@@ -1,0 +1,38 @@
+name = "petm8"
+main = "src/index.tsx"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "public"
+
+[vars]
+APP_NAME = "petm8"
+
+[triggers]
+crons = ["0 0 * * *", "0 */4 * * *", "*/5 * * * *", "*/15 * * * *"]
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "petm8-images"
+
+[[queues.producers]]
+queue = "ai-generation"
+binding = "AI_QUEUE"
+
+[[queues.producers]]
+queue = "order-fulfillment"
+binding = "FULFILLMENT_QUEUE"
+
+[[queues.producers]]
+queue = "notifications"
+binding = "NOTIFICATION_QUEUE"
+
+[[queues.consumers]]
+queue = "ai-generation"
+
+[[queues.consumers]]
+queue = "order-fulfillment"
+
+[[queues.consumers]]
+queue = "notifications"
