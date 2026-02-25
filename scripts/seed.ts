@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { eq } from "drizzle-orm";
 import { createDb } from "../src/infrastructure/db/client";
 import {
   products,
@@ -9,10 +10,30 @@ import {
   bookingSettings,
   bookingConfig,
   subscriptionPlans,
+  stores,
 } from "../src/infrastructure/db/schema";
 
 async function main() {
   const db = createDb(process.env.DATABASE_URL!);
+  const defaultStoreId =
+    process.env.DEFAULT_STORE_ID ?? "00000000-0000-4000-8000-000000000001";
+
+  const existingStore = await db
+    .select()
+    .from(stores)
+    .where(eq(stores.id, defaultStoreId))
+    .limit(1);
+
+  if (existingStore.length === 0) {
+    await db.insert(stores).values({
+      id: defaultStoreId,
+      name: "petm8",
+      slug: "petm8",
+      subdomain: "petm8",
+      status: "active",
+    });
+  }
+
   console.log("Seeding database...");
 
   // ─── Collections ────────────────────────────────────────────────────────────
@@ -20,6 +41,7 @@ async function main() {
   const [accessoriesCollection] = await db
     .insert(collections)
     .values({
+      storeId: defaultStoreId,
       name: "Accessories",
       slug: "accessories",
       description:
@@ -34,6 +56,7 @@ async function main() {
   const [digitalCollection] = await db
     .insert(collections)
     .values({
+      storeId: defaultStoreId,
       name: "Digital",
       slug: "digital",
       description:
@@ -54,6 +77,7 @@ async function main() {
   const [toteBag] = await db
     .insert(products)
     .values({
+      storeId: defaultStoreId,
       name: "Paw Print Tote Bag",
       slug: "paw-print-tote-bag",
       description:
@@ -134,6 +158,7 @@ async function main() {
   const [mug] = await db
     .insert(products)
     .values({
+      storeId: defaultStoreId,
       name: "Pet Portrait Mug",
       slug: "pet-portrait-mug",
       description:
@@ -143,7 +168,7 @@ async function main() {
       type: "physical",
       availableForSale: true,
       featuredImageUrl:
-        "https://images.petm8.io/products/pet-portrait-mug/main.jpg",
+        "https://images.petm8.io/products/pet-portrait-mug/main-v2.jpg",
       seoTitle: "Pet Portrait Mug | Petm8",
       seoDescription:
         "Charming watercolor-style pet portrait on a premium ceramic mug. Dishwasher safe.",
@@ -177,7 +202,7 @@ async function main() {
   await db.insert(productImages).values([
     {
       productId: mug.id,
-      url: "https://images.petm8.io/products/pet-portrait-mug/main.jpg",
+      url: "https://images.petm8.io/products/pet-portrait-mug/main-v2.jpg",
       altText: "Pet Portrait Mug - front view with dog illustration",
       position: 0,
     },
@@ -204,6 +229,7 @@ async function main() {
   const [guide] = await db
     .insert(products)
     .values({
+      storeId: defaultStoreId,
       name: "Pet Care Ultimate Guide",
       slug: "pet-care-ultimate-guide",
       description:
@@ -261,6 +287,7 @@ async function main() {
   const [premium] = await db
     .insert(products)
     .values({
+      storeId: defaultStoreId,
       name: "Petm8 Premium Monthly",
       slug: "petm8-premium-monthly",
       description:
@@ -271,7 +298,7 @@ async function main() {
       availableForSale: true,
       stripePriceId: "price_petm8_premium_monthly_placeholder",
       featuredImageUrl:
-        "https://images.petm8.io/products/premium/main.jpg",
+        "https://images.petm8.io/products/premium/main-v2.jpg",
       seoTitle: "Petm8 Premium Subscription | Petm8",
       seoDescription:
         "Unlimited AI portraits, member discounts, priority booking, and more. Cancel anytime.",
@@ -296,7 +323,7 @@ async function main() {
   await db.insert(productImages).values([
     {
       productId: premium.id,
-      url: "https://images.petm8.io/products/premium/main.jpg",
+      url: "https://images.petm8.io/products/premium/main-v2.jpg",
       altText: "Petm8 Premium - membership benefits overview",
       position: 0,
     },
@@ -321,6 +348,7 @@ async function main() {
   const [beachDay] = await db
     .insert(products)
     .values({
+      storeId: defaultStoreId,
       name: "Dog Beach Day Experience",
       slug: "dog-beach-day-experience",
       description:

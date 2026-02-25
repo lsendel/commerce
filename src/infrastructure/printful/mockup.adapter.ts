@@ -81,6 +81,7 @@ export class PrintfulMockupAdapter {
       placement: string;
       variantIds: number[];
       mockupUrl: string;
+      extraUrls: string[];
     }>;
     error?: string;
   }> {
@@ -96,6 +97,7 @@ export class PrintfulMockupAdapter {
         placement: m.placement,
         variantIds: m.variant_ids,
         mockupUrl: m.mockup_url,
+        extraUrls: (m.extra ?? []).map((e) => e.url),
       })),
       error: result.error,
     };

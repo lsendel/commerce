@@ -5,6 +5,7 @@ import type { Database } from "../../infrastructure/db/client";
 interface SyncCatalogInput {
   apiKey: string;
   db: Database;
+  storeId: string;
   printfulProductIds?: number[];
 }
 
@@ -28,6 +29,7 @@ export class SyncPrintfulCatalogUseCase {
         const result = await this.adapter.syncSingleProduct(
           client,
           input.db,
+          input.storeId,
           printfulProductId,
         );
         if (result.wasCreated) created++;
@@ -38,6 +40,6 @@ export class SyncPrintfulCatalogUseCase {
     }
 
     // Sync all products
-    return this.adapter.syncProducts(client, input.db);
+    return this.adapter.syncProducts(client, input.db, input.storeId);
   }
 }

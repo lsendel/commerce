@@ -4,7 +4,7 @@ import { BookingRepository } from "../infrastructure/repositories/booking.reposi
 
 export async function runExpireBookingRequests(env: Env): Promise<void> {
   const db = createDb(env.DATABASE_URL);
-  const bookingRepo = new BookingRepository(db);
+  const bookingRepo = new BookingRepository(db, env.DEFAULT_STORE_ID);
 
   const result = await bookingRepo.expireStaleRequests();
 

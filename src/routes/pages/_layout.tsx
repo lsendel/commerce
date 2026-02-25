@@ -45,6 +45,8 @@ export const Layout: FC<LayoutProps> = ({
       {description && <meta name="description" content={description} />}
       <meta name="robots" content="index,follow" />
       <link rel="canonical" href={url} />
+      <link rel="icon" href="/favicon.ico" sizes="any" />
+      <link rel="apple-touch-icon" href="/favicon-192.png" />
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={ogType} />

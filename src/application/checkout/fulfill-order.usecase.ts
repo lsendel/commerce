@@ -207,9 +207,22 @@ export class FulfillOrderUseCase {
     }
 
     // Create booking record
+    const availabilityRows = await this.db
+      .select({ storeId: bookingAvailability.storeId })
+      .from(bookingAvailability)
+      .where(eq(bookingAvailability.id, cartItem.bookingAvailabilityId))
+      .limit(1);
+
+    if (availabilityRows.length === 0) {
+      throw new Error(
+        `Booking availability ${cartItem.bookingAvailabilityId} not found`,
+      );
+    }
+
     const bookingRows = await this.db
       .insert(bookings)
       .values({
+        storeId: availabilityRows[0].storeId,
         orderItemId: orderItem?.id ?? null,
         userId,
         bookingAvailabilityId: cartItem.bookingAvailabilityId,

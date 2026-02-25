@@ -43,14 +43,28 @@ export async function handleOrderFulfillmentMessage(
 
   const db = createDb(env.DATABASE_URL);
   const printful = new PrintfulClient(env.PRINTFUL_API_KEY);
-  const orderRepo = new OrderRepository(db);
+  const orderRows = await db
+    .select({ storeId: orders.storeId })
+    .from(orders)
+    .where(eq(orders.id, orderId))
+    .limit(1);
+
+  if (orderRows.length === 0) {
+    console.error(
+      `[order-fulfillment] Order ${orderId} not found -- acking to prevent retries`,
+    );
+    message.ack();
+    return;
+  }
+
+  const orderRepo = new OrderRepository(db, orderRows[0].storeId);
 
   // Fetch the order with items
   const order = await orderRepo.findById(orderId);
 
   if (!order) {
     console.error(
-      `[order-fulfillment] Order ${orderId} not found -- acking to prevent retries`,
+      `[order-fulfillment] Order ${orderId} not found in scoped repo -- acking to prevent retries`,
     );
     message.ack();
     return;

@@ -1,5 +1,5 @@
 import type { Context, Next } from "hono";
-import { eq, or } from "drizzle-orm";
+import { eq, ne, or } from "drizzle-orm";
 import { stores, storeDomains } from "../infrastructure/db/schema";
 import { createDb } from "../infrastructure/db/client";
 import type { Env } from "../env";
@@ -24,38 +24,67 @@ declare module "hono" {
 export function tenantMiddleware() {
   return async (c: Context<{ Bindings: Env }>, next: Next) => {
     const host = c.req.header("host") ?? "";
-    const platformDomains = (c.env.PLATFORM_DOMAINS ?? "").split(",").map((d) => d.trim().toLowerCase());
+    const platformDomains = (c.env.PLATFORM_DOMAINS ?? "")
+      .split(",")
+      .map((d) => d.trim().toLowerCase())
+      .filter(Boolean);
+    const db = createDb(c.env.DATABASE_URL);
+
+    const setStoreContext = (store: typeof stores.$inferSelect) => {
+      c.set("storeId", store.id);
+      c.set("store", {
+        id: store.id,
+        name: store.name,
+        slug: store.slug,
+        logo: store.logo,
+        primaryColor: store.primaryColor,
+        secondaryColor: store.secondaryColor,
+        status: store.status ?? "active",
+        stripeConnectAccountId: store.stripeConnectAccountId,
+      });
+    };
+
+    const resolveDefaultStore = async () => {
+      const configuredDefaultStoreId = c.env.DEFAULT_STORE_ID?.trim();
+      if (configuredDefaultStoreId) {
+        const [configuredDefaultStore] = await db
+          .select()
+          .from(stores)
+          .where(eq(stores.id, configuredDefaultStoreId))
+          .limit(1);
+        if (configuredDefaultStore) return configuredDefaultStore;
+      }
+
+      const [firstActiveStore] = await db
+        .select()
+        .from(stores)
+        .where(ne(stores.status, "deactivated"))
+        .orderBy(stores.createdAt)
+        .limit(1);
+      if (firstActiveStore) return firstActiveStore;
+
+      const [anyStore] = await db
+        .select()
+        .from(stores)
+        .orderBy(stores.createdAt)
+        .limit(1);
+      return anyStore ?? null;
+    };
 
     // Check if this is a platform-level domain (landing pages, store creation)
     const hostWithoutPort = host.split(":")[0].toLowerCase();
     if (platformDomains.includes(hostWithoutPort)) {
       c.set("isPlatformDomain", true);
-      c.set("storeId", c.env.DEFAULT_STORE_ID);
-      // Load default store for platform pages
-      const db = createDb(c.env.DATABASE_URL);
-      const [store] = await db
-        .select()
-        .from(stores)
-        .where(eq(stores.id, c.env.DEFAULT_STORE_ID))
-        .limit(1);
-      if (store) {
-        c.set("store", {
-          id: store.id,
-          name: store.name,
-          slug: store.slug,
-          logo: store.logo,
-          primaryColor: store.primaryColor,
-          secondaryColor: store.secondaryColor,
-          status: store.status ?? "active",
-          stripeConnectAccountId: store.stripeConnectAccountId,
-        });
+      const defaultStore = await resolveDefaultStore();
+      if (!defaultStore) {
+        return c.json({ error: "No store configured for this tenant" }, 503);
       }
+      setStoreContext(defaultStore);
       await next();
       return;
     }
 
     c.set("isPlatformDomain", false);
-    const db = createDb(c.env.DATABASE_URL);
 
     // Try subdomain match: {slug}.{platform-domain}
     for (const pd of platformDomains) {
@@ -70,17 +99,7 @@ export function tenantMiddleware() {
           .limit(1);
 
         if (store && store.status !== "deactivated") {
-          c.set("store", {
-            id: store.id,
-            name: store.name,
-            slug: store.slug,
-            logo: store.logo,
-            primaryColor: store.primaryColor,
-            secondaryColor: store.secondaryColor,
-            status: store.status ?? "active",
-            stripeConnectAccountId: store.stripeConnectAccountId,
-          });
-          c.set("storeId", store.id);
+          setStoreContext(store);
           await next();
           return;
         }
@@ -102,41 +121,18 @@ export function tenantMiddleware() {
         .limit(1);
 
       if (store && store.status !== "deactivated") {
-        c.set("store", {
-          id: store.id,
-          name: store.name,
-          slug: store.slug,
-          logo: store.logo,
-          primaryColor: store.primaryColor,
-          secondaryColor: store.secondaryColor,
-          status: store.status ?? "active",
-          stripeConnectAccountId: store.stripeConnectAccountId,
-        });
-        c.set("storeId", store.id);
+        setStoreContext(store);
         await next();
         return;
       }
     }
 
     // Fallback to default store (dev/local)
-    c.set("storeId", c.env.DEFAULT_STORE_ID);
-    const [defaultStore] = await db
-      .select()
-      .from(stores)
-      .where(eq(stores.id, c.env.DEFAULT_STORE_ID))
-      .limit(1);
-    if (defaultStore) {
-      c.set("store", {
-        id: defaultStore.id,
-        name: defaultStore.name,
-        slug: defaultStore.slug,
-        logo: defaultStore.logo,
-        primaryColor: defaultStore.primaryColor,
-        secondaryColor: defaultStore.secondaryColor,
-        status: defaultStore.status ?? "active",
-        stripeConnectAccountId: defaultStore.stripeConnectAccountId,
-      });
+    const defaultStore = await resolveDefaultStore();
+    if (!defaultStore) {
+      return c.json({ error: "No store configured for this tenant" }, 503);
     }
+    setStoreContext(defaultStore);
     await next();
   };
 }
