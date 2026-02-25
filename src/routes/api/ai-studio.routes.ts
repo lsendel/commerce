@@ -27,7 +27,7 @@ studio.post(
   zValidator("json", generateArtworkSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const repo = new AiJobRepository(db);
+    const repo = new AiJobRepository(db, c.get("storeId") as string);
     const useCase = new GenerateArtworkUseCase(repo, c.env.AI_QUEUE);
 
     try {
@@ -54,7 +54,7 @@ studio.post(
 // GET /studio/jobs/:id — get job status
 studio.get("/jobs/:id", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
-  const repo = new AiJobRepository(db);
+  const repo = new AiJobRepository(db, c.get("storeId") as string);
   const useCase = new GetGenerationStatusUseCase(repo);
 
   try {
@@ -78,7 +78,7 @@ studio.get(
   ),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const repo = new AiJobRepository(db);
+    const repo = new AiJobRepository(db, c.get("storeId") as string);
     const useCase = new ListTemplatesUseCase(repo);
 
     const { category } = c.req.valid("query");
@@ -93,7 +93,7 @@ studio.post(
   zValidator("json", createPetProfileSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const repo = new AiJobRepository(db);
+    const repo = new AiJobRepository(db, c.get("storeId") as string);
     const storage = new R2StorageAdapter(c.env.IMAGES);
     const useCase = new ManagePetProfileUseCase(repo, storage);
 
@@ -113,7 +113,7 @@ studio.post(
 // GET /studio/pets — list user's pets
 studio.get("/pets", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
-  const repo = new AiJobRepository(db);
+  const repo = new AiJobRepository(db, c.get("storeId") as string);
   const storage = new R2StorageAdapter(c.env.IMAGES);
   const useCase = new ManagePetProfileUseCase(repo, storage);
 
@@ -127,7 +127,7 @@ studio.patch(
   zValidator("json", createPetProfileSchema.partial()),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const repo = new AiJobRepository(db);
+    const repo = new AiJobRepository(db, c.get("storeId") as string);
     const storage = new R2StorageAdapter(c.env.IMAGES);
     const useCase = new ManagePetProfileUseCase(repo, storage);
 
@@ -151,7 +151,7 @@ studio.patch(
 // DELETE /studio/pets/:id — delete pet
 studio.delete("/pets/:id", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
-  const repo = new AiJobRepository(db);
+  const repo = new AiJobRepository(db, c.get("storeId") as string);
   const storage = new R2StorageAdapter(c.env.IMAGES);
   const useCase = new ManagePetProfileUseCase(repo, storage);
 

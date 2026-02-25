@@ -49,8 +49,8 @@ webhooks.post("/webhooks/stripe", async (c) => {
 
       try {
         const db = createDb(c.env.DATABASE_URL);
-        const orderRepo = new OrderRepository(db);
-        const cartRepo = new CartRepository(db);
+        const orderRepo = new OrderRepository(db, c.get("storeId") as string);
+        const cartRepo = new CartRepository(db, c.get("storeId") as string);
 
         const useCase = new FulfillOrderUseCase(orderRepo, cartRepo, db);
         await useCase.execute({
@@ -85,7 +85,7 @@ webhooks.post("/webhooks/stripe", async (c) => {
 
       try {
         const db = createDb(c.env.DATABASE_URL);
-        const subscriptionRepo = new SubscriptionRepository(db);
+        const subscriptionRepo = new SubscriptionRepository(db, c.get("storeId") as string);
         const userRepo = new UserRepository(db);
 
         // Resolve the user from Stripe customer ID
@@ -183,7 +183,7 @@ webhooks.post("/webhooks/stripe", async (c) => {
 
       try {
         const db = createDb(c.env.DATABASE_URL);
-        const subscriptionRepo = new SubscriptionRepository(db);
+        const subscriptionRepo = new SubscriptionRepository(db, c.get("storeId") as string);
 
         const status = mapStripeSubscriptionStatus(
           stripeSubscription.status,
@@ -234,7 +234,7 @@ webhooks.post("/webhooks/stripe", async (c) => {
 
       try {
         const db = createDb(c.env.DATABASE_URL);
-        const subscriptionRepo = new SubscriptionRepository(db);
+        const subscriptionRepo = new SubscriptionRepository(db, c.get("storeId") as string);
 
         const updated = await subscriptionRepo.updateFromStripe(
           stripeSubscription.id,

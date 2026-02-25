@@ -58,7 +58,10 @@ export interface CreateBookingItemData {
 // ─── Repository ─────────────────────────────────────────────────────────────
 
 export class BookingRepository {
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    private storeId: string,
+  ) {}
 
   // ─── Availability ───────────────────────────────────────────────────────
 
@@ -68,6 +71,7 @@ export class BookingRepository {
     const rows = await this.db
       .insert(bookingAvailability)
       .values({
+        storeId: this.storeId,
         productId: data.productId,
         slotDate: data.slotDate,
         slotTime: data.slotTime,
@@ -141,6 +145,7 @@ export class BookingRepository {
     const offset = (page - 1) * limit;
 
     const conditions: ReturnType<typeof eq>[] = [
+      eq(bookingAvailability.storeId, this.storeId),
       eq(bookingAvailability.productId, filters.productId),
       eq(bookingAvailability.isActive, true),
     ];
@@ -223,7 +228,7 @@ export class BookingRepository {
     const rows = await this.db
       .select()
       .from(bookingAvailability)
-      .where(eq(bookingAvailability.id, id))
+      .where(and(eq(bookingAvailability.id, id), eq(bookingAvailability.storeId, this.storeId)))
       .limit(1);
 
     const slot = rows[0];
@@ -262,7 +267,7 @@ export class BookingRepository {
     const rows = await this.db
       .update(bookingAvailability)
       .set({ status })
-      .where(eq(bookingAvailability.id, id))
+      .where(and(eq(bookingAvailability.id, id), eq(bookingAvailability.storeId, this.storeId)))
       .returning();
 
     return rows[0] ?? null;
@@ -274,7 +279,7 @@ export class BookingRepository {
       .set({
         reservedCount: sql`${bookingAvailability.reservedCount} + ${count}`,
       })
-      .where(eq(bookingAvailability.id, id))
+      .where(and(eq(bookingAvailability.id, id), eq(bookingAvailability.storeId, this.storeId)))
       .returning();
 
     return rows[0] ?? null;
@@ -286,7 +291,7 @@ export class BookingRepository {
       .set({
         reservedCount: sql`GREATEST(${bookingAvailability.reservedCount} - ${count}, 0)`,
       })
-      .where(eq(bookingAvailability.id, id))
+      .where(and(eq(bookingAvailability.id, id), eq(bookingAvailability.storeId, this.storeId)))
       .returning();
 
     return rows[0] ?? null;
@@ -413,6 +418,7 @@ export class BookingRepository {
     const bookingRows = await this.db
       .insert(bookings)
       .values({
+        storeId: this.storeId,
         orderItemId: data.orderItemId,
         userId: data.userId,
         bookingAvailabilityId: data.bookingAvailabilityId,
@@ -456,7 +462,7 @@ export class BookingRepository {
     const countResult = await this.db
       .select({ total: count() })
       .from(bookings)
-      .where(eq(bookings.userId, userId));
+      .where(and(eq(bookings.userId, userId), eq(bookings.storeId, this.storeId)));
 
     const total = countResult[0]?.total ?? 0;
 
@@ -464,7 +470,7 @@ export class BookingRepository {
     const bookingRows = await this.db
       .select()
       .from(bookings)
-      .where(eq(bookings.userId, userId))
+      .where(and(eq(bookings.userId, userId), eq(bookings.storeId, this.storeId)))
       .orderBy(desc(bookings.createdAt))
       .limit(pagination.limit)
       .offset(offset);
@@ -490,7 +496,7 @@ export class BookingRepository {
     const rows = await this.db
       .select()
       .from(bookings)
-      .where(eq(bookings.id, id))
+      .where(and(eq(bookings.id, id), eq(bookings.storeId, this.storeId)))
       .limit(1);
 
     const booking = rows[0];
@@ -506,7 +512,7 @@ export class BookingRepository {
     const rows = await this.db
       .update(bookings)
       .set({ status, updatedAt: new Date() })
-      .where(eq(bookings.id, id))
+      .where(and(eq(bookings.id, id), eq(bookings.storeId, this.storeId)))
       .returning();
 
     const booking = rows[0];

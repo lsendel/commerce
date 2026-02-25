@@ -109,6 +109,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
                     type="button"
                     variant="ghost"
                     id="cancel-subscription-btn"
+                    data-subscription-id={subscription.id}
                     class="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     Cancel Subscription
@@ -157,7 +158,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
           <p class="text-sm text-gray-400 mb-6 max-w-sm mx-auto">
             Subscribe to a plan to get exclusive perks, discounts, and premium access for you and your pets.
           </p>
-          <Button href="/subscriptions" variant="primary" size="lg">
+          <Button href="/products?type=subscription" variant="primary" size="lg">
             Browse Plans
           </Button>
         </div>
@@ -198,10 +199,9 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
                   manageBtn.disabled = true;
                   manageBtn.textContent = 'Redirecting...';
                   try {
-                    var res = await fetch('/api/billing/portal-session', {
+                    var res = await fetch('/api/subscriptions/portal', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ returnUrl: window.location.href }),
                     });
                     if (!res.ok) throw new Error('Failed to open billing portal');
                     var data = await res.json();
@@ -226,12 +226,17 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
 
               document.getElementById('cancel-yes-btn').addEventListener('click', async function() {
                 var btn = this;
+                var subscriptionId = cancelBtn ? cancelBtn.getAttribute('data-subscription-id') : null;
+                if (!subscriptionId) {
+                  alert('Subscription not found');
+                  cancelConfirm.classList.add('hidden');
+                  return;
+                }
                 btn.disabled = true;
                 btn.textContent = 'Cancelling...';
                 try {
-                  var res = await fetch('/api/billing/subscriptions/cancel', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                  var res = await fetch('/api/subscriptions/' + subscriptionId, {
+                    method: 'DELETE',
                   });
                   if (!res.ok) throw new Error('Failed to cancel subscription');
                   window.location.reload();

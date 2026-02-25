@@ -258,7 +258,7 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
               document.getElementById('delete-confirm-btn').addEventListener('click', async function() {
                 if (!pendingDeleteId) return;
                 try {
-                  var res = await fetch('/api/account/addresses/' + pendingDeleteId, { method: 'DELETE' });
+                  var res = await fetch('/api/auth/addresses/' + pendingDeleteId, { method: 'DELETE' });
                   if (!res.ok) throw new Error('Failed to delete');
                   window.location.reload();
                 } catch (err) {
@@ -273,7 +273,11 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
                 btn.addEventListener('click', async function() {
                   var id = this.getAttribute('data-set-default');
                   try {
-                    var res = await fetch('/api/account/addresses/' + id + '/default', { method: 'PUT' });
+                    var res = await fetch('/api/auth/addresses/' + id, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ isDefault: true }),
+                    });
                     if (!res.ok) throw new Error('Failed to update');
                     window.location.reload();
                   } catch (err) {
@@ -291,31 +295,31 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
                 var fd = new FormData(this);
                 var addressId = fd.get('addressId');
                 var url = addressId
-                  ? '/api/account/addresses/' + addressId
-                  : '/api/account/addresses';
-                var method = addressId ? 'PUT' : 'POST';
+                  ? '/api/auth/addresses/' + addressId
+                  : '/api/auth/addresses';
+                var method = addressId ? 'PATCH' : 'POST';
 
                 try {
+                  var street = String(fd.get('line1') || '');
+                  var line2 = String(fd.get('line2') || '');
+                  if (line2) street = street + ', ' + line2;
                   var res = await fetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       label: fd.get('label'),
-                      name: fd.get('name'),
-                      line1: fd.get('line1'),
-                      line2: fd.get('line2'),
+                      street: street,
                       city: fd.get('city'),
                       state: fd.get('state'),
                       zip: fd.get('zip'),
-                      country: fd.get('country'),
-                      phone: fd.get('phone'),
+                      country: String(fd.get('country') || 'US').toUpperCase().slice(0, 2),
                       isDefault: !!fd.get('isDefault'),
                     }),
                   });
 
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.message || 'Failed to save address');
+                    throw new Error(data.error || data.message || 'Failed to save address');
                   }
 
                   window.location.reload();

@@ -26,7 +26,7 @@ catalog.get(
   zValidator("query", paginationSchema.merge(productFilterSchema)),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const repo = new ProductRepository(db);
+    const repo = new ProductRepository(db, c.get("storeId") as string);
     const useCase = new ListProductsUseCase(repo);
 
     const query = c.req.valid("query");
@@ -49,7 +49,7 @@ catalog.get(
 // GET /products/:slug - single product by slug
 catalog.get("/products/:slug", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
-  const repo = new ProductRepository(db);
+  const repo = new ProductRepository(db, c.get("storeId") as string);
   const useCase = new GetProductUseCase(repo);
 
   const slug = c.req.param("slug");
@@ -64,7 +64,7 @@ catalog.get(
   zValidator("query", paginationSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const repo = new ProductRepository(db);
+    const repo = new ProductRepository(db, c.get("storeId") as string);
     const useCase = new ListCollectionsUseCase(repo);
 
     const allCollections = await useCase.execute();
@@ -92,7 +92,7 @@ catalog.get(
   zValidator("query", paginationSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const repo = new ProductRepository(db);
+    const repo = new ProductRepository(db, c.get("storeId") as string);
     const useCase = new GetCollectionUseCase(repo);
 
     const slug = c.req.param("slug");

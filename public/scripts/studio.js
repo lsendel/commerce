@@ -416,7 +416,7 @@
       } else if (data.status === "failed" || data.status === "error") {
         clearInterval(studioState.pollTimer);
         studioState.pollTimer = null;
-        showProgressError(data.error || "Generation failed. Please try again.");
+        showProgressError(data.errorMessage || data.error || "Generation failed. Please try again.");
       }
     } catch (_) {
       // Silently retry on next interval
@@ -547,7 +547,11 @@
     var artImage = resultSection.querySelector("[data-art-image]");
     var artPreviewArea = resultSection.querySelector("[data-art-preview]");
 
-    var imageUrl = data.resultUrl || data.imageUrl || data.outputUrl;
+    var imageUrl =
+      data.resultImageUrl ||
+      data.resultUrl ||
+      data.imageUrl ||
+      data.outputUrl;
 
     if (imageUrl && artImage) {
       artImage.src = imageUrl;
@@ -586,7 +590,7 @@
       : [];
     links.forEach(function (link) {
       if (link.href && link.href.indexOf("studio/preview") !== -1 && studioState.jobId) {
-        link.href = "/studio/preview?jobId=" + studioState.jobId;
+        link.href = "/studio/preview/" + studioState.jobId;
       }
     });
   }

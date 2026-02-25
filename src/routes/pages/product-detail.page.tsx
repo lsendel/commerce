@@ -16,6 +16,7 @@ interface Variant {
   price: string;
   compareAtPrice?: string | null;
   availableForSale?: boolean | null;
+  inventoryQuantity?: number | null;
   options?: Record<string, string> | null;
 }
 
@@ -155,11 +156,10 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
                 <button
                   key={img.id}
                   type="button"
-                  class={`aspect-square rounded-xl overflow-hidden border-2 transition-all duration-150 ${
-                    idx === 0
+                  class={`aspect-square rounded-xl overflow-hidden border-2 transition-all duration-150 ${idx === 0
                       ? "border-brand-500 ring-2 ring-brand-200"
                       : "border-gray-200 hover:border-gray-300"
-                  }`}
+                    }`}
                   data-thumbnail
                   data-image-url={img.url}
                   data-image-alt={img.altText || name}
@@ -180,28 +180,34 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
         <div class="mt-8 lg:mt-0">
           {/* Type badge */}
           {type !== "physical" && (
-            <span class={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full mb-3 ${
-              type === "digital"
+            <span class={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full mb-3 ${type === "digital"
                 ? "bg-purple-100 text-purple-700"
                 : type === "subscription"
                   ? "bg-blue-100 text-blue-700"
                   : "bg-pet-teal/20 text-teal-700"
-            }`}>
+              }`}>
               {type === "digital" ? "Digital" : type === "subscription" ? "Subscription" : "Bookable Event"}
             </span>
           )}
 
           <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{name}</h1>
 
-          {/* Availability */}
-          {product.availableForSale === false && (
+          {/* Availability & Urgency Indicator */}
+          {product.availableForSale === false ? (
             <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 text-red-600 text-xs font-medium">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
               Currently unavailable
             </div>
-          )}
+          ) : product.type === "physical" && variants[0]?.inventoryQuantity !== undefined && variants[0].inventoryQuantity !== null && variants[0].inventoryQuantity < 5 ? (
+            <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 text-orange-600 text-xs font-medium animate-pulse">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Hurry! Only {variants[0].inventoryQuantity} left in stock.
+            </div>
+          ) : null}
 
           {/* Variant selector */}
           <div class="mt-6">

@@ -86,6 +86,225 @@ export const capacityTypeEnum = pgEnum("capacity_type", [
   "group",
 ]);
 
+export const storeStatusEnum = pgEnum("store_status", [
+  "trial",
+  "active",
+  "suspended",
+  "deactivated",
+]);
+
+export const storeMemberRoleEnum = pgEnum("store_member_role", [
+  "owner",
+  "admin",
+  "staff",
+]);
+
+export const platformRoleEnum = pgEnum("platform_role", [
+  "super_admin",
+  "group_admin",
+  "user",
+]);
+
+export const domainVerificationStatusEnum = pgEnum(
+  "domain_verification_status",
+  ["pending", "verified", "failed"],
+);
+
+export const affiliateStatusEnum = pgEnum("affiliate_status", [
+  "pending",
+  "approved",
+  "suspended",
+]);
+
+export const conversionStatusEnum = pgEnum("conversion_status", [
+  "pending",
+  "approved",
+  "paid",
+  "rejected",
+]);
+
+export const attributionMethodEnum = pgEnum("attribution_method", [
+  "link",
+  "coupon",
+  "tier",
+]);
+
+export const payoutStatusEnum = pgEnum("payout_status", [
+  "pending",
+  "processing",
+  "completed",
+  "failed",
+]);
+
+export const fulfillmentProviderTypeEnum = pgEnum("fulfillment_provider_type", [
+  "printful",
+  "gooten",
+  "prodigi",
+  "shapeways",
+]);
+
+export const storeBillingStatusEnum = pgEnum("store_billing_status", [
+  "active",
+  "past_due",
+  "cancelled",
+  "trialing",
+]);
+
+export const integrationProviderEnum = pgEnum("integration_provider", [
+  "stripe",
+  "printful",
+  "gemini",
+  "resend",
+  "gooten",
+  "prodigi",
+  "shapeways",
+]);
+
+export const integrationStatusEnum = pgEnum("integration_status", [
+  "connected",
+  "disconnected",
+  "error",
+  "pending_verification",
+]);
+
+// ─── Platform Context ───────────────────────────────────────────────────────
+
+export const platformPlans = pgTable("platform_plans", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  slug: text("slug").unique().notNull(),
+  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 })
+    .notNull()
+    .default("0"),
+  transactionFeePercent: decimal("transaction_fee_percent", {
+    precision: 5,
+    scale: 2,
+  })
+    .notNull()
+    .default("5"),
+  maxProducts: integer("max_products"),
+  maxStaff: integer("max_staff"),
+  features: jsonb("features").default({}),
+  stripePriceId: text("stripe_price_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const stores = pgTable(
+  "stores",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    slug: text("slug").unique().notNull(),
+    subdomain: text("subdomain").unique(),
+    customDomain: text("custom_domain"),
+    logo: text("logo"),
+    primaryColor: text("primary_color"),
+    secondaryColor: text("secondary_color"),
+    status: storeStatusEnum("status").default("trial"),
+    planId: uuid("plan_id").references(() => platformPlans.id),
+    stripeConnectAccountId: text("stripe_connect_account_id"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    subdomainIdx: index("stores_subdomain_idx").on(table.subdomain),
+    customDomainIdx: index("stores_custom_domain_idx").on(table.customDomain),
+  }),
+);
+
+export const storesRelations = relations(stores, ({ one, many }) => ({
+  plan: one(platformPlans, {
+    fields: [stores.planId],
+    references: [platformPlans.id],
+  }),
+  members: many(storeMembers),
+  domains: many(storeDomains),
+  settings: many(storeSettings),
+}));
+
+export const storeMembers = pgTable(
+  "store_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    role: storeMemberRoleEnum("role").notNull().default("staff"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    uniqueMember: uniqueIndex("store_members_store_user_idx").on(
+      table.storeId,
+      table.userId,
+    ),
+  }),
+);
+
+export const storeMembersRelations = relations(storeMembers, ({ one }) => ({
+  store: one(stores, {
+    fields: [storeMembers.storeId],
+    references: [stores.id],
+  }),
+  user: one(users, {
+    fields: [storeMembers.userId],
+    references: [users.id],
+  }),
+}));
+
+export const storeDomains = pgTable(
+  "store_domains",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    domain: text("domain").notNull(),
+    verificationStatus:
+      domainVerificationStatusEnum("verification_status").default("pending"),
+    verificationToken: text("verification_token"),
+    isPrimary: boolean("is_primary").default(false),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    domainIdx: uniqueIndex("store_domains_domain_idx").on(table.domain),
+  }),
+);
+
+export const storeDomainsRelations = relations(storeDomains, ({ one }) => ({
+  store: one(stores, {
+    fields: [storeDomains.storeId],
+    references: [stores.id],
+  }),
+}));
+
+export const storeSettings = pgTable(
+  "store_settings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    key: text("key").notNull(),
+    value: text("value"),
+  },
+  (table) => ({
+    storeKeyIdx: uniqueIndex("store_settings_store_key_idx").on(
+      table.storeId,
+      table.key,
+    ),
+  }),
+);
+
+export const storeSettingsRelations = relations(storeSettings, ({ one }) => ({
+  store: one(stores, {
+    fields: [storeSettings.storeId],
+    references: [stores.id],
+  }),
+}));
+
 // ─── Identity Context ────────────────────────────────────────────────────────
 
 export const users = pgTable("users", {
@@ -93,6 +312,7 @@ export const users = pgTable("users", {
   email: text("email").unique().notNull(),
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
+  platformRole: platformRoleEnum("platform_role").default("user"),
   stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -107,6 +327,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   generationJobs: many(generationJobs),
   bookingRequests: many(bookingRequests),
   bookings: many(bookings),
+  reviews: many(productReviews),
 }));
 
 export const addresses = pgTable("addresses", {
@@ -135,6 +356,9 @@ export const addressesRelations = relations(addresses, ({ one }) => ({
 
 export const products = pgTable("products", {
   id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
   name: text("name").notNull(),
   slug: text("slug").unique().notNull(),
   description: text("description"),
@@ -160,6 +384,7 @@ export const productsRelations = relations(products, ({ many, one }) => ({
   bookingConfig: one(bookingConfig),
   bookingAvailability: many(bookingAvailability),
   printfulSyncProduct: one(printfulSyncProducts),
+  reviews: many(productReviews),
 }));
 
 export const productVariants = pgTable("product_variants", {
@@ -210,6 +435,9 @@ export const productImagesRelations = relations(productImages, ({ one }) => ({
 
 export const collections = pgTable("collections", {
   id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
   name: text("name").notNull(),
   slug: text("slug").unique().notNull(),
   description: text("description"),
@@ -257,6 +485,9 @@ export const collectionProductsRelations = relations(
 
 export const carts = pgTable("carts", {
   id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
   userId: uuid("user_id").references(() => users.id),
   sessionId: text("session_id").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -307,6 +538,9 @@ export const cartItemsRelations = relations(cartItems, ({ one, many }) => ({
 
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id),
@@ -395,6 +629,9 @@ export const subscriptionPlansRelations = relations(
 
 export const subscriptions = pgTable("subscriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id),
@@ -464,6 +701,7 @@ export const bookingConfig = pgTable("booking_config", {
     .notNull()
     .unique()
     .references(() => products.id),
+  venueId: uuid("venue_id").references(() => venues.id),
   location: text("location"),
   included: jsonb("included"),
   notIncluded: jsonb("not_included"),
@@ -483,6 +721,9 @@ export const bookingAvailability = pgTable(
   "booking_availability",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
     productId: uuid("product_id")
       .notNull()
       .references(() => products.id),
@@ -580,6 +821,9 @@ export const bookingRequestsRelations = relations(
 
 export const bookings = pgTable("bookings", {
   id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
   orderItemId: uuid("order_item_id").references(() => orderItems.id),
   userId: uuid("user_id")
     .notNull()
@@ -630,6 +874,9 @@ export const bookingItemsRelations = relations(bookingItems, ({ one }) => ({
 
 export const petProfiles = pgTable("pet_profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id),
@@ -637,6 +884,7 @@ export const petProfiles = pgTable("pet_profiles", {
   species: text("species").notNull(),
   breed: text("breed"),
   photoUrl: text("photo_url"),
+  dateOfBirth: timestamp("date_of_birth"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -654,6 +902,9 @@ export const petProfilesRelations = relations(
 
 export const artTemplates = pgTable("art_templates", {
   id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
   name: text("name").notNull(),
   slug: text("slug").unique().notNull(),
   description: text("description"),
@@ -670,6 +921,9 @@ export const artTemplatesRelations = relations(artTemplates, ({ many }) => ({
 
 export const generationJobs = pgTable("generation_jobs", {
   id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id),
@@ -710,6 +964,9 @@ export const generationJobsRelations = relations(
 
 export const printfulSyncProducts = pgTable("printful_sync_products", {
   id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
   printfulId: integer("printful_id").unique().notNull(),
   productId: uuid("product_id")
     .notNull()
@@ -750,6 +1007,9 @@ export const printfulSyncVariantsRelations = relations(
 
 export const shipments = pgTable("shipments", {
   id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
   orderId: uuid("order_id")
     .notNull()
     .references(() => orders.id),
@@ -768,3 +1028,489 @@ export const shipmentsRelations = relations(shipments, ({ one }) => ({
     references: [orders.id],
   }),
 }));
+
+export const productReviews = pgTable("product_reviews", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
+  productId: uuid("product_id").notNull().references(() => products.id),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  rating: integer("rating").notNull(),
+  title: text("title"),
+  content: text("content"),
+  isVerifiedPurchase: boolean("is_verified_purchase").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const productReviewsRelations = relations(productReviews, ({ one }) => ({
+  product: one(products, {
+    fields: [productReviews.productId],
+    references: [products.id],
+  }),
+  user: one(users, {
+    fields: [productReviews.userId],
+    references: [users.id],
+  }),
+}));
+
+// ─── Store Billing Context (Phase 2) ────────────────────────────────────────
+
+export const storeBilling = pgTable("store_billing", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .unique()
+    .references(() => stores.id),
+  platformPlanId: uuid("platform_plan_id")
+    .notNull()
+    .references(() => platformPlans.id),
+  stripeSubscriptionId: text("stripe_subscription_id").unique(),
+  stripeCustomerId: text("stripe_customer_id"),
+  status: storeBillingStatusEnum("status").default("trialing"),
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const storeBillingRelations = relations(storeBilling, ({ one }) => ({
+  store: one(stores, {
+    fields: [storeBilling.storeId],
+    references: [stores.id],
+  }),
+  plan: one(platformPlans, {
+    fields: [storeBilling.platformPlanId],
+    references: [platformPlans.id],
+  }),
+}));
+
+export const platformTransactions = pgTable("platform_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
+  orderId: uuid("order_id")
+    .notNull()
+    .references(() => orders.id),
+  orderTotal: decimal("order_total", { precision: 10, scale: 2 }).notNull(),
+  platformFeePercent: decimal("platform_fee_percent", {
+    precision: 5,
+    scale: 2,
+  }).notNull(),
+  platformFeeAmount: decimal("platform_fee_amount", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
+  stripeTransferId: text("stripe_transfer_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const platformTransactionsRelations = relations(
+  platformTransactions,
+  ({ one }) => ({
+    store: one(stores, {
+      fields: [platformTransactions.storeId],
+      references: [stores.id],
+    }),
+    order: one(orders, {
+      fields: [platformTransactions.orderId],
+      references: [orders.id],
+    }),
+  }),
+);
+
+// ─── Multi-Provider Fulfillment Context (Phase 3) ───────────────────────────
+
+export const fulfillmentProviders = pgTable(
+  "fulfillment_providers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    name: text("name").notNull(),
+    type: fulfillmentProviderTypeEnum("type").notNull(),
+    apiKey: text("api_key"),
+    apiSecret: text("api_secret"),
+    isActive: boolean("is_active").default(true),
+    config: jsonb("config").default({}),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    storeTypeIdx: index("fulfillment_providers_store_type_idx").on(
+      table.storeId,
+      table.type,
+    ),
+  }),
+);
+
+export const fulfillmentProvidersRelations = relations(
+  fulfillmentProviders,
+  ({ one, many }) => ({
+    store: one(stores, {
+      fields: [fulfillmentProviders.storeId],
+      references: [stores.id],
+    }),
+    productMappings: many(providerProductMappings),
+  }),
+);
+
+export const providerProductMappings = pgTable(
+  "provider_product_mappings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    variantId: uuid("variant_id")
+      .notNull()
+      .references(() => productVariants.id),
+    providerId: uuid("provider_id")
+      .notNull()
+      .references(() => fulfillmentProviders.id),
+    externalProductId: text("external_product_id"),
+    externalVariantId: text("external_variant_id"),
+    costPrice: decimal("cost_price", { precision: 10, scale: 2 }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    variantProviderIdx: uniqueIndex(
+      "provider_product_mappings_variant_provider_idx",
+    ).on(table.variantId, table.providerId),
+  }),
+);
+
+export const providerProductMappingsRelations = relations(
+  providerProductMappings,
+  ({ one }) => ({
+    variant: one(productVariants, {
+      fields: [providerProductMappings.variantId],
+      references: [productVariants.id],
+    }),
+    provider: one(fulfillmentProviders, {
+      fields: [providerProductMappings.providerId],
+      references: [fulfillmentProviders.id],
+    }),
+  }),
+);
+
+// ─── Affiliate Context (Phase 4) ────────────────────────────────────────────
+
+export const affiliateTiers = pgTable("affiliate_tiers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
+  name: text("name").notNull(),
+  level: integer("level").notNull(),
+  commissionRate: decimal("commission_rate", {
+    precision: 5,
+    scale: 2,
+  }).notNull(),
+  bonusRate: decimal("bonus_rate", { precision: 5, scale: 2 })
+    .notNull()
+    .default("0"),
+  minSales: integer("min_sales").default(0),
+  minRevenue: decimal("min_revenue", { precision: 10, scale: 2 }).default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const affiliateTiersRelations = relations(
+  affiliateTiers,
+  ({ one, many }) => ({
+    store: one(stores, {
+      fields: [affiliateTiers.storeId],
+      references: [stores.id],
+    }),
+    affiliates: many(affiliates),
+  }),
+);
+
+export const affiliates = pgTable(
+  "affiliates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    status: affiliateStatusEnum("status").default("pending"),
+    referralCode: text("referral_code").unique().notNull(),
+    customSlug: text("custom_slug"),
+    commissionRate: decimal("commission_rate", {
+      precision: 5,
+      scale: 2,
+    }).notNull(),
+    parentAffiliateId: uuid("parent_affiliate_id"),
+    tierId: uuid("tier_id").references(() => affiliateTiers.id),
+    totalEarnings: decimal("total_earnings", { precision: 10, scale: 2 })
+      .notNull()
+      .default("0"),
+    totalClicks: integer("total_clicks").notNull().default(0),
+    totalConversions: integer("total_conversions").notNull().default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    storeUserIdx: uniqueIndex("affiliates_store_user_idx").on(
+      table.storeId,
+      table.userId,
+    ),
+    referralCodeIdx: index("affiliates_referral_code_idx").on(
+      table.referralCode,
+    ),
+  }),
+);
+
+export const affiliatesRelations = relations(
+  affiliates,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [affiliates.userId],
+      references: [users.id],
+    }),
+    store: one(stores, {
+      fields: [affiliates.storeId],
+      references: [stores.id],
+    }),
+    tier: one(affiliateTiers, {
+      fields: [affiliates.tierId],
+      references: [affiliateTiers.id],
+    }),
+    parent: one(affiliates, {
+      fields: [affiliates.parentAffiliateId],
+      references: [affiliates.id],
+      relationName: "parentAffiliate",
+    }),
+    children: many(affiliates, { relationName: "parentAffiliate" }),
+    links: many(affiliateLinks),
+    conversions: many(affiliateConversions),
+    payouts: many(affiliatePayouts),
+  }),
+);
+
+export const affiliateLinks = pgTable("affiliate_links", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  affiliateId: uuid("affiliate_id")
+    .notNull()
+    .references(() => affiliates.id),
+  targetUrl: text("target_url").notNull(),
+  shortCode: text("short_code").unique().notNull(),
+  clickCount: integer("click_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const affiliateLinksRelations = relations(
+  affiliateLinks,
+  ({ one, many }) => ({
+    affiliate: one(affiliates, {
+      fields: [affiliateLinks.affiliateId],
+      references: [affiliates.id],
+    }),
+    clicks: many(affiliateClicks),
+  }),
+);
+
+export const affiliateClicks = pgTable(
+  "affiliate_clicks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    linkId: uuid("link_id")
+      .notNull()
+      .references(() => affiliateLinks.id),
+    ip: text("ip"),
+    userAgent: text("user_agent"),
+    referrer: text("referrer"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    linkCreatedIdx: index("affiliate_clicks_link_created_idx").on(
+      table.linkId,
+      table.createdAt,
+    ),
+  }),
+);
+
+export const affiliateClicksRelations = relations(
+  affiliateClicks,
+  ({ one }) => ({
+    link: one(affiliateLinks, {
+      fields: [affiliateClicks.linkId],
+      references: [affiliateLinks.id],
+    }),
+  }),
+);
+
+export const affiliateConversions = pgTable("affiliate_conversions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  affiliateId: uuid("affiliate_id")
+    .notNull()
+    .references(() => affiliates.id),
+  orderId: uuid("order_id")
+    .notNull()
+    .references(() => orders.id),
+  orderTotal: decimal("order_total", { precision: 10, scale: 2 }).notNull(),
+  commissionAmount: decimal("commission_amount", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
+  status: conversionStatusEnum("status").default("pending"),
+  attributionMethod: attributionMethodEnum("attribution_method").notNull(),
+  clickId: uuid("click_id").references(() => affiliateClicks.id),
+  couponCode: text("coupon_code"),
+  parentConversionId: uuid("parent_conversion_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const affiliateConversionsRelations = relations(
+  affiliateConversions,
+  ({ one }) => ({
+    affiliate: one(affiliates, {
+      fields: [affiliateConversions.affiliateId],
+      references: [affiliates.id],
+    }),
+    order: one(orders, {
+      fields: [affiliateConversions.orderId],
+      references: [orders.id],
+    }),
+    click: one(affiliateClicks, {
+      fields: [affiliateConversions.clickId],
+      references: [affiliateClicks.id],
+    }),
+  }),
+);
+
+export const affiliatePayouts = pgTable("affiliate_payouts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  affiliateId: uuid("affiliate_id")
+    .notNull()
+    .references(() => affiliates.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  stripeTransferId: text("stripe_transfer_id"),
+  status: payoutStatusEnum("status").default("pending"),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const affiliatePayoutsRelations = relations(
+  affiliatePayouts,
+  ({ one }) => ({
+    affiliate: one(affiliates, {
+      fields: [affiliatePayouts.affiliateId],
+      references: [affiliates.id],
+    }),
+  }),
+);
+
+// ─── Venue Context (Phase 5) ────────────────────────────────────────────────
+
+export const venues = pgTable(
+  "venues",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    address: text("address").notNull(),
+    city: text("city").notNull(),
+    state: text("state"),
+    country: text("country").notNull(),
+    postalCode: text("postal_code").notNull(),
+    latitude: decimal("latitude", { precision: 10, scale: 7 }),
+    longitude: decimal("longitude", { precision: 10, scale: 7 }),
+    amenities: jsonb("amenities").default([]),
+    photos: jsonb("photos").default([]),
+    capacity: integer("capacity"),
+    description: text("description"),
+    contactEmail: text("contact_email"),
+    contactPhone: text("contact_phone"),
+    isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    storeSlugIdx: uniqueIndex("venues_store_slug_idx").on(
+      table.storeId,
+      table.slug,
+    ),
+    cityIdx: index("venues_city_idx").on(table.city),
+  }),
+);
+
+export const venuesRelations = relations(venues, ({ one }) => ({
+  store: one(stores, {
+    fields: [venues.storeId],
+    references: [stores.id],
+  }),
+}));
+
+// ─── Integration Management ─────────────────────────────────────────────────
+
+export const platformIntegrations = pgTable(
+  "platform_integrations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id").references(() => stores.id),
+    provider: integrationProviderEnum("provider").notNull(),
+    enabled: boolean("enabled").default(true),
+    config: jsonb("config").default({}),
+    status: integrationStatusEnum("status").default("disconnected"),
+    statusMessage: text("status_message"),
+    lastVerifiedAt: timestamp("last_verified_at"),
+    lastSyncAt: timestamp("last_sync_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    storeProviderIdx: uniqueIndex("integrations_store_provider_idx").on(
+      table.storeId,
+      table.provider,
+    ),
+  }),
+);
+
+export const platformIntegrationsRelations = relations(
+  platformIntegrations,
+  ({ one, many }) => ({
+    store: one(stores, {
+      fields: [platformIntegrations.storeId],
+      references: [stores.id],
+    }),
+    secrets: many(integrationSecrets),
+  }),
+);
+
+export const integrationSecrets = pgTable(
+  "integration_secrets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    integrationId: uuid("integration_id")
+      .notNull()
+      .references(() => platformIntegrations.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    encryptedValue: text("encrypted_value").notNull(),
+    iv: text("iv").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    integrationKeyIdx: uniqueIndex("secrets_integration_key_idx").on(
+      table.integrationId,
+      table.key,
+    ),
+  }),
+);
+
+export const integrationSecretsRelations = relations(
+  integrationSecrets,
+  ({ one }) => ({
+    integration: one(platformIntegrations, {
+      fields: [integrationSecrets.integrationId],
+      references: [platformIntegrations.id],
+    }),
+  }),
+);

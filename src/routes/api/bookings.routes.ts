@@ -31,7 +31,7 @@ bookings.get(
   zValidator("query", availabilityFilterSchema.merge(paginationSchema)),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const bookingRepo = new BookingRepository(db);
+    const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
     const useCase = new ListAvailabilityUseCase(bookingRepo);
 
     const query = c.req.valid("query");
@@ -56,8 +56,8 @@ bookings.post(
   zValidator("json", createAvailabilitySchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const bookingRepo = new BookingRepository(db);
-    const productRepo = new ProductRepository(db);
+    const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
+    const productRepo = new ProductRepository(db, c.get("storeId") as string);
     const useCase = new CreateAvailabilityUseCase(bookingRepo, productRepo);
 
     const body = c.req.valid("json");
@@ -75,8 +75,8 @@ bookings.post(
   zValidator("json", bulkCreateAvailabilitySchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const bookingRepo = new BookingRepository(db);
-    const productRepo = new ProductRepository(db);
+    const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
+    const productRepo = new ProductRepository(db, c.get("storeId") as string);
     const useCase = new CreateAvailabilityUseCase(bookingRepo, productRepo);
 
     const body = c.req.valid("json");
@@ -94,7 +94,7 @@ bookings.get(
   zValidator("query", paginationSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const bookingRepo = new BookingRepository(db);
+    const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
 
     const userId = c.get("userId");
     const query = c.req.valid("query");
@@ -116,7 +116,7 @@ bookings.post(
   zValidator("json", createBookingRequestSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const bookingRepo = new BookingRepository(db);
+    const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
     const useCase = new CreateBookingRequestUseCase(bookingRepo);
 
     const userId = c.get("userId");
@@ -139,7 +139,7 @@ bookings.post(
   requireAuth(),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const bookingRepo = new BookingRepository(db);
+    const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
     const useCase = new CheckInUseCase(bookingRepo);
 
     const bookingId = c.req.param("id");
@@ -156,7 +156,7 @@ bookings.post(
   requireAuth(),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const bookingRepo = new BookingRepository(db);
+    const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
     const useCase = new CancelBookingUseCase(bookingRepo);
 
     const bookingId = c.req.param("id");

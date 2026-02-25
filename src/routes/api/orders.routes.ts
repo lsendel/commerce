@@ -16,7 +16,7 @@ orders.get(
   zValidator("query", paginationSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const orderRepo = new OrderRepository(db);
+    const orderRepo = new OrderRepository(db, c.get("storeId") as string);
     const useCase = new GetOrdersUseCase(orderRepo);
 
     const userId = c.get("userId");
@@ -30,7 +30,7 @@ orders.get(
 // GET /orders/:id — get order detail
 orders.get("/orders/:id", requireAuth(), async (c) => {
   const db = createDb(c.env.DATABASE_URL);
-  const orderRepo = new OrderRepository(db);
+  const orderRepo = new OrderRepository(db, c.get("storeId") as string);
   const useCase = new GetOrdersUseCase(orderRepo);
 
   const userId = c.get("userId");

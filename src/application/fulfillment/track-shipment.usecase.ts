@@ -3,6 +3,7 @@ import type { Database } from "../../infrastructure/db/client";
 
 interface TrackShipmentInput {
   db: Database;
+  storeId: string;
   orderId: string;
   userId: string;
 }
@@ -12,8 +13,8 @@ export class TrackShipmentUseCase {
    * List all shipments for an order, verifying the user owns the order.
    */
   async execute(input: TrackShipmentInput) {
-    const { db, orderId, userId } = input;
-    const repo = new PrintfulRepository(db);
+    const { db, storeId, orderId, userId } = input;
+    const repo = new PrintfulRepository(db, storeId);
 
     // Verify the user owns the order
     const { eq, and } = await import("drizzle-orm");

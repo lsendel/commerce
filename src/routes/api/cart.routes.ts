@@ -14,13 +14,15 @@ import { optionalAuth } from "../../middleware/auth.middleware";
 const cart = new Hono<{ Bindings: Env }>();
 
 // All cart routes need a session ID and optional auth
-cart.use("/*", cartSession());
-cart.use("/*", optionalAuth());
+cart.use("/cart", cartSession());
+cart.use("/cart/*", cartSession());
+cart.use("/cart", optionalAuth());
+cart.use("/cart/*", optionalAuth());
 
 // GET /cart — get current cart with items
 cart.get("/cart", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
-  const repo = new CartRepository(db);
+  const repo = new CartRepository(db, c.get("storeId") as string);
   const useCase = new GetCartUseCase(repo);
 
   const sessionId = c.get("cartSessionId");
@@ -36,7 +38,7 @@ cart.post(
   zValidator("json", addToCartSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const repo = new CartRepository(db);
+    const repo = new CartRepository(db, c.get("storeId") as string);
     const useCase = new AddToCartUseCase(repo, db);
 
     const sessionId = c.get("cartSessionId");
@@ -54,7 +56,7 @@ cart.patch(
   zValidator("json", updateCartItemSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const repo = new CartRepository(db);
+    const repo = new CartRepository(db, c.get("storeId") as string);
     const useCase = new UpdateCartItemUseCase(repo);
 
     const sessionId = c.get("cartSessionId");
@@ -70,7 +72,7 @@ cart.patch(
 // DELETE /cart/items/:id — remove item from cart
 cart.delete("/cart/items/:id", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
-  const repo = new CartRepository(db);
+  const repo = new CartRepository(db, c.get("storeId") as string);
   const useCase = new RemoveFromCartUseCase(repo);
 
   const sessionId = c.get("cartSessionId");

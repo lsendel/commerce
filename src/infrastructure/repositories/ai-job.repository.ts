@@ -7,7 +7,10 @@ import {
 } from "../db/schema";
 
 export class AiJobRepository {
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    private storeId: string,
+  ) {}
 
   // ─── Generation Jobs ────────────────────────────────────────────────────────
 
@@ -22,6 +25,7 @@ export class AiJobRepository {
     const result = await this.db
       .insert(generationJobs)
       .values({
+        storeId: this.storeId,
         userId: data.userId,
         petProfileId: data.petProfileId,
         templateId: data.templateId ?? null,
@@ -38,7 +42,7 @@ export class AiJobRepository {
     const result = await this.db
       .select()
       .from(generationJobs)
-      .where(eq(generationJobs.id, id))
+      .where(and(eq(generationJobs.id, id), eq(generationJobs.storeId, this.storeId)))
       .limit(1);
     return result[0] ?? null;
   }
@@ -47,7 +51,7 @@ export class AiJobRepository {
     return this.db
       .select()
       .from(generationJobs)
-      .where(eq(generationJobs.userId, userId));
+      .where(and(eq(generationJobs.userId, userId), eq(generationJobs.storeId, this.storeId)));
   }
 
   async updateStatus(
@@ -74,7 +78,7 @@ export class AiJobRepository {
     const result = await this.db
       .update(generationJobs)
       .set(updateData)
-      .where(eq(generationJobs.id, id))
+      .where(and(eq(generationJobs.id, id), eq(generationJobs.storeId, this.storeId)))
       .returning();
     return result[0] ?? null;
   }
@@ -93,6 +97,7 @@ export class AiJobRepository {
     const result = await this.db
       .insert(petProfiles)
       .values({
+        storeId: this.storeId,
         userId,
         name: data.name,
         species: data.species,
@@ -107,14 +112,14 @@ export class AiJobRepository {
     return this.db
       .select()
       .from(petProfiles)
-      .where(eq(petProfiles.userId, userId));
+      .where(and(eq(petProfiles.userId, userId), eq(petProfiles.storeId, this.storeId)));
   }
 
   async findPetById(id: string) {
     const result = await this.db
       .select()
       .from(petProfiles)
-      .where(eq(petProfiles.id, id))
+      .where(and(eq(petProfiles.id, id), eq(petProfiles.storeId, this.storeId)))
       .limit(1);
     return result[0] ?? null;
   }
@@ -131,7 +136,7 @@ export class AiJobRepository {
     const result = await this.db
       .update(petProfiles)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(petProfiles.id, id))
+      .where(and(eq(petProfiles.id, id), eq(petProfiles.storeId, this.storeId)))
       .returning();
     return result[0] ?? null;
   }
@@ -139,12 +144,12 @@ export class AiJobRepository {
   async deletePetProfile(id: string) {
     const result = await this.db
       .delete(petProfiles)
-      .where(eq(petProfiles.id, id))
+      .where(and(eq(petProfiles.id, id), eq(petProfiles.storeId, this.storeId)))
       .returning();
     return result[0] ?? null;
   }
 
-  // ─── Art Templates ──────────────────────────────────────────────────────────
+  // ─── Art Templates (platform-level, not scoped by storeId — shared across stores) ──
 
   async findTemplates(category?: string) {
     if (category) {

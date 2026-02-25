@@ -199,7 +199,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
               </div>
               <p class="text-sm text-gray-400 mb-3">No active subscription</p>
               <a
-                href="/subscriptions"
+                href="/products?type=subscription"
                 class="text-sm font-semibold text-brand-600 hover:text-brand-700"
               >
                 Browse Plans
