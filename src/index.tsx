@@ -26,6 +26,7 @@ import { webhookRoutes } from "./routes/api/webhooks.routes";
 import platformRoutes from "./routes/api/platform.routes";
 import affiliateRoutes from "./routes/api/affiliate.routes";
 import venueRoutes from "./routes/api/venue.routes";
+import { integrationRoutes } from "./routes/api/integrations.routes";
 
 // GraphQL
 import { schema } from "./graphql/schema";
@@ -62,6 +63,8 @@ import { AffiliatePayoutsPage as _AffiliatePayoutsPage } from "./routes/pages/af
 import { AffiliateRegisterPage as _AffiliateRegisterPage } from "./routes/pages/affiliates/register.page";
 import { VenueListPage as _VenueListPage } from "./routes/pages/venues/list.page";
 import { VenueDetailPage as _VenueDetailPage } from "./routes/pages/venues/detail.page";
+import { AdminIntegrationsPage as _AdminIntegrationsPage } from "./routes/pages/admin/integrations.page";
+import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 
 // Type-erased page components for flexible data passing from repositories
 const HomePage = _HomePage as any;
@@ -90,6 +93,8 @@ const AffiliatePayoutsPage = _AffiliatePayoutsPage as any;
 const AffiliateRegisterPage = _AffiliateRegisterPage as any;
 const VenueListPage = _VenueListPage as any;
 const VenueDetailPage = _VenueDetailPage as any;
+const AdminIntegrationsPage = _AdminIntegrationsPage as any;
+const StoreIntegrationsPage = _StoreIntegrationsPage as any;
 
 // Infrastructure
 import { createDb } from "./infrastructure/db/client";
@@ -103,6 +108,9 @@ import { SubscriptionRepository } from "./infrastructure/repositories/subscripti
 import { StoreRepository } from "./infrastructure/repositories/store.repository";
 import { AffiliateRepository } from "./infrastructure/repositories/affiliate.repository";
 import { VenueRepository } from "./infrastructure/repositories/venue.repository";
+import { IntegrationRepository as IntegrationRepoImpl, IntegrationSecretRepository as SecretRepoImpl } from "./infrastructure/repositories/integration.repository";
+import { ListIntegrationsUseCase } from "./application/platform/list-integrations.usecase";
+import { CheckInfrastructureUseCase } from "./application/platform/check-infrastructure.usecase";
 import { verifyJwt } from "./infrastructure/security/jwt";
 import { getCookie } from "hono/cookie";
 import { AUTH_COOKIE_NAME, CART_COOKIE_NAME } from "./shared/constants";
@@ -141,6 +149,7 @@ app.route("/api", webhookRoutes);
 app.route("/api/platform", platformRoutes);
 app.route("/api/affiliates", affiliateRoutes);
 app.route("/api/venues", venueRoutes);
+app.route("/api/integrations", integrationRoutes);
 
 // ─── GraphQL ───────────────────────────────────────────────
 const yoga = createYoga({ schema, graphqlEndpoint: "/graphql" });
@@ -1052,6 +1061,48 @@ app.get("/platform/members", async (c) => {
     <Layout title="Team Members" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <MembersPage storeId={storeId} members={members as any} />
     </Layout>
+  );
+});
+
+// ─── Admin Integrations Page ──────────────────────────────
+app.get("/admin/integrations", async (c) => {
+  const { db, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const integrationRepo = new IntegrationRepoImpl(db);
+  const secretRepo = new SecretRepoImpl(db);
+  const listUseCase = new ListIntegrationsUseCase(integrationRepo, secretRepo);
+  const checkUseCase = new CheckInfrastructureUseCase();
+
+  const integrations = await listUseCase.listPlatform();
+  const infraHealth = await checkUseCase.execute(c.env, db);
+
+  return c.html(
+    <Layout title="Platform Integrations" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminIntegrationsPage integrations={integrations as any} infraHealth={infraHealth as any} />
+    </Layout>,
+  );
+});
+
+// ─── Store Integrations Page ──────────────────────────────
+app.get("/platform/integrations", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const storeRepo = new StoreRepository(db);
+  const store = await storeRepo.findById(storeId);
+  if (!store) return c.notFound();
+
+  const integrationRepo = new IntegrationRepoImpl(db);
+  const secretRepo = new SecretRepoImpl(db);
+  const listUseCase = new ListIntegrationsUseCase(integrationRepo, secretRepo);
+
+  const integrations = await listUseCase.listForStore(storeId);
+
+  return c.html(
+    <Layout title="Store Integrations" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <StoreIntegrationsPage store={store as any} integrations={integrations as any} />
+    </Layout>,
   );
 });
 

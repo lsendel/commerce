@@ -150,6 +150,23 @@ export const storeBillingStatusEnum = pgEnum("store_billing_status", [
   "trialing",
 ]);
 
+export const integrationProviderEnum = pgEnum("integration_provider", [
+  "stripe",
+  "printful",
+  "gemini",
+  "resend",
+  "gooten",
+  "prodigi",
+  "shapeways",
+]);
+
+export const integrationStatusEnum = pgEnum("integration_status", [
+  "connected",
+  "disconnected",
+  "error",
+  "pending_verification",
+]);
+
 // ─── Platform Context ───────────────────────────────────────────────────────
 
 export const platformPlans = pgTable("platform_plans", {
@@ -1430,3 +1447,70 @@ export const venuesRelations = relations(venues, ({ one }) => ({
     references: [stores.id],
   }),
 }));
+
+// ─── Integration Management ─────────────────────────────────────────────────
+
+export const platformIntegrations = pgTable(
+  "platform_integrations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id").references(() => stores.id),
+    provider: integrationProviderEnum("provider").notNull(),
+    enabled: boolean("enabled").default(true),
+    config: jsonb("config").default({}),
+    status: integrationStatusEnum("status").default("disconnected"),
+    statusMessage: text("status_message"),
+    lastVerifiedAt: timestamp("last_verified_at"),
+    lastSyncAt: timestamp("last_sync_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    storeProviderIdx: uniqueIndex("integrations_store_provider_idx").on(
+      table.storeId,
+      table.provider,
+    ),
+  }),
+);
+
+export const platformIntegrationsRelations = relations(
+  platformIntegrations,
+  ({ one, many }) => ({
+    store: one(stores, {
+      fields: [platformIntegrations.storeId],
+      references: [stores.id],
+    }),
+    secrets: many(integrationSecrets),
+  }),
+);
+
+export const integrationSecrets = pgTable(
+  "integration_secrets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    integrationId: uuid("integration_id")
+      .notNull()
+      .references(() => platformIntegrations.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    encryptedValue: text("encrypted_value").notNull(),
+    iv: text("iv").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    integrationKeyIdx: uniqueIndex("secrets_integration_key_idx").on(
+      table.integrationId,
+      table.key,
+    ),
+  }),
+);
+
+export const integrationSecretsRelations = relations(
+  integrationSecrets,
+  ({ one }) => ({
+    integration: one(platformIntegrations, {
+      fields: [integrationSecrets.integrationId],
+      references: [platformIntegrations.id],
+    }),
+  }),
+);

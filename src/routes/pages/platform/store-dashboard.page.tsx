@@ -143,6 +143,13 @@ export const StoreDashboardPage: FC<DashboardProps> = ({
           <div class="text-2xl mb-1">🤝</div>
           <span class="text-sm font-medium">Affiliates</span>
         </a>
+        <a
+          href="/platform/integrations"
+          class="block bg-white border rounded-lg p-4 hover:shadow-md transition-shadow text-center"
+        >
+          <div class="text-2xl mb-1">🔌</div>
+          <span class="text-sm font-medium">Integrations</span>
+        </a>
       </div>
     </div>
   );

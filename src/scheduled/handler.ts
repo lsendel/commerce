@@ -7,6 +7,7 @@ import { runAbandonedCartDetection } from "./abandoned-cart.job";
 import { runBirthdayEmails } from "./birthday-emails.job";
 import { runMockupPolling } from "./mockup-polling.job";
 import { runAffiliatePayouts } from "./affiliate-payouts.job";
+import { runIntegrationHealthChecks } from "./integration-health.job";
 
 export async function handleScheduled(
   ctrl: ScheduledController,
@@ -35,6 +36,7 @@ export async function handleScheduled(
       break;
     case "*/15 * * * *": // Every 15 minutes
       ctx.waitUntil(runStockCheck(env));
+      ctx.waitUntil(runIntegrationHealthChecks(env));
       break;
   }
 }

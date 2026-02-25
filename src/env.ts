@@ -28,6 +28,9 @@ export interface Env {
   // Email
   RESEND_API_KEY?: string;
 
+  // Encryption
+  ENCRYPTION_KEY?: string;
+
   // Cloudflare bindings
   IMAGES: R2Bucket;
   AI_QUEUE: Queue;
