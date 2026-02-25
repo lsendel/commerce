@@ -46,11 +46,10 @@ export const Input: FC<InputProps> = ({
         value={value}
         required={required}
         disabled={disabled}
-        class={`block w-full rounded-xl border px-4 py-2.5 text-sm transition-colors duration-150 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 disabled:bg-gray-100 disabled:cursor-not-allowed ${
-          error
-            ? "border-red-400 focus:ring-red-300 focus:border-red-400"
-            : "border-gray-300 hover:border-gray-400"
-        }`}
+        class={`block w-full rounded-xl border px-4 py-2.5 text-sm shadow-sm transition-all duration-200 ease-out placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:border-brand-500 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed ${error
+            ? "border-red-300 focus:ring-red-500/20"
+            : "border-gray-300 hover:border-gray-400 focus:ring-brand-500/20"
+          }`}
         {...rest}
       />
       {error && (

@@ -8,7 +8,10 @@ import {
 } from "../db/schema";
 
 export class CartRepository {
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    private storeId: string,
+  ) {}
 
   /**
    * Find an existing cart by sessionId or create a new one.
@@ -39,7 +42,7 @@ export class CartRepository {
     // Create a new cart
     const created = await this.db
       .insert(carts)
-      .values({ sessionId, userId: userId ?? null })
+      .values({ sessionId, userId: userId ?? null, storeId: this.storeId })
       .returning();
 
     return created[0];

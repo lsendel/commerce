@@ -38,10 +38,34 @@ interface ShipmentUpdateNotification {
   };
 }
 
+interface AbandonedCartNotification {
+  type: "abandoned_cart";
+  data: {
+    cartId: string;
+    userId: string;
+    userEmail: string;
+    userName: string;
+    itemCount: number;
+  };
+}
+
+interface BirthdayOfferNotification {
+  type: "birthday_offer";
+  data: {
+    userId: string;
+    userEmail: string;
+    userName: string;
+    petName: string;
+    offerCode: string;
+  };
+}
+
 type NotificationMessage =
   | BookingReminderNotification
   | OrderConfirmationNotification
-  | ShipmentUpdateNotification;
+  | ShipmentUpdateNotification
+  | AbandonedCartNotification
+  | BirthdayOfferNotification;
 
 export async function handleNotificationMessage(
   message: Message,
@@ -107,6 +131,36 @@ export async function handleNotificationMessage(
 
       console.log(
         `[notifications] Shipment update sent to ${userEmail} for order ${orderId} (${status})`,
+      );
+      break;
+    }
+
+    case "abandoned_cart": {
+      const { userEmail, userName, cartId, itemCount } = payload.data;
+
+      await emailAdapter.sendAbandonedCart(userEmail, {
+        userName,
+        cartId,
+        itemCount,
+      });
+
+      console.log(
+        `[notifications] Abandoned cart email sent to ${userEmail} for cart ${cartId}`,
+      );
+      break;
+    }
+
+    case "birthday_offer": {
+      const { userEmail, userName, petName, offerCode } = payload.data;
+
+      await emailAdapter.sendBirthdayOffer(userEmail, {
+        userName,
+        petName,
+        offerCode,
+      });
+
+      console.log(
+        `[notifications] Birthday offer sent to ${userEmail} for pet ${petName}`,
       );
       break;
     }

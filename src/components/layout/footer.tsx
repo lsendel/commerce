@@ -9,8 +9,8 @@ const columns: FooterColumn[] = [
   {
     title: "Shop",
     links: [
-      { label: "All Products", href: "/shop" },
-      { label: "Collections", href: "/shop/collections" },
+      { label: "All Products", href: "/products" },
+      { label: "Collections", href: "/products" },
     ],
   },
   {

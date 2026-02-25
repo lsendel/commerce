@@ -25,7 +25,7 @@ checkout.post(
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const stripe = createStripeClient(c.env.STRIPE_SECRET_KEY);
-    const cartRepo = new CartRepository(db);
+    const cartRepo = new CartRepository(db, c.get("storeId") as string);
 
     const useCase = new CreateCheckoutUseCase(cartRepo, db, stripe);
 
@@ -56,7 +56,7 @@ checkout.get("/checkout/success", requireAuth(), async (c) => {
   }
 
   const db = createDb(c.env.DATABASE_URL);
-  const orderRepo = new OrderRepository(db);
+  const orderRepo = new OrderRepository(db, c.get("storeId") as string);
 
   const order = await orderRepo.findByStripeSessionId(stripeSessionId);
   if (!order) {

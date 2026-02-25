@@ -14,6 +14,7 @@ import {
 interface CreatePrintfulOrderInput {
   apiKey: string;
   db: Database;
+  storeId: string;
   orderId: string;
 }
 
@@ -25,9 +26,9 @@ export class CreatePrintfulOrderUseCase {
    * and submit it to Printful for fulfillment.
    */
   async execute(input: CreatePrintfulOrderInput) {
-    const { apiKey, db, orderId } = input;
+    const { apiKey, db, storeId, orderId } = input;
     const client = new PrintfulClient(apiKey);
-    const printfulRepo = new PrintfulRepository(db);
+    const printfulRepo = new PrintfulRepository(db, storeId);
 
     // 1. Fetch the internal order
     const orderRows = await db

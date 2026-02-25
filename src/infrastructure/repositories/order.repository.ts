@@ -31,7 +31,7 @@ export interface CreateOrderItemData {
 }
 
 export class OrderRepository {
-  constructor(private db: Database) {}
+  constructor(private db: Database, private storeId: string) {}
 
   /**
    * Create an order with its items.
@@ -46,6 +46,7 @@ export class OrderRepository {
       .insert(orders)
       .values({
         userId: data.userId,
+        storeId: this.storeId,
         stripeCheckoutSessionId: data.stripeCheckoutSessionId,
         stripePaymentIntentId: data.stripePaymentIntentId ?? null,
         status: data.status ?? "pending",
@@ -105,7 +106,7 @@ export class OrderRepository {
     const countResult = await this.db
       .select({ total: count() })
       .from(orders)
-      .where(eq(orders.userId, userId));
+      .where(and(eq(orders.userId, userId), eq(orders.storeId, this.storeId)));
 
     const total = countResult[0]?.total ?? 0;
 
@@ -113,7 +114,7 @@ export class OrderRepository {
     const orderRows = await this.db
       .select()
       .from(orders)
-      .where(eq(orders.userId, userId))
+      .where(and(eq(orders.userId, userId), eq(orders.storeId, this.storeId)))
       .orderBy(desc(orders.createdAt))
       .limit(pagination.limit)
       .offset(offset);
@@ -138,7 +139,7 @@ export class OrderRepository {
    * Get a single order with items, optionally scoped to a user.
    */
   async findById(id: string, userId?: string) {
-    const conditions = [eq(orders.id, id)];
+    const conditions = [eq(orders.id, id), eq(orders.storeId, this.storeId)];
     if (userId) {
       conditions.push(eq(orders.userId, userId));
     }
@@ -166,7 +167,7 @@ export class OrderRepository {
     const updated = await this.db
       .update(orders)
       .set({ status, updatedAt: new Date() })
-      .where(eq(orders.id, orderId))
+      .where(and(eq(orders.id, orderId), eq(orders.storeId, this.storeId)))
       .returning();
 
     return updated[0] ?? null;
@@ -179,7 +180,7 @@ export class OrderRepository {
     const orderRows = await this.db
       .select()
       .from(orders)
-      .where(eq(orders.stripeCheckoutSessionId, sessionId))
+      .where(and(eq(orders.stripeCheckoutSessionId, sessionId), eq(orders.storeId, this.storeId)))
       .limit(1);
 
     return orderRows[0] ?? null;

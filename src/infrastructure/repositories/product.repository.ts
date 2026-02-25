@@ -21,7 +21,10 @@ export interface ProductFilters {
 }
 
 export class ProductRepository {
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    private storeId: string,
+  ) {}
 
   async findAll(filters: ProductFilters) {
     const page = filters.page ?? 1;
@@ -29,7 +32,9 @@ export class ProductRepository {
     const offset = (page - 1) * limit;
 
     // Build WHERE conditions for products table
-    const conditions: ReturnType<typeof eq>[] = [];
+    const conditions: ReturnType<typeof eq>[] = [
+      eq(products.storeId, this.storeId),
+    ];
 
     if (filters.type) {
       conditions.push(eq(products.type, filters.type as any));
@@ -235,7 +240,7 @@ export class ProductRepository {
     const rows = await this.db
       .select()
       .from(products)
-      .where(eq(products.slug, slug))
+      .where(and(eq(products.slug, slug), eq(products.storeId, this.storeId)))
       .limit(1);
 
     const product = rows[0];
@@ -327,7 +332,7 @@ export class ProductRepository {
     const rows = await this.db
       .select()
       .from(products)
-      .where(eq(products.id, id))
+      .where(and(eq(products.id, id), eq(products.storeId, this.storeId)))
       .limit(1);
 
     const product = rows[0];
@@ -388,7 +393,7 @@ export class ProductRepository {
   }
 
   async findCollections() {
-    const rows = await this.db.select().from(collections);
+    const rows = await this.db.select().from(collections).where(eq(collections.storeId, this.storeId));
     return rows.map((c) => ({
       id: c.id,
       name: c.name,
@@ -562,7 +567,7 @@ export class ProductRepository {
     seoTitle?: string;
     seoDescription?: string;
   }) {
-    const result = await this.db.insert(products).values(data).returning();
+    const result = await this.db.insert(products).values({ ...data, storeId: this.storeId }).returning();
     return result[0];
   }
 

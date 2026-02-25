@@ -24,11 +24,15 @@ interface ProductSummary {
 }
 
 interface HomePageProps {
+  user?: { name: string; email: string; sub: string } | null;
+  userPets?: Array<{ id: string; name: string; species: string; photoUrl?: string | null }>;
   featuredCollections: Collection[];
   featuredProducts: ProductSummary[];
 }
 
 export const HomePage: FC<HomePageProps> = ({
+  user,
+  userPets,
   featuredCollections,
   featuredProducts,
 }) => {
@@ -38,22 +42,28 @@ export const HomePage: FC<HomePageProps> = ({
       <section class="relative overflow-hidden bg-gradient-to-br from-brand-50 via-white to-pet-teal/10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36">
           <div class="max-w-2xl">
-            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 mb-6">
+            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 mb-6 transition-transform hover:scale-105">
               Welcome to petm8.io
             </span>
             <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight tracking-tight">
-              Everything for your{" "}
-              <span class="text-brand-500">furry friend</span>
+              {user ? (
+                <>Welcome back, <span class="text-brand-500">{user.name.split(' ')[0]}</span>!</>
+              ) : (
+                <>Everything for your <span class="text-brand-500">furry friend</span></>
+              )}
             </h1>
             <p class="mt-6 text-lg text-gray-600 leading-relaxed max-w-lg">
-              From premium supplies and custom AI pet portraits to grooming bookings
-              and subscription boxes -- we have everything your pet needs to thrive.
+              {userPets && userPets.length > 0 ? (
+                `We have everything ${userPets[0].name} needs to thrive. From premium supplies to custom AI pet portraits and grooming bookings.`
+              ) : (
+                "From premium supplies and custom AI pet portraits to grooming bookings and subscription boxes -- we have everything your pet needs to thrive."
+              )}
             </p>
             <div class="mt-8 flex flex-wrap gap-4">
               <Button variant="primary" size="lg" href="/products">
                 Shop Now
               </Button>
-              <Button variant="outline" size="lg" href="/collections">
+              <Button variant="outline" size="lg" href="/products">
                 Browse Collections
               </Button>
             </div>
@@ -90,7 +100,7 @@ export const HomePage: FC<HomePageProps> = ({
               <p class="mt-1 text-gray-500 text-sm">Find exactly what you are looking for</p>
             </div>
             <a
-              href="/collections"
+              href="/products"
               class="text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors hidden sm:inline-flex items-center gap-1"
             >
               View all
@@ -104,7 +114,7 @@ export const HomePage: FC<HomePageProps> = ({
             {featuredCollections.map((collection) => (
               <a
                 key={collection.id}
-                href={`/collections/${collection.slug}`}
+                href={`/products?collection=${encodeURIComponent(collection.slug)}`}
                 class="group relative overflow-hidden rounded-2xl aspect-[4/3] bg-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300"
               >
                 {collection.imageUrl ? (

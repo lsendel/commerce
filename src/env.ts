@@ -21,6 +21,13 @@ export interface Env {
   APP_URL: string;
   APP_NAME: string;
 
+  // Platform
+  PLATFORM_DOMAINS: string; // comma-separated: "petm8.io,premiumstores.net,premiums.shop"
+  DEFAULT_STORE_ID: string;
+
+  // Email
+  RESEND_API_KEY?: string;
+
   // Cloudflare bindings
   IMAGES: R2Bucket;
   AI_QUEUE: Queue;

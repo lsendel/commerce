@@ -162,9 +162,62 @@
 
       var variantId = btn.getAttribute("data-variant-id");
       var quantity = parseInt(btn.getAttribute("data-quantity") || "1", 10);
+      var selector = btn.closest("[data-variant-selector]");
+
+      if (!variantId && selector) {
+        var checkedVariant = selector.querySelector('[data-variant-radio]:checked');
+        if (checkedVariant) {
+          variantId = checkedVariant.value;
+        } else {
+          var variantSelect = selector.querySelector("[data-variant-select]");
+          if (variantSelect) variantId = variantSelect.value;
+        }
+      }
+
+      if (selector) {
+        var qtyInput = selector.querySelector("[data-qty-input]");
+        if (qtyInput) {
+          quantity = Math.max(1, parseInt(qtyInput.value || "1", 10) || 1);
+        }
+      }
+
+      if (!variantId) {
+        showToast("Please select a product option", "error");
+        return;
+      }
 
       // Build payload
       var payload = { variantId: variantId, quantity: quantity };
+
+      if (selector) {
+        var productType = selector.getAttribute("data-product-type");
+        if (productType === "bookable") {
+          var selectedSlot = selector.querySelector("[data-slot-radio]:checked");
+          var bookingAvailabilityId = selectedSlot
+            ? selectedSlot.getAttribute("data-slot-id") || selectedSlot.value
+            : null;
+
+          if (!bookingAvailabilityId) {
+            showToast("Please select a booking slot", "error");
+            return;
+          }
+
+          var personTypeQuantities = {};
+          var totalParticipants = 0;
+          selector.querySelectorAll("[data-person-qty]").forEach(function (input) {
+            var key = input.getAttribute("data-person-qty");
+            var value = parseInt(input.value || "0", 10) || 0;
+            if (value > 0) {
+              personTypeQuantities[key] = value;
+              totalParticipants += value;
+            }
+          });
+
+          payload.bookingAvailabilityId = bookingAvailabilityId;
+          payload.personTypeQuantities = personTypeQuantities;
+          payload.quantity = Math.max(1, totalParticipants);
+        }
+      }
 
       // Check for booking-specific data
       var bookingData = btn.getAttribute("data-booking-data");
@@ -195,6 +248,13 @@
 
         await updateCartBadge();
         showToast("Added to cart!", "success");
+        if (window.petm8Track) {
+          window.petm8Track("add_to_cart", {
+            variantId: variantId,
+            quantity: payload.quantity,
+            bookingAvailabilityId: payload.bookingAvailabilityId || null,
+          });
+        }
       } catch (err) {
         showToast(err.message || "Could not add to cart", "error");
       } finally {
@@ -292,6 +352,9 @@
         await refreshCartPage();
         await updateCartBadge();
         showToast("Item removed", "info");
+        if (window.petm8Track) {
+          window.petm8Track("remove_from_cart", { itemId: itemId });
+        }
       } catch (err) {
         btn.disabled = false;
         showToast(err.message || "Could not remove item", "error");
@@ -327,6 +390,9 @@
         }
 
         var data = await res.json();
+        if (window.petm8Track) {
+          window.petm8Track("begin_checkout", { cartHasUrl: !!data.url });
+        }
         if (data.url) {
           window.location.href = data.url;
         } else {
@@ -337,6 +403,43 @@
         restoreButton(btn);
         showToast(err.message || "Checkout failed", "error");
       }
+    });
+  }
+
+  // ─── Product Page Controls ───────────────────────────────────────────────────
+
+  function initProductPageControls() {
+    document.addEventListener("click", function (e) {
+      var qtyBtn = e.target.closest("[data-qty-increment], [data-qty-decrement]");
+      if (qtyBtn) {
+        e.preventDefault();
+        var selector = qtyBtn.closest("[data-variant-selector]");
+        if (!selector) return;
+        var qtyInput = selector.querySelector("[data-qty-input]");
+        if (!qtyInput) return;
+        var current = parseInt(qtyInput.value || "1", 10) || 1;
+        var next = qtyBtn.hasAttribute("data-qty-increment") ? current + 1 : current - 1;
+        qtyInput.value = String(Math.max(1, next));
+        return;
+      }
+
+      var personBtn = e.target.closest("[data-person-increment], [data-person-decrement]");
+      if (!personBtn) return;
+
+      e.preventDefault();
+      var personKey = personBtn.getAttribute("data-person-increment") || personBtn.getAttribute("data-person-decrement");
+      if (!personKey) return;
+      var selector = personBtn.closest("[data-variant-selector]");
+      if (!selector) return;
+      var input = selector.querySelector('[data-person-qty="' + personKey + '"]');
+      if (!input) return;
+
+      var value = parseInt(input.value || "0", 10) || 0;
+      var min = parseInt(input.getAttribute("min") || "0", 10) || 0;
+      var max = parseInt(input.getAttribute("max") || "99", 10) || 99;
+      var nextValue = personBtn.hasAttribute("data-person-increment") ? value + 1 : value - 1;
+      nextValue = Math.max(min, Math.min(max, nextValue));
+      input.value = String(nextValue);
     });
   }
 
@@ -397,5 +500,6 @@
     initCartQuantityControls();
     initCartRemoveButtons();
     initCheckoutButton();
+    initProductPageControls();
   });
 })();

@@ -26,3 +26,19 @@ export type PersonType = "adult" | "child" | "pet";
 export type GenerationStatus = "queued" | "processing" | "completed" | "failed";
 export type AiProvider = "gemini" | "flux";
 export type ShipmentStatus = "pending" | "shipped" | "in_transit" | "delivered" | "returned";
+
+// Platform
+export type StoreStatus = "trial" | "active" | "suspended" | "deactivated";
+export type StoreMemberRole = "owner" | "admin" | "staff";
+export type PlatformRole = "super_admin" | "group_admin" | "user";
+export type DomainVerificationStatus = "pending" | "verified" | "failed";
+export type StoreBillingStatus = "active" | "past_due" | "cancelled" | "trialing";
+
+// Fulfillment
+export type FulfillmentProviderType = "printful" | "gooten" | "prodigi" | "shapeways";
+
+// Affiliates
+export type AffiliateStatus = "pending" | "approved" | "suspended";
+export type ConversionStatus = "pending" | "approved" | "paid" | "rejected";
+export type AttributionMethod = "link" | "coupon" | "tier";
+export type PayoutStatus = "pending" | "processing" | "completed" | "failed";

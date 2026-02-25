@@ -82,7 +82,8 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
           <button
             type="button"
             class="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-            data-remove-item={item.id}
+            data-cart-remove
+            data-item-id={item.id}
             aria-label="Remove item"
           >
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -132,21 +133,23 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
               <button
                 type="button"
                 class="w-7 h-7 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-xs"
-                data-cart-decrement={item.id}
+                data-cart-qty="dec"
+                data-item-id={item.id}
               >
                 -
               </button>
-              <input
-                type="number"
-                value={String(quantity)}
-                min="1"
-                class="w-10 text-center rounded-lg border border-gray-300 text-xs py-1 focus:outline-none focus:ring-2 focus:ring-brand-300"
-                data-cart-qty={item.id}
-              />
+              <span
+                class="w-10 text-center rounded-lg border border-gray-300 text-xs py-1 inline-flex items-center justify-center"
+                data-cart-qty-display
+                data-item-id={item.id}
+              >
+                {quantity}
+              </span>
               <button
                 type="button"
                 class="w-7 h-7 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-xs"
-                data-cart-increment={item.id}
+                data-cart-qty="inc"
+                data-item-id={item.id}
               >
                 +
               </button>
@@ -158,7 +161,7 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
             </div>
           )}
           <div class="text-right">
-            <span class="text-sm font-bold text-gray-900">${displayTotal.toFixed(2)}</span>
+            <span class="text-sm font-bold text-gray-900" data-cart-item-price data-item-id={item.id}>${displayTotal.toFixed(2)}</span>
             {!isBookable && quantity > 1 && (
               <span class="block text-xs text-gray-400">${unitPrice.toFixed(2)} each</span>
             )}

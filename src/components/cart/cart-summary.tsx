@@ -16,7 +16,7 @@ export const CartSummary: FC<CartSummaryProps> = ({ subtotal, itemCount }) => {
           <span class="text-gray-600">
             Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})
           </span>
-          <span class="font-medium text-gray-900">${subtotal.toFixed(2)}</span>
+          <span class="font-medium text-gray-900" data-cart-subtotal>${subtotal.toFixed(2)}</span>
         </div>
 
         <div class="flex justify-between">
@@ -26,7 +26,7 @@ export const CartSummary: FC<CartSummaryProps> = ({ subtotal, itemCount }) => {
 
         <div class="border-t border-gray-100 pt-3 flex justify-between">
           <span class="font-bold text-gray-900">Total</span>
-          <span class="font-bold text-lg text-gray-900">${subtotal.toFixed(2)}</span>
+          <span class="font-bold text-lg text-gray-900" data-cart-total>${subtotal.toFixed(2)}</span>
         </div>
       </div>
 

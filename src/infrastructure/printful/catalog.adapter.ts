@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { PrintfulClient } from "./printful.client";
 import type { Database } from "../db/client";
 import {
@@ -62,7 +62,7 @@ export class PrintfulCatalogAdapter {
    * Fetch all sync products from Printful and upsert into local DB.
    * Returns counts of created and updated records.
    */
-  async syncProducts(client: PrintfulClient, db: Database) {
+  async syncProducts(client: PrintfulClient, db: Database, storeId: string) {
     let offset = 0;
     const limit = 100;
     let total = 0;
@@ -79,7 +79,7 @@ export class PrintfulCatalogAdapter {
       total = listResponse.paging?.total ?? productList.length;
 
       for (const item of productList) {
-        const result = await this.syncSingleProduct(client, db, item.id);
+        const result = await this.syncSingleProduct(client, db, storeId, item.id);
         if (result.wasCreated) created++;
         else updated++;
       }
@@ -96,6 +96,7 @@ export class PrintfulCatalogAdapter {
   async syncSingleProduct(
     client: PrintfulClient,
     db: Database,
+    storeId: string,
     printfulProductId: number,
   ): Promise<{ wasCreated: boolean }> {
     // 1. Fetch full product detail with variants from Printful
@@ -112,7 +113,12 @@ export class PrintfulCatalogAdapter {
     const existingProducts = await db
       .select()
       .from(printfulSyncProducts)
-      .where(eq(printfulSyncProducts.printfulId, syncProduct.id))
+      .where(
+        and(
+          eq(printfulSyncProducts.printfulId, syncProduct.id),
+          eq(printfulSyncProducts.storeId, storeId),
+        ),
+      )
       .limit(1);
 
     let productId: string;
@@ -143,6 +149,7 @@ export class PrintfulCatalogAdapter {
       const productRows = await db
         .insert(products)
         .values({
+          storeId,
           name: syncProduct.name,
           slug: await this.uniqueSlug(db, slug),
           type: "physical",
@@ -157,6 +164,7 @@ export class PrintfulCatalogAdapter {
 
       // Create sync product link
       await db.insert(printfulSyncProducts).values({
+        storeId,
         printfulId: syncProduct.id,
         productId,
         externalId: syncProduct.external_id,

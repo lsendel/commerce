@@ -26,6 +26,7 @@ fulfillment.post(
     const result = await useCase.execute({
       apiKey: c.env.PRINTFUL_API_KEY,
       db,
+      storeId: c.get("storeId") as string,
       printfulProductIds: body.printfulProductIds,
     });
 
@@ -50,7 +51,12 @@ fulfillment.get(
     const userId = c.get("userId");
 
     const useCase = new TrackShipmentUseCase();
-    const result = await useCase.execute({ db, orderId, userId });
+    const result = await useCase.execute({
+      db,
+      storeId: c.get("storeId") as string,
+      orderId,
+      userId,
+    });
 
     return c.json(result, 200);
   },
@@ -66,19 +72,32 @@ fulfillment.post(
     z.object({
       productId: z.string().uuid(),
       imageUrl: z.string().url(),
+      waitAndApply: z.boolean().optional(),
+      timeoutMs: z.number().int().min(5_000).max(300_000).optional(),
+      pollIntervalMs: z.number().int().min(500).max(10_000).optional(),
     }),
   ),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const { productId, imageUrl } = c.req.valid("json");
+    const { productId, imageUrl, waitAndApply, timeoutMs, pollIntervalMs } =
+      c.req.valid("json");
 
     const useCase = new GenerateMockupUseCase();
-    const result = await useCase.execute({
-      apiKey: c.env.PRINTFUL_API_KEY,
-      db,
-      productId,
-      imageUrl,
-    });
+    const result = waitAndApply
+      ? await useCase.executeAndApply({
+          apiKey: c.env.PRINTFUL_API_KEY,
+          db,
+          productId,
+          imageUrl,
+          timeoutMs,
+          pollIntervalMs,
+        })
+      : await useCase.execute({
+          apiKey: c.env.PRINTFUL_API_KEY,
+          db,
+          productId,
+          imageUrl,
+        });
 
     return c.json(result, 201);
   },

@@ -3,6 +3,7 @@ import type { Database } from "../db/client";
 import {
   orders,
   shipments,
+  printfulSyncProducts,
   printfulSyncVariants,
   productVariants,
 } from "../db/schema";
@@ -132,6 +133,22 @@ export class PrintfulWebhookHandler {
         );
         return { handled: true, type: event.type };
 
+      case "product_updated":
+        await this.handleProductUpdated(event.data, db);
+        return { handled: true, type: event.type };
+
+      case "order_failed":
+        await this.handleOrderFailed(event.data, db);
+        return { handled: true, type: event.type };
+
+      case "order_canceled":
+        await this.handleOrderCanceled(event.data, db);
+        return { handled: true, type: event.type };
+
+      case "package_returned":
+        await this.handlePackageReturned(event.data, db);
+        return { handled: true, type: event.type };
+
       default:
         // Unhandled event type — acknowledge but do nothing
         return { handled: false, type: event.type };
@@ -160,6 +177,7 @@ export class PrintfulWebhookHandler {
 
     // Create shipment record
     await db.insert(shipments).values({
+      storeId: order.storeId,
       orderId: order.id,
       carrier: shipmentData.carrier,
       trackingNumber: shipmentData.tracking_number,
@@ -220,5 +238,73 @@ export class PrintfulWebhookHandler {
       .update(productVariants)
       .set({ availableForSale: data.variant.in_stock })
       .where(eq(productVariants.id, syncVariant.variantId));
+  }
+
+  /**
+   * Handle product_updated: log the update for re-sync.
+   */
+  private async handleProductUpdated(data: Record<string, unknown>, db: Database) {
+    const product = data.product as { id?: number; external_id?: string } | undefined;
+    if (!product?.external_id) return;
+
+    const syncRows = await db
+      .select()
+      .from(printfulSyncProducts)
+      .where(eq(printfulSyncProducts.productId, product.external_id))
+      .limit(1);
+
+    if (syncRows.length > 0) {
+      await db
+        .update(printfulSyncProducts)
+        .set({ syncedAt: new Date() })
+        .where(eq(printfulSyncProducts.id, syncRows[0].id));
+    }
+  }
+
+  /**
+   * Handle order_failed: mark the local order as cancelled.
+   */
+  private async handleOrderFailed(data: Record<string, unknown>, db: Database) {
+    const order = data.order as { id?: number; external_id?: string } | undefined;
+    if (!order?.external_id) return;
+
+    await db
+      .update(orders)
+      .set({ status: "cancelled", updatedAt: new Date() })
+      .where(eq(orders.id, order.external_id));
+  }
+
+  /**
+   * Handle order_canceled: mark the local order as cancelled.
+   */
+  private async handleOrderCanceled(data: Record<string, unknown>, db: Database) {
+    const order = data.order as { id?: number; external_id?: string } | undefined;
+    if (!order?.external_id) return;
+
+    await db
+      .update(orders)
+      .set({ status: "cancelled", updatedAt: new Date() })
+      .where(eq(orders.id, order.external_id));
+  }
+
+  /**
+   * Handle package_returned: update the shipment status.
+   */
+  private async handlePackageReturned(data: Record<string, unknown>, db: Database) {
+    const order = data.order as { id?: number; external_id?: string } | undefined;
+    if (!order?.external_id) return;
+
+    // Find shipments for this order and mark as returned
+    const shipmentRows = await db
+      .select()
+      .from(shipments)
+      .where(eq(shipments.orderId, order.external_id));
+
+    for (const shipment of shipmentRows) {
+      await db
+        .update(shipments)
+        .set({ status: "returned" })
+        .where(eq(shipments.id, shipment.id));
+    }
   }
 }
