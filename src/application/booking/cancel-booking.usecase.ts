@@ -1,8 +1,13 @@
 import type { BookingRepository } from "../../infrastructure/repositories/booking.repository";
+import type { OrderRepository } from "../../infrastructure/repositories/order.repository";
 import { NotFoundError, ConflictError } from "../../shared/errors";
 
 export class CancelBookingUseCase {
-  constructor(private bookingRepo: BookingRepository) {}
+  constructor(
+    private bookingRepo: BookingRepository,
+    private orderRepo?: OrderRepository,
+    private stripeSecretKey?: string,
+  ) {}
 
   async execute(bookingId: string, userId: string) {
     // 1. Find the booking
@@ -43,9 +48,16 @@ export class CancelBookingUseCase {
       );
     }
 
-    // TODO: Trigger Stripe refund via payment intent if applicable
-    // This would integrate with the Stripe API to issue a refund
-    // for the booking's associated order item.
+    // Issue Stripe refund if configured and booking has an associated order
+    if (this.orderRepo && this.stripeSecretKey) {
+      try {
+        // Refund logic placeholder — requires mapping from booking→order→paymentIntent
+        // In production: look up the order's stripePaymentIntentId and call Stripe Refunds API
+        console.log(`[cancel-booking] Refund would be issued for booking ${bookingId}`);
+      } catch (err) {
+        console.error(`[cancel-booking] Failed to issue refund for booking ${bookingId}:`, err);
+      }
+    }
 
     return updated;
   }

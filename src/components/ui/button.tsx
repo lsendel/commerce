@@ -17,15 +17,15 @@ interface ButtonProps {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 focus-visible:ring-brand-300",
+    "bg-brand-500 text-white shadow-sm hover:shadow hover:bg-brand-600 hover:-translate-y-0.5 active:translate-y-0 active:bg-brand-700 focus-visible:ring-brand-500/50",
   secondary:
-    "bg-gray-200 text-gray-800 hover:bg-gray-300 active:bg-gray-400 focus-visible:ring-gray-300",
+    "bg-white border border-gray-200 text-gray-800 shadow-sm hover:shadow hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-0 active:bg-gray-100 focus-visible:ring-gray-300/50",
   outline:
-    "border-2 border-brand-500 text-brand-600 bg-transparent hover:bg-brand-50 active:bg-brand-100 focus-visible:ring-brand-300",
+    "border-2 border-brand-500 text-brand-600 bg-transparent hover:bg-brand-50 focus-visible:ring-brand-500/30",
   ghost:
     "bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200 focus-visible:ring-gray-300",
   danger:
-    "bg-red-500 text-white hover:bg-red-600 active:bg-red-700 focus-visible:ring-red-300",
+    "bg-red-500 text-white shadow-sm hover:shadow hover:bg-red-600 hover:-translate-y-0.5 active:translate-y-0 active:bg-red-700 focus-visible:ring-red-500/50",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -45,7 +45,7 @@ export const Button: FC<ButtonProps> = ({
   ...rest
 }) => {
   const base =
-    "inline-flex items-center justify-center font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center font-semibold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none";
 
   const classes = [base, variantClasses[variant], sizeClasses[size], className]
     .filter(Boolean)

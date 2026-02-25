@@ -8,6 +8,9 @@ import { subscriptionsContract } from "./subscriptions.contract";
 import { bookingsContract } from "./bookings.contract";
 import { aiStudioContract } from "./ai-studio.contract";
 import { fulfillmentContract } from "./fulfillment.contract";
+import { affiliatesContract } from "./affiliates.contract";
+import { platformContract } from "./platform.contract";
+import { venuesContract } from "./venues.contract";
 
 const c = initContract();
 
@@ -21,6 +24,9 @@ export const contract = c.router({
   bookings: bookingsContract,
   aiStudio: aiStudioContract,
   fulfillment: fulfillmentContract,
+  affiliates: affiliatesContract,
+  platform: platformContract,
+  venues: venuesContract,
 });
 
 export {
@@ -33,4 +39,7 @@ export {
   bookingsContract,
   aiStudioContract,
   fulfillmentContract,
+  affiliatesContract,
+  platformContract,
+  venuesContract,
 };

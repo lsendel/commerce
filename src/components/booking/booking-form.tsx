@@ -17,8 +17,8 @@ interface BookingFormProps {
   location: string;
   /** Person types with pricing */
   personTypes: PersonType[];
-  /** Product/event ID for the add-to-cart action */
-  productId: string;
+  /** Product variant ID for the add-to-cart action */
+  variantId: string;
 }
 
 export const BookingForm: FC<BookingFormProps> = ({
@@ -27,7 +27,7 @@ export const BookingForm: FC<BookingFormProps> = ({
   time,
   location,
   personTypes,
-  productId,
+  variantId,
 }) => {
   return (
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -53,7 +53,7 @@ export const BookingForm: FC<BookingFormProps> = ({
 
       <form id="booking-form" onsubmit="return false;">
         <input type="hidden" name="slotId" value={slotId} />
-        <input type="hidden" name="productId" value={productId} />
+        <input type="hidden" name="variantId" value={variantId} />
 
         {/* Person type quantity selectors */}
         <div class="space-y-4 mb-5">
@@ -201,26 +201,31 @@ export const BookingForm: FC<BookingFormProps> = ({
                 errorEl.classList.add('hidden');
 
                 var items = {};
+                var totalQty = 0;
                 form.querySelectorAll('[data-qty]').forEach(function(input) {
                   var key = input.getAttribute('data-qty');
                   var qty = parseInt(input.value) || 0;
-                  if (qty > 0) items[key] = qty;
+                  if (qty > 0) {
+                    items[key] = qty;
+                    totalQty += qty;
+                  }
                 });
 
                 try {
-                  var res = await fetch('/api/cart/add', {
+                  var res = await fetch('/api/cart/items', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      productId: form.querySelector('[name="productId"]').value,
-                      slotId: form.querySelector('[name="slotId"]').value,
-                      quantities: items,
+                      variantId: form.querySelector('[name="variantId"]').value,
+                      quantity: totalQty,
+                      bookingAvailabilityId: form.querySelector('[name="slotId"]').value,
+                      personTypeQuantities: items,
                     }),
                   });
 
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.message || 'Failed to add to cart');
+                    throw new Error(data.error || data.message || 'Failed to add to cart');
                   }
 
                   addBtn.textContent = 'Added!';

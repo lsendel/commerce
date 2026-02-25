@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   printfulSyncProducts,
@@ -7,7 +7,10 @@ import {
 } from "../db/schema";
 
 export class PrintfulRepository {
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    private storeId: string,
+  ) {}
 
   // ─── Sync Products ─────────────────────────────────────────────────────────
 
@@ -22,7 +25,7 @@ export class PrintfulRepository {
     const existing = await this.db
       .select()
       .from(printfulSyncProducts)
-      .where(eq(printfulSyncProducts.printfulId, data.printfulId))
+      .where(and(eq(printfulSyncProducts.printfulId, data.printfulId), eq(printfulSyncProducts.storeId, this.storeId)))
       .limit(1);
 
     if (existing.length > 0) {
@@ -42,6 +45,7 @@ export class PrintfulRepository {
     const inserted = await this.db
       .insert(printfulSyncProducts)
       .values({
+        storeId: this.storeId,
         printfulId: data.printfulId,
         productId: data.productId,
         externalId: data.externalId ?? null,
@@ -105,7 +109,7 @@ export class PrintfulRepository {
     const rows = await this.db
       .select()
       .from(printfulSyncProducts)
-      .where(eq(printfulSyncProducts.productId, productId))
+      .where(and(eq(printfulSyncProducts.productId, productId), eq(printfulSyncProducts.storeId, this.storeId)))
       .limit(1);
 
     return rows[0] ?? null;
@@ -140,6 +144,7 @@ export class PrintfulRepository {
     const inserted = await this.db
       .insert(shipments)
       .values({
+        storeId: this.storeId,
         orderId: data.orderId,
         carrier: data.carrier ?? null,
         trackingNumber: data.trackingNumber ?? null,
@@ -159,7 +164,7 @@ export class PrintfulRepository {
     return this.db
       .select()
       .from(shipments)
-      .where(eq(shipments.orderId, orderId));
+      .where(and(eq(shipments.orderId, orderId), eq(shipments.storeId, this.storeId)));
   }
 
   /**
@@ -178,7 +183,7 @@ export class PrintfulRepository {
         status,
         ...(deliveredAt ? { deliveredAt } : {}),
       })
-      .where(eq(shipments.id, id))
+      .where(and(eq(shipments.id, id), eq(shipments.storeId, this.storeId)))
       .returning();
 
     return updated[0] ?? null;

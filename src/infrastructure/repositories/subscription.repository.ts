@@ -25,7 +25,10 @@ export interface UpdateFromStripeData {
 }
 
 export class SubscriptionRepository {
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    private storeId: string,
+  ) {}
 
   /**
    * Get a subscription plan by ID, joined with product info.
@@ -47,7 +50,7 @@ export class SubscriptionRepository {
       })
       .from(subscriptionPlans)
       .innerJoin(products, eq(subscriptionPlans.productId, products.id))
-      .where(eq(subscriptionPlans.id, id))
+      .where(and(eq(subscriptionPlans.id, id), eq(products.storeId, this.storeId)))
       .limit(1);
 
     return rows[0] ?? null;
@@ -73,7 +76,7 @@ export class SubscriptionRepository {
       })
       .from(subscriptionPlans)
       .innerJoin(products, eq(subscriptionPlans.productId, products.id))
-      .where(eq(subscriptionPlans.productId, productId))
+      .where(and(eq(subscriptionPlans.productId, productId), eq(products.storeId, this.storeId)))
       .limit(1);
 
     return rows[0] ?? null;
@@ -99,7 +102,7 @@ export class SubscriptionRepository {
       })
       .from(subscriptionPlans)
       .innerJoin(products, eq(subscriptionPlans.productId, products.id))
-      .where(eq(subscriptionPlans.stripePriceId, stripePriceId))
+      .where(and(eq(subscriptionPlans.stripePriceId, stripePriceId), eq(products.storeId, this.storeId)))
       .limit(1);
 
     return rows[0] ?? null;
@@ -124,7 +127,8 @@ export class SubscriptionRepository {
         productDescription: products.description,
       })
       .from(subscriptionPlans)
-      .innerJoin(products, eq(subscriptionPlans.productId, products.id));
+      .innerJoin(products, eq(subscriptionPlans.productId, products.id))
+      .where(eq(products.storeId, this.storeId));
   }
 
   /**
@@ -134,6 +138,7 @@ export class SubscriptionRepository {
     const rows = await this.db
       .insert(subscriptions)
       .values({
+        storeId: this.storeId,
         userId: data.userId,
         planId: data.planId,
         stripeSubscriptionId: data.stripeSubscriptionId,
@@ -174,14 +179,14 @@ export class SubscriptionRepository {
         eq(subscriptions.planId, subscriptionPlans.id),
       )
       .innerJoin(products, eq(subscriptionPlans.productId, products.id))
-      .where(eq(subscriptions.userId, userId));
+      .where(and(eq(subscriptions.userId, userId), eq(subscriptions.storeId, this.storeId)));
   }
 
   /**
    * Get a single subscription by ID, optionally scoped to a user.
    */
   async findById(id: string, userId?: string) {
-    const conditions = [eq(subscriptions.id, id)];
+    const conditions = [eq(subscriptions.id, id), eq(subscriptions.storeId, this.storeId)];
     if (userId) {
       conditions.push(eq(subscriptions.userId, userId));
     }
@@ -233,7 +238,7 @@ export class SubscriptionRepository {
         updatedAt: subscriptions.updatedAt,
       })
       .from(subscriptions)
-      .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId))
+      .where(and(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId), eq(subscriptions.storeId, this.storeId)))
       .limit(1);
 
     return rows[0] ?? null;
@@ -267,7 +272,7 @@ export class SubscriptionRepository {
     const rows = await this.db
       .update(subscriptions)
       .set(updateValues)
-      .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId))
+      .where(and(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId), eq(subscriptions.storeId, this.storeId)))
       .returning();
 
     return rows[0] ?? null;
@@ -279,7 +284,7 @@ export class SubscriptionRepository {
   async delete(id: string) {
     const rows = await this.db
       .delete(subscriptions)
-      .where(eq(subscriptions.id, id))
+      .where(and(eq(subscriptions.id, id), eq(subscriptions.storeId, this.storeId)))
       .returning();
 
     return rows[0] ?? null;

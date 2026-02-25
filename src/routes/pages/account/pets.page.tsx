@@ -291,7 +291,7 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
               document.getElementById('pet-delete-yes').addEventListener('click', async function() {
                 if (!pendingDeleteId) return;
                 try {
-                  var res = await fetch('/api/account/pets/' + pendingDeleteId, { method: 'DELETE' });
+                  var res = await fetch('/api/studio/pets/' + pendingDeleteId, { method: 'DELETE' });
                   if (!res.ok) throw new Error('Failed to remove pet');
                   window.location.reload();
                 } catch (err) {
@@ -310,18 +310,23 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
 
                 var fd = new FormData(this);
                 var petId = fd.get('petId');
-                var url = petId ? '/api/account/pets/' + petId : '/api/account/pets';
-                var method = petId ? 'PUT' : 'POST';
+                var url = petId ? '/api/studio/pets/' + petId : '/api/studio/pets';
+                var method = petId ? 'PATCH' : 'POST';
 
                 try {
                   var res = await fetch(url, {
                     method: method,
-                    body: fd,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      name: fd.get('name'),
+                      species: fd.get('species'),
+                      breed: fd.get('breed') || undefined,
+                    }),
                   });
 
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.message || 'Failed to save pet');
+                    throw new Error(data.error || data.message || 'Failed to save pet');
                   }
 
                   window.location.reload();

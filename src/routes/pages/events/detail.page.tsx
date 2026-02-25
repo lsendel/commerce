@@ -38,6 +38,7 @@ interface PersonType {
 
 interface EventDetailPageProps {
   id: string;
+  variantId: string;
   slug: string;
   name: string;
   description: string;
@@ -64,6 +65,7 @@ interface EventDetailPageProps {
 
 export const EventDetailPage: FC<EventDetailPageProps> = ({
   id,
+  variantId,
   slug,
   name,
   description,
@@ -326,7 +328,7 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
                 time={selectedSlot.time}
                 location={location}
                 personTypes={personTypes}
-                productId={id}
+                variantId={variantId}
               />
             )}
           </div>

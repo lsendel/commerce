@@ -14,7 +14,8 @@ import { NotFoundError, ValidationError } from "../../shared/errors";
 const subscriptionRoutes = new Hono<{ Bindings: Env }>();
 
 // All subscription routes require authentication
-subscriptionRoutes.use("/*", requireAuth());
+subscriptionRoutes.use("/subscriptions", requireAuth());
+subscriptionRoutes.use("/subscriptions/*", requireAuth());
 
 // POST /subscriptions — create subscription (returns checkout URL)
 subscriptionRoutes.post(
@@ -23,7 +24,7 @@ subscriptionRoutes.post(
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const stripe = createStripeClient(c.env.STRIPE_SECRET_KEY);
-    const subscriptionRepo = new SubscriptionRepository(db);
+    const subscriptionRepo = new SubscriptionRepository(db, c.get("storeId") as string);
     const userRepo = new UserRepository(db);
 
     const useCase = new ManageSubscriptionUseCase(
@@ -56,7 +57,7 @@ subscriptionRoutes.post(
 subscriptionRoutes.get("/subscriptions", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
   const stripe = createStripeClient(c.env.STRIPE_SECRET_KEY);
-  const subscriptionRepo = new SubscriptionRepository(db);
+  const subscriptionRepo = new SubscriptionRepository(db, c.get("storeId") as string);
   const userRepo = new UserRepository(db);
 
   const useCase = new ManageSubscriptionUseCase(
@@ -114,7 +115,7 @@ subscriptionRoutes.post("/subscriptions/portal", async (c) => {
 subscriptionRoutes.delete("/subscriptions/:id", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
   const stripe = createStripeClient(c.env.STRIPE_SECRET_KEY);
-  const subscriptionRepo = new SubscriptionRepository(db);
+  const subscriptionRepo = new SubscriptionRepository(db, c.get("storeId") as string);
   const userRepo = new UserRepository(db);
 
   const useCase = new ManageSubscriptionUseCase(

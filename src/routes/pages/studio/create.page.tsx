@@ -172,7 +172,7 @@ export const StudioCreatePage: FC<StudioCreatePageProps> = ({
             <Button variant="outline" href="/studio/create">
               Create Another
             </Button>
-            <Button variant="primary" href={`/studio/preview?jobId=${activeJob?.id || ""}`}>
+            <Button variant="primary" href={`/studio/preview/${activeJob?.id || ""}`}>
               View Full Preview
             </Button>
           </div>

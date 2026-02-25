@@ -93,7 +93,7 @@ export const ArtPreview: FC<ArtPreviewProps> = ({
 
         {/* Apply to Product */}
         <a
-          href={productSlug ? `/products/${productSlug}?artJobId=${jobId}` : "/shop"}
+          href={productSlug ? `/products/${productSlug}?artJobId=${jobId}` : "/products"}
           data-apply-to-product
           class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 w-full sm:w-auto"
         >

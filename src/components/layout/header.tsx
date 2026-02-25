@@ -6,23 +6,29 @@ interface HeaderProps {
   activePath?: string;
   isAuthenticated?: boolean;
   cartCount?: number;
+  storeName?: string;
+  storeLogo?: string | null;
 }
 
 export const Header: FC<HeaderProps> = ({
   activePath,
   isAuthenticated = false,
   cartCount = 0,
+  storeName = "petm8",
+  storeLogo,
 }) => {
   return (
     <header class="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-md">
       <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <a href="/" class="flex items-center gap-1.5 shrink-0">
-          <span class="text-2xl" aria-hidden="true">
-            🐾
-          </span>
+          {storeLogo ? (
+            <img src={storeLogo} alt={storeName} class="h-8 w-auto" />
+          ) : (
+            <span class="text-2xl" aria-hidden="true">🐾</span>
+          )}
           <span class="text-xl font-bold text-brand-500 tracking-tight">
-            petm8
+            {storeName}
           </span>
         </a>
 
@@ -64,7 +70,7 @@ export const Header: FC<HeaderProps> = ({
           {/* Auth links (desktop) */}
           {!isAuthenticated && (
             <a
-              href="/login"
+              href="/auth/login"
               class="rounded-xl bg-brand-500 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-600 transition-colors"
             >
               Sign in
@@ -139,7 +145,7 @@ export const Header: FC<HeaderProps> = ({
         />
         {!isAuthenticated && (
           <a
-            href="/login"
+            href="/auth/login"
             class="mt-2 block rounded-xl bg-brand-500 px-5 py-2.5 text-center text-sm font-semibold text-white hover:bg-brand-600 transition-colors"
           >
             Sign in
