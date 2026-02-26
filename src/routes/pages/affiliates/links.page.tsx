@@ -1,7 +1,15 @@
 import type { FC } from "hono/jsx";
 
+interface AffiliateLink {
+  id: string;
+  targetUrl: string;
+  shortCode: string;
+  clickCount: number;
+  createdAt: string;
+}
+
 interface LinksProps {
-  links: any[];
+  links: AffiliateLink[];
   referralCode: string;
   baseUrl: string;
 }
@@ -65,7 +73,7 @@ export const AffiliateLinksPage: FC<LinksProps> = ({
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-            {links.map((l: any) => (
+            {links.map((l) => (
               <tr>
                 <td class="px-6 py-4 text-sm truncate max-w-xs text-gray-900 dark:text-gray-100">
                   {l.targetUrl}

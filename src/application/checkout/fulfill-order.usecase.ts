@@ -24,6 +24,8 @@ import { CommitInventoryUseCase } from "../catalog/commit-inventory.usecase";
 import { RedeemPromotionUseCase } from "../promotions/redeem-promotion.usecase";
 import { GenerateDownloadTokenUseCase } from "../catalog/generate-download-token.usecase";
 import { TrackEventUseCase } from "../analytics/track-event.usecase";
+import { AffiliateRepository } from "../../infrastructure/repositories/affiliate.repository";
+import { AttributeConversionUseCase } from "../affiliates/attribute-conversion.usecase";
 
 interface FulfillOrderInput {
   session: Stripe.Checkout.Session;
@@ -181,7 +183,23 @@ export class FulfillOrderUseCase {
       }
     }
 
-    // 8. Generate download tokens for digital products
+    // 8. Attribute affiliate conversion (if referral code in metadata)
+    const referralCode = metadata.referralCode;
+    if (referralCode) {
+      try {
+        const affiliateRepo = new AffiliateRepository(this.db, this.storeId);
+        const attributeUseCase = new AttributeConversionUseCase(affiliateRepo);
+        await attributeUseCase.execute({
+          referralCode,
+          orderId: order.id,
+          orderTotal: total.toFixed(2),
+        });
+      } catch {
+        // Affiliate attribution failure should not block fulfillment
+      }
+    }
+
+    // 9. Generate download tokens for digital products
     const digitalItems = cartWithItems.items.filter((item) => {
       const variant = variantMap.get(item.variantId);
       const product = variant ? productMap.get(variant.productId) : null;

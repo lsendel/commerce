@@ -93,6 +93,14 @@ export class AffiliateRepository {
       .where(eq(affiliates.id, id));
   }
 
+  async listAll() {
+    return this.db
+      .select()
+      .from(affiliates)
+      .where(eq(affiliates.storeId, this.storeId))
+      .orderBy(desc(affiliates.createdAt));
+  }
+
   async listPending() {
     return this.db
       .select()

@@ -154,4 +154,13 @@ affiliateRoutes.patch("/admin/:id/approve", requireAuth(), async (c) => {
   return c.json({ affiliate });
 });
 
+// Admin: suspend
+affiliateRoutes.patch("/admin/:id/suspend", requireAuth(), async (c) => {
+  const storeId = c.get("storeId");
+  const db = createDb(c.env.DATABASE_URL);
+  const repo = new AffiliateRepository(db, storeId);
+  const affiliate = await repo.updateStatus(c.req.param("id"), "suspended");
+  return c.json({ affiliate });
+});
+
 export default affiliateRoutes;

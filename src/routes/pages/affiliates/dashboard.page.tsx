@@ -1,9 +1,33 @@
 import type { FC } from "hono/jsx";
 
+interface AffiliateInfo {
+  referralCode: string;
+  totalEarnings: string;
+  totalClicks: number;
+  totalConversions: number;
+  commissionRate: string;
+  status: string;
+}
+
+interface ConversionRow {
+  id: string;
+  orderTotal: string;
+  commissionAmount: string;
+  status: string;
+  createdAt: string;
+}
+
+interface LinkRow {
+  id: string;
+  targetUrl: string;
+  shortCode: string;
+  clickCount: number;
+}
+
 interface AffiliateDashboardProps {
-  affiliate: any;
-  recentConversions: any[];
-  links: any[];
+  affiliate: AffiliateInfo;
+  recentConversions: ConversionRow[];
+  links: LinkRow[];
 }
 
 export const AffiliateDashboardPage: FC<AffiliateDashboardProps> = ({
@@ -61,7 +85,7 @@ export const AffiliateDashboardPage: FC<AffiliateDashboardProps> = ({
           </p>
         ) : (
           <ul class="space-y-2">
-            {links.slice(0, 5).map((l: any) => (
+            {links.slice(0, 5).map((l) => (
               <li class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
                 <span class="text-sm truncate max-w-xs">{l.targetUrl}</span>
                 <div class="flex items-center gap-3">
@@ -94,7 +118,7 @@ export const AffiliateDashboardPage: FC<AffiliateDashboardProps> = ({
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-              {recentConversions.map((conv: any) => (
+              {recentConversions.map((conv) => (
                 <tr>
                   <td class="py-2 text-sm">
                     {new Date(conv.createdAt).toLocaleDateString()}

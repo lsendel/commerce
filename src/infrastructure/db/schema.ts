@@ -12,6 +12,7 @@ import {
   uniqueIndex,
   index,
   primaryKey,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -1794,7 +1795,7 @@ export const affiliates = pgTable(
       precision: 5,
       scale: 2,
     }).notNull(),
-    parentAffiliateId: uuid("parent_affiliate_id"),
+    parentAffiliateId: uuid("parent_affiliate_id").references((): AnyPgColumn => affiliates.id),
     tierId: uuid("tier_id").references(() => affiliateTiers.id),
     payoutEmail: text("payout_email"),
     totalEarnings: decimal("total_earnings", { precision: 10, scale: 2 })
@@ -1912,7 +1913,7 @@ export const affiliateConversions = pgTable("affiliate_conversions", {
   attributionMethod: attributionMethodEnum("attribution_method").notNull(),
   clickId: uuid("click_id").references(() => affiliateClicks.id),
   couponCode: text("coupon_code"),
-  parentConversionId: uuid("parent_conversion_id"),
+  parentConversionId: uuid("parent_conversion_id").references((): AnyPgColumn => affiliateConversions.id),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   affiliateStatusIdx: index("conversions_affiliate_status_idx").on(table.affiliateId, table.status),
