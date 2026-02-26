@@ -68,6 +68,7 @@ import { AffiliateRegisterPage as _AffiliateRegisterPage } from "./routes/pages/
 import { VenueListPage as _VenueListPage } from "./routes/pages/venues/list.page";
 import { VenueDetailPage as _VenueDetailPage } from "./routes/pages/venues/detail.page";
 import { AdminIntegrationsPage as _AdminIntegrationsPage } from "./routes/pages/admin/integrations.page";
+import { CreateProductPage as _CreateProductPage } from "./routes/pages/platform/create-product.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 import { NotFoundPage } from "./routes/pages/404.page";
 import { ErrorPage } from "./components/ui/error-page";
@@ -102,9 +103,11 @@ const VenueListPage = _VenueListPage as any;
 const VenueDetailPage = _VenueDetailPage as any;
 const AdminIntegrationsPage = _AdminIntegrationsPage as any;
 const StoreIntegrationsPage = _StoreIntegrationsPage as any;
+const CreateProductPage = _CreateProductPage as any;
 
 // Infrastructure
 import { createDb } from "./infrastructure/db/client";
+import { fulfillmentProviders } from "./infrastructure/db/schema";
 import { ProductRepository } from "./infrastructure/repositories/product.repository";
 import { CartRepository } from "./infrastructure/repositories/cart.repository";
 import { OrderRepository } from "./infrastructure/repositories/order.repository";
@@ -811,6 +814,37 @@ app.get("/studio/preview", async (c) => {
   const jobId = c.req.query("jobId");
   if (!jobId) return c.redirect("/studio/gallery");
   return c.redirect(`/studio/preview/${encodeURIComponent(jobId)}`);
+});
+
+// Product creation wizard from art
+app.get("/products/create/:artJobId", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const aiRepo = new AiJobRepository(db, storeId);
+  const job = await aiRepo.findById(c.req.param("artJobId"));
+  if (!job || job.userId !== user.sub) {
+    return c.html(
+      <Layout title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+        <NotFoundPage />
+      </Layout>,
+      404,
+    );
+  }
+
+  const { eq, and } = await import("drizzle-orm");
+  const providers = await db.select().from(fulfillmentProviders).where(
+    and(eq(fulfillmentProviders.storeId, storeId), eq(fulfillmentProviders.isActive, true)),
+  );
+
+  return c.html(
+    <Layout title="Create Product" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <CreateProductPage
+        artJobId={job.id}
+        artImageUrl={job.outputRasterUrl ?? job.outputSvgUrl ?? null}
+        providers={providers.map((p: any) => ({ id: p.id, name: p.name, type: p.type }))}
+      />
+    </Layout>
+  );
 });
 
 app.get("/studio/gallery", async (c) => {
