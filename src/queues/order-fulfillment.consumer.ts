@@ -1,185 +1,228 @@
 import { eq, inArray } from "drizzle-orm";
 import type { Env } from "../env";
 import { createDb } from "../infrastructure/db/client";
-import { PrintfulClient } from "../infrastructure/printful/printful.client";
 import {
   orders,
   orderItems,
   productVariants,
-  printfulSyncVariants,
+  providerProductMappings,
 } from "../infrastructure/db/schema";
-import { OrderRepository } from "../infrastructure/repositories/order.repository";
+import { FulfillmentRequestRepository } from "../infrastructure/repositories/fulfillment-request.repository";
+import { createFulfillmentProvider } from "../infrastructure/fulfillment/provider-factory";
+import { ResolveSecretUseCase } from "../application/platform/resolve-secret.usecase";
+import { IntegrationRepository, IntegrationSecretRepository } from "../infrastructure/repositories/integration.repository";
+import type { FulfillmentOrderItem } from "../infrastructure/fulfillment/fulfillment-provider.interface";
+import type { FulfillmentProviderType } from "../shared/types";
+import type { IntegrationProvider } from "../domain/platform/integration.entity";
 
-interface OrderFulfillmentMessage {
-  orderId: string;
-}
-
-interface PrintfulRecipient {
-  name: string;
-  address1: string;
-  city: string;
-  state_code: string;
-  country_code: string;
-  zip: string;
-}
-
-interface PrintfulOrderItem {
-  sync_variant_id: number;
-  quantity: number;
-  retail_price: string;
-}
-
-interface PrintfulCreateOrderPayload {
-  external_id: string;
-  recipient: PrintfulRecipient;
-  items: PrintfulOrderItem[];
+interface FulfillmentMessage {
+  type: string;
+  fulfillmentRequestId?: string;
+  provider?: string;
+  storeId?: string;
+  // Legacy format
+  orderId?: string;
 }
 
 export async function handleOrderFulfillmentMessage(
   message: Message,
   env: Env,
 ): Promise<void> {
-  const { orderId } = message.body as OrderFulfillmentMessage;
+  const body = message.body as FulfillmentMessage;
+
+  // Handle legacy { orderId } messages — ack and skip
+  if (body.orderId && !body.fulfillmentRequestId) {
+    console.log(
+      `[fulfillment] Legacy orderId message for ${body.orderId} — acking and skipping`,
+    );
+    message.ack();
+    return;
+  }
+
+  const { fulfillmentRequestId, provider, storeId } = body;
+  if (!fulfillmentRequestId || !provider || !storeId) {
+    console.error("[fulfillment] Invalid message — missing required fields");
+    message.ack();
+    return;
+  }
 
   const db = createDb(env.DATABASE_URL);
-  const printful = new PrintfulClient(env.PRINTFUL_API_KEY);
-  const orderRows = await db
-    .select({ storeId: orders.storeId })
-    .from(orders)
-    .where(eq(orders.id, orderId))
-    .limit(1);
+  const requestRepo = new FulfillmentRequestRepository(db, storeId);
 
-  const orderRow = orderRows[0];
-  if (!orderRow) {
+  // Load the fulfillment request
+  const request = await requestRepo.findById(fulfillmentRequestId);
+  if (!request) {
     console.error(
-      `[order-fulfillment] Order ${orderId} not found -- acking to prevent retries`,
+      `[fulfillment] Request ${fulfillmentRequestId} not found — acking`,
     );
     message.ack();
     return;
   }
 
-  const orderRepo = new OrderRepository(db, orderRow.storeId);
+  // Idempotency gate: skip if already submitted or beyond pending
+  if (request.externalId != null || request.status !== "pending") {
+    console.log(
+      `[fulfillment] Request ${fulfillmentRequestId} already ${request.status} (externalId=${request.externalId}) — skipping`,
+    );
+    message.ack();
+    return;
+  }
 
-  // Fetch the order with items
-  const order = await orderRepo.findById(orderId);
+  // Resolve API key via integration secrets
+  const integrationRepo = new IntegrationRepository(db);
+  const secretRepo = new IntegrationSecretRepository(db);
+  const resolveSecret = new ResolveSecretUseCase(integrationRepo, secretRepo);
+  const apiKey = await resolveSecret.execute(
+    provider as IntegrationProvider,
+    "api_key",
+    env,
+    storeId,
+  );
 
-  if (!order) {
+  if (!apiKey) {
     console.error(
-      `[order-fulfillment] Order ${orderId} not found in scoped repo -- acking to prevent retries`,
+      `[fulfillment] No API key for provider ${provider} in store ${storeId}`,
     );
+    await requestRepo.updateStatus(fulfillmentRequestId, "failed", {
+      errorMessage: `No API key configured for ${provider}`,
+    });
     message.ack();
     return;
   }
 
-  // Get all variant IDs from order items
-  const variantIds = order.items
-    .map((item) => item.variantId)
-    .filter((id): id is string => id !== null);
+  // Build the provider client
+  const fulfillmentProvider = createFulfillmentProvider(
+    provider as FulfillmentProviderType,
+    { apiKey },
+  );
 
-  if (variantIds.length === 0) {
-    console.log(
-      `[order-fulfillment] Order ${orderId} has no variant items -- nothing to fulfill via Printful`,
+  // Load request items, order items, variants, and mappings
+  const requestItems = await requestRepo.findItemsByRequestId(
+    fulfillmentRequestId,
+  );
+  const orderItemIds = requestItems
+    .map((ri) => ri.orderItemId)
+    .filter((id): id is string => id != null);
+
+  if (orderItemIds.length === 0) {
+    console.error(
+      `[fulfillment] Request ${fulfillmentRequestId} has no order items`,
     );
+    await requestRepo.updateStatus(fulfillmentRequestId, "failed", {
+      errorMessage: "No order items linked to request",
+    });
     message.ack();
     return;
   }
 
-  // Fetch the actual variant rows to get Printful sync variant IDs
-  const variantRows = await db
+  const oiRows = await db
     .select()
-    .from(productVariants)
-    .where(inArray(productVariants.id, variantIds));
+    .from(orderItems)
+    .where(inArray(orderItems.id, orderItemIds));
 
-  // Find which variants have Printful sync mappings
-  const printfulVariantIds = variantRows
-    .map((v) => v.printfulSyncVariantId)
-    .filter((id): id is number => id !== null);
+  const variantIds = oiRows
+    .map((oi) => oi.variantId)
+    .filter((id): id is string => id != null);
 
-  if (printfulVariantIds.length === 0) {
-    console.log(
-      `[order-fulfillment] Order ${orderId} has no Printful-linked variants -- nothing to fulfill`,
-    );
-    message.ack();
-    return;
-  }
+  const [variantRows, mappingRows] = await Promise.all([
+    variantIds.length > 0
+      ? db
+          .select()
+          .from(productVariants)
+          .where(inArray(productVariants.id, variantIds))
+      : Promise.resolve([]),
+    variantIds.length > 0
+      ? db
+          .select()
+          .from(providerProductMappings)
+          .where(inArray(providerProductMappings.variantId, variantIds))
+      : Promise.resolve([]),
+  ]);
 
-  // Get Printful sync variant mappings for the variant IDs that have a printfulSyncVariantId
-  const syncVariantRows = await db
-    .select()
-    .from(printfulSyncVariants)
-    .where(inArray(printfulSyncVariants.printfulId, printfulVariantIds));
+  const mappingByVariant = new Map(
+    mappingRows.map((m) => [m.variantId, m]),
+  );
 
-  // Build a map: local variant ID -> Printful sync variant ID
-  const variantToPrintfulMap = new Map<string, number>();
-  for (const sv of syncVariantRows) {
-    variantToPrintfulMap.set(sv.variantId, sv.printfulId);
-  }
+  // Build FulfillmentOrderItem[]
+  const items: FulfillmentOrderItem[] = [];
+  for (const oi of oiRows) {
+    if (!oi.variantId) continue;
+    const mapping = mappingByVariant.get(oi.variantId);
 
-  // Build Printful order items (only for physical items with Printful mappings)
-  const printfulItems: PrintfulOrderItem[] = [];
-
-  for (const item of order.items) {
-    if (!item.variantId) continue;
-
-    // Check if the variant has a printfulSyncVariantId on the variant row
-    const variantRow = variantRows.find((v) => v.id === item.variantId);
-    if (!variantRow?.printfulSyncVariantId) continue;
-
-    const printfulSyncVariantId = variantToPrintfulMap.get(item.variantId);
-    if (!printfulSyncVariantId) continue;
-
-    printfulItems.push({
-      sync_variant_id: printfulSyncVariantId,
-      quantity: item.quantity,
-      retail_price: item.unitPrice.toFixed(2),
+    items.push({
+      externalVariantId: mapping?.externalVariantId ?? oi.variantId,
+      quantity: oi.quantity,
+      retailPrice: oi.unitPrice,
+      name: `${oi.productName}${oi.variantTitle ? ` - ${oi.variantTitle}` : ""}`,
     });
   }
 
-  if (printfulItems.length === 0) {
-    console.log(
-      `[order-fulfillment] Order ${orderId} has no fulfillable Printful items after filtering`,
-    );
+  // Get order for shipping address
+  const orderRows = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.id, request.orderId))
+    .limit(1);
+
+  const order = orderRows[0];
+  if (!order) {
+    await requestRepo.updateStatus(fulfillmentRequestId, "failed", {
+      errorMessage: "Order not found",
+    });
     message.ack();
     return;
   }
 
-  // Build recipient from order shipping address
   const shippingAddress = order.shippingAddress as Record<string, string> | null;
-
-  const recipient: PrintfulRecipient = {
+  const recipient = {
     name: shippingAddress?.name ?? "",
     address1: shippingAddress?.street ?? shippingAddress?.address1 ?? "",
     city: shippingAddress?.city ?? "",
-    state_code: shippingAddress?.state ?? shippingAddress?.state_code ?? "",
-    country_code:
-      shippingAddress?.country ?? shippingAddress?.country_code ?? "",
+    stateCode: shippingAddress?.state ?? shippingAddress?.state_code ?? "",
+    countryCode:
+      shippingAddress?.country ?? shippingAddress?.country_code ?? "US",
     zip: shippingAddress?.zip ?? shippingAddress?.postal_code ?? "",
   };
 
-  // Create order on Printful
-  const payload: PrintfulCreateOrderPayload = {
-    external_id: order.id,
-    recipient,
-    items: printfulItems,
-  };
-
   try {
-    await printful.post("/orders", payload);
+    const result = await fulfillmentProvider.createOrder(
+      request.orderId,
+      recipient,
+      items,
+    );
 
-    // Update order status to processing
-    await orderRepo.updateStatus(orderId, "processing");
+    // Write externalId + status = 'submitted' atomically
+    await requestRepo.updateStatus(fulfillmentRequestId, "submitted", {
+      externalId: result.externalId,
+      submittedAt: new Date(),
+      costActualTotal: result.costs?.total,
+      costShipping: result.costs?.shipping,
+      costTax: result.costs?.tax,
+    });
 
     console.log(
-      `[order-fulfillment] Created Printful order for ${orderId} with ${printfulItems.length} item(s)`,
+      `[fulfillment] Submitted request ${fulfillmentRequestId} to ${provider} — externalId=${result.externalId}`,
     );
-
     message.ack();
   } catch (error) {
-    console.error(
-      `[order-fulfillment] Failed to create Printful order for ${orderId}:`,
-      error,
-    );
-    // Retry on failure -- Printful API may be temporarily unavailable
-    message.retry();
+    const err = error instanceof Error ? error : new Error(String(error));
+    const statusCode = (error as any)?.status ?? (error as any)?.statusCode;
+
+    if (statusCode && statusCode >= 400 && statusCode < 500) {
+      // 4xx: client error, mark as failed and ack (no retry)
+      console.error(
+        `[fulfillment] 4xx error for request ${fulfillmentRequestId}: ${err.message}`,
+      );
+      await requestRepo.updateStatus(fulfillmentRequestId, "failed", {
+        errorMessage: err.message,
+      });
+      message.ack();
+    } else {
+      // 5xx / network: retry
+      console.error(
+        `[fulfillment] Retriable error for request ${fulfillmentRequestId}: ${err.message}`,
+      );
+      message.retry();
+    }
   }
 }
