@@ -5,8 +5,6 @@ import type { CartRepository } from "../../infrastructure/repositories/cart.repo
 import { FulfillmentRequestRepository } from "../../infrastructure/repositories/fulfillment-request.repository";
 import { FulfillmentRouter } from "../../infrastructure/fulfillment/fulfillment-router";
 import {
-  carts,
-  cartItems,
   products,
   productVariants,
   bookingRequests,
@@ -16,6 +14,16 @@ import {
   bookingAvailabilityPrices,
 } from "../../infrastructure/db/schema";
 import type Stripe from "stripe";
+
+// Commerce feature integrations
+import { InventoryRepository } from "../../infrastructure/repositories/inventory.repository";
+import { PromotionRepository } from "../../infrastructure/repositories/promotion.repository";
+import { DownloadRepository } from "../../infrastructure/repositories/download.repository";
+import { AnalyticsRepository } from "../../infrastructure/repositories/analytics.repository";
+import { CommitInventoryUseCase } from "../catalog/commit-inventory.usecase";
+import { RedeemPromotionUseCase } from "../promotions/redeem-promotion.usecase";
+import { GenerateDownloadTokenUseCase } from "../catalog/generate-download-token.usecase";
+import { TrackEventUseCase } from "../analytics/track-event.usecase";
 
 interface FulfillOrderInput {
   session: Stripe.Checkout.Session;
@@ -117,23 +125,81 @@ export class FulfillOrderUseCase {
       await this.confirmBooking(item, userId, order.id, order.items);
     }
 
-    // 6. Decrement inventory for physical products
+    // 6. Commit inventory reservations (finalize stock) for physical products
     const physicalItems = cartWithItems.items.filter((item) => {
       const variant = variantMap.get(item.variantId);
       const product = variant ? productMap.get(variant.productId) : null;
       return product?.type === "physical";
     });
 
+    const inventoryRepo = new InventoryRepository(this.db, this.storeId);
+    const commitUseCase = new CommitInventoryUseCase(inventoryRepo);
+
     for (const item of physicalItems) {
-      await this.db
-        .update(productVariants)
-        .set({
-          inventoryQuantity: sql`GREATEST(${productVariants.inventoryQuantity} - ${item.quantity}, 0)`,
-        })
-        .where(eq(productVariants.id, item.variantId));
+      // Try to commit reservation first; fall back to direct decrement
+      const committed = await commitUseCase.execute(item.id);
+      if (!committed) {
+        await this.db
+          .update(productVariants)
+          .set({
+            inventoryQuantity: sql`GREATEST(${productVariants.inventoryQuantity} - ${item.quantity}, 0)`,
+          })
+          .where(eq(productVariants.id, item.variantId));
+      }
     }
 
-    // 7. Clear the cart
+    // 7. Redeem promotions (if coupon was applied via session metadata)
+    const discountStr = session.metadata?.discount;
+    const couponCode = session.metadata?.couponCode;
+    if (discountStr && Number(discountStr) > 0) {
+      try {
+        const promoRepo = new PromotionRepository(this.db, this.storeId);
+        const redeemUseCase = new RedeemPromotionUseCase(promoRepo);
+        // If there's a coupon code, look up and redeem the associated promotion
+        if (couponCode) {
+          const result = await promoRepo.findCouponByCode(couponCode);
+          if (result) {
+            await redeemUseCase.execute({
+              promotionId: result.coupon.promotionId,
+              couponCodeId: result.coupon.id,
+              orderId: order.id,
+              customerId: userId,
+              discountAmount: Number(discountStr),
+            });
+          }
+        }
+      } catch {
+        // Promotion redemption failure should not block fulfillment
+      }
+    }
+
+    // 8. Generate download tokens for digital products
+    const digitalItems = cartWithItems.items.filter((item) => {
+      const variant = variantMap.get(item.variantId);
+      const product = variant ? productMap.get(variant.productId) : null;
+      return product?.type === "digital";
+    });
+
+    if (digitalItems.length > 0) {
+      try {
+        const downloadRepo = new DownloadRepository(this.db, this.storeId);
+        const tokenUseCase = new GenerateDownloadTokenUseCase(downloadRepo);
+        for (const item of digitalItems) {
+          const orderItem = order.items.find(
+            (oi) => oi.variantId === item.variantId,
+          );
+          await tokenUseCase.execute({
+            userId,
+            orderId: order.id,
+            orderItemId: orderItem?.id,
+          });
+        }
+      } catch {
+        // Download token failure should not block fulfillment
+      }
+    }
+
+    // 9. Clear the cart
     await this.cartRepo.clearCart(cartId);
 
     // 8. Route physical items to fulfillment providers and create requests
@@ -188,6 +254,24 @@ export class FulfillOrderUseCase {
           storeId: this.storeId,
         });
       }
+    }
+
+    // 11. Track purchase event
+    try {
+      const analyticsRepo = new AnalyticsRepository(this.db, this.storeId);
+      const trackUseCase = new TrackEventUseCase(analyticsRepo);
+      await trackUseCase.execute({
+        eventType: "purchase",
+        userId,
+        properties: {
+          orderId: order.id,
+          total,
+          subtotal,
+          itemCount: cartWithItems.items.length,
+        },
+      });
+    } catch {
+      // Analytics failure should not block fulfillment
     }
 
     return order;

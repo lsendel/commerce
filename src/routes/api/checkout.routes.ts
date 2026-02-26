@@ -42,6 +42,7 @@ checkout.post(
       userEmail: user.email,
       successUrl: body.successUrl ?? `${appUrl}/checkout/success`,
       cancelUrl: body.cancelUrl ?? `${appUrl}/cart`,
+      storeId: c.get("storeId") as string,
     });
 
     return c.json({ url: result.url }, 200);

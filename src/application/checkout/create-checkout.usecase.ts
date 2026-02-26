@@ -1,18 +1,26 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import type { Database } from "../../infrastructure/db/client";
 import type { CartRepository } from "../../infrastructure/repositories/cart.repository";
 import { StripeCheckoutAdapter } from "../../infrastructure/stripe/checkout.adapter";
 import type Stripe from "stripe";
 import {
-  carts,
-  cartItems,
   products,
   productVariants,
   bookingRequests,
-  bookingAvailability,
 } from "../../infrastructure/db/schema";
 import { ValidationError } from "../../shared/errors";
 import { BOOKING_REQUEST_TTL_MINUTES } from "../../shared/constants";
+
+// Commerce feature integrations
+import { PromotionRepository } from "../../infrastructure/repositories/promotion.repository";
+import { InventoryRepository } from "../../infrastructure/repositories/inventory.repository";
+import { ShippingRepository } from "../../infrastructure/repositories/shipping.repository";
+import { AnalyticsRepository } from "../../infrastructure/repositories/analytics.repository";
+import { EvaluateCartPromotionsUseCase } from "../promotions/evaluate-cart-promotions.usecase";
+import { ReserveInventoryUseCase } from "../catalog/reserve-inventory.usecase";
+import { CalculateShippingUseCase } from "../fulfillment/calculate-shipping.usecase";
+import { CalculateTaxUseCase } from "../tax/calculate-tax.usecase";
+import { TrackEventUseCase } from "../analytics/track-event.usecase";
 
 interface CreateCheckoutInput {
   sessionId: string;
@@ -20,6 +28,12 @@ interface CreateCheckoutInput {
   userEmail: string;
   successUrl: string;
   cancelUrl: string;
+  shippingAddress?: {
+    country: string;
+    state?: string;
+    postalCode?: string;
+  };
+  storeId: string;
 }
 
 export class CreateCheckoutUseCase {
@@ -32,7 +46,7 @@ export class CreateCheckoutUseCase {
   ) {}
 
   async execute(input: CreateCheckoutInput): Promise<{ url: string }> {
-    const { sessionId, userId, userEmail, successUrl, cancelUrl } = input;
+    const { sessionId, userId, userEmail, successUrl, cancelUrl, shippingAddress, storeId } = input;
 
     // 1. Get the user's cart with items
     const cart = await this.cartRepo.findOrCreateCart(sessionId, userId);
@@ -49,7 +63,122 @@ export class CreateCheckoutUseCase {
       }
     }
 
-    // 3. Build line items for Stripe
+    // 3. Evaluate promotions — get discount breakdown
+    const promoRepo = new PromotionRepository(this.db, storeId);
+    const promoUseCase = new EvaluateCartPromotionsUseCase(promoRepo, this.db);
+
+    // Enrich cart items with productId for promotion evaluation
+    const variantIds = [...new Set(cartWithItems.items.map((i) => i.variantId))];
+    const variantRows = await this.db
+      .select()
+      .from(productVariants)
+      .where(inArray(productVariants.id, variantIds));
+    const variantProductMap = new Map(variantRows.map((v) => [v.id, v.productId]));
+
+    const discounts = await promoUseCase.execute(
+      cartWithItems.items.map((item) => ({
+        variantId: item.variantId,
+        productId: variantProductMap.get(item.variantId) ?? "",
+        quantity: item.quantity,
+        unitPrice: item.variant.price,
+      })),
+      userId,
+    );
+
+    const totalDiscount = discounts.reduce((sum, d) => sum + d.discountAmount, 0);
+
+    // 4. Re-verify inventory reservations for physical items
+    const inventoryRepo = new InventoryRepository(this.db, storeId);
+    const reserveUseCase = new ReserveInventoryUseCase(inventoryRepo);
+
+    const productRows = await this.db
+      .select()
+      .from(products)
+      .where(inArray(products.id, [...new Set(variantRows.map((v) => v.productId))]));
+    const productMap = new Map(productRows.map((p) => [p.id, p]));
+
+    for (const item of cartWithItems.items) {
+      const variant = variantRows.find((v) => v.id === item.variantId);
+      const product = variant ? productMap.get(variant.productId) : null;
+      if (product?.type === "physical") {
+        // Re-verify: try to reserve (may already be reserved from add-to-cart)
+        const existing = await inventoryRepo.findByCartItem(item.id);
+        if (!existing) {
+          await reserveUseCase.execute(item.variantId, item.id, item.quantity);
+        }
+      }
+    }
+
+    // 5. Calculate shipping (if address provided and physical items exist)
+    let shippingCost = 0;
+    if (shippingAddress) {
+      const hasPhysical = cartWithItems.items.some((item) => {
+        const variant = variantRows.find((v) => v.id === item.variantId);
+        const product = variant ? productMap.get(variant.productId) : null;
+        return product?.type === "physical";
+      });
+
+      if (hasPhysical) {
+        try {
+          const shippingRepo = new ShippingRepository(this.db, storeId);
+          const shippingUseCase = new CalculateShippingUseCase(shippingRepo);
+          const shippingResult = await shippingUseCase.execute({
+            items: cartWithItems.items.map((item) => {
+              const variant = variantRows.find((v) => v.id === item.variantId);
+              return {
+                variantId: item.variantId,
+                quantity: item.quantity,
+                price: item.variant.price,
+                weight: variant?.weight ? Number(variant.weight) : null,
+                weightUnit: variant?.weightUnit ?? null,
+              };
+            }),
+            address: shippingAddress,
+            subtotal: cartWithItems.subtotal,
+          });
+          // Use the cheapest available option
+          const cheapest = shippingResult.options
+            .filter((o) => o.price !== null)
+            .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))[0];
+          shippingCost = cheapest?.price ?? 0;
+        } catch {
+          // No shipping zone found — proceed without shipping cost
+        }
+      }
+    }
+
+    // 6. Calculate tax
+    let taxAmount = 0;
+    if (shippingAddress) {
+      try {
+        const taxUseCase = new CalculateTaxUseCase();
+        const taxResult = await taxUseCase.execute({
+          db: this.db,
+          storeId,
+          lineItems: cartWithItems.items.map((item) => {
+            const variant = variantRows.find((v) => v.id === item.variantId);
+            const product = variant ? productMap.get(variant.productId) : null;
+            return {
+              id: item.id,
+              amount: item.variant.price * item.quantity,
+              productType: product?.type ?? "physical",
+            };
+          }),
+          shippingAmount: shippingCost,
+          address: {
+            country: shippingAddress.country,
+            state: shippingAddress.state,
+            zip: shippingAddress.postalCode ?? "",
+          },
+        });
+        taxAmount = taxResult.totalTax;
+      } catch {
+        // No tax zones configured — proceed without tax
+      }
+    }
+
+    // 7. Build line items for Stripe (with discount applied)
+    const subtotalAfterDiscount = Math.max(cartWithItems.subtotal - totalDiscount, 0);
     const lineItems = cartWithItems.items.map((item) => ({
       variantTitle: item.variant.title,
       productName: item.variant.product.name,
@@ -58,7 +187,7 @@ export class CreateCheckoutUseCase {
       imageUrl: item.variant.product.featuredImageUrl,
     }));
 
-    // 4. Create Stripe Checkout Session
+    // 8. Create Stripe Checkout Session
     const { url } = await this.adapter.createCheckoutSession({
       stripe: this.stripe,
       lineItems,
@@ -68,8 +197,33 @@ export class CreateCheckoutUseCase {
       metadata: {
         cartId: cart.id,
         userId,
+        discount: totalDiscount.toFixed(2),
+        shippingCost: shippingCost.toFixed(2),
+        taxAmount: taxAmount.toFixed(2),
       },
     });
+
+    // 9. Track checkout_started event
+    try {
+      const analyticsRepo = new AnalyticsRepository(this.db, storeId);
+      const trackUseCase = new TrackEventUseCase(analyticsRepo);
+      await trackUseCase.execute({
+        eventType: "checkout_started",
+        userId,
+        sessionId,
+        properties: {
+          cartId: cart.id,
+          subtotal: cartWithItems.subtotal,
+          discount: totalDiscount,
+          shippingCost,
+          taxAmount,
+          total: subtotalAfterDiscount + shippingCost + taxAmount,
+          itemCount: cartWithItems.items.length,
+        },
+      });
+    } catch {
+      // Analytics failure should not block checkout
+    }
 
     return { url };
   }
