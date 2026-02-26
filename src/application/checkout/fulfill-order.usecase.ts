@@ -2,6 +2,8 @@ import { eq, and, sql, inArray } from "drizzle-orm";
 import type { Database } from "../../infrastructure/db/client";
 import type { OrderRepository } from "../../infrastructure/repositories/order.repository";
 import type { CartRepository } from "../../infrastructure/repositories/cart.repository";
+import { FulfillmentRequestRepository } from "../../infrastructure/repositories/fulfillment-request.repository";
+import { FulfillmentRouter } from "../../infrastructure/fulfillment/fulfillment-router";
 import {
   carts,
   cartItems,
@@ -25,6 +27,7 @@ export class FulfillOrderUseCase {
     private orderRepo: OrderRepository,
     private cartRepo: CartRepository,
     private db: Database,
+    private storeId: string,
   ) {}
 
   async execute(input: FulfillOrderInput) {
@@ -133,16 +136,58 @@ export class FulfillOrderUseCase {
     // 7. Clear the cart
     await this.cartRepo.clearCart(cartId);
 
-    // 8. Queue fulfillment for physical items
+    // 8. Route physical items to fulfillment providers and create requests
     if (fulfillmentQueue && physicalItems.length > 0) {
-      await fulfillmentQueue.send({
-        type: "order.fulfill",
-        orderId: order.id,
-        items: physicalItems.map((item) => ({
-          variantId: item.variantId,
-          quantity: item.quantity,
-        })),
-      });
+      const router = new FulfillmentRouter(this.db, this.storeId);
+      const requestRepo = new FulfillmentRequestRepository(this.db, this.storeId);
+
+      const physicalVariantIds = physicalItems.map((i) => i.variantId);
+      const routingMap = await router.selectProvidersForVariants(physicalVariantIds);
+
+      // Group items by provider
+      const byProvider = new Map<string, Array<{ orderItemId: string; variantId: string; quantity: number }>>();
+      for (const item of physicalItems) {
+        const routing = routingMap.get(item.variantId);
+        const providerKey = routing?.providerType ?? "manual";
+        const group = byProvider.get(providerKey) ?? [];
+        const orderItem = order.items.find(
+          (oi) => oi.variantId === item.variantId && !oi.bookingAvailabilityId,
+        );
+        if (orderItem) {
+          group.push({
+            orderItemId: orderItem.id,
+            variantId: item.variantId,
+            quantity: item.quantity,
+          });
+        }
+        byProvider.set(providerKey, group);
+      }
+
+      // Create one fulfillment request per provider group
+      for (const [providerType, items] of byProvider) {
+        const firstItem = items[0];
+      const firstRouting = firstItem
+          ? routingMap.get(firstItem.variantId)
+          : undefined;
+
+        const request = await requestRepo.create({
+          orderId: order.id,
+          provider: providerType,
+          providerId: firstRouting?.providerId,
+          itemsSnapshot: items,
+          items: items.map((i) => ({
+            orderItemId: i.orderItemId,
+            quantity: i.quantity,
+          })),
+        });
+
+        await fulfillmentQueue.send({
+          type: "fulfillment.submit",
+          fulfillmentRequestId: request.id,
+          provider: providerType,
+          storeId: this.storeId,
+        });
+      }
     }
 
     return order;

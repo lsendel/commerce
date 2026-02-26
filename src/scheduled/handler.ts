@@ -8,6 +8,7 @@ import { runBirthdayEmails } from "./birthday-emails.job";
 import { runMockupPolling } from "./mockup-polling.job";
 import { runAffiliatePayouts } from "./affiliate-payouts.job";
 import { runIntegrationHealthChecks } from "./integration-health.job";
+import { runGootenPolling } from "./gooten-polling.job";
 
 export async function handleScheduled(
   ctrl: ScheduledController,
@@ -30,6 +31,7 @@ export async function handleScheduled(
       break;
     case "*/5 * * * *": // Every 5 minutes
       ctx.waitUntil(runExpireBookingRequests(env));
+      ctx.waitUntil(runGootenPolling(env));
       break;
     case "*/10 * * * *": // Every 10 minutes
       ctx.waitUntil(runMockupPolling(env));

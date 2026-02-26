@@ -167,6 +167,20 @@ export const integrationStatusEnum = pgEnum("integration_status", [
   "pending_verification",
 ]);
 
+export const fulfillmentRequestStatusEnum = pgEnum(
+  "fulfillment_request_status",
+  [
+    "pending",
+    "submitted",
+    "processing",
+    "shipped",
+    "delivered",
+    "cancel_requested",
+    "cancelled",
+    "failed",
+  ],
+);
+
 // ─── Platform Context ───────────────────────────────────────────────────────
 
 export const platformPlans = pgTable("platform_plans", {
@@ -371,6 +385,7 @@ export const products = pgTable("products", {
   featuredImageUrl: text("featured_image_url"),
   seoTitle: text("seo_title"),
   seoDescription: text("seo_description"),
+  artJobId: uuid("art_job_id").references(() => generationJobs.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -385,6 +400,11 @@ export const productsRelations = relations(products, ({ many, one }) => ({
   bookingAvailability: many(bookingAvailability),
   printfulSyncProduct: one(printfulSyncProducts),
   reviews: many(productReviews),
+  artJob: one(generationJobs, {
+    fields: [products.artJobId],
+    references: [generationJobs.id],
+  }),
+  designPlacements: many(designPlacements),
 }));
 
 export const productVariants = pgTable("product_variants", {
@@ -400,6 +420,9 @@ export const productVariants = pgTable("product_variants", {
   options: jsonb("options"),
   printfulSyncVariantId: integer("printful_sync_variant_id"),
   availableForSale: boolean("available_for_sale").default(true),
+  digitalAssetKey: text("digital_asset_key"),
+  fulfillmentProvider: text("fulfillment_provider"),
+  estimatedProductionDays: integer("estimated_production_days"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -554,6 +577,8 @@ export const orders = pgTable("orders", {
   ),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   shippingAddress: jsonb("shipping_address"),
+  cancelReason: text("cancel_reason"),
+  cancelledAt: timestamp("cancelled_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -566,6 +591,7 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
   items: many(orderItems),
   shipments: many(shipments),
   bookingRequests: many(bookingRequests),
+  fulfillmentRequests: many(fulfillmentRequests),
 }));
 
 export const orderItems = pgTable("order_items", {
@@ -1013,12 +1039,16 @@ export const shipments = pgTable("shipments", {
   orderId: uuid("order_id")
     .notNull()
     .references(() => orders.id),
+  fulfillmentRequestId: uuid("fulfillment_request_id").references(
+    () => fulfillmentRequests.id,
+  ),
   carrier: text("carrier"),
   trackingNumber: text("tracking_number"),
   trackingUrl: text("tracking_url"),
   status: shipmentStatusEnum("status").default("pending"),
   shippedAt: timestamp("shipped_at"),
   deliveredAt: timestamp("delivered_at"),
+  raw: jsonb("raw"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -1189,6 +1219,201 @@ export const providerProductMappingsRelations = relations(
     provider: one(fulfillmentProviders, {
       fields: [providerProductMappings.providerId],
       references: [fulfillmentProviders.id],
+    }),
+  }),
+);
+
+export const designPlacements = pgTable("design_placements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  area: text("area").notNull(),
+  imageUrl: text("image_url").notNull(),
+  x: integer("x").default(0),
+  y: integer("y").default(0),
+  scale: decimal("scale", { precision: 5, scale: 3 }).default("1.000"),
+  rotation: integer("rotation").default(0),
+  printAreaId: text("print_area_id"),
+  providerMeta: jsonb("provider_meta"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const designPlacementsRelations = relations(
+  designPlacements,
+  ({ one }) => ({
+    product: one(products, {
+      fields: [designPlacements.productId],
+      references: [products.id],
+    }),
+  }),
+);
+
+// ─── Fulfillment Requests Context ───────────────────────────────────────────
+
+export const fulfillmentRequests = pgTable(
+  "fulfillment_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id),
+    provider: text("provider").notNull(),
+    providerId: uuid("provider_id").references(() => fulfillmentProviders.id),
+    externalId: text("external_id"),
+    status: fulfillmentRequestStatusEnum("status").default("pending"),
+    itemsSnapshot: jsonb("items_snapshot"),
+    costEstimatedTotal: decimal("cost_estimated_total", {
+      precision: 10,
+      scale: 2,
+    }),
+    costActualTotal: decimal("cost_actual_total", {
+      precision: 10,
+      scale: 2,
+    }),
+    costShipping: decimal("cost_shipping", { precision: 10, scale: 2 }),
+    costTax: decimal("cost_tax", { precision: 10, scale: 2 }),
+    currency: text("currency").default("USD"),
+    refundStripeId: text("refund_stripe_id"),
+    refundAmount: decimal("refund_amount", { precision: 10, scale: 2 }),
+    refundStatus: text("refund_status"),
+    errorMessage: text("error_message"),
+    submittedAt: timestamp("submitted_at"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    orderIdx: index("fulfillment_requests_order_idx").on(table.orderId),
+    providerExternalIdx: index("fulfillment_requests_provider_external_idx").on(
+      table.provider,
+      table.externalId,
+    ),
+  }),
+);
+
+export const fulfillmentRequestsRelations = relations(
+  fulfillmentRequests,
+  ({ one, many }) => ({
+    order: one(orders, {
+      fields: [fulfillmentRequests.orderId],
+      references: [orders.id],
+    }),
+    provider_: one(fulfillmentProviders, {
+      fields: [fulfillmentRequests.providerId],
+      references: [fulfillmentProviders.id],
+    }),
+    items: many(fulfillmentRequestItems),
+  }),
+);
+
+export const fulfillmentRequestItems = pgTable("fulfillment_request_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  fulfillmentRequestId: uuid("fulfillment_request_id")
+    .notNull()
+    .references(() => fulfillmentRequests.id, { onDelete: "cascade" }),
+  orderItemId: uuid("order_item_id").references(() => orderItems.id),
+  providerLineId: text("provider_line_id"),
+  quantity: integer("quantity").notNull(),
+  status: text("status"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const fulfillmentRequestItemsRelations = relations(
+  fulfillmentRequestItems,
+  ({ one }) => ({
+    request: one(fulfillmentRequests, {
+      fields: [fulfillmentRequestItems.fulfillmentRequestId],
+      references: [fulfillmentRequests.id],
+    }),
+    orderItem: one(orderItems, {
+      fields: [fulfillmentRequestItems.orderItemId],
+      references: [orderItems.id],
+    }),
+  }),
+);
+
+export const providerEvents = pgTable(
+  "provider_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    provider: text("provider").notNull(),
+    externalEventId: text("external_event_id"),
+    externalOrderId: text("external_order_id"),
+    eventType: text("event_type").notNull(),
+    payload: jsonb("payload"),
+    receivedAt: timestamp("received_at").defaultNow(),
+    processedAt: timestamp("processed_at"),
+    errorMessage: text("error_message"),
+  },
+  (table) => ({
+    providerEventIdx: uniqueIndex("provider_events_provider_event_idx")
+      .on(table.provider, table.externalEventId),
+  }),
+);
+
+export const providerEventsRelations = relations(
+  providerEvents,
+  ({ one }) => ({
+    store: one(stores, {
+      fields: [providerEvents.storeId],
+      references: [stores.id],
+    }),
+  }),
+);
+
+// ─── Download Tokens (Digital Products) ─────────────────────────────────────
+
+export const downloadTokens = pgTable(
+  "download_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id),
+    orderItemId: uuid("order_item_id").references(() => orderItems.id),
+    token: text("token").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    downloadedAt: timestamp("downloaded_at"),
+    revoked: boolean("revoked").default(false),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    tokenIdx: uniqueIndex("download_tokens_token_idx").on(table.token),
+  }),
+);
+
+export const downloadTokensRelations = relations(
+  downloadTokens,
+  ({ one }) => ({
+    store: one(stores, {
+      fields: [downloadTokens.storeId],
+      references: [stores.id],
+    }),
+    user: one(users, {
+      fields: [downloadTokens.userId],
+      references: [users.id],
+    }),
+    order: one(orders, {
+      fields: [downloadTokens.orderId],
+      references: [orders.id],
+    }),
+    orderItem: one(orderItems, {
+      fields: [downloadTokens.orderItemId],
+      references: [orderItems.id],
     }),
   }),
 );

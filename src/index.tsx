@@ -30,6 +30,9 @@ import { integrationRoutes } from "./routes/api/integrations.routes";
 import { cacheRoutes } from "./routes/api/cache.routes";
 import { cacheResponse } from "./middleware/cache.middleware";
 import { browserCaching } from "./middleware/browser-cache.middleware";
+import { adminProductRoutes } from "./routes/api/admin-products.routes";
+import { cancellationRoutes } from "./routes/api/cancellations.routes";
+import { downloadRoutes } from "./routes/api/downloads.routes";
 
 // GraphQL
 import { schema } from "./graphql/schema";
@@ -67,6 +70,8 @@ import { AffiliateRegisterPage as _AffiliateRegisterPage } from "./routes/pages/
 import { VenueListPage as _VenueListPage } from "./routes/pages/venues/list.page";
 import { VenueDetailPage as _VenueDetailPage } from "./routes/pages/venues/detail.page";
 import { AdminIntegrationsPage as _AdminIntegrationsPage } from "./routes/pages/admin/integrations.page";
+import { CreateProductPage as _CreateProductPage } from "./routes/pages/platform/create-product.page";
+import { FulfillmentDashboardPage as _FulfillmentDashboardPage } from "./routes/pages/admin/fulfillment-dashboard.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 import { NotFoundPage } from "./routes/pages/404.page";
 import { ErrorPage } from "./components/ui/error-page";
@@ -101,9 +106,12 @@ const VenueListPage = _VenueListPage as any;
 const VenueDetailPage = _VenueDetailPage as any;
 const AdminIntegrationsPage = _AdminIntegrationsPage as any;
 const StoreIntegrationsPage = _StoreIntegrationsPage as any;
+const CreateProductPage = _CreateProductPage as any;
+const FulfillmentDashboardPage = _FulfillmentDashboardPage as any;
 
 // Infrastructure
 import { createDb } from "./infrastructure/db/client";
+import { fulfillmentProviders } from "./infrastructure/db/schema";
 import { ProductRepository } from "./infrastructure/repositories/product.repository";
 import { CartRepository } from "./infrastructure/repositories/cart.repository";
 import { OrderRepository } from "./infrastructure/repositories/order.repository";
@@ -170,6 +178,9 @@ app.route("/api/affiliates", affiliateRoutes);
 app.route("/api/venues", venueRoutes);
 app.route("/api/integrations", integrationRoutes);
 app.route("/api", cacheRoutes);
+app.route("/api/admin", adminProductRoutes);
+app.route("/api", cancellationRoutes);
+app.route("/api", downloadRoutes);
 
 // ─── GraphQL ───────────────────────────────────────────────
 const yoga = createYoga({ schema, graphqlEndpoint: "/graphql" });
@@ -811,6 +822,37 @@ app.get("/studio/preview", async (c) => {
   return c.redirect(`/studio/preview/${encodeURIComponent(jobId)}`);
 });
 
+// Product creation wizard from art
+app.get("/products/create/:artJobId", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const aiRepo = new AiJobRepository(db, storeId);
+  const job = await aiRepo.findById(c.req.param("artJobId"));
+  if (!job || job.userId !== user.sub) {
+    return c.html(
+      <Layout title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+        <NotFoundPage />
+      </Layout>,
+      404,
+    );
+  }
+
+  const { eq, and } = await import("drizzle-orm");
+  const providers = await db.select().from(fulfillmentProviders).where(
+    and(eq(fulfillmentProviders.storeId, storeId), eq(fulfillmentProviders.isActive, true)),
+  );
+
+  return c.html(
+    <Layout title="Create Product" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <CreateProductPage
+        artJobId={job.id}
+        artImageUrl={job.outputRasterUrl ?? job.outputSvgUrl ?? null}
+        providers={providers.map((p: any) => ({ id: p.id, name: p.name, type: p.type }))}
+      />
+    </Layout>
+  );
+});
+
 app.get("/studio/gallery", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   const aiRepo = new AiJobRepository(db, storeId);
@@ -1158,6 +1200,67 @@ app.get("/admin/integrations", async (c) => {
   return c.html(
     <Layout title="Platform Integrations" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <AdminIntegrationsPage integrations={integrations as any} infraHealth={infraHealth as any} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Fulfillment Dashboard ──────────────────────────
+app.get("/admin/fulfillment", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const { eq, desc, sql } = await import("drizzle-orm");
+  const { fulfillmentRequests: frTable } = await import("./infrastructure/db/schema");
+
+  const requests = await db
+    .select()
+    .from(frTable)
+    .where(eq(frTable.storeId, storeId))
+    .orderBy(desc(frTable.createdAt))
+    .limit(100);
+
+  const countRows = await db
+    .select({
+      status: frTable.status,
+      count: sql<number>`count(*)`,
+    })
+    .from(frTable)
+    .where(eq(frTable.storeId, storeId))
+    .groupBy(frTable.status);
+
+  const counts: Record<string, number> = {};
+  let total = 0;
+  for (const row of countRows) {
+    const n = Number(row.count);
+    counts[row.status ?? "pending"] = n;
+    total += n;
+  }
+
+  const stats = {
+    total,
+    pending: counts.pending ?? 0,
+    submitted: counts.submitted ?? 0,
+    processing: counts.processing ?? 0,
+    shipped: counts.shipped ?? 0,
+    delivered: counts.delivered ?? 0,
+    failed: counts.failed ?? 0,
+    cancelled: counts.cancelled ?? 0,
+  };
+
+  const formatted = requests.map((r: any) => ({
+    id: r.id,
+    orderId: r.orderId,
+    provider: r.provider,
+    externalId: r.externalId,
+    status: r.status ?? "pending",
+    errorMessage: r.errorMessage,
+    createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "",
+    updatedAt: r.updatedAt ? new Date(r.updatedAt).toISOString() : "",
+  }));
+
+  return c.html(
+    <Layout title="Fulfillment Dashboard" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <FulfillmentDashboardPage requests={formatted} stats={stats} />
     </Layout>,
   );
 });
