@@ -52,7 +52,7 @@ webhooks.post("/webhooks/stripe", async (c) => {
         const orderRepo = new OrderRepository(db, c.get("storeId") as string);
         const cartRepo = new CartRepository(db, c.get("storeId") as string);
 
-        const useCase = new FulfillOrderUseCase(orderRepo, cartRepo, db);
+        const useCase = new FulfillOrderUseCase(orderRepo, cartRepo, db, c.get("storeId") as string);
         await useCase.execute({
           session,
           fulfillmentQueue: c.env.FULFILLMENT_QUEUE,
