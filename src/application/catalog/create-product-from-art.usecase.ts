@@ -82,7 +82,7 @@ export class CreateProductFromArtUseCase {
     const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${Date.now()}`;
 
     // 3. Create product
-    const [product] = await this.db
+    const productRows = await this.db
       .insert(products)
       .values({
         storeId,
@@ -97,10 +97,13 @@ export class CreateProductFromArtUseCase {
       })
       .returning();
 
+    const product = productRows[0];
+    if (!product) throw new Error("Failed to create product");
+
     // 4. Create variants + optional provider mappings
     const createdVariants = [];
     for (const v of variantInputs) {
-      const [variant] = await this.db
+      const variantRows = await this.db
         .insert(productVariants)
         .values({
           productId: product.id,
@@ -115,6 +118,9 @@ export class CreateProductFromArtUseCase {
           availableForSale: true,
         })
         .returning();
+
+      const variant = variantRows[0];
+      if (!variant) throw new Error("Failed to create variant");
 
       // 5. Create provider mapping if provider info given
       if (v.providerId && v.externalVariantId) {
@@ -156,9 +162,11 @@ export class CreateProductFromArtUseCase {
       imageUrlList.push(artJob.outputRasterUrl);
     }
     for (let i = 0; i < imageUrlList.length; i++) {
+      const imageUrl = imageUrlList[i];
+      if (!imageUrl) continue;
       await this.db.insert(productImages).values({
         productId: product.id,
-        url: imageUrlList[i],
+        url: imageUrl,
         altText: `${name} - image ${i + 1}`,
         position: i,
       });

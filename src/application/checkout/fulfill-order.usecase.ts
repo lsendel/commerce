@@ -165,8 +165,9 @@ export class FulfillOrderUseCase {
 
       // Create one fulfillment request per provider group
       for (const [providerType, items] of byProvider) {
-        const firstRouting = items.length > 0
-          ? routingMap.get(items[0].variantId)
+        const firstItem = items[0];
+      const firstRouting = firstItem
+          ? routingMap.get(firstItem.variantId)
           : undefined;
 
         const request = await requestRepo.create({

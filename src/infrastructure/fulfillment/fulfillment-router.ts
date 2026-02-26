@@ -49,6 +49,7 @@ export class FulfillmentRouter {
     if (rows.length === 0) return null;
 
     const r = rows[0];
+    if (!r) return null;
     return {
       providerId: r.providerId,
       providerType: r.providerType,

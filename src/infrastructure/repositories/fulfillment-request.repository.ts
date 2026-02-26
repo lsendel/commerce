@@ -34,7 +34,7 @@ export class FulfillmentRequestRepository {
   ) {}
 
   async create(data: CreateRequestData) {
-    const [request] = await this.db
+    const rows = await this.db
       .insert(fulfillmentRequests)
       .values({
         storeId: this.storeId,
@@ -45,6 +45,9 @@ export class FulfillmentRequestRepository {
         costEstimatedTotal: data.costEstimatedTotal,
       })
       .returning();
+
+    const request = rows[0];
+    if (!request) throw new Error("Failed to create fulfillment request");
 
     if (data.items.length > 0) {
       await this.db.insert(fulfillmentRequestItems).values(
