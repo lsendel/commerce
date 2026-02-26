@@ -100,15 +100,31 @@ export class AddToCartUseCase {
 
     // 5. Reserve inventory for physical products
     if (product.type === "physical" && addedItem) {
+      // Check available stock and give a user-friendly message
+      const stock = variant.inventoryQuantity ?? 0;
+      if (stock <= 0) {
+        await this.repo.removeItem(addedItem.id, cart.id);
+        throw new ValidationError("This item is currently out of stock");
+      }
+      if (data.quantity > stock) {
+        await this.repo.removeItem(addedItem.id, cart.id);
+        throw new ValidationError(
+          stock === 1
+            ? "Only 1 left in stock — please reduce your quantity"
+            : `Only ${stock} left in stock — please reduce your quantity`,
+        );
+      }
+
       const reservation = await this.inventoryRepo.reserve(
         data.variantId,
         addedItem.id,
         data.quantity,
       );
       if (!reservation) {
-        // Rollback: remove the cart item
         await this.repo.removeItem(addedItem.id, cart.id);
-        throw new ValidationError("Insufficient inventory for this item");
+        throw new ValidationError(
+          `Not enough stock available. Only ${stock} left.`,
+        );
       }
     }
 

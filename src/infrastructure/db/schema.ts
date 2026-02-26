@@ -23,6 +23,12 @@ export const productTypeEnum = pgEnum("product_type", [
   "bookable",
 ]);
 
+export const productStatusEnum = pgEnum("product_status", ["draft", "active", "archived"]);
+
+export const inventoryTransactionTypeEnum = pgEnum("inventory_transaction_type", [
+  "adjustment", "sale", "return", "restock", "reservation", "release",
+]);
+
 export const orderStatusEnum = pgEnum("order_status", [
   "pending",
   "processing",
@@ -30,6 +36,19 @@ export const orderStatusEnum = pgEnum("order_status", [
   "delivered",
   "cancelled",
   "refunded",
+]);
+
+export const refundStatusEnum = pgEnum("refund_status", [
+  "pending",
+  "processing",
+  "succeeded",
+  "failed",
+]);
+
+export const orderNoteTypeEnum = pgEnum("order_note_type", [
+  "customer",
+  "internal",
+  "system",
 ]);
 
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
@@ -473,6 +492,7 @@ export const products = pgTable("products", {
   description: text("description"),
   descriptionHtml: text("description_html"),
   type: productTypeEnum("type").notNull(),
+  status: productStatusEnum("status").notNull().default("active"),
   availableForSale: boolean("available_for_sale").default(true),
   downloadUrl: text("download_url"),
   stripePriceId: text("stripe_price_id"),
@@ -483,7 +503,9 @@ export const products = pgTable("products", {
   artJobId: uuid("art_job_id").references(() => generationJobs.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  storeStatusIdx: index("products_store_status_idx").on(table.storeId, table.status),
+}));
 
 export const productsRelations = relations(products, ({ many, one }) => ({
   variants: many(productVariants),
@@ -519,10 +541,12 @@ export const productVariants = pgTable("product_variants", {
   weightUnit: text("weight_unit").default("oz"),
   reservedQuantity: integer("reserved_quantity").default(0),
   digitalAssetKey: text("digital_asset_key"),
-  fulfillmentProvider: text("fulfillment_provider"),
+  fulfillmentProvider: fulfillmentProviderTypeEnum("fulfillment_provider"),
   estimatedProductionDays: integer("estimated_production_days"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  productIdx: index("product_variants_product_idx").on(table.productId),
+}));
 
 export const productVariantsRelations = relations(
   productVariants,
@@ -545,7 +569,9 @@ export const productImages = pgTable("product_images", {
   url: text("url").notNull(),
   altText: text("alt_text"),
   position: integer("position").default(0),
-});
+}, (table) => ({
+  productIdx: index("product_images_product_idx").on(table.productId),
+}));
 
 export const productImagesRelations = relations(productImages, ({ one }) => ({
   product: one(products, {
@@ -611,6 +637,7 @@ export const carts = pgTable("carts", {
     .references(() => stores.id),
   userId: uuid("user_id").references(() => users.id),
   sessionId: text("session_id").notNull(),
+  couponCodeId: uuid("coupon_code_id").references(() => couponCodes.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -623,21 +650,27 @@ export const cartsRelations = relations(carts, ({ one, many }) => ({
   items: many(cartItems),
 }));
 
-export const cartItems = pgTable("cart_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  cartId: uuid("cart_id")
-    .notNull()
-    .references(() => carts.id),
-  variantId: uuid("variant_id")
-    .notNull()
-    .references(() => productVariants.id),
-  quantity: integer("quantity").notNull().default(1),
-  bookingAvailabilityId: uuid("booking_availability_id").references(
-    () => bookingAvailability.id,
-  ),
-  personTypeQuantities: jsonb("person_type_quantities"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const cartItems = pgTable(
+  "cart_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    cartId: uuid("cart_id")
+      .notNull()
+      .references(() => carts.id),
+    variantId: uuid("variant_id")
+      .notNull()
+      .references(() => productVariants.id),
+    quantity: integer("quantity").notNull().default(1),
+    bookingAvailabilityId: uuid("booking_availability_id").references(
+      () => bookingAvailability.id,
+    ),
+    personTypeQuantities: jsonb("person_type_quantities"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    cartIdx: index("cart_items_cart_id_idx").on(table.cartId),
+  }),
+);
 
 export const cartItemsRelations = relations(cartItems, ({ one, many }) => ({
   cart: one(carts, {
@@ -657,33 +690,44 @@ export const cartItemsRelations = relations(cartItems, ({ one, many }) => ({
 
 // ─── Checkout Context ────────────────────────────────────────────────────────
 
-export const orders = pgTable("orders", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  storeId: uuid("store_id")
-    .notNull()
-    .references(() => stores.id),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id),
-  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
-  stripePaymentIntentId: text("stripe_payment_intent_id"),
-  status: orderStatusEnum("status").default("pending"),
-  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
-  tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
-  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default(
-    "0",
-  ),
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  shippingAddress: jsonb("shipping_address"),
-  discount: decimal("discount", { precision: 10, scale: 2 }).default("0"),
-  couponCode: text("coupon_code"),
-  currency: text("currency").default("USD"),
-  exchangeRate: decimal("exchange_rate", { precision: 12, scale: 6 }),
-  cancelReason: text("cancel_reason"),
-  cancelledAt: timestamp("cancelled_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export const orders = pgTable(
+  "orders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    status: orderStatusEnum("status").default("pending"),
+    subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+    tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
+    shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default(
+      "0",
+    ),
+    total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+    shippingAddress: jsonb("shipping_address"),
+    discount: decimal("discount", { precision: 10, scale: 2 }).default("0"),
+    couponCode: text("coupon_code"),
+    currency: text("currency").default("USD"),
+    exchangeRate: decimal("exchange_rate", { precision: 12, scale: 6 }),
+    notes: text("notes"),
+    internalNotes: text("internal_notes"),
+    cancelReason: text("cancel_reason"),
+    cancelledAt: timestamp("cancelled_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    userIdx: index("orders_user_idx").on(table.userId),
+    storeStatusIdx: index("orders_store_status_idx").on(table.storeId, table.status),
+    stripeSessionIdx: index("orders_stripe_session_idx").on(table.stripeCheckoutSessionId),
+    stripePaymentIdx: index("orders_stripe_payment_idx").on(table.stripePaymentIntentId),
+  }),
+);
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
   user: one(users, {
@@ -694,24 +738,33 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
   shipments: many(shipments),
   bookingRequests: many(bookingRequests),
   fulfillmentRequests: many(fulfillmentRequests),
+  refunds: many(refunds),
+  notes: many(orderNotes),
 }));
 
-export const orderItems = pgTable("order_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  orderId: uuid("order_id")
-    .notNull()
-    .references(() => orders.id),
-  variantId: uuid("variant_id").references(() => productVariants.id),
-  productName: text("product_name").notNull(),
-  variantTitle: text("variant_title"),
-  quantity: integer("quantity").notNull(),
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
-  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
-  bookingAvailabilityId: uuid("booking_availability_id").references(
-    () => bookingAvailability.id,
-  ),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const orderItems = pgTable(
+  "order_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id),
+    variantId: uuid("variant_id").references(() => productVariants.id),
+    productName: text("product_name").notNull(),
+    variantTitle: text("variant_title"),
+    quantity: integer("quantity").notNull(),
+    unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+    totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+    currency: text("currency").default("USD"),
+    bookingAvailabilityId: uuid("booking_availability_id").references(
+      () => bookingAvailability.id,
+    ),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    orderIdx: index("order_items_order_idx").on(table.orderId),
+  }),
+);
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   order: one(orders, {
@@ -727,6 +780,73 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
     references: [bookingAvailability.id],
   }),
   booking: one(bookings),
+}));
+
+// ─── Refunds ─────────────────────────────────────────────────────────────────
+
+export const refunds = pgTable(
+  "refunds",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id),
+    fulfillmentRequestId: uuid("fulfillment_request_id").references(
+      () => fulfillmentRequests.id,
+    ),
+    stripeRefundId: text("stripe_refund_id"),
+    amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+    currency: text("currency").notNull().default("USD"),
+    reason: text("reason"),
+    status: refundStatusEnum("status").notNull().default("pending"),
+    lineItems: jsonb("line_items"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    processedAt: timestamp("processed_at"),
+  },
+  (table) => ({
+    orderIdx: index("refunds_order_idx").on(table.orderId),
+    storeIdx: index("refunds_store_idx").on(table.storeId),
+  }),
+);
+
+export const refundsRelations = relations(refunds, ({ one }) => ({
+  order: one(orders, {
+    fields: [refunds.orderId],
+    references: [orders.id],
+  }),
+  fulfillmentRequest: one(fulfillmentRequests, {
+    fields: [refunds.fulfillmentRequestId],
+    references: [fulfillmentRequests.id],
+  }),
+}));
+
+// ─── Order Notes ─────────────────────────────────────────────────────────────
+
+export const orderNotes = pgTable(
+  "order_notes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    userId: uuid("user_id"),
+    type: orderNoteTypeEnum("type").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    orderIdx: index("order_notes_order_idx").on(table.orderId),
+  }),
+);
+
+export const orderNotesRelations = relations(orderNotes, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderNotes.orderId],
+    references: [orders.id],
+  }),
 }));
 
 // ─── Billing Context ─────────────────────────────────────────────────────────
@@ -2350,4 +2470,26 @@ export const auditLog = pgTable("audit_log", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
   storeEntityIdx: index("audit_log_store_entity_idx").on(table.storeId, table.entityType, table.createdAt),
+}));
+
+// ─── Inventory Transactions ─────────────────────────────────────────────────
+
+export const inventoryTransactions = pgTable("inventory_transactions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  variantId: uuid("variant_id").notNull().references(() => productVariants.id),
+  type: inventoryTransactionTypeEnum("type").notNull(),
+  quantity: integer("quantity").notNull(),
+  reference: text("reference"),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  variantIdx: index("inventory_transactions_variant_idx").on(table.variantId, table.createdAt),
+}));
+
+export const inventoryTransactionsRelations = relations(inventoryTransactions, ({ one }) => ({
+  variant: one(productVariants, {
+    fields: [inventoryTransactions.variantId],
+    references: [productVariants.id],
+  }),
 }));

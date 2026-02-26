@@ -1,7 +1,7 @@
 import { eq, and } from "drizzle-orm";
 import type { Database } from "../../infrastructure/db/client";
 import type { ReviewRepository } from "../../infrastructure/repositories/review.repository";
-import { orders, orderItems, productVariants } from "../../infrastructure/db/schema";
+import { orders, orderItems, productVariants, productReviews } from "../../infrastructure/db/schema";
 import { ValidationError } from "../../shared/errors";
 import type { ReviewStatus } from "../../domain/catalog/review.entity";
 
@@ -25,20 +25,36 @@ export class SubmitReviewUseCase {
       throw new ValidationError("Rating must be an integer between 1 and 5");
     }
 
-    // 2. Check if user purchased this product (verified purchase flag)
+    // 2. Check for duplicate review (user + product)
+    const existingReview = await this.db
+      .select({ id: productReviews.id })
+      .from(productReviews)
+      .where(
+        and(
+          eq(productReviews.userId, input.userId),
+          eq(productReviews.productId, input.productId),
+        ),
+      )
+      .limit(1);
+
+    if (existingReview[0]) {
+      throw new ValidationError("You have already reviewed this product");
+    }
+
+    // 3. Check if user purchased this product (verified purchase flag)
     const isVerifiedPurchase = await this.checkVerifiedPurchase(
       input.userId,
       input.productId,
     );
 
-    // 3. Content filter: check for excessive caps, URLs
+    // 4. Content filter: check for excessive caps, URLs
     const contentText = [input.title ?? "", input.content ?? ""].join(" ");
     const isSuspicious = this.isContentSuspicious(contentText);
 
-    // 4. Set status: approved if clean, flagged if suspicious
+    // 5. Set status: approved if clean, flagged if suspicious
     const status: ReviewStatus = isSuspicious ? "flagged" : "approved";
 
-    // 5. Insert review
+    // 6. Insert review
     const review = await this.reviewRepo.create({
       productId: input.productId,
       userId: input.userId,

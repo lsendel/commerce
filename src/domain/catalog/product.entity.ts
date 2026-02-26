@@ -44,3 +44,27 @@ export function createProduct(
     updatedAt: now,
   };
 }
+
+export function canPurchase(
+  variant: Variant,
+  product: Product,
+): { ok: boolean; reason?: string } {
+  if (product.status !== "active") {
+    return { ok: false, reason: "Product is not available" };
+  }
+  if (!variant.availableForSale) {
+    return { ok: false, reason: "Variant is not available for sale" };
+  }
+  if (variant.inventoryQuantity <= 0) {
+    return { ok: false, reason: "Out of stock" };
+  }
+  return { ok: true };
+}
+
+export function canReview(
+  userId: string,
+  productId: string,
+  purchasedProductIds: string[],
+): boolean {
+  return purchasedProductIds.includes(productId);
+}

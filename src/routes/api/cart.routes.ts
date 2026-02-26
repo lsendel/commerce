@@ -7,6 +7,8 @@ import { GetCartUseCase } from "../../application/cart/get-cart.usecase";
 import { AddToCartUseCase } from "../../application/cart/add-to-cart.usecase";
 import { UpdateCartItemUseCase } from "../../application/cart/update-cart-item.usecase";
 import { RemoveFromCartUseCase } from "../../application/cart/remove-from-cart.usecase";
+import { RemoveCouponUseCase } from "../../application/cart/remove-coupon.usecase";
+import { ValidateCartUseCase } from "../../application/cart/validate-cart.usecase";
 import { addToCartSchema, updateCartItemSchema } from "../../shared/validators";
 import { cartSession } from "../../middleware/cart-session.middleware";
 import { optionalAuth } from "../../middleware/auth.middleware";
@@ -23,11 +25,11 @@ cart.use("/cart/*", cartSession());
 cart.use("/cart", optionalAuth());
 cart.use("/cart/*", optionalAuth());
 
-// GET /cart — get current cart with items
+// GET /cart — get current cart with items, totals, and warnings
 cart.get("/cart", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
   const repo = new CartRepository(db, c.get("storeId") as string);
-  const useCase = new GetCartUseCase(repo);
+  const useCase = new GetCartUseCase(repo, db);
 
   const sessionId = c.get("cartSessionId");
   const userId = c.get("userId");
@@ -97,13 +99,18 @@ cart.post(
     const { code } = c.req.valid("json");
     const storeId = c.get("storeId") as string;
     const userId = c.get("userId") ?? null;
+    const sessionId = c.get("cartSessionId");
     const db = createDb(c.env.DATABASE_URL);
     const promoRepo = new PromotionRepository(db, storeId);
-    const useCase = new ApplyCouponUseCase(promoRepo);
+    const cartRepo = new CartRepository(db, storeId);
+    const useCase = new ApplyCouponUseCase(promoRepo, db);
+
+    // Find the cart to pass its ID for coupon persistence
+    const cartObj = await cartRepo.findOrCreateCart(sessionId, userId ?? undefined);
 
     try {
-      const result = await useCase.execute(code, userId);
-      return c.json({ promotion: result.promotion, coupon: result.coupon });
+      const result = await useCase.execute(code, userId, cartObj.id);
+      return c.json({ promotion: result.promotion, coupon: result.coupon, discount: result.discount });
     } catch (error: any) {
       if (error.code === "NOT_FOUND") {
         return c.json({ error: error.message }, 404);
@@ -118,7 +125,30 @@ cart.post(
 
 // DELETE /cart/remove-coupon — remove coupon from cart
 cart.delete("/cart/remove-coupon", async (c) => {
-  return c.json({ message: "Coupon removed" });
+  const db = createDb(c.env.DATABASE_URL);
+  const storeId = c.get("storeId") as string;
+  const repo = new CartRepository(db, storeId);
+  const useCase = new RemoveCouponUseCase(repo, db);
+
+  const sessionId = c.get("cartSessionId");
+  const userId = c.get("userId");
+
+  const result = await useCase.execute(sessionId, userId);
+  return c.json(result, 200);
+});
+
+// POST /cart/validate — validate cart for checkout readiness
+cart.post("/cart/validate", async (c) => {
+  const db = createDb(c.env.DATABASE_URL);
+  const storeId = c.get("storeId") as string;
+  const repo = new CartRepository(db, storeId);
+  const useCase = new ValidateCartUseCase(repo, db);
+
+  const sessionId = c.get("cartSessionId");
+  const userId = c.get("userId");
+
+  const result = await useCase.execute(sessionId, userId);
+  return c.json(result, 200);
 });
 
 export { cart as cartRoutes };

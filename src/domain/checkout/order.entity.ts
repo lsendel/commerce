@@ -30,15 +30,21 @@ export interface Order {
   shippingZip: string;
   shippingCountry: string;
   notes: string | null;
+  internalNotes: string | null;
+  cancelReason: string | null;
+  cancelledAt: Date | null;
   items: OrderItem[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 export function createOrder(
-  params: Omit<Order, "createdAt" | "updatedAt" | "status" | "notes" | "stripePaymentIntentId" | "items" | "exchangeRate" | "couponCode"> & {
+  params: Omit<Order, "createdAt" | "updatedAt" | "status" | "notes" | "internalNotes" | "cancelReason" | "cancelledAt" | "stripePaymentIntentId" | "items" | "exchangeRate" | "couponCode"> & {
     status?: OrderStatus;
     notes?: string | null;
+    internalNotes?: string | null;
+    cancelReason?: string | null;
+    cancelledAt?: Date | null;
     stripePaymentIntentId?: string | null;
     exchangeRate?: number | null;
     couponCode?: string | null;
@@ -50,6 +56,9 @@ export function createOrder(
     ...params,
     status: params.status ?? "pending",
     notes: params.notes ?? null,
+    internalNotes: params.internalNotes ?? null,
+    cancelReason: params.cancelReason ?? null,
+    cancelledAt: params.cancelledAt ?? null,
     stripePaymentIntentId: params.stripePaymentIntentId ?? null,
     exchangeRate: params.exchangeRate ?? null,
     couponCode: params.couponCode ?? null,

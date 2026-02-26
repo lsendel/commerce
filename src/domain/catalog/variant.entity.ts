@@ -3,6 +3,8 @@ export interface VariantOption {
   value: string;
 }
 
+export type FulfillmentProviderType = "printful" | "gooten" | "prodigi" | "shapeways";
+
 export interface Variant {
   id: string;
   productId: string;
@@ -14,6 +16,7 @@ export interface Variant {
   options: VariantOption[];
   printfulSyncVariantId: string | null;
   availableForSale: boolean;
+  fulfillmentProvider?: FulfillmentProviderType | null;
 }
 
 export function createVariant(

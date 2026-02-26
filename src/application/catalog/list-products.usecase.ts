@@ -7,6 +7,7 @@ export class ListProductsUseCase {
     page?: number;
     limit?: number;
     type?: string;
+    status?: string;
     collection?: string;
     search?: string;
     minPrice?: number;

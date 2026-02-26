@@ -93,10 +93,16 @@ export class FulfillOrderUseCase {
       };
     });
 
-    const subtotal = cartWithItems.subtotal;
-    const total = session.amount_total
-      ? (session.amount_total / 100)
-      : subtotal;
+    const metadata = session.metadata ?? {};
+    const subtotal = metadata.subtotal ? Number(metadata.subtotal) : cartWithItems.subtotal;
+    const tax = metadata.tax ? Number(metadata.tax) : 0;
+    const shippingCost = metadata.shipping ? Number(metadata.shipping) : 0;
+    const discount = metadata.discount ? Number(metadata.discount) : 0;
+    const total = metadata.total
+      ? Number(metadata.total)
+      : session.amount_total
+        ? (session.amount_total / 100)
+        : subtotal;
 
     const order = await this.orderRepo.create(
       {
@@ -108,10 +114,12 @@ export class FulfillOrderUseCase {
             : session.payment_intent?.id ?? null,
         status: "processing",
         subtotal: subtotal.toFixed(2),
-        tax: "0",
-        shippingCost: "0",
+        tax: tax.toFixed(2),
+        shippingCost: shippingCost.toFixed(2),
+        discount: discount.toFixed(2),
         total: total.toFixed(2),
         shippingAddress: null,
+        couponCode: metadata.couponCode ?? null,
       },
       orderItems,
     );
@@ -149,8 +157,8 @@ export class FulfillOrderUseCase {
     }
 
     // 7. Redeem promotions (if coupon was applied via session metadata)
-    const discountStr = session.metadata?.discount;
-    const couponCode = session.metadata?.couponCode;
+    const discountStr = metadata.discount;
+    const couponCode = metadata.couponCode;
     if (discountStr && Number(discountStr) > 0) {
       try {
         const promoRepo = new PromotionRepository(this.db, this.storeId);

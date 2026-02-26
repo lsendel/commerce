@@ -8,6 +8,7 @@ import {
   designPlacements,
 } from "../../infrastructure/db/schema";
 import { NotFoundError, ValidationError, ForbiddenError } from "../../shared/errors";
+import { generateDefaults } from "../../domain/catalog/seo-metadata.vo";
 
 interface VariantInput {
   title: string;
@@ -16,7 +17,7 @@ interface VariantInput {
   compareAtPrice?: string;
   options?: Record<string, string>;
   digitalAssetKey?: string;
-  fulfillmentProvider?: string;
+  fulfillmentProvider?: "printful" | "gooten" | "prodigi" | "shapeways";
   estimatedProductionDays?: number;
   providerId?: string;
   externalProductId?: string;
@@ -43,6 +44,7 @@ interface CreateProductFromArtInput {
   description?: string;
   descriptionHtml?: string;
   type: "physical" | "digital";
+  status?: "draft" | "active" | "archived";
   availableForSale?: boolean;
   featuredImageUrl?: string;
   variants: VariantInput[];
@@ -78,8 +80,9 @@ export class CreateProductFromArtUseCase {
       throw new ValidationError("Art job must be completed before creating a product");
     }
 
-    // 2. Generate slug
+    // 2. Generate slug + SEO defaults
     const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${Date.now()}`;
+    const seo = generateDefaults(name, input.description);
 
     // 3. Create product
     const productRows = await this.db
@@ -91,8 +94,11 @@ export class CreateProductFromArtUseCase {
         description: input.description ?? null,
         descriptionHtml: input.descriptionHtml ?? null,
         type: input.type,
+        status: input.status ?? "draft",
         availableForSale: input.availableForSale ?? true,
         featuredImageUrl: input.featuredImageUrl ?? artJob.outputRasterUrl ?? null,
+        seoTitle: seo.title ?? null,
+        seoDescription: seo.description ?? null,
         artJobId,
       })
       .returning();
