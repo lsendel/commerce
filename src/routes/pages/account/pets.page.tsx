@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import { html } from "hono/html";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 
@@ -33,7 +34,13 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
       {/* Pet Cards Grid */}
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
         {pets.map((pet) => (
-          <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 text-center group">
+          <div
+            class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 text-center"
+            data-pet-card={pet.id}
+            data-name={pet.name}
+            data-species={pet.species}
+            data-breed={pet.breed || ""}
+          >
             {/* Avatar */}
             <div class="w-20 h-20 rounded-full mx-auto mb-4 overflow-hidden bg-brand-50 flex items-center justify-center ring-4 ring-brand-100/50">
               {pet.photoUrl ? (
@@ -57,7 +64,7 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
             </p>
 
             {/* Actions */}
-            <div class="flex items-center justify-center gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex items-center justify-center gap-2 mt-4">
               <button
                 type="button"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors"
@@ -223,123 +230,140 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
         </div>
       </div>
 
-      {/* Client-side interactions */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              var formSection = document.getElementById('pet-form-section');
-              var form = document.getElementById('pet-form');
-              var formTitle = document.getElementById('pet-form-title');
-              var formError = document.getElementById('pet-form-error');
-              var deleteConfirm = document.getElementById('pet-delete-confirm');
-              var photoInput = document.getElementById('pet-photo-input');
-              var photoPreview = document.getElementById('pet-photo-preview');
-              var pendingDeleteId = null;
+      {/* Static trusted script — no user input interpolated */}
+      {html`
+        <script>
+          (function() {
+            var formSection = document.getElementById('pet-form-section');
+            var form = document.getElementById('pet-form');
+            var formTitle = document.getElementById('pet-form-title');
+            var formError = document.getElementById('pet-form-error');
+            var deleteConfirm = document.getElementById('pet-delete-confirm');
+            var photoInput = document.getElementById('pet-photo-input');
+            var photoPreview = document.getElementById('pet-photo-preview');
+            var defaultSvg = photoPreview ? photoPreview.firstElementChild : null;
+            var pendingDeleteId = null;
 
-              function showForm(title) {
-                formTitle.textContent = title || 'Add a Pet';
-                formSection.classList.remove('hidden');
-                formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
+            function resetPreview() {
+              while (photoPreview.firstChild) photoPreview.removeChild(photoPreview.firstChild);
+              if (defaultSvg) photoPreview.appendChild(defaultSvg.cloneNode(true));
+            }
 
-              function hideForm() {
-                formSection.classList.add('hidden');
-                form.reset();
-                form.querySelector('[name="petId"]').value = '';
-                formError.classList.add('hidden');
-                photoPreview.innerHTML = '<svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>';
-              }
+            function showForm(title) {
+              formTitle.textContent = title || 'Add a Pet';
+              formSection.classList.remove('hidden');
+              formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
 
-              photoInput.addEventListener('change', function() {
-                var file = this.files[0];
-                if (!file) return;
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                  photoPreview.innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-cover" />';
-                };
-                reader.readAsDataURL(file);
+            function hideForm() {
+              formSection.classList.add('hidden');
+              form.reset();
+              form.querySelector('[name="petId"]').value = '';
+              formError.classList.add('hidden');
+              resetPreview();
+            }
+
+            function populateForm(card) {
+              form.querySelector('[name="name"]').value = card.dataset.name || '';
+              var speciesSelect = form.querySelector('[name="species"]');
+              if (speciesSelect) speciesSelect.value = card.dataset.species || '';
+              form.querySelector('[name="breed"]').value = card.dataset.breed || '';
+            }
+
+            photoInput.addEventListener('change', function() {
+              var file = this.files[0];
+              if (!file) return;
+              var reader = new FileReader();
+              reader.onload = function(e) {
+                while (photoPreview.firstChild) photoPreview.removeChild(photoPreview.firstChild);
+                var img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'w-full h-full object-cover';
+                photoPreview.appendChild(img);
+              };
+              reader.readAsDataURL(file);
+            });
+
+            document.getElementById('add-pet-trigger').addEventListener('click', function() {
+              showForm('Add a Pet');
+            });
+
+            document.getElementById('pet-form-close').addEventListener('click', hideForm);
+            document.getElementById('pet-cancel-btn').addEventListener('click', hideForm);
+
+            document.querySelectorAll('[data-edit-pet]').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var id = this.getAttribute('data-edit-pet');
+                form.querySelector('[name="petId"]').value = id;
+                var card = document.querySelector('[data-pet-card="' + id + '"]');
+                if (card) populateForm(card);
+                showForm('Edit Pet');
               });
+            });
 
-              document.getElementById('add-pet-trigger').addEventListener('click', function() {
-                showForm('Add a Pet');
+            document.querySelectorAll('[data-delete-pet]').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                pendingDeleteId = this.getAttribute('data-delete-pet');
+                deleteConfirm.classList.remove('hidden');
               });
+            });
 
-              document.getElementById('pet-form-close').addEventListener('click', hideForm);
-              document.getElementById('pet-cancel-btn').addEventListener('click', hideForm);
+            document.getElementById('pet-delete-no').addEventListener('click', function() {
+              deleteConfirm.classList.add('hidden');
+              pendingDeleteId = null;
+            });
 
-              document.querySelectorAll('[data-edit-pet]').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                  var id = this.getAttribute('data-edit-pet');
-                  form.querySelector('[name="petId"]').value = id;
-                  showForm('Edit Pet');
-                });
-              });
-
-              document.querySelectorAll('[data-delete-pet]').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                  pendingDeleteId = this.getAttribute('data-delete-pet');
-                  deleteConfirm.classList.remove('hidden');
-                });
-              });
-
-              document.getElementById('pet-delete-no').addEventListener('click', function() {
+            document.getElementById('pet-delete-yes').addEventListener('click', async function() {
+              if (!pendingDeleteId) return;
+              try {
+                var res = await fetch('/api/studio/pets/' + pendingDeleteId, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to remove pet');
+                window.location.reload();
+              } catch (err) {
+                alert(err.message);
+              } finally {
                 deleteConfirm.classList.add('hidden');
                 pendingDeleteId = null;
-              });
+              }
+            });
 
-              document.getElementById('pet-delete-yes').addEventListener('click', async function() {
-                if (!pendingDeleteId) return;
-                try {
-                  var res = await fetch('/api/studio/pets/' + pendingDeleteId, { method: 'DELETE' });
-                  if (!res.ok) throw new Error('Failed to remove pet');
-                  window.location.reload();
-                } catch (err) {
-                  alert(err.message);
-                } finally {
-                  deleteConfirm.classList.add('hidden');
-                  pendingDeleteId = null;
+            form.addEventListener('submit', async function(e) {
+              e.preventDefault();
+              var btn = document.getElementById('pet-submit-btn');
+              btn.disabled = true;
+              formError.classList.add('hidden');
+
+              var fd = new FormData(this);
+              var petId = fd.get('petId');
+              var url = petId ? '/api/studio/pets/' + petId : '/api/studio/pets';
+              var method = petId ? 'PATCH' : 'POST';
+
+              try {
+                var res = await fetch(url, {
+                  method: method,
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    name: fd.get('name'),
+                    species: fd.get('species'),
+                    breed: fd.get('breed') || undefined,
+                  }),
+                });
+
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(data.error || data.message || 'Failed to save pet');
                 }
-              });
 
-              form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                var btn = document.getElementById('pet-submit-btn');
-                btn.disabled = true;
-                formError.classList.add('hidden');
-
-                var fd = new FormData(this);
-                var petId = fd.get('petId');
-                var url = petId ? '/api/studio/pets/' + petId : '/api/studio/pets';
-                var method = petId ? 'PATCH' : 'POST';
-
-                try {
-                  var res = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      name: fd.get('name'),
-                      species: fd.get('species'),
-                      breed: fd.get('breed') || undefined,
-                    }),
-                  });
-
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.error || data.message || 'Failed to save pet');
-                  }
-
-                  window.location.reload();
-                } catch (err) {
-                  formError.textContent = err.message;
-                  formError.classList.remove('hidden');
-                  btn.disabled = false;
-                }
-              });
-            })();
-          `,
-        }}
-      />
+                window.location.reload();
+              } catch (err) {
+                formError.textContent = err.message;
+                formError.classList.remove('hidden');
+                btn.disabled = false;
+              }
+            });
+          })();
+        </script>
+      `}
     </div>
   );
 };

@@ -1,6 +1,8 @@
 import type { FC } from "hono/jsx";
+import { html } from "hono/html";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
+import { Select } from "../../../components/ui/select";
 import { Badge } from "../../../components/ui/badge";
 
 interface Address {
@@ -20,6 +22,34 @@ interface Address {
 interface AddressesPageProps {
   addresses: Address[];
 }
+
+const COUNTRY_OPTIONS = [
+  { value: "US", label: "United States" },
+  { value: "CA", label: "Canada" },
+  { value: "GB", label: "United Kingdom" },
+  { value: "AU", label: "Australia" },
+  { value: "DE", label: "Germany" },
+  { value: "FR", label: "France" },
+  { value: "ES", label: "Spain" },
+  { value: "IT", label: "Italy" },
+  { value: "NL", label: "Netherlands" },
+  { value: "JP", label: "Japan" },
+  { value: "BR", label: "Brazil" },
+  { value: "MX", label: "Mexico" },
+  { value: "IN", label: "India" },
+  { value: "NZ", label: "New Zealand" },
+  { value: "IE", label: "Ireland" },
+  { value: "SE", label: "Sweden" },
+  { value: "NO", label: "Norway" },
+  { value: "DK", label: "Denmark" },
+  { value: "FI", label: "Finland" },
+  { value: "CH", label: "Switzerland" },
+  { value: "AT", label: "Austria" },
+  { value: "BE", label: "Belgium" },
+  { value: "PT", label: "Portugal" },
+  { value: "SG", label: "Singapore" },
+  { value: "KR", label: "South Korea" },
+];
 
 export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
   return (
@@ -44,6 +74,16 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
             class={`bg-white dark:bg-gray-800 rounded-2xl border shadow-sm p-5 relative ${
               addr.isDefault ? "border-brand-300 ring-1 ring-brand-100" : "border-gray-100"
             }`}
+            data-address-card={addr.id}
+            data-name={addr.name}
+            data-line1={addr.line1}
+            data-line2={addr.line2 || ""}
+            data-city={addr.city}
+            data-state={addr.state}
+            data-zip={addr.zip}
+            data-country={addr.country}
+            data-phone={addr.phone || ""}
+            data-label={addr.label || ""}
           >
             <div class="flex items-start justify-between mb-3">
               <div class="flex items-center gap-2">
@@ -160,7 +200,7 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
 
             <div class="grid grid-cols-2 gap-4">
               <Input label="ZIP / Postal code" name="zip" required placeholder="94102" autocomplete="postal-code" />
-              <Input label="Country" name="country" required value="US" autocomplete="country" />
+              <Select label="Country" name="country" required options={COUNTRY_OPTIONS} value="US" />
             </div>
 
             <Input label="Phone (optional)" name="phone" type="tel" placeholder="+1 (555) 123-4567" autocomplete="tel" />
@@ -203,136 +243,149 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
         </div>
       </div>
 
-      {/* Client-side interactions */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              var formSection = document.getElementById('address-form-section');
-              var form = document.getElementById('address-form');
-              var formTitle = document.getElementById('address-form-title');
-              var formError = document.getElementById('address-form-error');
-              var deleteConfirm = document.getElementById('delete-confirm');
-              var pendingDeleteId = null;
+      {/* Static trusted script — no user input interpolated */}
+      {html`
+        <script>
+          (function() {
+            var formSection = document.getElementById('address-form-section');
+            var form = document.getElementById('address-form');
+            var formTitle = document.getElementById('address-form-title');
+            var formError = document.getElementById('address-form-error');
+            var deleteConfirm = document.getElementById('delete-confirm');
+            var pendingDeleteId = null;
 
-              function showForm(title) {
-                formTitle.textContent = title || 'Add New Address';
-                formSection.classList.remove('hidden');
-                formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
+            function showForm(title) {
+              formTitle.textContent = title || 'Add New Address';
+              formSection.classList.remove('hidden');
+              formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
 
-              function hideForm() {
-                formSection.classList.add('hidden');
-                form.reset();
-                form.querySelector('[name="addressId"]').value = '';
-                formError.classList.add('hidden');
-              }
+            function hideForm() {
+              formSection.classList.add('hidden');
+              form.reset();
+              form.querySelector('[name="addressId"]').value = '';
+              formError.classList.add('hidden');
+            }
 
-              document.getElementById('add-address-trigger').addEventListener('click', function() {
-                showForm('Add New Address');
+            function populateForm(card) {
+              form.querySelector('[name="label"]').value = card.dataset.label || '';
+              form.querySelector('[name="name"]').value = card.dataset.name || '';
+              form.querySelector('[name="line1"]').value = card.dataset.line1 || '';
+              form.querySelector('[name="line2"]').value = card.dataset.line2 || '';
+              form.querySelector('[name="city"]').value = card.dataset.city || '';
+              form.querySelector('[name="state"]').value = card.dataset.state || '';
+              form.querySelector('[name="zip"]').value = card.dataset.zip || '';
+              form.querySelector('[name="phone"]').value = card.dataset.phone || '';
+              var countrySelect = form.querySelector('[name="country"]');
+              if (countrySelect) countrySelect.value = card.dataset.country || 'US';
+            }
+
+            document.getElementById('add-address-trigger').addEventListener('click', function() {
+              showForm('Add New Address');
+            });
+
+            document.getElementById('address-form-close').addEventListener('click', hideForm);
+            document.getElementById('address-cancel-btn').addEventListener('click', hideForm);
+
+            document.querySelectorAll('[data-edit-address]').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var id = this.getAttribute('data-edit-address');
+                form.querySelector('[name="addressId"]').value = id;
+                var card = document.querySelector('[data-address-card="' + id + '"]');
+                if (card) populateForm(card);
+                showForm('Edit Address');
               });
+            });
 
-              document.getElementById('address-form-close').addEventListener('click', hideForm);
-              document.getElementById('address-cancel-btn').addEventListener('click', hideForm);
-
-              document.querySelectorAll('[data-edit-address]').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                  var id = this.getAttribute('data-edit-address');
-                  form.querySelector('[name="addressId"]').value = id;
-                  showForm('Edit Address');
-                });
+            document.querySelectorAll('[data-delete-address]').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                pendingDeleteId = this.getAttribute('data-delete-address');
+                deleteConfirm.classList.remove('hidden');
               });
+            });
 
-              document.querySelectorAll('[data-delete-address]').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                  pendingDeleteId = this.getAttribute('data-delete-address');
-                  deleteConfirm.classList.remove('hidden');
-                });
-              });
+            document.getElementById('delete-cancel-btn').addEventListener('click', function() {
+              deleteConfirm.classList.add('hidden');
+              pendingDeleteId = null;
+            });
 
-              document.getElementById('delete-cancel-btn').addEventListener('click', function() {
+            document.getElementById('delete-confirm-btn').addEventListener('click', async function() {
+              if (!pendingDeleteId) return;
+              try {
+                var res = await fetch('/api/auth/addresses/' + pendingDeleteId, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete');
+                window.location.reload();
+              } catch (err) {
+                alert(err.message);
+              } finally {
                 deleteConfirm.classList.add('hidden');
                 pendingDeleteId = null;
-              });
+              }
+            });
 
-              document.getElementById('delete-confirm-btn').addEventListener('click', async function() {
-                if (!pendingDeleteId) return;
+            document.querySelectorAll('[data-set-default]').forEach(function(btn) {
+              btn.addEventListener('click', async function() {
+                var id = this.getAttribute('data-set-default');
                 try {
-                  var res = await fetch('/api/auth/addresses/' + pendingDeleteId, { method: 'DELETE' });
-                  if (!res.ok) throw new Error('Failed to delete');
+                  var res = await fetch('/api/auth/addresses/' + id, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ isDefault: true }),
+                  });
+                  if (!res.ok) throw new Error('Failed to update');
                   window.location.reload();
                 } catch (err) {
                   alert(err.message);
-                } finally {
-                  deleteConfirm.classList.add('hidden');
-                  pendingDeleteId = null;
                 }
               });
+            });
 
-              document.querySelectorAll('[data-set-default]').forEach(function(btn) {
-                btn.addEventListener('click', async function() {
-                  var id = this.getAttribute('data-set-default');
-                  try {
-                    var res = await fetch('/api/auth/addresses/' + id, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ isDefault: true }),
-                    });
-                    if (!res.ok) throw new Error('Failed to update');
-                    window.location.reload();
-                  } catch (err) {
-                    alert(err.message);
-                  }
+            form.addEventListener('submit', async function(e) {
+              e.preventDefault();
+              var btn = document.getElementById('address-submit-btn');
+              btn.disabled = true;
+              formError.classList.add('hidden');
+
+              var fd = new FormData(this);
+              var addressId = fd.get('addressId');
+              var url = addressId
+                ? '/api/auth/addresses/' + addressId
+                : '/api/auth/addresses';
+              var method = addressId ? 'PATCH' : 'POST';
+
+              try {
+                var street = String(fd.get('line1') || '');
+                var line2 = String(fd.get('line2') || '');
+                if (line2) street = street + ', ' + line2;
+                var res = await fetch(url, {
+                  method: method,
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    label: fd.get('label'),
+                    street: street,
+                    city: fd.get('city'),
+                    state: fd.get('state'),
+                    zip: fd.get('zip'),
+                    country: String(fd.get('country') || 'US').toUpperCase().slice(0, 2),
+                    isDefault: !!fd.get('isDefault'),
+                  }),
                 });
-              });
 
-              form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                var btn = document.getElementById('address-submit-btn');
-                btn.disabled = true;
-                formError.classList.add('hidden');
-
-                var fd = new FormData(this);
-                var addressId = fd.get('addressId');
-                var url = addressId
-                  ? '/api/auth/addresses/' + addressId
-                  : '/api/auth/addresses';
-                var method = addressId ? 'PATCH' : 'POST';
-
-                try {
-                  var street = String(fd.get('line1') || '');
-                  var line2 = String(fd.get('line2') || '');
-                  if (line2) street = street + ', ' + line2;
-                  var res = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      label: fd.get('label'),
-                      street: street,
-                      city: fd.get('city'),
-                      state: fd.get('state'),
-                      zip: fd.get('zip'),
-                      country: String(fd.get('country') || 'US').toUpperCase().slice(0, 2),
-                      isDefault: !!fd.get('isDefault'),
-                    }),
-                  });
-
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.error || data.message || 'Failed to save address');
-                  }
-
-                  window.location.reload();
-                } catch (err) {
-                  formError.textContent = err.message;
-                  formError.classList.remove('hidden');
-                  btn.disabled = false;
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(data.error || data.message || 'Failed to save address');
                 }
-              });
-            })();
-          `,
-        }}
-      />
+
+                window.location.reload();
+              } catch (err) {
+                formError.textContent = err.message;
+                formError.classList.remove('hidden');
+                btn.disabled = false;
+              }
+            });
+          })();
+        </script>
+      `}
     </div>
   );
 };
