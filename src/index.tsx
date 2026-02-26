@@ -32,6 +32,7 @@ import { cacheResponse } from "./middleware/cache.middleware";
 import { browserCaching } from "./middleware/browser-cache.middleware";
 import { adminProductRoutes } from "./routes/api/admin-products.routes";
 import { cancellationRoutes } from "./routes/api/cancellations.routes";
+import { downloadRoutes } from "./routes/api/downloads.routes";
 
 // GraphQL
 import { schema } from "./graphql/schema";
@@ -179,6 +180,7 @@ app.route("/api/integrations", integrationRoutes);
 app.route("/api", cacheRoutes);
 app.route("/api/admin", adminProductRoutes);
 app.route("/api", cancellationRoutes);
+app.route("/api", downloadRoutes);
 
 // ─── GraphQL ───────────────────────────────────────────────
 const yoga = createYoga({ schema, graphqlEndpoint: "/graphql" });
