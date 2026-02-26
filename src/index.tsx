@@ -69,6 +69,7 @@ import { VenueListPage as _VenueListPage } from "./routes/pages/venues/list.page
 import { VenueDetailPage as _VenueDetailPage } from "./routes/pages/venues/detail.page";
 import { AdminIntegrationsPage as _AdminIntegrationsPage } from "./routes/pages/admin/integrations.page";
 import { CreateProductPage as _CreateProductPage } from "./routes/pages/platform/create-product.page";
+import { FulfillmentDashboardPage as _FulfillmentDashboardPage } from "./routes/pages/admin/fulfillment-dashboard.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 import { NotFoundPage } from "./routes/pages/404.page";
 import { ErrorPage } from "./components/ui/error-page";
@@ -104,6 +105,7 @@ const VenueDetailPage = _VenueDetailPage as any;
 const AdminIntegrationsPage = _AdminIntegrationsPage as any;
 const StoreIntegrationsPage = _StoreIntegrationsPage as any;
 const CreateProductPage = _CreateProductPage as any;
+const FulfillmentDashboardPage = _FulfillmentDashboardPage as any;
 
 // Infrastructure
 import { createDb } from "./infrastructure/db/client";
@@ -1194,6 +1196,67 @@ app.get("/admin/integrations", async (c) => {
   return c.html(
     <Layout title="Platform Integrations" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <AdminIntegrationsPage integrations={integrations as any} infraHealth={infraHealth as any} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Fulfillment Dashboard ──────────────────────────
+app.get("/admin/fulfillment", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const { eq, desc, sql } = await import("drizzle-orm");
+  const { fulfillmentRequests: frTable } = await import("./infrastructure/db/schema");
+
+  const requests = await db
+    .select()
+    .from(frTable)
+    .where(eq(frTable.storeId, storeId))
+    .orderBy(desc(frTable.createdAt))
+    .limit(100);
+
+  const countRows = await db
+    .select({
+      status: frTable.status,
+      count: sql<number>`count(*)`,
+    })
+    .from(frTable)
+    .where(eq(frTable.storeId, storeId))
+    .groupBy(frTable.status);
+
+  const counts: Record<string, number> = {};
+  let total = 0;
+  for (const row of countRows) {
+    const n = Number(row.count);
+    counts[row.status ?? "pending"] = n;
+    total += n;
+  }
+
+  const stats = {
+    total,
+    pending: counts.pending ?? 0,
+    submitted: counts.submitted ?? 0,
+    processing: counts.processing ?? 0,
+    shipped: counts.shipped ?? 0,
+    delivered: counts.delivered ?? 0,
+    failed: counts.failed ?? 0,
+    cancelled: counts.cancelled ?? 0,
+  };
+
+  const formatted = requests.map((r: any) => ({
+    id: r.id,
+    orderId: r.orderId,
+    provider: r.provider,
+    externalId: r.externalId,
+    status: r.status ?? "pending",
+    errorMessage: r.errorMessage,
+    createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "",
+    updatedAt: r.updatedAt ? new Date(r.updatedAt).toISOString() : "",
+  }));
+
+  return c.html(
+    <Layout title="Fulfillment Dashboard" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <FulfillmentDashboardPage requests={formatted} stats={stats} />
     </Layout>,
   );
 });
