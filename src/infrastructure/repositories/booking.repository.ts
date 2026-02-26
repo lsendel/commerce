@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, desc, sql, count, lt, inArray } from "drizzle-orm";
+import { eq, and, gte, lte, desc, sql, count, lt, inArray, like, or } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   bookingAvailability,
@@ -8,7 +8,9 @@ import {
   bookingRequests,
   bookings,
   bookingItems,
+  bookingWaitlist,
   products,
+  users,
 } from "../db/schema";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -532,6 +534,274 @@ export class BookingRepository {
     if (!booking) return null;
 
     return this.enrichBooking(booking);
+  }
+
+  // ─── Waitlist ─────────────────────────────────────────────────────────
+
+  async addToWaitlist(availabilityId: string, userId: string) {
+    // Determine next position
+    const countResult = await this.db
+      .select({ total: count() })
+      .from(bookingWaitlist)
+      .where(
+        and(
+          eq(bookingWaitlist.availabilityId, availabilityId),
+          eq(bookingWaitlist.storeId, this.storeId),
+        ),
+      );
+
+    const position = (countResult[0]?.total ?? 0) + 1;
+
+    const rows = await this.db
+      .insert(bookingWaitlist)
+      .values({
+        storeId: this.storeId,
+        userId,
+        availabilityId,
+        position,
+        status: "waiting",
+      })
+      .returning();
+
+    return rows[0] ?? null;
+  }
+
+  async findWaitlistEntry(availabilityId: string, userId: string) {
+    const rows = await this.db
+      .select()
+      .from(bookingWaitlist)
+      .where(
+        and(
+          eq(bookingWaitlist.availabilityId, availabilityId),
+          eq(bookingWaitlist.userId, userId),
+          eq(bookingWaitlist.storeId, this.storeId),
+          eq(bookingWaitlist.status, "waiting"),
+        ),
+      )
+      .limit(1);
+
+    return rows[0] ?? null;
+  }
+
+  async findNextWaitlistEntry(availabilityId: string) {
+    const rows = await this.db
+      .select()
+      .from(bookingWaitlist)
+      .where(
+        and(
+          eq(bookingWaitlist.availabilityId, availabilityId),
+          eq(bookingWaitlist.storeId, this.storeId),
+          eq(bookingWaitlist.status, "waiting"),
+        ),
+      )
+      .orderBy(bookingWaitlist.position)
+      .limit(1);
+
+    return rows[0] ?? null;
+  }
+
+  async updateWaitlistStatus(
+    id: string,
+    status: "waiting" | "notified" | "expired" | "converted",
+    extra?: { notifiedAt?: Date; expiredAt?: Date },
+  ) {
+    const setValues: Record<string, unknown> = { status };
+    if (extra?.notifiedAt) setValues.notifiedAt = extra.notifiedAt;
+    if (extra?.expiredAt) setValues.expiredAt = extra.expiredAt;
+
+    const rows = await this.db
+      .update(bookingWaitlist)
+      .set(setValues)
+      .where(
+        and(
+          eq(bookingWaitlist.id, id),
+          eq(bookingWaitlist.storeId, this.storeId),
+        ),
+      )
+      .returning();
+
+    return rows[0] ?? null;
+  }
+
+  async findWaitlistByUserId(userId: string) {
+    return this.db
+      .select()
+      .from(bookingWaitlist)
+      .where(
+        and(
+          eq(bookingWaitlist.userId, userId),
+          eq(bookingWaitlist.storeId, this.storeId),
+          eq(bookingWaitlist.status, "waiting"),
+        ),
+      )
+      .orderBy(bookingWaitlist.createdAt);
+  }
+
+  async removeFromWaitlist(id: string, userId: string) {
+    const rows = await this.db
+      .delete(bookingWaitlist)
+      .where(
+        and(
+          eq(bookingWaitlist.id, id),
+          eq(bookingWaitlist.userId, userId),
+          eq(bookingWaitlist.storeId, this.storeId),
+        ),
+      )
+      .returning();
+
+    return rows[0] ?? null;
+  }
+
+  // ─── Admin Queries ───────────────────────────────────────────────────
+
+  async findBookingsForAdmin(filters: {
+    page: number;
+    limit: number;
+    status?: string;
+    date?: string;
+    search?: string;
+  }) {
+    const offset = (filters.page - 1) * filters.limit;
+
+    const conditions: ReturnType<typeof eq>[] = [
+      eq(bookings.storeId, this.storeId),
+    ];
+
+    if (filters.status) {
+      conditions.push(eq(bookings.status, filters.status as any));
+    }
+
+    if (filters.date) {
+      conditions.push(eq(bookingAvailability.slotDate, filters.date));
+    }
+
+    const whereClause = and(...conditions);
+
+    // Count
+    const countResult = await this.db
+      .select({ total: count() })
+      .from(bookings)
+      .innerJoin(bookingAvailability, eq(bookings.bookingAvailabilityId, bookingAvailability.id))
+      .innerJoin(products, eq(bookingAvailability.productId, products.id))
+      .leftJoin(users, eq(bookings.userId, users.id))
+      .where(
+        filters.search
+          ? and(whereClause, or(
+              like(users.name, `%${filters.search}%`),
+              like(users.email, `%${filters.search}%`),
+            ))
+          : whereClause,
+      );
+
+    const total = countResult[0]?.total ?? 0;
+
+    // Fetch
+    const rows = await this.db
+      .select({
+        id: bookings.id,
+        status: bookings.status,
+        userId: bookings.userId,
+        customerName: users.name,
+        customerEmail: users.email,
+        eventName: products.name,
+        slotDate: bookingAvailability.slotDate,
+        slotTime: bookingAvailability.slotTime,
+        createdAt: bookings.createdAt,
+      })
+      .from(bookings)
+      .innerJoin(bookingAvailability, eq(bookings.bookingAvailabilityId, bookingAvailability.id))
+      .innerJoin(products, eq(bookingAvailability.productId, products.id))
+      .leftJoin(users, eq(bookings.userId, users.id))
+      .where(
+        filters.search
+          ? and(whereClause, or(
+              like(users.name, `%${filters.search}%`),
+              like(users.email, `%${filters.search}%`),
+            ))
+          : whereClause,
+      )
+      .orderBy(desc(bookings.createdAt))
+      .limit(filters.limit)
+      .offset(offset);
+
+    // Get booking items for quantity
+    const bookingIds = rows.map((r) => r.id);
+    let quantityMap = new Map<string, number>();
+    if (bookingIds.length > 0) {
+      const itemRows = await this.db
+        .select({
+          bookingId: bookingItems.bookingId,
+          qty: sql<number>`sum(${bookingItems.quantity})`.as("qty"),
+        })
+        .from(bookingItems)
+        .where(inArray(bookingItems.bookingId, bookingIds))
+        .groupBy(bookingItems.bookingId);
+
+      for (const item of itemRows) {
+        quantityMap.set(item.bookingId, Number(item.qty));
+      }
+    }
+
+    const bookingsList = rows.map((r) => ({
+      ...r,
+      quantity: quantityMap.get(r.id) ?? 1,
+    }));
+
+    return { bookings: bookingsList, total };
+  }
+
+  async getBookingStats() {
+    const base = eq(bookings.storeId, this.storeId);
+
+    const statsRows = await this.db
+      .select({
+        status: bookings.status,
+        cnt: count(),
+      })
+      .from(bookings)
+      .where(base)
+      .groupBy(bookings.status);
+
+    let totalBookings = 0;
+    let checkedIn = 0;
+    let noShows = 0;
+    let cancelled = 0;
+
+    for (const row of statsRows) {
+      const c = Number(row.cnt);
+      totalBookings += c;
+      if (row.status === "checked_in") checkedIn = c;
+      if (row.status === "no_show") noShows = c;
+      if (row.status === "cancelled") cancelled = c;
+    }
+
+    return { totalBookings, checkedIn, noShows, cancelled };
+  }
+
+  async findWaitlistForAdmin() {
+    const rows = await this.db
+      .select({
+        id: bookingWaitlist.id,
+        userName: users.name,
+        eventName: products.name,
+        position: bookingWaitlist.position,
+        status: bookingWaitlist.status,
+        createdAt: bookingWaitlist.createdAt,
+      })
+      .from(bookingWaitlist)
+      .innerJoin(bookingAvailability, eq(bookingWaitlist.availabilityId, bookingAvailability.id))
+      .innerJoin(products, eq(bookingAvailability.productId, products.id))
+      .leftJoin(users, eq(bookingWaitlist.userId, users.id))
+      .where(
+        and(
+          eq(bookingWaitlist.storeId, this.storeId),
+          eq(bookingWaitlist.status, "waiting"),
+        ),
+      )
+      .orderBy(bookingWaitlist.position)
+      .limit(50);
+
+    return rows;
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────────

@@ -31,6 +31,32 @@ export class CreateBookingRequestUseCase {
       throw new ConflictError("Cannot book a slot that has already started");
     }
 
+    // Enforce cutoff and max advance time from booking settings
+    const settings = await this.bookingRepo.findSettingsByProductId(slot.productId);
+    if (settings) {
+      // Cutoff: must book at least N hours/minutes before slot
+      const cutoffMs = settings.cutOffTime
+        ? settings.cutOffTime * (settings.cutOffUnit === "hours" ? 3_600_000 : 60_000)
+        : 0;
+      if (cutoffMs > 0) {
+        const cutoffDeadline = new Date(slotStart.getTime() - cutoffMs);
+        if (now > cutoffDeadline) {
+          throw new ConflictError(
+            `Booking cutoff has passed. Must book at least ${settings.cutOffTime} ${settings.cutOffUnit ?? "hours"} in advance.`,
+          );
+        }
+      }
+
+      // Max advance: cannot book more than N days ahead
+      const maxAdvanceDays = settings.maxAdvanceTime ?? 90;
+      const maxAdvanceMs = maxAdvanceDays * 86_400_000;
+      if (slotStart.getTime() - now.getTime() > maxAdvanceMs) {
+        throw new ConflictError(
+          `Cannot book more than ${maxAdvanceDays} days in advance.`,
+        );
+      }
+    }
+
     // 3. Calculate total quantity from person type quantities
     const totalQuantity = Object.values(personTypeQuantities).reduce(
       (sum, qty) => sum + qty,
