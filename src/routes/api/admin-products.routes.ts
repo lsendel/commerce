@@ -4,9 +4,11 @@ import { z } from "zod";
 import type { Env } from "../../env";
 import { createDb } from "../../infrastructure/db/client";
 import { requireAuth } from "../../middleware/auth.middleware";
+import { eq, and } from "drizzle-orm";
 import { CreateProductFromArtUseCase } from "../../application/catalog/create-product-from-art.usecase";
 import { GenerateMockupUseCase } from "../../application/fulfillment/generate-mockup.usecase";
 import { AiJobRepository } from "../../infrastructure/repositories/ai-job.repository";
+import { fulfillmentRequests } from "../../infrastructure/db/schema";
 
 const adminProducts = new Hono<{ Bindings: Env }>();
 
@@ -116,6 +118,63 @@ adminProducts.post(
         });
 
     return c.json(result, 201);
+  },
+);
+
+// ─── POST /fulfillment/:id/retry — Retry a failed fulfillment request ─────
+
+adminProducts.post(
+  "/fulfillment/:id/retry",
+  requireAuth(),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const storeId = c.get("storeId") as string;
+    const requestId = c.req.param("id");
+
+    // Load and verify the request
+    const rows = await db
+      .select()
+      .from(fulfillmentRequests)
+      .where(
+        and(
+          eq(fulfillmentRequests.id, requestId),
+          eq(fulfillmentRequests.storeId, storeId),
+        ),
+      )
+      .limit(1);
+
+    const request = rows[0];
+    if (!request) {
+      return c.json({ error: "Fulfillment request not found" }, 404);
+    }
+
+    if (request.status !== "failed" && request.status !== "cancelled") {
+      return c.json(
+        { error: `Cannot retry request in ${request.status} status` },
+        400,
+      );
+    }
+
+    // Reset to pending and clear error
+    await db
+      .update(fulfillmentRequests)
+      .set({
+        status: "pending",
+        errorMessage: null,
+        externalId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(fulfillmentRequests.id, requestId));
+
+    // Re-enqueue for processing
+    await c.env.FULFILLMENT_QUEUE.send({
+      type: "fulfillment.submit",
+      fulfillmentRequestId: requestId,
+      provider: request.provider,
+      storeId,
+    });
+
+    return c.json({ success: true, message: "Request re-queued for processing" });
   },
 );
 
