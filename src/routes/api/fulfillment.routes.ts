@@ -8,7 +8,9 @@ import { SyncPrintfulCatalogUseCase } from "../../application/fulfillment/sync-p
 import { TrackShipmentUseCase } from "../../application/fulfillment/track-shipment.usecase";
 import { GenerateMockupUseCase } from "../../application/fulfillment/generate-mockup.usecase";
 import { PrintfulWebhookHandler } from "../../infrastructure/printful/webhook.handler";
+import { FulfillmentWebhookRouter } from "../../infrastructure/fulfillment/webhook-router";
 import { syncCatalogSchema } from "../../shared/validators";
+import type { FulfillmentRequestStatus } from "../../domain/fulfillment/fulfillment-request.entity";
 
 const fulfillment = new Hono<{ Bindings: Env }>();
 
@@ -126,11 +128,91 @@ fulfillment.post("/webhooks/printful", async (c) => {
   // Parse the event payload
   const event = JSON.parse(rawBody);
 
-  // Process the event
+  // Process the event through existing handler
   const db = createDb(c.env.DATABASE_URL);
   const result = await webhookHandler.handleEvent(event, db);
 
+  // Also record event via webhook router for fulfillment request tracking
+  const storeId = c.get("storeId") as string;
+  if (storeId && event.data?.order?.external_id) {
+    const statusMap: Record<string, FulfillmentRequestStatus> = {
+      package_shipped: "shipped",
+      order_updated: "processing",
+      order_failed: "failed",
+      order_canceled: "cancelled",
+    };
+    const webhookRouter = new FulfillmentWebhookRouter(db, storeId);
+    const shipmentData = event.data?.shipment;
+    await webhookRouter.processEvent({
+      provider: "printful",
+      externalEventId: `printful-${event.type}-${event.created}`,
+      externalOrderId: String(event.data.order.external_id),
+      eventType: event.type,
+      payload: event.data,
+      mappedStatus: statusMap[event.type],
+      shipment: event.type === "package_shipped" && shipmentData
+        ? {
+            carrier: shipmentData.carrier ?? "",
+            trackingNumber: shipmentData.tracking_number ?? "",
+            trackingUrl: shipmentData.tracking_url ?? "",
+            shippedAt: new Date(shipmentData.shipped_at * 1000),
+            raw: shipmentData,
+          }
+        : undefined,
+    });
+  }
+
   return c.json({ received: true, ...result }, 200);
+});
+
+// ─── POST /webhooks/prodigi — Handle Prodigi webhook events ──────────
+
+fulfillment.post("/webhooks/prodigi", async (c) => {
+  const rawBody = await c.req.text();
+  const signature = c.req.header("x-prodigi-signature") ?? "";
+
+  // Stub verification for now (Task 19 implements full HMAC)
+  if (!signature && c.env.PRODIGI_WEBHOOK_SECRET) {
+    return c.json({ error: "Missing webhook signature" }, 401);
+  }
+
+  const event = JSON.parse(rawBody);
+  const db = createDb(c.env.DATABASE_URL);
+  const storeId = c.get("storeId") as string;
+
+  if (!storeId || !event.id || !event.order?.id) {
+    return c.json({ received: true, handled: false }, 200);
+  }
+
+  const statusMap: Record<string, FulfillmentRequestStatus> = {
+    "order.shipped": "shipped",
+    "order.completed": "delivered",
+    "order.cancelled": "cancelled",
+    "order.failed": "failed",
+  };
+
+  const webhookRouter = new FulfillmentWebhookRouter(db, storeId);
+  const shipmentInfo = event.shipment;
+
+  await webhookRouter.processEvent({
+    provider: "prodigi",
+    externalEventId: event.id,
+    externalOrderId: String(event.order.id),
+    eventType: event.type ?? event.event ?? "unknown",
+    payload: event,
+    mappedStatus: statusMap[event.type ?? event.event],
+    shipment: shipmentInfo
+      ? {
+          carrier: shipmentInfo.carrier ?? "",
+          trackingNumber: shipmentInfo.tracking_number ?? shipmentInfo.trackingNumber ?? "",
+          trackingUrl: shipmentInfo.tracking_url ?? shipmentInfo.trackingUrl ?? "",
+          shippedAt: new Date(),
+          raw: shipmentInfo,
+        }
+      : undefined,
+  });
+
+  return c.json({ received: true }, 200);
 });
 
 export { fulfillment as fulfillmentRoutes };

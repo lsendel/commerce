@@ -14,6 +14,9 @@ export interface Env {
   PRINTFUL_API_KEY: string;
   PRINTFUL_WEBHOOK_SECRET: string;
 
+  // Prodigi
+  PRODIGI_WEBHOOK_SECRET?: string;
+
   // AI
   GEMINI_API_KEY: string;
 
