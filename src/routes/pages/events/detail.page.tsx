@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import { html } from "hono/html";
 import { CalendarView } from "../../../components/booking/calendar-view";
 import { SlotCard } from "../../../components/booking/slot-card";
 import { BookingForm } from "../../../components/booking/booking-form";
@@ -61,6 +62,10 @@ interface EventDetailPageProps {
   selectedSlotId?: string;
   /** Person types for booking form */
   personTypes?: PersonType[];
+  /** Whether waitlist is enabled for this event */
+  waitlistEnabled?: boolean;
+  /** Cancellation policy window in hours */
+  cancellationPolicyHours?: number;
 }
 
 export const EventDetailPage: FC<EventDetailPageProps> = ({
@@ -84,6 +89,8 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
   slots,
   selectedSlotId,
   personTypes,
+  waitlistEnabled,
+  cancellationPolicyHours,
 }) => {
   const selectedSlot = slots?.find((s) => s.id === selectedSlotId);
   const baseUrl = `/events/${slug}`;
@@ -314,6 +321,23 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
               </div>
             )}
 
+            {/* Join Waitlist for full slots */}
+            {selectedDate && slots && slots.length > 0 && slots.every((s) => s.status === "full") && waitlistEnabled && (
+              <div class="bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-800 p-5 text-center">
+                <p class="text-sm text-amber-700 dark:text-amber-300 mb-3">
+                  All slots for this date are full. Join the waitlist to be notified if a spot opens up.
+                </p>
+                <button
+                  type="button"
+                  data-action="join-waitlist"
+                  data-availability-id={slots[0]?.id}
+                  class="px-4 py-2 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+                >
+                  Join Waitlist
+                </button>
+              </div>
+            )}
+
             {selectedDate && (!slots || slots.length === 0) && (
               <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 text-center">
                 <p class="text-sm text-gray-400">No slots available for this date.</p>
@@ -331,9 +355,51 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
                 variantId={variantId}
               />
             )}
+
+            {/* Cancellation policy preview */}
+            {cancellationPolicyHours != null && cancellationPolicyHours > 0 && (
+              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-600">
+                <div class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Cancellation Policy
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  Free cancellation up to {cancellationPolicyHours} hours before the event. Late cancellations may not be refunded.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {html`<script>
+        document.addEventListener('click', async (e) => {
+          const btn = e.target.closest('[data-action="join-waitlist"]');
+          if (!btn) return;
+          const availabilityId = btn.dataset.availabilityId;
+          if (!availabilityId) return;
+          btn.disabled = true;
+          btn.textContent = 'Joining...';
+          try {
+            const res = await fetch('/api/bookings/availability/' + availabilityId + '/waitlist', { method: 'POST' });
+            if (res.ok) {
+              btn.textContent = 'Joined Waitlist!';
+              btn.classList.replace('bg-amber-500', 'bg-green-500');
+              btn.classList.replace('hover:bg-amber-600', 'hover:bg-green-600');
+            } else {
+              const data = await res.json().catch(() => ({}));
+              alert(data.error || 'Could not join waitlist');
+              btn.disabled = false;
+              btn.textContent = 'Join Waitlist';
+            }
+          } catch {
+            btn.disabled = false;
+            btn.textContent = 'Join Waitlist';
+          }
+        });
+      </script>`}
     </div>
   );
 };

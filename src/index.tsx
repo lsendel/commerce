@@ -92,6 +92,7 @@ import { ProductEditPage as _ProductEditPage } from "./routes/pages/admin/produc
 import { AdminCollectionsPage as _AdminCollectionsPage } from "./routes/pages/admin/collections.page";
 import { AdminOrdersPage as _AdminOrdersPage } from "./routes/pages/admin/orders.page";
 import { AdminOrderDetailPage as _AdminOrderDetailPage } from "./routes/pages/admin/order-detail.page";
+import { AdminBookingsPage as _AdminBookingsPage } from "./routes/pages/admin/bookings.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 import { NotFoundPage } from "./routes/pages/404.page";
 import { ErrorPage } from "./components/ui/error-page";
@@ -134,6 +135,7 @@ const ProductEditPage = _ProductEditPage as any;
 const AdminCollectionsPage = _AdminCollectionsPage as any;
 const AdminOrdersPage = _AdminOrdersPage as any;
 const AdminOrderDetailPage = _AdminOrderDetailPage as any;
+const AdminBookingsPage = _AdminBookingsPage as any;
 const ResetPasswordPage = _ResetPasswordPage as any;
 const VerifyEmailPage = _VerifyEmailPage as any;
 
@@ -1616,6 +1618,37 @@ app.get("/admin/orders/:id", async (c) => {
         order={order as any}
         customerName={customer?.name}
         customerEmail={customer?.email}
+      />
+    </Layout>,
+  );
+});
+
+// ─── Admin Bookings Page ──────────────────────────────────
+app.get("/admin/bookings", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const page = Number(c.req.query("page") || "1");
+  const limit = 20;
+  const status = c.req.query("status");
+  const date = c.req.query("date");
+  const search = c.req.query("search");
+
+  const bookingRepo = new BookingRepository(db, storeId);
+  const { bookings: bookingsList, total } = await bookingRepo.findBookingsForAdmin({ page, limit, status, date, search });
+  const stats = await bookingRepo.getBookingStats();
+  const waitlist = await bookingRepo.findWaitlistForAdmin();
+
+  return c.html(
+    <Layout title="Bookings – Admin" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminBookingsPage
+        bookings={bookingsList as any}
+        total={total}
+        page={page}
+        limit={limit}
+        filters={{ status, date, search }}
+        stats={stats}
+        waitlist={waitlist as any}
       />
     </Layout>,
   );
