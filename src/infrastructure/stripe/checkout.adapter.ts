@@ -17,6 +17,7 @@ export interface CreateCheckoutSessionParams {
   metadata: {
     cartId: string;
     userId: string;
+    [key: string]: string;
   };
 }
 
@@ -53,10 +54,7 @@ export class StripeCheckoutAdapter {
       success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl,
       customer_email: customerEmail,
-      metadata: {
-        cartId: metadata.cartId,
-        userId: metadata.userId,
-      },
+      metadata,
     });
 
     if (!session.url) {

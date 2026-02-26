@@ -10,6 +10,10 @@ import { RemoveFromCartUseCase } from "../../application/cart/remove-from-cart.u
 import { addToCartSchema, updateCartItemSchema } from "../../shared/validators";
 import { cartSession } from "../../middleware/cart-session.middleware";
 import { optionalAuth } from "../../middleware/auth.middleware";
+import { InventoryRepository } from "../../infrastructure/repositories/inventory.repository";
+import { PromotionRepository } from "../../infrastructure/repositories/promotion.repository";
+import { ApplyCouponUseCase } from "../../application/promotions/apply-coupon.usecase";
+import { applyCouponSchema } from "../../contracts/promotions.contract";
 
 const cart = new Hono<{ Bindings: Env }>();
 
@@ -39,7 +43,8 @@ cart.post(
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const repo = new CartRepository(db, c.get("storeId") as string);
-    const useCase = new AddToCartUseCase(repo, db);
+    const inventoryRepo = new InventoryRepository(db, c.get("storeId") as string);
+    const useCase = new AddToCartUseCase(repo, db, inventoryRepo);
 
     const sessionId = c.get("cartSessionId");
     const userId = c.get("userId");
@@ -73,7 +78,8 @@ cart.patch(
 cart.delete("/cart/items/:id", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
   const repo = new CartRepository(db, c.get("storeId") as string);
-  const useCase = new RemoveFromCartUseCase(repo);
+  const inventoryRepo = new InventoryRepository(db, c.get("storeId") as string);
+  const useCase = new RemoveFromCartUseCase(repo, inventoryRepo);
 
   const sessionId = c.get("cartSessionId");
   const userId = c.get("userId");
@@ -81,6 +87,38 @@ cart.delete("/cart/items/:id", async (c) => {
 
   const result = await useCase.execute(sessionId, itemId, userId);
   return c.json(result, 200);
+});
+
+// POST /cart/apply-coupon — apply coupon to cart
+cart.post(
+  "/cart/apply-coupon",
+  zValidator("json", applyCouponSchema),
+  async (c) => {
+    const { code } = c.req.valid("json");
+    const storeId = c.get("storeId") as string;
+    const userId = c.get("userId") ?? null;
+    const db = createDb(c.env.DATABASE_URL);
+    const promoRepo = new PromotionRepository(db, storeId);
+    const useCase = new ApplyCouponUseCase(promoRepo);
+
+    try {
+      const result = await useCase.execute(code, userId);
+      return c.json({ promotion: result.promotion, coupon: result.coupon });
+    } catch (error: any) {
+      if (error.code === "NOT_FOUND") {
+        return c.json({ error: error.message }, 404);
+      }
+      if (error.code === "VALIDATION_ERROR") {
+        return c.json({ error: error.message }, 400);
+      }
+      throw error;
+    }
+  },
+);
+
+// DELETE /cart/remove-coupon — remove coupon from cart
+cart.delete("/cart/remove-coupon", async (c) => {
+  return c.json({ message: "Coupon removed" });
 });
 
 export { cart as cartRoutes };

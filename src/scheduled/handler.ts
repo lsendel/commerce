@@ -9,6 +9,12 @@ import { runMockupPolling } from "./mockup-polling.job";
 import { runAffiliatePayouts } from "./affiliate-payouts.job";
 import { runIntegrationHealthChecks } from "./integration-health.job";
 import { runGootenPolling } from "./gooten-polling.job";
+import { runExpireInventoryReservations } from "./expire-inventory-reservations.job";
+import { runRefreshCustomerSegments } from "./refresh-customer-segments.job";
+import { runExpirePromotions } from "./expire-promotions.job";
+import { runRollupAnalytics } from "./rollup-analytics.job";
+import { runPushAnalyticsExternal } from "./push-analytics-external.job";
+import { runSyncExchangeRates } from "./sync-exchange-rates.job";
 
 export async function handleScheduled(
   ctrl: ScheduledController,
@@ -25,6 +31,16 @@ export async function handleScheduled(
       break;
     case "0 * * * *": // Every 1 hour
       ctx.waitUntil(runAbandonedCartDetection(env));
+      ctx.waitUntil(runExpirePromotions(env));
+      break;
+    case "0 2 * * *": // Daily at 2am UTC — analytics rollup
+      ctx.waitUntil(runRollupAnalytics(env));
+      break;
+    case "0 6 * * *": // Daily at 6am UTC — exchange rate sync
+      ctx.waitUntil(runSyncExchangeRates(env));
+      break;
+    case "0 */6 * * *": // Every 6 hours — refresh customer segments
+      ctx.waitUntil(runRefreshCustomerSegments(env));
       break;
     case "0 */4 * * *": // Every 4 hours
       ctx.waitUntil(runCatalogSync(env));
@@ -32,6 +48,7 @@ export async function handleScheduled(
     case "*/5 * * * *": // Every 5 minutes
       ctx.waitUntil(runExpireBookingRequests(env));
       ctx.waitUntil(runGootenPolling(env));
+      ctx.waitUntil(runExpireInventoryReservations(env));
       break;
     case "*/10 * * * *": // Every 10 minutes
       ctx.waitUntil(runMockupPolling(env));
@@ -39,6 +56,7 @@ export async function handleScheduled(
     case "*/15 * * * *": // Every 15 minutes
       ctx.waitUntil(runStockCheck(env));
       ctx.waitUntil(runIntegrationHealthChecks(env));
+      ctx.waitUntil(runPushAnalyticsExternal(env));
       break;
   }
 }

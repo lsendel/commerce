@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import type { CartRepository } from "../../infrastructure/repositories/cart.repository";
 import type { Database } from "../../infrastructure/db/client";
+import type { InventoryRepository } from "../../infrastructure/repositories/inventory.repository";
 import {
   productVariants,
   products,
@@ -12,6 +13,7 @@ export class AddToCartUseCase {
   constructor(
     private repo: CartRepository,
     private db: Database,
+    private inventoryRepo: InventoryRepository,
   ) {}
 
   async execute(
@@ -89,14 +91,28 @@ export class AddToCartUseCase {
     // 4. Find or create the cart, then add the item
     const cart = await this.repo.findOrCreateCart(sessionId, userId);
 
-    await this.repo.addItem(cart.id, {
+    const addedItem = await this.repo.addItem(cart.id, {
       variantId: data.variantId,
       quantity: data.quantity,
       bookingAvailabilityId: data.bookingAvailabilityId,
       personTypeQuantities: data.personTypeQuantities,
     });
 
-    // 5. Return the full cart
+    // 5. Reserve inventory for physical products
+    if (product.type === "physical" && addedItem) {
+      const reservation = await this.inventoryRepo.reserve(
+        data.variantId,
+        addedItem.id,
+        data.quantity,
+      );
+      if (!reservation) {
+        // Rollback: remove the cart item
+        await this.repo.removeItem(addedItem.id, cart.id);
+        throw new ValidationError("Insufficient inventory for this item");
+      }
+    }
+
+    // 6. Return the full cart
     const cartWithItems = await this.repo.findCartWithItems(cart.id);
     return cartWithItems ?? { id: cart.id, items: [], subtotal: 0 };
   }
