@@ -371,6 +371,7 @@ export const products = pgTable("products", {
   featuredImageUrl: text("featured_image_url"),
   seoTitle: text("seo_title"),
   seoDescription: text("seo_description"),
+  artJobId: uuid("art_job_id").references(() => generationJobs.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -385,6 +386,11 @@ export const productsRelations = relations(products, ({ many, one }) => ({
   bookingAvailability: many(bookingAvailability),
   printfulSyncProduct: one(printfulSyncProducts),
   reviews: many(productReviews),
+  artJob: one(generationJobs, {
+    fields: [products.artJobId],
+    references: [generationJobs.id],
+  }),
+  designPlacements: many(designPlacements),
 }));
 
 export const productVariants = pgTable("product_variants", {
@@ -400,6 +406,9 @@ export const productVariants = pgTable("product_variants", {
   options: jsonb("options"),
   printfulSyncVariantId: integer("printful_sync_variant_id"),
   availableForSale: boolean("available_for_sale").default(true),
+  digitalAssetKey: text("digital_asset_key"),
+  fulfillmentProvider: text("fulfillment_provider"),
+  estimatedProductionDays: integer("estimated_production_days"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -1189,6 +1198,32 @@ export const providerProductMappingsRelations = relations(
     provider: one(fulfillmentProviders, {
       fields: [providerProductMappings.providerId],
       references: [fulfillmentProviders.id],
+    }),
+  }),
+);
+
+export const designPlacements = pgTable("design_placements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  area: text("area").notNull(),
+  imageUrl: text("image_url").notNull(),
+  x: integer("x").default(0),
+  y: integer("y").default(0),
+  scale: decimal("scale", { precision: 5, scale: 3 }).default("1.000"),
+  rotation: integer("rotation").default(0),
+  printAreaId: text("print_area_id"),
+  providerMeta: jsonb("provider_meta"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const designPlacementsRelations = relations(
+  designPlacements,
+  ({ one }) => ({
+    product: one(products, {
+      fields: [designPlacements.productId],
+      references: [products.id],
     }),
   }),
 );
