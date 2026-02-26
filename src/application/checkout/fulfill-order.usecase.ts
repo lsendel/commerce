@@ -219,10 +219,11 @@ export class FulfillOrderUseCase {
       const routingMap = await router.selectProvidersForVariants(physicalVariantIds);
 
       // Group items by provider
-      const byProvider = new Map<string, Array<{ orderItemId: string; variantId: string; quantity: number }>>();
+      type FulfillmentProviderKey = "printful" | "gooten" | "prodigi" | "shapeways" | "manual";
+      const byProvider = new Map<FulfillmentProviderKey, Array<{ orderItemId: string; variantId: string; quantity: number }>>();
       for (const item of physicalItems) {
         const routing = routingMap.get(item.variantId);
-        const providerKey = routing?.providerType ?? "manual";
+        const providerKey = (routing?.providerType ?? "manual") as FulfillmentProviderKey;
         const group = byProvider.get(providerKey) ?? [];
         const orderItem = order.items.find(
           (oi) => oi.variantId === item.variantId && !oi.bookingAvailabilityId,

@@ -132,6 +132,12 @@ export const platformRoleEnum = pgEnum("platform_role", [
   "user",
 ]);
 
+export const invitationStatusEnum = pgEnum("invitation_status", [
+  "pending",
+  "accepted",
+  "expired",
+]);
+
 export const domainVerificationStatusEnum = pgEnum(
   "domain_verification_status",
   ["pending", "verified", "failed"],
@@ -308,6 +314,8 @@ export const stores = pgTable(
     subdomain: text("subdomain").unique(),
     customDomain: text("custom_domain"),
     logo: text("logo"),
+    logoUrl: text("logo_url"),
+    faviconUrl: text("favicon_url"),
     primaryColor: text("primary_color"),
     secondaryColor: text("secondary_color"),
     status: storeStatusEnum("status").default("trial"),
@@ -1350,12 +1358,18 @@ export const productReviews = pgTable("product_reviews", {
   title: text("title"),
   content: text("content"),
   isVerifiedPurchase: boolean("is_verified_purchase").default(false),
+  verifiedPurchaseOrderId: uuid("verified_purchase_order_id").references(() => orders.id),
   status: reviewStatusEnum("status").default("approved"),
   moderatedAt: timestamp("moderated_at"),
+  responseText: text("response_text"),
+  responseAt: timestamp("response_at"),
   helpfulCount: integer("helpful_count").default(0),
   reportedCount: integer("reported_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  productUserIdx: uniqueIndex("reviews_product_user_idx").on(table.productId, table.userId),
+  storeStatusIdx: index("reviews_store_status_idx").on(table.storeId, table.status),
+}));
 
 export const productReviewsRelations = relations(productReviews, ({ one }) => ({
   product: one(products, {
@@ -1418,7 +1432,9 @@ export const platformTransactions = pgTable("platform_transactions", {
   }).notNull(),
   stripeTransferId: text("stripe_transfer_id"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  storeCreatedIdx: index("platform_transactions_store_created_idx").on(table.storeId, table.createdAt),
+}));
 
 export const platformTransactionsRelations = relations(
   platformTransactions,
@@ -1746,6 +1762,7 @@ export const affiliateTiers = pgTable("affiliate_tiers", {
     .default("0"),
   minSales: integer("min_sales").default(0),
   minRevenue: decimal("min_revenue", { precision: 10, scale: 2 }).default("0"),
+  minimumPayoutAmount: decimal("minimum_payout_amount", { precision: 10, scale: 2 }).default("25.00"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -1779,6 +1796,7 @@ export const affiliates = pgTable(
     }).notNull(),
     parentAffiliateId: uuid("parent_affiliate_id"),
     tierId: uuid("tier_id").references(() => affiliateTiers.id),
+    payoutEmail: text("payout_email"),
     totalEarnings: decimal("total_earnings", { precision: 10, scale: 2 })
       .notNull()
       .default("0"),
@@ -1896,7 +1914,10 @@ export const affiliateConversions = pgTable("affiliate_conversions", {
   couponCode: text("coupon_code"),
   parentConversionId: uuid("parent_conversion_id"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  affiliateStatusIdx: index("conversions_affiliate_status_idx").on(table.affiliateId, table.status),
+  orderIdx: index("conversions_order_idx").on(table.orderId),
+}));
 
 export const affiliateConversionsRelations = relations(
   affiliateConversions,
@@ -2111,6 +2132,7 @@ export const couponCodes = pgTable(
       table.promotionId,
       table.code,
     ),
+    codeLookupIdx: index("coupon_codes_code_idx").on(table.code),
   }),
 );
 
@@ -2136,7 +2158,10 @@ export const promotionRedemptions = pgTable("promotion_redemptions", {
   discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull(),
   lineItemsAffected: jsonb("line_items_affected"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  promotionIdx: index("redemptions_promotion_idx").on(table.promotionId),
+  orderIdx: index("redemptions_order_idx").on(table.orderId),
+}));
 
 export const promotionRedemptionsRelations = relations(
   promotionRedemptions,
@@ -2433,6 +2458,10 @@ export const analyticsEvents = pgTable(
       table.eventType,
       table.createdAt,
     ),
+    storeCreatedIdx: index("analytics_events_store_created_idx").on(
+      table.storeId,
+      table.createdAt,
+    ),
   }),
 );
 
@@ -2458,6 +2487,22 @@ export const analyticsDailyRollups = pgTable(
     ),
   }),
 );
+
+export const funnelStepEnum = pgEnum("funnel_step", [
+  "page_view", "product_view", "add_to_cart", "checkout_started", "order_completed",
+]);
+
+export const analyticsFunnels = pgTable("analytics_funnels", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  sessionId: text("session_id").notNull(),
+  step: funnelStepEnum("step").notNull(),
+  productId: uuid("product_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  storeStepIdx: index("funnels_store_step_idx").on(table.storeId, table.step, table.createdAt),
+  sessionIdx: index("funnels_session_idx").on(table.sessionId),
+}));
 
 // ─── Currency Context ───────────────────────────────────────────────────────
 
@@ -2575,5 +2620,33 @@ export const inventoryTransactionsRelations = relations(inventoryTransactions, (
   variant: one(productVariants, {
     fields: [inventoryTransactions.variantId],
     references: [productVariants.id],
+  }),
+}));
+
+// ─── Store Invitations ──────────────────────────────────────────────────────
+
+export const storeInvitations = pgTable("store_invitations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  email: text("email").notNull(),
+  role: storeMemberRoleEnum("role").notNull(),
+  token: text("token").notNull().unique(),
+  invitedBy: uuid("invited_by").notNull().references(() => users.id),
+  status: invitationStatusEnum("status").notNull().default("pending"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  storeEmailIdx: index("store_invitations_store_email_idx").on(table.storeId, table.email),
+  tokenIdx: uniqueIndex("store_invitations_token_idx").on(table.token),
+}));
+
+export const storeInvitationsRelations = relations(storeInvitations, ({ one }) => ({
+  store: one(stores, {
+    fields: [storeInvitations.storeId],
+    references: [stores.id],
+  }),
+  inviter: one(users, {
+    fields: [storeInvitations.invitedBy],
+    references: [users.id],
   }),
 }));

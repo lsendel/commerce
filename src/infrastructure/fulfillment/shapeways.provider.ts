@@ -135,6 +135,11 @@ export class ShapewaysProvider implements FulfillmentProvider {
     }));
   }
 
+  /**
+   * Shapeways webhook signature verification is not yet implemented.
+   * Their API does not currently document a signing mechanism.
+   * Always returns true — validate via other means (order ID matching).
+   */
   verifyWebhook(_payload: string, _signature: string): boolean {
     return true;
   }

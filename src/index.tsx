@@ -97,6 +97,12 @@ import { AdminBookingsPage as _AdminBookingsPage } from "./routes/pages/admin/bo
 import { FulfillmentDetailPage as _FulfillmentDetailPage } from "./routes/pages/admin/fulfillment-detail.page";
 import { ShippingPage as _ShippingPage } from "./routes/pages/admin/shipping.page";
 import { TaxPage as _TaxPage } from "./routes/pages/admin/tax.page";
+import { PromotionsPage as _PromotionsPage } from "./routes/pages/admin/promotions.page";
+import { PromotionCodesPage as _PromotionCodesPage } from "./routes/pages/admin/promotion-codes.page";
+import { SegmentsPage as _SegmentsPage } from "./routes/pages/admin/segments.page";
+import { AdminReviewsPage as _AdminReviewsPage } from "./routes/pages/admin/reviews.page";
+import { AdminAffiliatesPage as _AdminAffiliatesPage } from "./routes/pages/admin/affiliates.page";
+import { AdminAnalyticsPage as _AdminAnalyticsPage } from "./routes/pages/admin/analytics.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 import { NotFoundPage } from "./routes/pages/404.page";
 import { ErrorPage } from "./components/ui/error-page";
@@ -144,12 +150,18 @@ const AdminBookingsPage = _AdminBookingsPage as any;
 const FulfillmentDetailPage = _FulfillmentDetailPage as any;
 const ShippingPage = _ShippingPage as any;
 const TaxPage = _TaxPage as any;
+const PromotionsPage = _PromotionsPage as any;
+const PromotionCodesPage = _PromotionCodesPage as any;
+const SegmentsPage = _SegmentsPage as any;
+const AdminReviewsPage = _AdminReviewsPage as any;
+const AdminAffiliatesPage = _AdminAffiliatesPage as any;
+const AdminAnalyticsPage = _AdminAnalyticsPage as any;
 const ResetPasswordPage = _ResetPasswordPage as any;
 const VerifyEmailPage = _VerifyEmailPage as any;
 
 // Infrastructure
 import { createDb } from "./infrastructure/db/client";
-import { fulfillmentProviders } from "./infrastructure/db/schema";
+import { fulfillmentProviders, couponCodes, promotions } from "./infrastructure/db/schema";
 import { ProductRepository } from "./infrastructure/repositories/product.repository";
 import { CartRepository } from "./infrastructure/repositories/cart.repository";
 import { OrderRepository } from "./infrastructure/repositories/order.repository";
@@ -162,6 +174,8 @@ import { AffiliateRepository } from "./infrastructure/repositories/affiliate.rep
 import { VenueRepository } from "./infrastructure/repositories/venue.repository";
 import { IntegrationRepository as IntegrationRepoImpl, IntegrationSecretRepository as SecretRepoImpl } from "./infrastructure/repositories/integration.repository";
 import { ReviewRepository } from "./infrastructure/repositories/review.repository";
+import { PromotionRepository } from "./infrastructure/repositories/promotion.repository";
+import { AnalyticsRepository } from "./infrastructure/repositories/analytics.repository";
 import { ListIntegrationsUseCase } from "./application/platform/list-integrations.usecase";
 import { CheckInfrastructureUseCase } from "./application/platform/check-infrastructure.usecase";
 import { verifyJwt } from "./infrastructure/security/jwt";
@@ -1365,10 +1379,10 @@ app.get("/platform/dashboard", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
   const storeRepo = new StoreRepository(db);
-  const store = await storeRepo.findById(storeId);
-  const members = store ? await storeRepo.findMembers(storeId) : [];
-  const domains = store ? await storeRepo.findDomains(storeId) : [];
-  const billing = store ? await storeRepo.getBilling(storeId) : null;
+  const { GetStoreDashboardUseCase: DashUC } = await import("./application/platform/get-store-dashboard.usecase");
+  const dashUC = new DashUC(storeRepo);
+  const { store, members, domains, billing, pendingInvitations } = await dashUC.execute(storeId);
+  const plan = billing?.platformPlanId ? await storeRepo.findPlanById(billing.platformPlanId) : null;
 
   return c.html(
     <Layout title="Store Dashboard" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
@@ -1377,6 +1391,8 @@ app.get("/platform/dashboard", async (c) => {
         members={members as any}
         domains={domains as any}
         billing={billing as any}
+        plan={plan as any}
+        pendingInvitations={pendingInvitations as any}
       />
     </Layout>
   );
@@ -1386,9 +1402,12 @@ app.get("/platform/settings", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
   const storeRepo = new StoreRepository(db);
-  const store = await storeRepo.findById(storeId);
-  const plans = await storeRepo.findAllPlans();
-  const billing = store ? await storeRepo.getBilling(storeId) : null;
+  const [store, plans, billing, domains] = await Promise.all([
+    storeRepo.findById(storeId),
+    storeRepo.findAllPlans(),
+    storeRepo.getBilling(storeId),
+    storeRepo.findDomains(storeId),
+  ]);
 
   return c.html(
     <Layout title="Store Settings" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
@@ -1396,6 +1415,8 @@ app.get("/platform/settings", async (c) => {
         store={store as any}
         plans={plans as any}
         billing={billing as any}
+        connectStatus={null}
+        domains={domains as any}
       />
     </Layout>
   );
@@ -1603,6 +1624,140 @@ app.get("/admin/tax", async (c) => {
   return c.html(
     <Layout title="Tax Settings" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <TaxPage zones={[]} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Promotions Pages ──────────────────────────────
+app.get("/admin/promotions", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const promoRepo = new PromotionRepository(db, storeId);
+  const allPromos = await promoRepo.listAll();
+  const statusFilter = c.req.query("status") || undefined;
+  const typeFilter = c.req.query("type") || undefined;
+  const filtered = allPromos.filter((p: any) => {
+    if (statusFilter && p.status !== statusFilter) return false;
+    if (typeFilter && p.type !== typeFilter) return false;
+    return true;
+  });
+  return c.html(
+    <Layout title="Promotions" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <PromotionsPage promotions={filtered as any} filters={{ status: statusFilter, type: typeFilter }} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/promotions/codes", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const { eq } = await import("drizzle-orm");
+  const promoRepo = new PromotionRepository(db, storeId);
+  const [allPromos, codeRows] = await Promise.all([
+    promoRepo.listAll(),
+    db.select({
+      id: couponCodes.id,
+      promotionId: couponCodes.promotionId,
+      promotionName: promotions.name,
+      code: couponCodes.code,
+      maxRedemptions: couponCodes.maxRedemptions,
+      redemptionCount: couponCodes.redemptionCount,
+      singleUsePerCustomer: couponCodes.singleUsePerCustomer,
+      createdAt: couponCodes.createdAt,
+    })
+      .from(couponCodes)
+      .innerJoin(promotions, eq(couponCodes.promotionId, promotions.id))
+      .where(eq(promotions.storeId, storeId)),
+  ]);
+  return c.html(
+    <Layout title="Coupon Codes" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <PromotionCodesPage codes={codeRows as any} promotions={allPromos as any} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/segments", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const promoRepo = new PromotionRepository(db, storeId);
+  const segments = await promoRepo.listSegments();
+  return c.html(
+    <Layout title="Customer Segments" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <SegmentsPage segments={segments as any} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Reviews Page ──────────────────────────────────
+app.get("/admin/reviews", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const reviewRepo = new ReviewRepository(db, storeId);
+  const page = parseInt(c.req.query("page") || "1", 10);
+  const limit = 20;
+  const statusFilter = c.req.query("status") || undefined;
+  const result = await reviewRepo.listAll(page, limit, statusFilter);
+  const totalPages = Math.ceil(result.total / limit);
+  return c.html(
+    <Layout title="Reviews" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminReviewsPage reviews={result.reviews as any} total={result.total} page={page} totalPages={totalPages} filters={{ status: statusFilter }} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Affiliates Page ────────────────────────────────
+app.get("/admin/affiliates", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const affiliateRepo = new AffiliateRepository(db, storeId);
+  const allAffiliates = await affiliateRepo.listAll();
+  return c.html(
+    <Layout title="Affiliates" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminAffiliatesPage affiliates={allAffiliates as any} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Analytics Page ─────────────────────────────────
+app.get("/admin/analytics", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const now = new Date();
+  const dateFrom = c.req.query("from") || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const dateTo = c.req.query("to") || now.toISOString().slice(0, 10);
+
+  const analyticsRepo = new AnalyticsRepository(db, storeId);
+  const { GetDashboardMetricsUseCase: DashMetrics } = await import("./application/analytics/get-dashboard-metrics.usecase");
+  const { GetConversionFunnelUseCase: FunnelUC } = await import("./application/analytics/get-conversion-funnel.usecase");
+  const { GetTopProductsUseCase: TopProdUC } = await import("./application/analytics/get-top-products.usecase");
+  const { GetRevenueMetricsUseCase: RevUC } = await import("./application/analytics/get-revenue-metrics.usecase");
+
+  const [dashMetrics, funnel, topProducts, revenue] = await Promise.all([
+    new DashMetrics(analyticsRepo).execute(dateFrom, dateTo),
+    new FunnelUC(db, storeId).execute(dateFrom, dateTo),
+    new TopProdUC(db, storeId).execute(dateFrom, dateTo),
+    new RevUC(analyticsRepo).execute(dateFrom, dateTo),
+  ]);
+
+  const metrics = [
+    { label: "Revenue", value: `$${dashMetrics.totalRevenue.toFixed(2)}` },
+    { label: "Orders", value: String(dashMetrics.orderCount) },
+    { label: "Page Views", value: String(dashMetrics.pageViews) },
+    { label: "Conversion Rate", value: `${(dashMetrics.conversionRate * 100).toFixed(1)}%` },
+    { label: "Avg Order Value", value: `$${dashMetrics.averageOrderValue.toFixed(2)}` },
+    { label: "Visitors", value: String(dashMetrics.uniqueVisitors) },
+  ];
+
+  return c.html(
+    <Layout title="Analytics" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminAnalyticsPage
+        metrics={metrics}
+        funnel={funnel as any}
+        topProducts={topProducts as any}
+        dailyRevenue={revenue.dailyRevenue as any}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+      />
     </Layout>,
   );
 });
