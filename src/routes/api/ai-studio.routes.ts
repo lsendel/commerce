@@ -148,6 +148,41 @@ studio.patch(
   },
 );
 
+// POST /studio/pets/:id/photo — upload pet photo
+studio.post("/pets/:id/photo", async (c) => {
+  const db = createDb(c.env.DATABASE_URL);
+  const repo = new AiJobRepository(db, c.get("storeId") as string);
+  const storage = new R2StorageAdapter(c.env.IMAGES);
+  const useCase = new ManagePetProfileUseCase(repo, storage);
+
+  try {
+    const petId = c.req.param("id");
+    const body = await c.req.parseBody();
+    const file = body["photo"];
+
+    if (!file || !(file instanceof File)) {
+      return c.json({ error: "No photo file provided" }, 400);
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pet = await useCase.uploadPhoto(petId, c.get("userId"), {
+      data: arrayBuffer,
+      contentType: file.type,
+      size: file.size,
+    });
+
+    return c.json(pet, 200);
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return c.json({ error: error.message }, 404);
+    }
+    if (error instanceof Error && (error.message.includes("Invalid file") || error.message.includes("File too large"))) {
+      return c.json({ error: error.message }, 400);
+    }
+    throw error;
+  }
+});
+
 // DELETE /studio/pets/:id — delete pet
 studio.delete("/pets/:id", async (c) => {
   const db = createDb(c.env.DATABASE_URL);

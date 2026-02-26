@@ -1132,6 +1132,7 @@ export const petProfiles = pgTable("pet_profiles", {
   species: text("species").notNull(),
   breed: text("breed"),
   photoUrl: text("photo_url"),
+  photoStorageKey: text("photo_storage_key"),
   dateOfBirth: timestamp("date_of_birth"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -1188,7 +1189,10 @@ export const generationJobs = pgTable("generation_jobs", {
   errorMessage: text("error_message"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  userStatusIdx: index("generation_jobs_user_status_idx").on(table.userId, table.status),
+  storeStatusIdx: index("generation_jobs_store_status_idx").on(table.storeId, table.status),
+}));
 
 export const generationJobsRelations = relations(
   generationJobs,

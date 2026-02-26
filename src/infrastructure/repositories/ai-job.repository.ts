@@ -131,6 +131,7 @@ export class AiJobRepository {
       species: string;
       breed: string;
       photoUrl: string;
+      photoStorageKey: string;
     }>,
   ) {
     const result = await this.db
