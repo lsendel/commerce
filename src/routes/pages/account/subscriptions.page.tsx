@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import { html } from "hono/html";
 import { Button } from "../../../components/ui/button";
 import { Badge } from "../../../components/ui/badge";
 
@@ -13,8 +14,19 @@ interface Subscription {
   cancelAtPeriodEnd: boolean;
 }
 
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  interval: "month" | "year";
+  features: string[];
+  stripePriceId: string | null;
+}
+
 interface SubscriptionsPageProps {
   subscription?: Subscription | null;
+  availablePlans?: SubscriptionPlan[];
 }
 
 const statusVariant: Record<string, "success" | "warning" | "error" | "info"> = {
@@ -31,7 +43,7 @@ const statusLabel: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) => {
+export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, availablePlans }) => {
   return (
     <div class="max-w-3xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between mb-8">
@@ -54,7 +66,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
             <div class="p-6">
               <div class="flex items-start justify-between mb-4">
                 <div>
-                  <h2 class="text-lg font-bold text-gray-900">{subscription.planName}</h2>
+                  <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">{subscription.planName}</h2>
                   <div class="flex items-center gap-2 mt-1">
                     <Badge variant={statusVariant[subscription.status] || "neutral"}>
                       {statusLabel[subscription.status] || subscription.status}
@@ -73,12 +85,12 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
               </div>
 
               {/* Billing details */}
-              <div class="grid grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50 mb-5">
+              <div class="grid grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900 mb-5">
                 <div>
                   <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">
                     Current Period Ends
                   </p>
-                  <p class="text-sm font-medium text-gray-900 mt-1">
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1">
                     {subscription.currentPeriodEnd}
                   </p>
                 </div>
@@ -86,7 +98,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
                   <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">
                     Next Billing Date
                   </p>
-                  <p class="text-sm font-medium text-gray-900 mt-1">
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1">
                     {subscription.cancelAtPeriodEnd
                       ? "No further billing"
                       : subscription.nextBillingDate}
@@ -104,13 +116,24 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
                   Manage Subscription
                 </Button>
 
+                {subscription.cancelAtPeriodEnd && subscription.status !== "cancelled" && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    id="resume-subscription-btn"
+                    data-subscription-id={subscription.id}
+                  >
+                    Resume Subscription
+                  </Button>
+                )}
+
                 {subscription.status !== "cancelled" && !subscription.cancelAtPeriodEnd && (
                   <Button
                     type="button"
                     variant="ghost"
                     id="cancel-subscription-btn"
                     data-subscription-id={subscription.id}
-                    class="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    class="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
                     Cancel Subscription
                   </Button>
@@ -119,8 +142,58 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
             </div>
           </div>
 
+          {/* Plan comparison */}
+          {availablePlans && availablePlans.length > 1 && (
+            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">Available Plans</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Compare plans and switch anytime.</p>
+              </div>
+              <div class="grid md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-700">
+                {availablePlans.map((plan) => {
+                  const isCurrent = subscription?.planName === plan.name;
+                  return (
+                    <div class={`p-6 ${isCurrent ? "bg-brand-50/50 dark:bg-brand-900/10" : ""}`}>
+                      <h3 class="font-semibold text-gray-900 dark:text-gray-100">{plan.name}</h3>
+                      <p class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+                        ${plan.price}<span class="text-sm font-normal text-gray-400">/{plan.interval}</span>
+                      </p>
+                      <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">{plan.description}</p>
+                      <ul class="mt-4 space-y-2">
+                        {plan.features.map((f) => (
+                          <li class="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                            <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                      <div class="mt-4">
+                        {isCurrent ? (
+                          <Badge variant="info">Current Plan</Badge>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            class="w-full change-plan-btn"
+                            data-plan-id={plan.id}
+                            data-plan-name={plan.name}
+                          >
+                            Switch to {plan.name}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Info note */}
-          <div class="rounded-xl bg-brand-50 border border-brand-100 p-4">
+          <div class="rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-800 p-4">
             <div class="flex gap-3">
               <svg class="w-5 h-5 text-brand-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -130,9 +203,9 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
                   d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <div class="text-sm text-brand-800">
+              <div class="text-sm text-brand-800 dark:text-brand-200">
                 <p class="font-medium">Need help with billing?</p>
-                <p class="text-brand-600 mt-0.5">
+                <p class="text-brand-600 dark:text-brand-400 mt-0.5">
                   Contact us at{" "}
                   <a href="mailto:support@petm8.io" class="underline">support@petm8.io</a>{" "}
                   and we'll sort it out.
@@ -154,7 +227,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
               />
             </svg>
           </div>
-          <h2 class="text-lg font-semibold text-gray-900 mb-1">No Active Subscription</h2>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">No Active Subscription</h2>
           <p class="text-sm text-gray-400 mb-6 max-w-sm mx-auto">
             Subscribe to a plan to get exclusive perks, discounts, and premium access for you and your pets.
           </p>
@@ -169,9 +242,9 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
         id="cancel-confirm"
         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       >
-        <div class="bg-white rounded-2xl shadow-xl p-6 max-w-sm mx-4 w-full">
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">Cancel Subscription</h3>
-          <p class="text-sm text-gray-500 mb-5">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 max-w-sm mx-4 w-full">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Cancel Subscription</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
             Your subscription will remain active until the end of your current billing period. Are you sure?
           </p>
           <div class="flex items-center gap-3 justify-end">
@@ -186,9 +259,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
       </div>
 
       {/* Client-side handlers */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
+      {html`<script>
             (function() {
               var manageBtn = document.getElementById('manage-subscription-btn');
               var cancelBtn = document.getElementById('cancel-subscription-btn');
@@ -247,10 +318,64 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
                   cancelConfirm.classList.add('hidden');
                 }
               });
+
+              // Resume subscription handler
+              var resumeBtn = document.getElementById('resume-subscription-btn');
+              if (resumeBtn) {
+                resumeBtn.addEventListener('click', async function() {
+                  var subscriptionId = this.getAttribute('data-subscription-id');
+                  this.disabled = true;
+                  this.textContent = 'Resuming...';
+                  try {
+                    var res = await fetch('/api/subscriptions/' + subscriptionId + '/resume', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                    });
+                    if (!res.ok) {
+                      var data = await res.json().catch(function() { return {}; });
+                      throw new Error(data.error || 'Failed to resume subscription');
+                    }
+                    window.location.reload();
+                  } catch (err) {
+                    alert(err.message);
+                    this.disabled = false;
+                    this.textContent = 'Resume Subscription';
+                  }
+                });
+              }
+
+              // Change plan handlers
+              document.querySelectorAll('.change-plan-btn').forEach(function(btn) {
+                btn.addEventListener('click', async function() {
+                  var planId = this.getAttribute('data-plan-id');
+                  var planName = this.getAttribute('data-plan-name');
+                  if (!confirm('Switch to ' + planName + '? Your billing will be prorated.')) return;
+                  var subscriptionId = (cancelBtn || resumeBtn)
+                    ? (cancelBtn || resumeBtn).getAttribute('data-subscription-id')
+                    : null;
+                  if (!subscriptionId) { alert('No active subscription found'); return; }
+                  this.disabled = true;
+                  this.textContent = 'Switching...';
+                  try {
+                    var res = await fetch('/api/subscriptions/' + subscriptionId + '/change-plan', {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ newPlanId: planId }),
+                    });
+                    if (!res.ok) {
+                      var data = await res.json().catch(function() { return {}; });
+                      throw new Error(data.error || 'Failed to change plan');
+                    }
+                    window.location.reload();
+                  } catch (err) {
+                    alert(err.message);
+                    this.disabled = false;
+                    this.textContent = 'Switch to ' + planName;
+                  }
+                });
+              });
             })();
-          `,
-        }}
-      />
+      </script>`}
     </div>
   );
 };

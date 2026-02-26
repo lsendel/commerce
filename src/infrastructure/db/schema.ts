@@ -6,6 +6,7 @@ import {
   boolean,
   integer,
   decimal,
+  date,
   jsonb,
   pgEnum,
   uniqueIndex,
@@ -80,6 +81,13 @@ export const bookingStatusEnum = pgEnum("booking_status", [
 ]);
 
 export const personTypeEnum = pgEnum("person_type", ["adult", "child", "pet"]);
+
+export const waitlistStatusEnum = pgEnum("waitlist_status", [
+  "waiting",
+  "notified",
+  "expired",
+  "converted",
+]);
 
 export const generationStatusEnum = pgEnum("generation_status", [
   "queued",
@@ -894,7 +902,9 @@ export const subscriptions = pgTable("subscriptions", {
   cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  userIdx: index("subscriptions_user_idx").on(table.userId),
+}));
 
 export const subscriptionsRelations = relations(
   subscriptions,
@@ -989,6 +999,10 @@ export const bookingAvailability = pgTable(
       table.productId,
       table.slotDate,
     ),
+    storeDatetimeIdx: index("booking_availability_store_datetime_idx").on(
+      table.storeId,
+      table.slotDatetime,
+    ),
   }),
 );
 
@@ -1043,7 +1057,10 @@ export const bookingRequests = pgTable("booking_requests", {
   orderId: uuid("order_id").references(() => orders.id),
   cartItemId: uuid("cart_item_id").references(() => cartItems.id),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  userStatusIdx: index("booking_requests_user_status_idx").on(table.userId, table.status),
+  availabilityStatusIdx: index("booking_requests_availability_status_idx").on(table.availabilityId, table.status),
+}));
 
 export const bookingRequestsRelations = relations(
   bookingRequests,
@@ -1073,6 +1090,7 @@ export const bookings = pgTable("bookings", {
     .notNull()
     .references(() => stores.id),
   orderItemId: uuid("order_item_id").references(() => orderItems.id),
+  bookingRequestId: uuid("booking_request_id").references(() => bookingRequests.id),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id),
@@ -1115,6 +1133,40 @@ export const bookingItemsRelations = relations(bookingItems, ({ one }) => ({
   booking: one(bookings, {
     fields: [bookingItems.bookingId],
     references: [bookings.id],
+  }),
+}));
+
+export const bookingWaitlist = pgTable("booking_waitlist", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  availabilityId: uuid("availability_id")
+    .notNull()
+    .references(() => bookingAvailability.id),
+  position: integer("position").notNull(),
+  status: waitlistStatusEnum("status").notNull().default("waiting"),
+  notifiedAt: timestamp("notified_at"),
+  expiredAt: timestamp("expired_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  availabilityStatusIdx: index("booking_waitlist_availability_status_idx").on(
+    table.availabilityId,
+    table.status,
+  ),
+}));
+
+export const bookingWaitlistRelations = relations(bookingWaitlist, ({ one }) => ({
+  user: one(users, {
+    fields: [bookingWaitlist.userId],
+    references: [users.id],
+  }),
+  availability: one(bookingAvailability, {
+    fields: [bookingWaitlist.availabilityId],
+    references: [bookingAvailability.id],
   }),
 }));
 
@@ -1276,7 +1328,9 @@ export const shipments = pgTable("shipments", {
   deliveredAt: timestamp("delivered_at"),
   raw: jsonb("raw"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  orderIdx: index("shipments_order_idx").on(table.orderId),
+}));
 
 export const shipmentsRelations = relations(shipments, ({ one }) => ({
   order: one(orders, {
@@ -1491,7 +1545,7 @@ export const fulfillmentRequests = pgTable(
     orderId: uuid("order_id")
       .notNull()
       .references(() => orders.id),
-    provider: text("provider").notNull(),
+    provider: fulfillmentProviderTypeEnum("provider").notNull(),
     providerId: uuid("provider_id").references(() => fulfillmentProviders.id),
     externalId: text("external_id"),
     status: fulfillmentRequestStatusEnum("status").default("pending"),
@@ -1551,7 +1605,10 @@ export const fulfillmentRequestItems = pgTable("fulfillment_request_items", {
   status: text("status"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  requestIdx: index("fulfillment_request_items_request_idx").on(table.fulfillmentRequestId),
+  orderItemIdx: index("fulfillment_request_items_order_item_idx").on(table.orderItemId),
+}));
 
 export const fulfillmentRequestItemsRelations = relations(
   fulfillmentRequestItems,
@@ -1598,6 +1655,29 @@ export const providerEventsRelations = relations(
     }),
   }),
 );
+
+// ─── Provider Health Snapshots ───────────────────────────────────────────────
+
+export const providerHealthSnapshots = pgTable("provider_health_snapshots", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  provider: text("provider").notNull(),
+  period: date("period").notNull(),
+  totalRequests: integer("total_requests").notNull().default(0),
+  successCount: integer("success_count").notNull().default(0),
+  failureCount: integer("failure_count").notNull().default(0),
+  avgResponseMs: integer("avg_response_ms"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  storeProviderPeriodIdx: uniqueIndex("health_store_provider_period_idx").on(table.storeId, table.provider, table.period),
+}));
+
+export const providerHealthSnapshotsRelations = relations(providerHealthSnapshots, ({ one }) => ({
+  store: one(stores, {
+    fields: [providerHealthSnapshots.storeId],
+    references: [stores.id],
+  }),
+}));
 
 // ─── Download Tokens (Digital Products) ─────────────────────────────────────
 

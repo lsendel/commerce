@@ -279,6 +279,19 @@ export class SubscriptionRepository {
   }
 
   /**
+   * Update the plan on a subscription (for plan changes).
+   */
+  async updatePlan(id: string, newPlanId: string) {
+    const rows = await this.db
+      .update(subscriptions)
+      .set({ planId: newPlanId, updatedAt: new Date() })
+      .where(and(eq(subscriptions.id, id), eq(subscriptions.storeId, this.storeId)))
+      .returning();
+
+    return rows[0] ?? null;
+  }
+
+  /**
    * Hard delete a subscription record.
    */
   async delete(id: string) {
