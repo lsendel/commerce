@@ -50,20 +50,20 @@ export const SlotCard: FC<SlotCardProps> = ({
 
   return (
     <div
-      class={`bg-white rounded-2xl border shadow-sm p-4 transition-all ${
+      class={`bg-white dark:bg-gray-800 rounded-2xl border shadow-sm p-4 transition-all ${
         selected
-          ? "border-brand-400 ring-2 ring-brand-100 shadow-md"
-          : "border-gray-100 hover:border-gray-200 hover:shadow-md"
+          ? "border-brand-400 ring-2 ring-brand-100 dark:ring-brand-900/30 shadow-md"
+          : "border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-md"
       }`}
     >
       <div class="flex items-center justify-between mb-3">
-        <span class="text-lg font-bold text-gray-900">{time}</span>
+        <span class="text-lg font-bold text-gray-900 dark:text-gray-100">{time}</span>
         <StatusBadge status={status} />
       </div>
 
       {/* Occupancy bar */}
       <div class="mb-3">
-        <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+        <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
           <span>Capacity</span>
           <span>
             {remaining}/{total} remaining
@@ -81,8 +81,8 @@ export const SlotCard: FC<SlotCardProps> = ({
       <div class="space-y-1 mb-4">
         {prices.map((p) => (
           <div class="flex items-center justify-between text-sm">
-            <span class="text-gray-600">{p.label}</span>
-            <span class="font-medium text-gray-900">${p.price}</span>
+            <span class="text-gray-600 dark:text-gray-400">{p.label}</span>
+            <span class="font-medium text-gray-900 dark:text-gray-100">${p.price}</span>
           </div>
         ))}
       </div>
@@ -102,7 +102,7 @@ export const SlotCard: FC<SlotCardProps> = ({
       )}
 
       {!isSelectable && (
-        <div class="block w-full text-center px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 text-gray-400 cursor-not-allowed">
+        <div class="block w-full text-center px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed">
           Unavailable
         </div>
       )}

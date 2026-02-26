@@ -30,23 +30,23 @@ export const BookingForm: FC<BookingFormProps> = ({
   variantId,
 }) => {
   return (
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Book This Slot</h3>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Book This Slot</h3>
 
       {/* Selected slot info */}
-      <div class="rounded-xl bg-brand-50 border border-brand-100 p-4 mb-5">
+      <div class="rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-800 p-4 mb-5">
         <div class="grid grid-cols-3 gap-3 text-sm">
           <div>
-            <p class="text-xs font-medium text-brand-500 uppercase tracking-wide">Date</p>
-            <p class="font-semibold text-brand-800 mt-0.5">{date}</p>
+            <p class="text-xs font-medium text-brand-500 dark:text-brand-400 uppercase tracking-wide">Date</p>
+            <p class="font-semibold text-brand-800 dark:text-brand-300 mt-0.5">{date}</p>
           </div>
           <div>
-            <p class="text-xs font-medium text-brand-500 uppercase tracking-wide">Time</p>
-            <p class="font-semibold text-brand-800 mt-0.5">{time}</p>
+            <p class="text-xs font-medium text-brand-500 dark:text-brand-400 uppercase tracking-wide">Time</p>
+            <p class="font-semibold text-brand-800 dark:text-brand-300 mt-0.5">{time}</p>
           </div>
           <div>
-            <p class="text-xs font-medium text-brand-500 uppercase tracking-wide">Location</p>
-            <p class="font-semibold text-brand-800 mt-0.5">{location}</p>
+            <p class="text-xs font-medium text-brand-500 dark:text-brand-400 uppercase tracking-wide">Location</p>
+            <p class="font-semibold text-brand-800 dark:text-brand-300 mt-0.5">{location}</p>
           </div>
         </div>
       </div>
@@ -60,17 +60,17 @@ export const BookingForm: FC<BookingFormProps> = ({
           {personTypes.map((pt) => (
             <div class="flex items-center justify-between" data-person-type={pt.key}>
               <div>
-                <p class="text-sm font-medium text-gray-900">{pt.label}</p>
-                <p class="text-xs text-gray-400">${pt.unitPrice} each</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{pt.label}</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500">${pt.unitPrice} each</p>
               </div>
               <div class="flex items-center gap-2">
                 <button
                   type="button"
-                  class="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:border-gray-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  class="w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   data-decrement={pt.key}
                   aria-label={`Decrease ${pt.label}`}
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
                   </svg>
                 </button>
@@ -80,18 +80,18 @@ export const BookingForm: FC<BookingFormProps> = ({
                   value="0"
                   min={pt.min ?? 0}
                   max={pt.max ?? 99}
-                  class="w-12 text-center text-sm font-semibold border border-gray-300 rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  class="w-12 text-center text-sm font-semibold border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   data-qty={pt.key}
                   data-price={pt.unitPrice}
                   readonly
                 />
                 <button
                   type="button"
-                  class="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:border-gray-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  class="w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   data-increment={pt.key}
                   aria-label={`Increase ${pt.label}`}
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                   </svg>
                 </button>
@@ -101,7 +101,7 @@ export const BookingForm: FC<BookingFormProps> = ({
         </div>
 
         {/* Price breakdown */}
-        <div class="border-t border-gray-100 pt-4 mb-5">
+        <div class="border-t border-gray-100 dark:border-gray-700 pt-4 mb-5">
           <div id="price-breakdown" class="space-y-2">
             {personTypes.map((pt) => (
               <div class="flex justify-between text-sm text-gray-500 hidden" data-line={pt.key}>
@@ -116,7 +116,7 @@ export const BookingForm: FC<BookingFormProps> = ({
             ))}
           </div>
 
-          <div class="flex justify-between text-base font-bold text-gray-900 pt-3 mt-3 border-t border-gray-100">
+          <div class="flex justify-between text-base font-bold text-gray-900 dark:text-gray-100 pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
             <span>Total</span>
             <span id="booking-total">$0.00</span>
           </div>

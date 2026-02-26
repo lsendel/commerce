@@ -18,6 +18,9 @@ export class RegisterUseCase {
 
     const passwordHash = await hashPassword(input.password);
     const user = await this.userRepo.create({ email, passwordHash, name: input.name.trim() });
+    if (!user) {
+      throw new Error("Failed to create user");
+    }
     return { id: user.id, email: user.email, name: user.name };
   }
 }

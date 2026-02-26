@@ -1,3 +1,9 @@
+/**
+ * Cart domain query resolvers.
+ * Stub implementations return empty data until connected to repositories.
+ */
 export const cartResolvers = {
-  // Populated in Phase 7
+  Query: {
+    cart: () => null,
+  },
 };

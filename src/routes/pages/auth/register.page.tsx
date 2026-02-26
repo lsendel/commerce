@@ -8,19 +8,19 @@ interface RegisterPageProps {
 
 export const RegisterPage: FC<RegisterPageProps> = ({ error }) => {
   return (
-    <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4 py-12">
       <div class="w-full max-w-md">
         {/* Logo / Title */}
         <div class="text-center mb-8">
           <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-500 text-white text-2xl font-bold mb-4 shadow-lg shadow-brand-200">
             p8
           </div>
-          <h1 class="text-2xl font-bold text-gray-900">Create your account</h1>
-          <p class="mt-1 text-sm text-gray-500">Join the petm8 community</p>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Create your account</h1>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Join the petm8 community</p>
         </div>
 
         {/* Card */}
-        <div class="bg-white rounded-2xl shadow-lg shadow-gray-200/60 border border-gray-100 p-8">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg shadow-gray-200/60 dark:shadow-none border border-gray-100 dark:border-gray-700 p-8">
           {/* Error message */}
           <div
             id="register-error"
@@ -91,7 +91,7 @@ export const RegisterPage: FC<RegisterPageProps> = ({ error }) => {
           </form>
 
           <div class="mt-6 text-center">
-            <p class="text-sm text-gray-500">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
               Already have an account?{" "}
               <a href="/auth/login" class="text-brand-600 hover:text-brand-700 font-semibold">
                 Sign In
@@ -176,6 +176,8 @@ export const RegisterPage: FC<RegisterPageProps> = ({ error }) => {
                 } catch (err) {
                   errorEl.textContent = err.message;
                   errorEl.classList.remove('hidden');
+                  var announcer = document.getElementById('announcer');
+                  if (announcer) announcer.textContent = 'Registration failed: ' + err.message;
                   btn.disabled = false;
                   btn.textContent = 'Create Account';
                 }

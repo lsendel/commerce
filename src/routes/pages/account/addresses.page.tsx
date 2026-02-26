@@ -26,7 +26,7 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
     <div class="max-w-4xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Addresses</h1>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Addresses</h1>
           <p class="mt-1 text-sm text-gray-500">Manage your shipping and billing addresses.</p>
         </div>
         <a
@@ -41,7 +41,7 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
       <div class="grid sm:grid-cols-2 gap-4 mb-8">
         {addresses.map((addr) => (
           <div
-            class={`bg-white rounded-2xl border shadow-sm p-5 relative ${
+            class={`bg-white dark:bg-gray-800 rounded-2xl border shadow-sm p-5 relative ${
               addr.isDefault ? "border-brand-300 ring-1 ring-brand-100" : "border-gray-100"
             }`}
           >

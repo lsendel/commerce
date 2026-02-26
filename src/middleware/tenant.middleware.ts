@@ -72,7 +72,7 @@ export function tenantMiddleware() {
     };
 
     // Check if this is a platform-level domain (landing pages, store creation)
-    const hostWithoutPort = host.split(":")[0].toLowerCase();
+    const hostWithoutPort = (host.split(":")[0] ?? host).toLowerCase();
     if (platformDomains.includes(hostWithoutPort)) {
       c.set("isPlatformDomain", true);
       const defaultStore = await resolveDefaultStore();

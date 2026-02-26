@@ -60,11 +60,12 @@ export class ProductRepository {
         .where(eq(collections.slug, filters.collection))
         .limit(1);
 
-      if (collectionRow.length > 0) {
+      const foundCollection = collectionRow[0];
+      if (foundCollection) {
         const cpRows = await this.db
           .select({ productId: collectionProducts.productId })
           .from(collectionProducts)
-          .where(eq(collectionProducts.collectionId, collectionRow[0].id));
+          .where(eq(collectionProducts.collectionId, foundCollection.id));
 
         collectionProductIds = cpRows.map((r) => r.productId);
         if (collectionProductIds.length === 0) {
@@ -138,7 +139,7 @@ export class ProductRepository {
       .from(products)
       .where(whereClause);
 
-    const total = Number(countResult[0].count);
+    const total = Number(countResult[0]?.count ?? 0);
 
     // Fetch products
     const productRows = await this.db
@@ -426,7 +427,7 @@ export class ProductRepository {
       .from(collectionProducts)
       .where(eq(collectionProducts.collectionId, collection.id));
 
-    const total = Number(countResult[0].count);
+    const total = Number(countResult[0]?.count ?? 0);
 
     // Get product IDs for this collection (paginated)
     const cpRows = await this.db
@@ -586,6 +587,99 @@ export class ProductRepository {
       .values(data)
       .returning();
     return result[0];
+  }
+
+  async findRelatedProducts(productId: string, limit = 4) {
+    // 1. Find collections this product belongs to
+    const cpRows = await this.db
+      .select({ collectionId: collectionProducts.collectionId })
+      .from(collectionProducts)
+      .where(eq(collectionProducts.productId, productId));
+
+    let relatedProductIds: string[] = [];
+
+    if (cpRows.length > 0) {
+      const collectionIds = cpRows.map((r) => r.collectionId);
+      // Get other product IDs in the same collections
+      const siblingRows = await this.db
+        .selectDistinct({ productId: collectionProducts.productId })
+        .from(collectionProducts)
+        .where(inArray(collectionProducts.collectionId, collectionIds));
+
+      relatedProductIds = siblingRows
+        .map((r) => r.productId)
+        .filter((id) => id !== productId);
+    }
+
+    // 2. Fallback: recently added products if no collection match
+    if (relatedProductIds.length === 0) {
+      const recentRows = await this.db
+        .select({ id: products.id })
+        .from(products)
+        .where(
+          and(
+            eq(products.storeId, this.storeId),
+            eq(products.availableForSale, true),
+          )
+        )
+        .orderBy(desc(products.createdAt))
+        .limit(limit + 1);
+
+      relatedProductIds = recentRows
+        .map((r) => r.id)
+        .filter((id) => id !== productId);
+    }
+
+    // Limit to requested count
+    relatedProductIds = relatedProductIds.slice(0, limit);
+
+    if (relatedProductIds.length === 0) return [];
+
+    // 3. Fetch full product data
+    const productRows = await this.db
+      .select()
+      .from(products)
+      .where(
+        and(
+          inArray(products.id, relatedProductIds),
+          eq(products.storeId, this.storeId),
+          eq(products.availableForSale, true),
+        )
+      )
+      .limit(limit);
+
+    if (productRows.length === 0) return [];
+
+    const ids = productRows.map((p) => p.id);
+
+    const variantRows = await this.db
+      .select()
+      .from(productVariants)
+      .where(inArray(productVariants.productId, ids));
+
+    const variantsByProduct = new Map<string, (typeof variantRows)[number][]>();
+    for (const v of variantRows) {
+      const arr = variantsByProduct.get(v.productId) ?? [];
+      arr.push(v);
+      variantsByProduct.set(v.productId, arr);
+    }
+
+    return productRows.map((p) => {
+      const pvs = (variantsByProduct.get(p.id) ?? []).map((v) => ({
+        id: v.id,
+        price: Number(v.price),
+        compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
+      }));
+
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        type: p.type,
+        featuredImageUrl: p.featuredImageUrl ?? null,
+        variants: pvs,
+      };
+    });
   }
 
   async updateInventory(variantId: string, delta: number) {

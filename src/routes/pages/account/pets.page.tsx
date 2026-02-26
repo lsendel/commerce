@@ -19,7 +19,7 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
     <div class="max-w-4xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Your Pets</h1>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Your Pets</h1>
           <p class="mt-1 text-sm text-gray-500">Manage your pet profiles.</p>
         </div>
         <a
@@ -33,7 +33,7 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
       {/* Pet Cards Grid */}
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
         {pets.map((pet) => (
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center group">
+          <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 text-center group">
             {/* Avatar */}
             <div class="w-20 h-20 rounded-full mx-auto mb-4 overflow-hidden bg-brand-50 flex items-center justify-center ring-4 ring-brand-100/50">
               {pet.photoUrl ? (

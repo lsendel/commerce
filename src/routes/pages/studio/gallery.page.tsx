@@ -21,8 +21,8 @@ export const StudioGalleryPage: FC<StudioGalleryPageProps> = ({
     <div class="max-w-6xl mx-auto px-4 py-8 sm:py-12">
       {/* Header */}
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Art Style Gallery</h1>
-        <p class="mt-2 text-gray-500 max-w-xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Art Style Gallery</h1>
+        <p class="mt-2 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
           Browse our collection of AI art styles. Pick one and turn your pet's photo into a masterpiece.
         </p>
       </div>
@@ -62,7 +62,7 @@ export const StudioGalleryPage: FC<StudioGalleryPageProps> = ({
           {filteredTemplates.map((template) => (
             <div
               key={template.id}
-              class="group flex flex-col rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100"
+              class="group flex flex-col rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100 dark:border-gray-700"
             >
               {/* Preview image */}
               <div class="relative aspect-[4/3] overflow-hidden bg-gray-50">
@@ -80,10 +80,10 @@ export const StudioGalleryPage: FC<StudioGalleryPageProps> = ({
 
               {/* Info */}
               <div class="flex flex-col flex-1 p-5">
-                <h3 class="text-base font-semibold text-gray-900 group-hover:text-brand-600 transition-colors duration-200">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors duration-200">
                   {template.name}
                 </h3>
-                <p class="mt-1.5 text-sm text-gray-500 line-clamp-2 flex-1">
+                <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400 line-clamp-2 flex-1">
                   {template.description}
                 </p>
 

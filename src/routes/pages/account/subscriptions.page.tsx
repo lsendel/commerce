@@ -36,7 +36,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
     <div class="max-w-3xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Subscription</h1>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Subscription</h1>
           <p class="mt-1 text-sm text-gray-500">Manage your subscription and billing.</p>
         </div>
         <a
@@ -50,7 +50,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
       {subscription ? (
         <div class="space-y-6">
           {/* Active subscription card */}
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <div class="p-6">
               <div class="flex items-start justify-between mb-4">
                 <div>
@@ -65,7 +65,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
                   </div>
                 </div>
                 <div class="text-right">
-                  <p class="text-2xl font-bold text-gray-900">${subscription.amount}</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">${subscription.amount}</p>
                   <p class="text-xs text-gray-400">
                     per {subscription.interval}
                   </p>
@@ -143,7 +143,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
         </div>
       ) : (
         /* No subscription state */
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-12 text-center">
           <div class="w-16 h-16 rounded-full bg-brand-50 text-brand-500 flex items-center justify-center mx-auto mb-4">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

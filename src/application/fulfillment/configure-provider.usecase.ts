@@ -26,7 +26,8 @@ export class ConfigureProviderUseCase {
       )
       .limit(1);
 
-    if (existing.length > 0) {
+    const existingProvider = existing[0];
+    if (existingProvider) {
       const updated = await this.db
         .update(fulfillmentProviders)
         .set({
@@ -35,7 +36,7 @@ export class ConfigureProviderUseCase {
           config: input.config ?? null,
           isActive: true,
         })
-        .where(eq(fulfillmentProviders.id, existing[0].id))
+        .where(eq(fulfillmentProviders.id, existingProvider.id))
         .returning();
       return updated[0];
     }

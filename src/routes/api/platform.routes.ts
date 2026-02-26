@@ -36,6 +36,10 @@ platform.post(
       subdomain: data.subdomain ?? data.slug,
     });
 
+    if (!store) {
+      return c.json({ error: "Failed to create store" }, 500);
+    }
+
     // Add creator as owner
     await repo.addMember(store.id, c.get("userId"), "owner");
 
@@ -181,13 +185,14 @@ platform.post(
     const plan = await repo.findPlanById(planId);
     if (!plan) return c.json({ error: "Plan not found" }, 404);
 
-    let billing = await repo.getBilling(storeId);
-    if (billing) {
+    const existingBilling = await repo.getBilling(storeId);
+    let billing;
+    if (existingBilling) {
       billing = await repo.updateBilling(storeId, { platformPlanId: planId });
     } else {
       billing = await repo.createBilling({ storeId, platformPlanId: planId });
     }
-    return c.json({ billing });
+    return c.json({ billing: billing ?? null });
   },
 );
 

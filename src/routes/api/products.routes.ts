@@ -14,15 +14,17 @@ import {
   productFilterSchema,
 } from "../../shared/validators";
 import { optionalAuth } from "../../middleware/auth.middleware";
+import { cacheResponse } from "../../middleware/cache.middleware";
 
 const catalog = new Hono<{ Bindings: Env }>();
 
 // All catalog routes use optional auth (product pages work without login)
 catalog.use("/*", optionalAuth());
 
-// GET /products - list with filtering, sorting, pagination
+// GET /products - list with filtering, sorting, pagination (cache 5min)
 catalog.get(
   "/products",
+  cacheResponse({ ttl: 300, tags: ["products:list"] }),
   zValidator("query", paginationSchema.merge(productFilterSchema)),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
@@ -46,8 +48,11 @@ catalog.get(
   },
 );
 
-// GET /products/:slug - single product by slug
-catalog.get("/products/:slug", async (c) => {
+// GET /products/:slug - single product by slug (cache 1h)
+catalog.get("/products/:slug", cacheResponse({
+  ttl: 3600,
+  dynamicTags: (c) => [`product:${c.req.param("slug")}`],
+}), async (c) => {
   const db = createDb(c.env.DATABASE_URL);
   const repo = new ProductRepository(db, c.get("storeId") as string);
   const useCase = new GetProductUseCase(repo);
@@ -58,9 +63,10 @@ catalog.get("/products/:slug", async (c) => {
   return c.json(product, 200);
 });
 
-// GET /collections - list all collections
+// GET /collections - list all collections (cache 1h)
 catalog.get(
   "/collections",
+  cacheResponse({ ttl: 3600, tags: ["collections:list"] }),
   zValidator("query", paginationSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
@@ -86,9 +92,13 @@ catalog.get(
   },
 );
 
-// GET /collections/:slug - collection with products
+// GET /collections/:slug - collection with products (cache 1h)
 catalog.get(
   "/collections/:slug",
+  cacheResponse({
+    ttl: 3600,
+    dynamicTags: (c) => [`collection:${c.req.param("slug")}`],
+  }),
   zValidator("query", paginationSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);

@@ -46,7 +46,7 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
   const displayTotal = isBookable && bookingTotal > 0 ? bookingTotal : lineTotal;
 
   return (
-    <div class="flex gap-4 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm" data-cart-item={item.id}>
+    <div class="flex gap-4 p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm" data-cart-item={item.id}>
       {/* Image */}
       <a href={`/products/${product.slug}`} class="shrink-0">
         {product.featuredImageUrl ? (
@@ -57,7 +57,7 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
             loading="lazy"
           />
         ) : (
-          <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-brand-50 flex items-center justify-center">
+          <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center">
             <svg class="w-8 h-8 text-brand-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -71,17 +71,17 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
           <div>
             <a
               href={`/products/${product.slug}`}
-              class="text-sm font-semibold text-gray-900 hover:text-brand-600 transition-colors line-clamp-1"
+              class="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-brand-600 dark:hover:text-brand-400 transition-colors line-clamp-1"
             >
               {product.name}
             </a>
-            <p class="text-xs text-gray-500 mt-0.5">{variant.title}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{variant.title}</p>
           </div>
 
           {/* Remove button */}
           <button
             type="button"
-            class="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+            class="shrink-0 p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             data-cart-remove
             data-item-id={item.id}
             aria-label="Remove item"
@@ -132,24 +132,27 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
             <div class="flex items-center gap-1">
               <button
                 type="button"
-                class="w-7 h-7 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-xs"
+                class="w-7 h-7 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs"
                 data-cart-qty="dec"
                 data-item-id={item.id}
+                aria-label="Decrease quantity"
               >
                 -
               </button>
               <span
-                class="w-10 text-center rounded-lg border border-gray-300 text-xs py-1 inline-flex items-center justify-center"
+                class="w-10 text-center rounded-lg border border-gray-300 dark:border-gray-600 dark:text-gray-200 text-xs py-1 inline-flex items-center justify-center"
                 data-cart-qty-display
                 data-item-id={item.id}
+                aria-label={`Quantity: ${quantity}`}
               >
                 {quantity}
               </span>
               <button
                 type="button"
-                class="w-7 h-7 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-xs"
+                class="w-7 h-7 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs"
                 data-cart-qty="inc"
                 data-item-id={item.id}
+                aria-label="Increase quantity"
               >
                 +
               </button>
@@ -161,7 +164,7 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
             </div>
           )}
           <div class="text-right">
-            <span class="text-sm font-bold text-gray-900" data-cart-item-price data-item-id={item.id}>${displayTotal.toFixed(2)}</span>
+            <span class="text-sm font-bold text-gray-900 dark:text-gray-100" data-cart-item-price data-item-id={item.id}>${displayTotal.toFixed(2)}</span>
             {!isBookable && quantity > 1 && (
               <span class="block text-xs text-gray-400">${unitPrice.toFixed(2)} each</span>
             )}

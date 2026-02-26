@@ -13,6 +13,12 @@ import {
   stores,
 } from "../src/infrastructure/db/schema";
 
+function first<T>(rows: T[]): T {
+  const row = rows[0];
+  if (row === undefined) throw new Error("Expected at least one row from insert/returning");
+  return row;
+}
+
 async function main() {
   const db = createDb(process.env.DATABASE_URL!);
   const defaultStoreId =
@@ -38,7 +44,7 @@ async function main() {
 
   // ─── Collections ────────────────────────────────────────────────────────────
 
-  const [accessoriesCollection] = await db
+  const accessoriesCollection = first(await db
     .insert(collections)
     .values({
       storeId: defaultStoreId,
@@ -51,9 +57,9 @@ async function main() {
         "Browse our collection of pet-themed accessories including tote bags, mugs, and more.",
       imageUrl: "https://images.petm8.io/collections/accessories-hero.jpg",
     })
-    .returning();
+    .returning());
 
-  const [digitalCollection] = await db
+  const digitalCollection = first(await db
     .insert(collections)
     .values({
       storeId: defaultStoreId,
@@ -66,7 +72,7 @@ async function main() {
         "Explore our digital products including pet care guides and premium subscription plans.",
       imageUrl: "https://images.petm8.io/collections/digital-hero.jpg",
     })
-    .returning();
+    .returning());
 
   console.log(
     `  Created collections: ${accessoriesCollection.name}, ${digitalCollection.name}`,
@@ -74,7 +80,7 @@ async function main() {
 
   // ─── Physical Product 1: Paw Print Tote Bag ────────────────────────────────
 
-  const [toteBag] = await db
+  const toteBag = first(await db
     .insert(products)
     .values({
       storeId: defaultStoreId,
@@ -92,7 +98,7 @@ async function main() {
       seoDescription:
         "Durable organic cotton tote bag with paw print design. Perfect for pet lovers on the go.",
     })
-    .returning();
+    .returning());
 
   const toteBagVariants = await db
     .insert(productVariants)
@@ -155,7 +161,7 @@ async function main() {
 
   // ─── Physical Product 2: Pet Portrait Mug ──────────────────────────────────
 
-  const [mug] = await db
+  const mug = first(await db
     .insert(products)
     .values({
       storeId: defaultStoreId,
@@ -173,7 +179,7 @@ async function main() {
       seoDescription:
         "Charming watercolor-style pet portrait on a premium ceramic mug. Dishwasher safe.",
     })
-    .returning();
+    .returning());
 
   const mugVariants = await db
     .insert(productVariants)
@@ -226,7 +232,7 @@ async function main() {
 
   // ─── Digital Product: Pet Care Ultimate Guide ──────────────────────────────
 
-  const [guide] = await db
+  const guide = first(await db
     .insert(products)
     .values({
       storeId: defaultStoreId,
@@ -245,7 +251,7 @@ async function main() {
       seoDescription:
         "180+ page guide covering nutrition, training, health, and grooming. Written by certified vets.",
     })
-    .returning();
+    .returning());
 
   const guideVariants = await db
     .insert(productVariants)
@@ -284,7 +290,7 @@ async function main() {
 
   // ─── Subscription Product: Petm8 Premium Monthly ──────────────────────────
 
-  const [premium] = await db
+  const premium = first(await db
     .insert(products)
     .values({
       storeId: defaultStoreId,
@@ -303,7 +309,7 @@ async function main() {
       seoDescription:
         "Unlimited AI portraits, member discounts, priority booking, and more. Cancel anytime.",
     })
-    .returning();
+    .returning());
 
   const premiumVariants = await db
     .insert(productVariants)
@@ -345,7 +351,7 @@ async function main() {
 
   // ─── Bookable Product: Dog Beach Day Experience ────────────────────────────
 
-  const [beachDay] = await db
+  const beachDay = first(await db
     .insert(products)
     .values({
       storeId: defaultStoreId,
@@ -363,7 +369,7 @@ async function main() {
       seoDescription:
         "3-hour guided beach experience for dogs at Bondi Beach. Includes handlers, toys, picnic, and professional photos.",
     })
-    .returning();
+    .returning());
 
   const beachDayVariants = await db
     .insert(productVariants)

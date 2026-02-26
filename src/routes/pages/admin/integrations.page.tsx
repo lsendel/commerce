@@ -114,8 +114,8 @@ export const AdminIntegrationsPage: FC<AdminIntegrationsProps> = ({
 
   return (
     <div class="max-w-5xl mx-auto py-8 px-4">
-      <h1 class="text-3xl font-bold mb-2">Platform Integrations</h1>
-      <p class="text-gray-500 mb-8">
+      <h1 class="text-3xl font-bold mb-2 text-gray-900 dark:text-gray-100">Platform Integrations</h1>
+      <p class="text-gray-500 dark:text-gray-400 mb-8">
         Manage API keys, verify connections, and monitor service health.
       </p>
 
@@ -129,7 +129,7 @@ export const AdminIntegrationsPage: FC<AdminIntegrationsProps> = ({
           {tab === "Infrastructure" ? (
             <div class="space-y-3">
               {(infraHealth ?? []).map((item: any) => (
-                <div class="bg-white border rounded-lg p-4 flex items-center justify-between">
+                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     <StatusBadge
                       status={
@@ -140,7 +140,7 @@ export const AdminIntegrationsPage: FC<AdminIntegrationsProps> = ({
                             : "disconnected"
                       }
                     />
-                    <span class="font-medium">{item.service}</span>
+                    <span class="font-medium text-gray-900 dark:text-gray-100">{item.service}</span>
                   </div>
                   <div class="text-sm text-gray-500">
                     {item.message}

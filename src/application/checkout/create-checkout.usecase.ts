@@ -106,13 +106,16 @@ export class CreateCheckoutUseCase {
 
     if (existing.length > 0) {
       // Update existing request to pending_payment with fresh expiry
-      await this.db
-        .update(bookingRequests)
-        .set({
-          status: "pending_payment",
-          expiresAt,
-        })
-        .where(eq(bookingRequests.id, existing[0].id));
+      const existingRequest = existing[0];
+      if (existingRequest) {
+        await this.db
+          .update(bookingRequests)
+          .set({
+            status: "pending_payment",
+            expiresAt,
+          })
+          .where(eq(bookingRequests.id, existingRequest.id));
+      }
     } else {
       // Create new booking request
       await this.db.insert(bookingRequests).values({

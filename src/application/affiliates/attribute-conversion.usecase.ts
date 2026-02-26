@@ -45,7 +45,7 @@ export class AttributeConversionUseCase {
             orderTotal: input.orderTotal,
             commissionAmount: parentCommission,
             attributionMethod: "tier",
-            parentConversionId: conversion.id,
+            parentConversionId: conversion?.id,
           });
         }
       }

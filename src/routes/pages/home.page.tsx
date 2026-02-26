@@ -39,21 +39,21 @@ export const HomePage: FC<HomePageProps> = ({
   return (
     <div>
       {/* Hero */}
-      <section class="relative overflow-hidden bg-gradient-to-br from-brand-50 via-white to-pet-teal/10">
+      <section class="relative overflow-hidden bg-gradient-to-br from-brand-50 via-white to-pet-teal/10 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36">
           <div class="max-w-2xl">
-            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 mb-6 transition-transform hover:scale-105">
+            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 mb-6 transition-transform hover:scale-105">
               Welcome to petm8.io
             </span>
-            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight tracking-tight">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-gray-100 leading-tight tracking-tight">
               {user ? (
                 <>Welcome back, <span class="text-brand-500">{user.name.split(' ')[0]}</span>!</>
               ) : (
                 <>Everything for your <span class="text-brand-500">furry friend</span></>
               )}
             </h1>
-            <p class="mt-6 text-lg text-gray-600 leading-relaxed max-w-lg">
-              {userPets && userPets.length > 0 ? (
+            <p class="mt-6 text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-lg">
+              {userPets && userPets.length > 0 && userPets[0] ? (
                 `We have everything ${userPets[0].name} needs to thrive. From premium supplies to custom AI pet portraits and grooming bookings.`
               ) : (
                 "From premium supplies and custom AI pet portraits to grooming bookings and subscription boxes -- we have everything your pet needs to thrive."
@@ -72,7 +72,7 @@ export const HomePage: FC<HomePageProps> = ({
 
         {/* Decorative paw prints */}
         <div class="absolute top-10 right-10 opacity-5">
-          <svg class="w-64 h-64 text-brand-500" viewBox="0 0 100 100" fill="currentColor">
+          <svg class="w-64 h-64 text-brand-500" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true">
             <circle cx="35" cy="25" r="8" />
             <circle cx="65" cy="25" r="8" />
             <circle cx="22" cy="45" r="7" />
@@ -81,7 +81,7 @@ export const HomePage: FC<HomePageProps> = ({
           </svg>
         </div>
         <div class="absolute bottom-5 left-20 opacity-5 rotate-12">
-          <svg class="w-40 h-40 text-pet-teal" viewBox="0 0 100 100" fill="currentColor">
+          <svg class="w-40 h-40 text-pet-teal" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true">
             <circle cx="35" cy="25" r="8" />
             <circle cx="65" cy="25" r="8" />
             <circle cx="22" cy="45" r="7" />
@@ -96,8 +96,8 @@ export const HomePage: FC<HomePageProps> = ({
         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div class="flex items-center justify-between mb-8">
             <div>
-              <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Shop by Collection</h2>
-              <p class="mt-1 text-gray-500 text-sm">Find exactly what you are looking for</p>
+              <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Shop by Collection</h2>
+              <p class="mt-1 text-gray-500 dark:text-gray-400 text-sm">Find exactly what you are looking for</p>
             </div>
             <a
               href="/products"
@@ -115,7 +115,7 @@ export const HomePage: FC<HomePageProps> = ({
               <a
                 key={collection.id}
                 href={`/products?collection=${encodeURIComponent(collection.slug)}`}
-                class="group relative overflow-hidden rounded-2xl aspect-[4/3] bg-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300"
+                class="group relative overflow-hidden rounded-2xl aspect-[4/3] bg-gray-100 dark:bg-gray-800 shadow-sm hover:shadow-lg transition-shadow duration-300"
               >
                 {collection.imageUrl ? (
                   <img
@@ -147,8 +147,8 @@ export const HomePage: FC<HomePageProps> = ({
         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div class="flex items-center justify-between mb-8">
             <div>
-              <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Featured Products</h2>
-              <p class="mt-1 text-gray-500 text-sm">Our top picks for your pet</p>
+              <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Featured Products</h2>
+              <p class="mt-1 text-gray-500 dark:text-gray-400 text-sm">Our top picks for your pet</p>
             </div>
             <a
               href="/products"
@@ -202,7 +202,7 @@ export const HomePage: FC<HomePageProps> = ({
           <div class="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
           <div class="absolute bottom-0 right-20 w-48 h-48 bg-white/5 rounded-full translate-y-1/4" />
           <div class="absolute top-1/2 right-8 opacity-10 hidden lg:block">
-            <svg class="w-48 h-48 text-white" viewBox="0 0 100 100" fill="currentColor">
+            <svg class="w-48 h-48 text-white" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true">
               <circle cx="35" cy="25" r="8" />
               <circle cx="65" cy="25" r="8" />
               <circle cx="22" cy="45" r="7" />

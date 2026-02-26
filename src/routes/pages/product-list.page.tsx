@@ -78,8 +78,8 @@ export const ProductListPage: FC<ProductListPageProps> = ({
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Page header */}
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Products</h1>
-        <p class="mt-1 text-gray-500 text-sm">{total} {total === 1 ? "product" : "products"} found</p>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Products</h1>
+        <p class="mt-1 text-gray-500 dark:text-gray-400 text-sm">{total} {total === 1 ? "product" : "products"} found</p>
       </div>
 
       <div class="lg:flex lg:gap-8">
@@ -88,19 +88,19 @@ export const ProductListPage: FC<ProductListPageProps> = ({
           <form method="get" action="/products" class="space-y-6 sticky top-6">
             {/* Search */}
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Search</label>
               <input
                 type="text"
                 name="search"
                 value={filters.search || ""}
                 placeholder="Search products..."
-                class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 placeholder:text-gray-400"
+                class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
 
             {/* Type filter */}
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Product Type</label>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Product Type</label>
               <div class="space-y-2">
                 {productTypes.map((pt) => (
                   <label key={pt.value} class="flex items-center gap-2 cursor-pointer">
@@ -111,7 +111,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                       checked={(filters.type || "") === pt.value}
                       class="text-brand-500 focus:ring-brand-300"
                     />
-                    <span class="text-sm text-gray-700">{pt.label}</span>
+                    <span class="text-sm text-gray-700 dark:text-gray-300">{pt.label}</span>
                   </label>
                 ))}
               </div>
@@ -120,10 +120,10 @@ export const ProductListPage: FC<ProductListPageProps> = ({
             {/* Collection filter */}
             {collections.length > 0 && (
               <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Collection</label>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Collection</label>
                 <select
                   name="collection"
-                  class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
+                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
                 >
                   <option value="">All Collections</option>
                   {collections.map((c) => (
@@ -137,7 +137,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
 
             {/* Price range */}
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Price Range</label>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Price Range</label>
               <div class="flex items-center gap-2">
                 <input
                   type="number"
@@ -146,7 +146,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                   placeholder="Min"
                   min="0"
                   step="0.01"
-                  class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                 />
                 <span class="text-gray-400 text-sm">-</span>
                 <input
@@ -156,17 +156,17 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                   placeholder="Max"
                   min="0"
                   step="0.01"
-                  class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                 />
               </div>
             </div>
 
             {/* Sort */}
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Sort By</label>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sort By</label>
               <select
                 name="sort"
-                class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
+                class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
               >
                 {sortOptions.map((opt) => (
                   <option key={opt.value} value={opt.value} selected={(filters.sort || "") === opt.value}>
@@ -191,9 +191,9 @@ export const ProductListPage: FC<ProductListPageProps> = ({
 
         {/* Mobile filter bar */}
         <div class="lg:hidden mb-6">
-          <details class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <details class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
             <summary class="flex items-center justify-between p-4 cursor-pointer">
-              <span class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
@@ -203,7 +203,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </summary>
-            <div class="p-4 border-t border-gray-100">
+            <div class="p-4 border-t border-gray-100 dark:border-gray-700">
               <form method="get" action="/products" class="space-y-4">
                 <input
                   type="text"
@@ -215,7 +215,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                 <div class="grid grid-cols-2 gap-3">
                   <select
                     name="type"
-                    class="rounded-xl border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                    class="rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                   >
                     {productTypes.map((pt) => (
                       <option key={pt.value} value={pt.value} selected={(filters.type || "") === pt.value}>
@@ -225,7 +225,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                   </select>
                   <select
                     name="sort"
-                    class="rounded-xl border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                    class="rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                   >
                     {sortOptions.map((opt) => (
                       <option key={opt.value} value={opt.value} selected={(filters.sort || "") === opt.value}>
@@ -237,7 +237,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                 {collections.length > 0 && (
                   <select
                     name="collection"
-                    class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                    class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                   >
                     <option value="">All Collections</option>
                     {collections.map((c) => (
@@ -255,7 +255,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                     placeholder="Min $"
                     min="0"
                     step="0.01"
-                    class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                    class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                   />
                   <span class="text-gray-400 text-sm">-</span>
                   <input
@@ -265,7 +265,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                     placeholder="Max $"
                     min="0"
                     step="0.01"
-                    class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                    class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                   />
                 </div>
                 <div class="flex gap-2">

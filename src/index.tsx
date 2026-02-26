@@ -27,6 +27,9 @@ import platformRoutes from "./routes/api/platform.routes";
 import affiliateRoutes from "./routes/api/affiliate.routes";
 import venueRoutes from "./routes/api/venue.routes";
 import { integrationRoutes } from "./routes/api/integrations.routes";
+import { cacheRoutes } from "./routes/api/cache.routes";
+import { cacheResponse } from "./middleware/cache.middleware";
+import { browserCaching } from "./middleware/browser-cache.middleware";
 
 // GraphQL
 import { schema } from "./graphql/schema";
@@ -65,6 +68,9 @@ import { VenueListPage as _VenueListPage } from "./routes/pages/venues/list.page
 import { VenueDetailPage as _VenueDetailPage } from "./routes/pages/venues/detail.page";
 import { AdminIntegrationsPage as _AdminIntegrationsPage } from "./routes/pages/admin/integrations.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
+import { NotFoundPage } from "./routes/pages/404.page";
+import { ErrorPage } from "./components/ui/error-page";
+import { withErrorHandling } from "./middleware/page-error.middleware";
 
 // Type-erased page components for flexible data passing from repositories
 const HomePage = _HomePage as any;
@@ -124,6 +130,19 @@ app.use("*", errorHandler());
 app.use("*", tenantMiddleware());
 app.use("*", affiliateMiddleware());
 app.use("/api/*", cors());
+app.use("*", browserCaching());
+
+// ─── Page-level Response Cache (product detail pages, 10min) ──
+app.use(
+  "/products/:slug",
+  cacheResponse({
+    ttl: 600,
+    dynamicTags: (c) => {
+      const slug = c.req.param("slug");
+      return slug ? [`product:${slug}`] : [];
+    },
+  }),
+);
 
 // ─── Health Check ──────────────────────────────────────────
 app.get("/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }));
@@ -150,6 +169,7 @@ app.route("/api/platform", platformRoutes);
 app.route("/api/affiliates", affiliateRoutes);
 app.route("/api/venues", venueRoutes);
 app.route("/api/integrations", integrationRoutes);
+app.route("/api", cacheRoutes);
 
 // ─── GraphQL ───────────────────────────────────────────────
 const yoga = createYoga({ schema, graphqlEndpoint: "/graphql" });
@@ -313,11 +333,18 @@ app.get("/contact", async (c) => {
 
 app.get("/robots.txt", (c) => {
   const appUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
-  return c.text(
-    `User-agent: *\nAllow: /\nSitemap: ${appUrl}/sitemap.xml\n`,
-    200,
-    { "Content-Type": "text/plain; charset=utf-8" },
-  );
+  const robotsTxt = [
+    "User-agent: *",
+    "Allow: /",
+    "Disallow: /api/",
+    "Disallow: /admin/",
+    "Disallow: /platform/",
+    "Disallow: /account/",
+    "",
+    `Sitemap: ${appUrl}/sitemap.xml`,
+    "",
+  ].join("\n");
+  return c.text(robotsTxt, 200, { "Content-Type": "text/plain; charset=utf-8" });
 });
 
 app.get("/sitemap.xml", async (c) => {
@@ -325,31 +352,47 @@ app.get("/sitemap.xml", async (c) => {
   const sitemapStoreId = c.get("storeId") as string;
   const productRepo = new ProductRepository(db, sitemapStoreId);
   const appUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
-  const now = new Date().toISOString();
+  const now = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-  const [productsResult, eventsResult] = await Promise.all([
+  const [productsResult, eventsResult, allCollections] = await Promise.all([
     productRepo.findAll({ limit: 1000, available: true }),
     productRepo.findAll({ limit: 1000, type: "bookable", available: true }),
+    productRepo.findCollections(),
   ]);
 
-  const urls = [
-    `${appUrl}/`,
-    `${appUrl}/products`,
-    `${appUrl}/events`,
-    `${appUrl}/events/calendar`,
-    `${appUrl}/studio`,
-    `${appUrl}/about`,
-    `${appUrl}/contact`,
-    ...productsResult.products.map((product: any) => `${appUrl}/products/${product.slug}`),
-    ...eventsResult.products.map((event: any) => `${appUrl}/events/${event.slug}`),
+  // Helper to build a <url> element with all SEO attributes
+  const urlEntry = (loc: string, lastmod: string, changefreq: string, priority: string) =>
+    `  <url>\n    <loc>${escapeXml(loc)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+
+  const entries: string[] = [
+    // Static pages
+    urlEntry(`${appUrl}/`, now, "daily", "1.0"),
+    urlEntry(`${appUrl}/products`, now, "daily", "0.9"),
+    urlEntry(`${appUrl}/events`, now, "daily", "0.8"),
+    urlEntry(`${appUrl}/events/calendar`, now, "daily", "0.7"),
+    urlEntry(`${appUrl}/studio`, now, "weekly", "0.6"),
+    urlEntry(`${appUrl}/about`, now, "monthly", "0.4"),
+    urlEntry(`${appUrl}/contact`, now, "monthly", "0.4"),
+    urlEntry(`${appUrl}/auth/login`, now, "monthly", "0.3"),
+    urlEntry(`${appUrl}/auth/register`, now, "monthly", "0.3"),
+    urlEntry(`${appUrl}/venues`, now, "weekly", "0.6"),
+    // Collection pages (redirect to /products?collection=slug)
+    ...allCollections.map((col: any) =>
+      urlEntry(`${appUrl}/products?collection=${encodeURIComponent(col.slug)}`, now, "weekly", "0.7"),
+    ),
+    // Product detail pages
+    ...productsResult.products.map((product: any) =>
+      urlEntry(`${appUrl}/products/${product.slug}`, now, "weekly", "0.8"),
+    ),
+    // Event detail pages
+    ...eventsResult.products.map((event: any) =>
+      urlEntry(`${appUrl}/events/${event.slug}`, now, "weekly", "0.8"),
+    ),
   ];
 
-  const uniqueUrls = [...new Set(urls)];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-    uniqueUrls
-      .map((url) => `  <url><loc>${escapeXml(url)}</loc><lastmod>${now}</lastmod></url>`)
-      .join("\n") +
+    entries.join("\n") +
     `\n</urlset>`;
 
   return c.body(xml, 200, { "Content-Type": "application/xml; charset=utf-8" });
@@ -373,8 +416,25 @@ app.get("/products", async (c) => {
   });
   const allCollections = await productRepo.findCollections();
 
+  const siteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const listingDescription = query.collection
+    ? `Browse ${query.collection} products at ${storeName}`
+    : `Shop ${result.total} products at ${storeName}. Premium pet supplies, events, and more.`;
+
   return c.html(
-    <Layout title="Shop" activePath="/products" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout
+      title="Shop"
+      description={listingDescription}
+      activePath="/products"
+      isAuthenticated={isAuthenticated}
+      cartCount={cartCount}
+      ogType="website"
+      url={`${siteUrl}/products`}
+      storeName={storeName}
+      storeLogo={storeLogo}
+      primaryColor={primaryColor}
+      secondaryColor={secondaryColor}
+    >
       <ProductListPage
         products={result.products as any}
         total={result.total}
@@ -412,8 +472,12 @@ app.get("/products/:slug", async (c) => {
     availability = (avResult as any)?.slots ?? avResult ?? [];
   }
 
-  const productUrl = `https://petm8.io/products/${product.slug}`;
-  const productImageUrl = product.featuredImageUrl || "https://petm8.io/og-image.jpg";
+  // Fetch related products (same collections, or recently added fallback)
+  const relatedProducts = await productRepo.findRelatedProducts(product.id, 4);
+
+  const siteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const productUrl = `${siteUrl}/products/${product.slug}`;
+  const productImageUrl = product.featuredImageUrl || `${siteUrl}/og-image.jpg`;
   const productJsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -421,13 +485,21 @@ app.get("/products/:slug", async (c) => {
     image: productImageUrl,
     description: product.seoDescription || product.description || product.name,
     sku: product.variants?.[0]?.sku || product.id,
+    brand: {
+      "@type": "Organization",
+      name: storeName,
+    },
     offers: {
       "@type": "Offer",
       url: productUrl,
       priceCurrency: "USD",
       price: product.variants?.[0]?.price || "0.00",
       availability: product.availableForSale ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-    }
+      seller: {
+        "@type": "Organization",
+        name: storeName,
+      },
+    },
   };
 
   return c.html(
@@ -441,6 +513,8 @@ app.get("/products/:slug", async (c) => {
       ogType="product"
       url={productUrl}
       jsonLd={productJsonLd}
+      ogPriceAmount={String(product.variants?.[0]?.price || "0.00")}
+      ogPriceCurrency="USD"
       storeName={storeName}
       storeLogo={storeLogo}
       primaryColor={primaryColor}
@@ -453,6 +527,7 @@ app.get("/products/:slug", async (c) => {
           bookingConfig: bookingConfig as any,
         }}
         slots={availability as any}
+        relatedProducts={relatedProducts as any}
       />
     </Layout>
   );
@@ -822,8 +897,9 @@ app.get("/events/calendar", async (c) => {
   );
   const selectedDate = c.req.query("date") || undefined;
   const eventsByDate = allSlots.flat().reduce((acc: Record<string, any[]>, slot: any) => {
-    if (!acc[slot.slotDate]) acc[slot.slotDate] = [];
-    acc[slot.slotDate].push({
+    const dateKey: string = slot.slotDate;
+    const existing = acc[dateKey] ?? [];
+    existing.push({
       id: slot.id,
       slug: slot.slug,
       name: slot.name,
@@ -832,6 +908,7 @@ app.get("/events/calendar", async (c) => {
       location: slot.location,
       spotsRemaining: slot.spotsRemaining,
     });
+    acc[dateKey] = existing;
     return acc;
   }, {});
   const eventTypes = [
@@ -916,8 +993,9 @@ app.get("/events/:slug", async (c) => {
     ? `${settings.duration} ${settings.durationUnit || "minutes"}`
     : "Flexible duration";
 
-  const eventUrl = `https://petm8.io/events/${product.slug}`;
-  const eventImageUrl = product.featuredImageUrl || "https://petm8.io/og-image.jpg";
+  const eventSiteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const eventUrl = `${eventSiteUrl}/events/${product.slug}`;
+  const eventImageUrl = product.featuredImageUrl || `${eventSiteUrl}/og-image.jpg`;
   const eventJsonLd = {
     "@context": "https://schema.org",
     "@type": "Event",
@@ -1200,32 +1278,54 @@ app.get("/venues/:slug", async (c) => {
   );
 });
 
-// ─── Error Pages ───────────────────────────────────────────
-const NotFoundPage = () => (
-  <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-    <div class="text-8xl mb-4">🐾</div>
-    <h1 class="text-3xl font-bold text-gray-900 mb-2">Page Not Found</h1>
-    <p class="text-gray-500 mb-8 max-w-md">
-      Looks like this page wandered off. Let's get you back on track.
-    </p>
-    <a href="/" class="inline-flex items-center px-6 py-3 bg-brand-500 text-white font-medium rounded-xl hover:bg-brand-600 transition-colors">
-      Back to Home
-    </a>
-  </div>
-);
+// Error pages are now imported from:
+//   src/routes/pages/404.page.tsx (NotFoundPage)
+//   src/components/ui/error-page.tsx (ErrorPage)
 
-const ErrorPage = () => (
-  <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-    <div class="text-8xl mb-4">🙀</div>
-    <h1 class="text-3xl font-bold text-gray-900 mb-2">Something Went Wrong</h1>
-    <p class="text-gray-500 mb-8 max-w-md">
-      We hit an unexpected snag. Please try again.
-    </p>
-    <a href="/" class="inline-flex items-center px-6 py-3 bg-brand-500 text-white font-medium rounded-xl hover:bg-brand-600 transition-colors">
-      Back to Home
-    </a>
-  </div>
-);
+// ─── CDN Image Proxy with Cache + WebP negotiation (C5) ──
+app.get("/cdn/*", async (c) => {
+  const key = c.req.path.slice(5); // strip "/cdn/"
+  if (!key) return c.notFound();
+
+  const bucket = c.env.IMAGES;
+  const object = await bucket.get(key);
+  if (!object) return c.notFound();
+
+  const acceptHeader = c.req.header("Accept") || "";
+  const supportsWebP = acceptHeader.includes("image/webp");
+
+  const headers = new Headers();
+  headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  headers.set("Vary", "Accept");
+
+  const ct = object.httpMetadata?.contentType;
+  if (ct) {
+    headers.set("Content-Type", ct);
+  } else {
+    const ext = key.split(".").pop()?.toLowerCase();
+    const mime: Record<string, string> = {
+      jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+      webp: "image/webp", svg: "image/svg+xml", gif: "image/gif", avif: "image/avif",
+    };
+    headers.set("Content-Type", mime[ext ?? ""] ?? "application/octet-stream");
+  }
+
+  // WebP negotiation: try .webp variant if browser supports it
+  if (supportsWebP && ct && !ct.includes("webp") && !ct.includes("svg")) {
+    const webpKey = key.replace(/\.(jpe?g|png)$/i, ".webp");
+    if (webpKey !== key) {
+      const webpObj = await bucket.get(webpKey);
+      if (webpObj) {
+        headers.set("Content-Type", "image/webp");
+        headers.set("ETag", webpObj.httpEtag);
+        return new Response(webpObj.body as ReadableStream, { headers });
+      }
+    }
+  }
+
+  headers.set("ETag", object.httpEtag);
+  return new Response(object.body as ReadableStream, { headers });
+});
 
 // 404 catch-all
 app.notFound(async (c) => {
@@ -1248,7 +1348,7 @@ app.onError(async (err, c) => {
     const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
     return c.html(
       <Layout title="Error" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-        <ErrorPage />
+        <ErrorPage status={500} />
       </Layout>,
       500
     );

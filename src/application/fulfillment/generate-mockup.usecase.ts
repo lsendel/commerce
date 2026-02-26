@@ -40,7 +40,13 @@ export class GenerateMockupUseCase {
       );
     }
 
-    const printfulProductId = syncProducts[0].printfulId;
+    const syncProduct = syncProducts[0];
+    if (!syncProduct) {
+      throw new Error(
+        `Product ${productId} is not linked to a Printful product`,
+      );
+    }
+    const printfulProductId = syncProduct.printfulId;
 
     // Create the mockup task
     const { taskKey } = await this.adapter.createMockupTask(

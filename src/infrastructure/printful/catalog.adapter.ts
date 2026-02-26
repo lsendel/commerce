@@ -124,9 +124,10 @@ export class PrintfulCatalogAdapter {
     let productId: string;
     let wasCreated = false;
 
-    if (existingProducts.length > 0) {
+    const existingProduct = existingProducts[0];
+    if (existingProduct) {
       // Product already linked — update our product record
-      productId = existingProducts[0].productId;
+      productId = existingProduct.productId;
       await db
         .update(products)
         .set({
@@ -159,7 +160,9 @@ export class PrintfulCatalogAdapter {
         })
         .returning();
 
-      productId = productRows[0].id;
+      const newProduct = productRows[0];
+      if (!newProduct) throw new Error("Failed to create product from Printful sync");
+      productId = newProduct.id;
       wasCreated = true;
 
       // Create sync product link
@@ -193,9 +196,10 @@ export class PrintfulCatalogAdapter {
       .where(eq(printfulSyncVariants.printfulId, sv.id))
       .limit(1);
 
-    if (existingVariant.length > 0) {
+    const existingVar = existingVariant[0];
+    if (existingVar) {
       // Update existing variant
-      const variantId = existingVariant[0].variantId;
+      const variantId = existingVar.variantId;
       await db
         .update(productVariants)
         .set({
@@ -227,9 +231,11 @@ export class PrintfulCatalogAdapter {
         })
         .returning();
 
+      const newVariant = variantRows[0];
+      if (!newVariant) throw new Error("Failed to create variant from Printful sync");
       await db.insert(printfulSyncVariants).values({
         printfulId: sv.id,
-        variantId: variantRows[0].id,
+        variantId: newVariant.id,
         printfulProductId: sv.sync_product_id,
         syncedAt: new Date(),
       });

@@ -26,7 +26,7 @@ export async function runBookingReminders(env: Env): Promise<void> {
   // Calculate tomorrow's date in YYYY-MM-DD format (UTC)
   const tomorrow = new Date();
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split("T")[0];
+  const tomorrowStr = tomorrow.toISOString().split("T")[0] ?? "";
 
   // Find all availability slots for tomorrow
   const tomorrowSlots = await db

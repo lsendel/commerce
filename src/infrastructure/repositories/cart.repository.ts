@@ -27,6 +27,7 @@ export class CartRepository {
 
     if (existing.length > 0) {
       const cart = existing[0];
+      if (!cart) throw new Error("Unexpected empty cart row");
       // If user just logged in, associate the anonymous cart with their account
       if (userId && !cart.userId) {
         const updated = await this.db
@@ -34,7 +35,9 @@ export class CartRepository {
           .set({ userId, updatedAt: new Date() })
           .where(eq(carts.id, cart.id))
           .returning();
-        return updated[0];
+        const updatedCart = updated[0];
+        if (!updatedCart) throw new Error("Failed to update cart");
+        return updatedCart;
       }
       return cart;
     }
@@ -45,7 +48,9 @@ export class CartRepository {
       .values({ sessionId, userId: userId ?? null, storeId: this.storeId })
       .returning();
 
-    return created[0];
+    const newCart = created[0];
+    if (!newCart) throw new Error("Failed to create cart");
+    return newCart;
   }
 
   /**
@@ -158,29 +163,30 @@ export class CartRepository {
       .where(and(...conditions))
       .limit(1);
 
-    if (existing.length > 0 && !data.bookingAvailabilityId) {
+    const existingItem = existing[0];
+    if (existingItem && !data.bookingAvailabilityId) {
       // Increment quantity for non-booking items
       const updated = await this.db
         .update(cartItems)
         .set({
           quantity: sql`${cartItems.quantity} + ${data.quantity}`,
         })
-        .where(eq(cartItems.id, existing[0].id))
+        .where(eq(cartItems.id, existingItem.id))
         .returning();
-      return updated[0];
+      return updated[0] ?? null;
     }
 
-    if (existing.length > 0 && data.bookingAvailabilityId) {
+    if (existingItem && data.bookingAvailabilityId) {
       // Increment quantity for same booking slot
       const updated = await this.db
         .update(cartItems)
         .set({
           quantity: sql`${cartItems.quantity} + ${data.quantity}`,
-          personTypeQuantities: data.personTypeQuantities ?? existing[0].personTypeQuantities,
+          personTypeQuantities: data.personTypeQuantities ?? existingItem.personTypeQuantities,
         })
-        .where(eq(cartItems.id, existing[0].id))
+        .where(eq(cartItems.id, existingItem.id))
         .returning();
-      return updated[0];
+      return updated[0] ?? null;
     }
 
     // Insert new item
@@ -256,7 +262,8 @@ export class CartRepository {
       .where(eq(carts.userId, toUserId))
       .limit(1);
 
-    if (userCarts.length === 0) {
+    const userCart = userCarts[0];
+    if (!userCart) {
       // No user cart exists — just associate the anonymous cart
       await this.db
         .update(carts)
@@ -264,8 +271,6 @@ export class CartRepository {
         .where(eq(carts.id, anonCart.id));
       return;
     }
-
-    const userCart = userCarts[0];
 
     // If the anonymous cart IS the user cart, nothing to do
     if (anonCart.id === userCart.id) return;

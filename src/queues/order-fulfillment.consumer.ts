@@ -49,7 +49,8 @@ export async function handleOrderFulfillmentMessage(
     .where(eq(orders.id, orderId))
     .limit(1);
 
-  if (orderRows.length === 0) {
+  const orderRow = orderRows[0];
+  if (!orderRow) {
     console.error(
       `[order-fulfillment] Order ${orderId} not found -- acking to prevent retries`,
     );
@@ -57,7 +58,7 @@ export async function handleOrderFulfillmentMessage(
     return;
   }
 
-  const orderRepo = new OrderRepository(db, orderRows[0].storeId);
+  const orderRepo = new OrderRepository(db, orderRow.storeId);
 
   // Fetch the order with items
   const order = await orderRepo.findById(orderId);

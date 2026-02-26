@@ -42,6 +42,9 @@ export class CreatePrintfulOrderUseCase {
     }
 
     const order = orderRows[0];
+    if (!order) {
+      throw new Error(`Order ${orderId} not found`);
+    }
 
     // 2. Fetch order items
     const items = await db

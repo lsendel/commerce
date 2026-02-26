@@ -27,31 +27,31 @@ export const EventsListPage: FC<EventsListPageProps> = ({
     <div class="max-w-6xl mx-auto px-4 py-8">
       {/* Page header */}
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Events &amp; Experiences</h1>
-        <p class="mt-2 text-gray-500">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Events &amp; Experiences</h1>
+        <p class="mt-2 text-gray-500 dark:text-gray-400">
           Discover pet-friendly events and book unforgettable experiences.
         </p>
       </div>
 
       {/* Date range filter */}
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-8">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 mb-8">
         <form method="get" class="flex flex-wrap items-end gap-4">
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">From</label>
+            <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">From</label>
             <input
               type="date"
               name="dateFrom"
               value={filterDateFrom || ""}
-              class="rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
+              class="rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
             />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">To</label>
+            <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">To</label>
             <input
               type="date"
               name="dateTo"
               value={filterDateTo || ""}
-              class="rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
+              class="rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
             />
           </div>
           <Button type="submit" variant="primary" size="sm">
@@ -67,9 +67,9 @@ export const EventsListPage: FC<EventsListPageProps> = ({
 
       {/* Events grid */}
       {events.length === 0 ? (
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-12 text-center">
           <div class="w-16 h-16 rounded-full bg-brand-50 text-brand-500 flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -78,7 +78,7 @@ export const EventsListPage: FC<EventsListPageProps> = ({
               />
             </svg>
           </div>
-          <h2 class="text-lg font-semibold text-gray-900 mb-1">No events found</h2>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">No events found</h2>
           <p class="text-sm text-gray-400">Try adjusting your date range or check back soon.</p>
         </div>
       ) : (
@@ -86,7 +86,7 @@ export const EventsListPage: FC<EventsListPageProps> = ({
           {events.map((event) => (
             <a
               href={`/events/${event.slug}`}
-              class="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:border-brand-200 transition-all duration-200"
+              class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden hover:shadow-lg hover:border-brand-200 dark:hover:border-brand-600 transition-all duration-200"
             >
               {/* Image */}
               <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
@@ -117,14 +117,14 @@ export const EventsListPage: FC<EventsListPageProps> = ({
 
               {/* Content */}
               <div class="p-5">
-                <h3 class="font-semibold text-gray-900 group-hover:text-brand-700 transition-colors">
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-brand-700 dark:group-hover:text-brand-400 transition-colors">
                   {event.name}
                 </h3>
                 {event.shortDescription && (
                   <p class="text-sm text-gray-500 mt-1 line-clamp-2">{event.shortDescription}</p>
                 )}
 
-                <div class="flex items-center gap-3 mt-3 text-xs text-gray-400">
+                <div class="flex items-center gap-3 mt-3 text-xs text-gray-400 dark:text-gray-500">
                   {/* Location */}
                   <span class="flex items-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -28,12 +28,13 @@ export class PrintfulRepository {
       .where(and(eq(printfulSyncProducts.printfulId, data.printfulId), eq(printfulSyncProducts.storeId, this.storeId)))
       .limit(1);
 
-    if (existing.length > 0) {
+    const existingSync = existing[0];
+    if (existingSync) {
       const updated = await this.db
         .update(printfulSyncProducts)
         .set({
           productId: data.productId,
-          externalId: data.externalId ?? existing[0].externalId,
+          externalId: data.externalId ?? existingSync.externalId,
           syncedAt: new Date(),
         })
         .where(eq(printfulSyncProducts.printfulId, data.printfulId))
@@ -72,13 +73,14 @@ export class PrintfulRepository {
       .where(eq(printfulSyncVariants.printfulId, data.printfulId))
       .limit(1);
 
-    if (existing.length > 0) {
+    const existingVar = existing[0];
+    if (existingVar) {
       const updated = await this.db
         .update(printfulSyncVariants)
         .set({
           variantId: data.variantId,
           printfulProductId:
-            data.printfulProductId ?? existing[0].printfulProductId,
+            data.printfulProductId ?? existingVar.printfulProductId,
           syncedAt: new Date(),
         })
         .where(eq(printfulSyncVariants.printfulId, data.printfulId))

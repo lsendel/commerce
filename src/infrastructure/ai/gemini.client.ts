@@ -73,7 +73,10 @@ export class GeminiClient {
     const bytes = new Uint8Array(buffer);
     let binary = "";
     for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
+      const byte = bytes[i];
+      if (byte !== undefined) {
+        binary += String.fromCharCode(byte);
+      }
     }
     return btoa(binary);
   }
@@ -82,7 +85,7 @@ export class GeminiClient {
     // Try to extract SVG from markdown code blocks first
     const codeBlockMatch = text.match(/```(?:svg|xml)?\s*([\s\S]*?)```/);
     if (codeBlockMatch) {
-      const inner = codeBlockMatch[1].trim();
+      const inner = (codeBlockMatch[1] ?? "").trim();
       if (inner.startsWith("<svg")) {
         return inner;
       }

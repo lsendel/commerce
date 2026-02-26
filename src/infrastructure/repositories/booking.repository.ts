@@ -84,6 +84,9 @@ export class BookingRepository {
       .returning();
 
     const slot = rows[0];
+    if (!slot) {
+      throw new Error("Failed to create availability slot");
+    }
 
     // Insert prices for the slot
     const priceRows = [];
@@ -96,7 +99,10 @@ export class BookingRepository {
           price: p.price.toFixed(2),
         })
         .returning();
-      priceRows.push(inserted[0]);
+      const priceRow = inserted[0];
+      if (priceRow) {
+        priceRows.push(priceRow);
+      }
     }
 
     return {
@@ -334,7 +340,11 @@ export class BookingRepository {
       })
       .returning();
 
-    return rows[0];
+    const request = rows[0];
+    if (!request) {
+      throw new Error("Failed to create booking request");
+    }
+    return request;
   }
 
   async findRequestById(id: string) {
@@ -427,6 +437,9 @@ export class BookingRepository {
       .returning();
 
     const booking = bookingRows[0];
+    if (!booking) {
+      throw new Error("Failed to create booking");
+    }
 
     const createdItems: Array<{
       id: string;
