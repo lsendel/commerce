@@ -25,7 +25,8 @@ export class MapProductToProviderUseCase {
       )
       .limit(1);
 
-    if (existing.length > 0) {
+    const existingMapping = existing[0];
+    if (existingMapping) {
       const updated = await this.db
         .update(providerProductMappings)
         .set({
@@ -33,7 +34,7 @@ export class MapProductToProviderUseCase {
           externalVariantId: input.externalVariantId,
           costPrice: input.costPrice,
         })
-        .where(eq(providerProductMappings.id, existing[0].id))
+        .where(eq(providerProductMappings.id, existingMapping.id))
         .returning();
       return updated[0];
     }

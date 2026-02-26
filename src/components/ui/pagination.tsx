@@ -33,8 +33,8 @@ export const Pagination: FC<PaginationProps> = ({
   const linkBase =
     "inline-flex items-center justify-center rounded-xl text-sm font-medium transition-colors duration-150 h-10 min-w-[2.5rem] px-2";
   const activeClass = "bg-brand-500 text-white shadow-sm";
-  const inactiveClass = "text-gray-700 hover:bg-gray-100";
-  const disabledClass = "text-gray-300 cursor-not-allowed pointer-events-none";
+  const inactiveClass = "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800";
+  const disabledClass = "text-gray-300 dark:text-gray-600 cursor-not-allowed pointer-events-none";
 
   return (
     <nav class="flex items-center justify-center gap-1" aria-label="Pagination">
@@ -45,13 +45,13 @@ export const Pagination: FC<PaginationProps> = ({
           class={`${linkBase} ${inactiveClass}`}
           aria-label="Previous page"
         >
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </a>
       ) : (
-        <span class={`${linkBase} ${disabledClass}`} aria-disabled="true">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <span class={`${linkBase} ${disabledClass}`} aria-disabled="true" aria-label="Previous page">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </span>
@@ -61,7 +61,7 @@ export const Pagination: FC<PaginationProps> = ({
       {pages.map((page, idx) => {
         if (page === "ellipsis") {
           return (
-            <span key={`e-${idx}`} class={`${linkBase} ${disabledClass}`}>
+            <span key={`e-${idx}`} class={`${linkBase} ${disabledClass}`} aria-hidden="true">
               ...
             </span>
           );
@@ -74,6 +74,7 @@ export const Pagination: FC<PaginationProps> = ({
             href={buildUrl(page)}
             class={`${linkBase} ${isActive ? activeClass : inactiveClass}`}
             aria-current={isActive ? "page" : undefined}
+            aria-label={`Page ${page}`}
           >
             {page}
           </a>
@@ -87,13 +88,13 @@ export const Pagination: FC<PaginationProps> = ({
           class={`${linkBase} ${inactiveClass}`}
           aria-label="Next page"
         >
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </a>
       ) : (
-        <span class={`${linkBase} ${disabledClass}`} aria-disabled="true">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <span class={`${linkBase} ${disabledClass}`} aria-disabled="true" aria-label="Next page">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </span>

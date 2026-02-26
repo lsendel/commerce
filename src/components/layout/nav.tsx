@@ -35,7 +35,7 @@ export const Nav: FC<NavProps> = ({
     : "flex items-center gap-1";
 
   return (
-    <nav class={containerClass}>
+    <nav class={containerClass} aria-label={vertical ? "Mobile navigation" : "Main navigation"}>
       {filteredLinks.map((link) => {
         const isActive =
           activePath === link.href ||
@@ -47,9 +47,10 @@ export const Nav: FC<NavProps> = ({
             href={link.href}
             class={`rounded-xl px-4 py-2 text-sm font-medium transition-colors duration-150 ${
               isActive
-                ? "bg-brand-50 text-brand-600"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                ? "bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
             } ${vertical ? "w-full" : ""}`}
+            aria-current={isActive ? "page" : undefined}
           >
             {link.label}
           </a>

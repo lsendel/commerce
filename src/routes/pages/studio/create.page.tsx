@@ -40,8 +40,8 @@ export const StudioCreatePage: FC<StudioCreatePageProps> = ({
     <div class="max-w-4xl mx-auto px-4 py-8 sm:py-12">
       {/* Header */}
       <div class="text-center mb-10">
-        <h1 class="text-3xl font-bold text-gray-900">AI Pet Art Studio</h1>
-        <p class="mt-2 text-gray-500">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">AI Pet Art Studio</h1>
+        <p class="mt-2 text-gray-500 dark:text-gray-400">
           Transform your pet's photo into unique artwork
         </p>
       </div>
@@ -52,7 +52,7 @@ export const StudioCreatePage: FC<StudioCreatePageProps> = ({
         <section data-step-section="pet" class={hasActiveJob || isComplete ? "hidden" : ""}>
           <div class="flex items-center gap-3 mb-4">
             <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white text-sm font-bold">1</span>
-            <h2 class="text-lg font-semibold text-gray-900">Choose Your Pet</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Choose Your Pet</h2>
           </div>
 
           {/* Existing pet selector */}
@@ -116,7 +116,7 @@ export const StudioCreatePage: FC<StudioCreatePageProps> = ({
         <section data-step-section="upload" class={hasActiveJob || isComplete ? "hidden" : "mt-8"}>
           <div class="flex items-center gap-3 mb-4">
             <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white text-sm font-bold">2</span>
-            <h2 class="text-lg font-semibold text-gray-900">Upload Photo</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Upload Photo</h2>
           </div>
           <UploadZone />
         </section>
@@ -125,7 +125,7 @@ export const StudioCreatePage: FC<StudioCreatePageProps> = ({
         <section data-step-section="template" class={hasActiveJob || isComplete ? "hidden" : "mt-10"}>
           <div class="flex items-center gap-3 mb-4">
             <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white text-sm font-bold">3</span>
-            <h2 class="text-lg font-semibold text-gray-900">Pick a Style</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pick a Style</h2>
           </div>
           <TemplatePicker templates={templates} showCustomPrompt={true} />
         </section>

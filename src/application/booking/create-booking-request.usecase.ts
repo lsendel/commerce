@@ -76,7 +76,7 @@ export class CreateBookingRequestUseCase {
       now.getTime() + BOOKING_REQUEST_TTL_MINUTES * 60 * 1000,
     );
 
-    const request = await this.bookingRepo.createBookingRequest({
+    const bookingRequest = await this.bookingRepo.createBookingRequest({
       availabilityId,
       userId,
       quantity: totalQuantity,
@@ -87,10 +87,10 @@ export class CreateBookingRequestUseCase {
     await this.bookingRepo.incrementReservedCount(availabilityId, totalQuantity);
 
     return {
-      id: request.id,
-      userId: request.userId,
-      availabilityId: request.availabilityId,
-      status: request.status ?? "pending_payment",
+      id: bookingRequest.id,
+      userId: bookingRequest.userId,
+      availabilityId: bookingRequest.availabilityId,
+      status: bookingRequest.status ?? "pending_payment",
       personTypeQuantities,
       totalPrice,
       availability: {
@@ -98,7 +98,7 @@ export class CreateBookingRequestUseCase {
         slotTime: slot.slotTime,
         product: { name: "", slug: "", featuredImageUrl: null },
       },
-      createdAt: request.createdAt?.toISOString() ?? now.toISOString(),
+      createdAt: bookingRequest.createdAt?.toISOString() ?? now.toISOString(),
       expiresAt: expiresAt.toISOString(),
     };
   }

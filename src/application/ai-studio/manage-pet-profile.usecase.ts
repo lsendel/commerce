@@ -28,6 +28,9 @@ export class ManagePetProfileUseCase {
       photoUrl,
     });
 
+    if (!pet) {
+      throw new Error("Failed to create pet profile");
+    }
     return this.formatPet(pet);
   }
 

@@ -170,9 +170,9 @@ export class PrintfulWebhookHandler {
       .where(eq(orders.id, externalOrderId))
       .limit(1);
 
-    if (orderRows.length === 0) return;
-
     const order = orderRows[0];
+    if (!order) return;
+
     const shipmentData = data.shipment;
 
     // Create shipment record
@@ -229,9 +229,8 @@ export class PrintfulWebhookHandler {
       .where(eq(printfulSyncVariants.printfulId, printfulVariantId))
       .limit(1);
 
-    if (syncVariantRows.length === 0) return;
-
     const syncVariant = syncVariantRows[0];
+    if (!syncVariant) return;
 
     // Update product variant availability
     await db
@@ -253,11 +252,12 @@ export class PrintfulWebhookHandler {
       .where(eq(printfulSyncProducts.productId, product.external_id))
       .limit(1);
 
-    if (syncRows.length > 0) {
+    const syncRow = syncRows[0];
+    if (syncRow) {
       await db
         .update(printfulSyncProducts)
         .set({ syncedAt: new Date() })
-        .where(eq(printfulSyncProducts.id, syncRows[0].id));
+        .where(eq(printfulSyncProducts.id, syncRow.id));
     }
   }
 

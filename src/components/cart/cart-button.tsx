@@ -8,7 +8,7 @@ export const CartButton: FC<CartButtonProps> = ({ itemCount = 0 }) => {
   return (
     <a
       href="/cart"
-      class="relative inline-flex items-center justify-center p-2 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors duration-150"
+      class="relative inline-flex items-center justify-center p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
       aria-label={`Shopping cart with ${itemCount} items`}
       data-cart-button
     >

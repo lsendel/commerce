@@ -24,9 +24,9 @@ export const StatusBadge: FC<StatusBadgeProps> = ({ status, message }) => (
     <span
       class={`w-2 h-2 rounded-full ${STATUS_STYLES[status] ?? "bg-gray-400"}`}
     />
-    <span class="text-sm font-medium">
+    <span class="text-sm font-medium dark:text-gray-200">
       {STATUS_LABELS[status] ?? status}
     </span>
-    {message && <span class="text-xs text-red-600">({message})</span>}
+    {message && <span class="text-xs text-red-600 dark:text-red-400">({message})</span>}
   </div>
 );

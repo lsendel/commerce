@@ -8,12 +8,12 @@ interface VenueDetailProps {
 export const VenueDetailPage: FC<VenueDetailProps> = ({ venue, events }) => {
   return (
     <div class="max-w-4xl mx-auto py-8 px-4">
-      <a href="/venues" class="text-indigo-600 hover:underline text-sm mb-4 block">
+      <a href="/venues" class="text-brand-600 hover:underline text-sm mb-4 block">
         &larr; All Venues
       </a>
 
-      <h1 class="text-3xl font-bold mb-2">{venue.name}</h1>
-      <p class="text-gray-600 mb-6">
+      <h1 class="text-3xl font-bold mb-2 text-gray-900 dark:text-gray-100">{venue.name}</h1>
+      <p class="text-gray-600 dark:text-gray-400 mb-6">
         {venue.address}, {venue.city}
         {venue.state ? `, ${venue.state}` : ""}, {venue.country}{" "}
         {venue.postalCode}
@@ -23,7 +23,7 @@ export const VenueDetailPage: FC<VenueDetailProps> = ({ venue, events }) => {
       {venue.latitude && venue.longitude && (
         <div
           id="venue-map"
-          class="h-64 rounded-lg border bg-gray-100 mb-6"
+          class="h-64 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 mb-6"
           data-venues={JSON.stringify([
             {
               id: venue.id,
@@ -42,24 +42,24 @@ export const VenueDetailPage: FC<VenueDetailProps> = ({ venue, events }) => {
         <div class="space-y-4">
           {venue.description && (
             <div>
-              <h2 class="text-lg font-semibold mb-2">About</h2>
-              <p class="text-gray-700">{venue.description}</p>
+              <h2 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">About</h2>
+              <p class="text-gray-700 dark:text-gray-300">{venue.description}</p>
             </div>
           )}
 
           {venue.capacity && (
             <div>
-              <h3 class="text-sm font-medium text-gray-500">Capacity</h3>
+              <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Capacity</h3>
               <p>{venue.capacity} people</p>
             </div>
           )}
 
           {venue.amenities && (venue.amenities as string[]).length > 0 && (
             <div>
-              <h3 class="text-sm font-medium text-gray-500 mb-2">Amenities</h3>
+              <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Amenities</h3>
               <div class="flex flex-wrap gap-2">
                 {(venue.amenities as string[]).map((a: string) => (
-                  <span class="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                  <span class="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-sm">
                     {a}
                   </span>
                 ))}
@@ -73,7 +73,7 @@ export const VenueDetailPage: FC<VenueDetailProps> = ({ venue, events }) => {
                 <span class="text-gray-500">Email:</span>{" "}
                 <a
                   href={`mailto:${venue.contactEmail}`}
-                  class="text-indigo-600"
+                  class="text-brand-600 dark:text-brand-400"
                 >
                   {venue.contactEmail}
                 </a>
@@ -89,7 +89,7 @@ export const VenueDetailPage: FC<VenueDetailProps> = ({ venue, events }) => {
 
         {/* Events at this venue */}
         <div>
-          <h2 class="text-lg font-semibold mb-4">Events at This Venue</h2>
+          <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Events at This Venue</h2>
           {events.length === 0 ? (
             <p class="text-gray-500 text-sm">No upcoming events.</p>
           ) : (
@@ -98,9 +98,9 @@ export const VenueDetailPage: FC<VenueDetailProps> = ({ venue, events }) => {
                 <li>
                   <a
                     href={`/events/${e.slug}`}
-                    class="block bg-white border rounded-lg p-3 hover:shadow-md transition-shadow"
+                    class="block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-md transition-shadow"
                   >
-                    <h3 class="font-medium">{e.name}</h3>
+                    <h3 class="font-medium text-gray-900 dark:text-gray-100">{e.name}</h3>
                     <p class="text-sm text-gray-500 mt-1">
                       {e.nextDate ?? "See schedule"}
                     </p>

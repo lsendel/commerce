@@ -31,14 +31,15 @@ export const TemplatePicker: FC<TemplatePickerProps> = ({
               type="button"
               data-template-card
               data-template-id={template.id}
-              class={`group relative flex flex-col rounded-2xl border-2 overflow-hidden bg-white text-left transition-all duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 ${
+              class={`group relative flex flex-col rounded-2xl border-2 overflow-hidden bg-white dark:bg-gray-800 text-left transition-all duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 ${
                 isSelected
-                  ? "border-brand-500 shadow-md ring-2 ring-brand-200"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-brand-500 shadow-md ring-2 ring-brand-200 dark:ring-brand-800"
+                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
               }`}
+              aria-pressed={isSelected}
             >
               {/* Preview image */}
-              <div class="relative aspect-[4/3] overflow-hidden bg-gray-50">
+              <div class="relative aspect-[4/3] overflow-hidden bg-gray-50 dark:bg-gray-900">
                 <img
                   src={template.previewUrl}
                   alt={`${template.name} style preview`}
@@ -57,13 +58,13 @@ export const TemplatePicker: FC<TemplatePickerProps> = ({
 
               {/* Info */}
               <div class="p-4">
-                <h3 class="text-sm font-semibold text-gray-900">{template.name}</h3>
-                <p class="mt-1 text-xs text-gray-500 line-clamp-2">{template.description}</p>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{template.name}</h3>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{template.description}</p>
               </div>
 
               {/* Category pill */}
               <div class="px-4 pb-3">
-                <span class="inline-block text-[11px] font-medium text-gray-500 bg-gray-100 rounded-full px-2.5 py-0.5">
+                <span class="inline-block text-[11px] font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-full px-2.5 py-0.5">
                   {template.category}
                 </span>
               </div>
@@ -75,7 +76,7 @@ export const TemplatePicker: FC<TemplatePickerProps> = ({
       {/* Custom prompt area */}
       {showCustomPrompt && (
         <div class="mt-6">
-          <label for="custom-prompt" class="block text-sm font-medium text-gray-700 mb-1.5">
+          <label for="custom-prompt" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Custom Prompt <span class="text-gray-400 font-normal">(optional)</span>
           </label>
           <textarea
@@ -84,7 +85,7 @@ export const TemplatePicker: FC<TemplatePickerProps> = ({
             data-custom-prompt
             rows={3}
             placeholder="Describe any customizations, e.g. 'Make the background a sunset over the ocean'"
-            class="block w-full rounded-xl border border-gray-300 px-4 py-3 text-sm placeholder:text-gray-400 transition-colors duration-150 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 resize-none"
+            class="block w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-4 py-3 text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-colors duration-150 hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 resize-none"
           />
         </div>
       )}

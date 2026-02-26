@@ -60,8 +60,8 @@ export const GenerationProgress: FC<GenerationProgressProps> = ({
                     status === "complete"
                       ? "bg-brand-500 border-brand-500 text-white"
                       : status === "active"
-                        ? "bg-white border-brand-500 text-brand-500"
-                        : "bg-white border-gray-300 text-gray-400"
+                        ? "bg-white dark:bg-gray-800 border-brand-500 text-brand-500"
+                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500"
                   }`}
                 >
                   {status === "complete" ? (
@@ -83,10 +83,10 @@ export const GenerationProgress: FC<GenerationProgressProps> = ({
                 <span
                   class={`text-xs font-medium whitespace-nowrap ${
                     status === "complete"
-                      ? "text-brand-600"
+                      ? "text-brand-600 dark:text-brand-400"
                       : status === "active"
-                        ? "text-brand-600"
-                        : "text-gray-400"
+                        ? "text-brand-600 dark:text-brand-400"
+                        : "text-gray-400 dark:text-gray-500"
                   }`}
                 >
                   {step.label}
@@ -98,7 +98,7 @@ export const GenerationProgress: FC<GenerationProgressProps> = ({
                 <div class="flex-1 h-0.5 mx-3 mb-7">
                   <div
                     class={`h-full rounded-full transition-colors duration-300 ${
-                      i < currentIndex ? "bg-brand-500" : "bg-gray-200"
+                      i < currentIndex ? "bg-brand-500" : "bg-gray-200 dark:bg-gray-700"
                     }`}
                   />
                 </div>
@@ -118,7 +118,7 @@ export const GenerationProgress: FC<GenerationProgressProps> = ({
             <span data-progress-error>{error}</span>
           </div>
         ) : currentStep === "done" ? (
-          <p class="text-sm font-medium text-green-600">Your artwork is ready!</p>
+          <p class="text-sm font-medium text-green-600 dark:text-green-400" role="status">Your artwork is ready!</p>
         ) : (
           <div class="flex flex-col items-center gap-1">
             {/* Spinner */}
@@ -127,12 +127,12 @@ export const GenerationProgress: FC<GenerationProgressProps> = ({
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              <span data-progress-status class="text-sm text-gray-600">
+              <span data-progress-status class="text-sm text-gray-600 dark:text-gray-400" role="status">
                 Processing your pet's photo...
               </span>
             </div>
             {estimatedSeconds !== undefined && estimatedSeconds > 0 && (
-              <p data-progress-eta class="text-xs text-gray-400">
+              <p data-progress-eta class="text-xs text-gray-400 dark:text-gray-500">
                 Estimated: ~{estimatedSeconds}s remaining
               </p>
             )}

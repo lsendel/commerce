@@ -17,13 +17,13 @@ interface ButtonProps {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand-500 text-white shadow-sm hover:shadow hover:bg-brand-600 hover:-translate-y-0.5 active:translate-y-0 active:bg-brand-700 focus-visible:ring-brand-500/50",
+    "bg-brand-500 text-white shadow-sm hover:shadow hover:bg-brand-600 hover:-translate-y-0.5 active:translate-y-0 active:bg-brand-700 focus-visible:ring-brand-500/50 dark:bg-brand-600 dark:hover:bg-brand-500 dark:active:bg-brand-700",
   secondary:
-    "bg-white border border-gray-200 text-gray-800 shadow-sm hover:shadow hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-0 active:bg-gray-100 focus-visible:ring-gray-300/50",
+    "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 shadow-sm hover:shadow hover:bg-gray-50 dark:hover:bg-gray-700 hover:-translate-y-0.5 active:translate-y-0 active:bg-gray-100 dark:active:bg-gray-600 focus-visible:ring-gray-300/50",
   outline:
-    "border-2 border-brand-500 text-brand-600 bg-transparent hover:bg-brand-50 focus-visible:ring-brand-500/30",
+    "border-2 border-brand-500 text-brand-600 dark:text-brand-400 bg-transparent hover:bg-brand-50 dark:hover:bg-brand-900/20 focus-visible:ring-brand-500/30",
   ghost:
-    "bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200 focus-visible:ring-gray-300",
+    "bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 focus-visible:ring-gray-300",
   danger:
     "bg-red-500 text-white shadow-sm hover:shadow hover:bg-red-600 hover:-translate-y-0.5 active:translate-y-0 active:bg-red-700 focus-visible:ring-red-500/50",
 };

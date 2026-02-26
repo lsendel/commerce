@@ -196,14 +196,17 @@ export class FulfillOrderUseCase {
       .limit(1);
 
     if (requests.length > 0) {
-      await this.db
-        .update(bookingRequests)
-        .set({
-          status: "confirmed",
-          orderId,
-          expiresAt: null,
-        })
-        .where(eq(bookingRequests.id, requests[0].id));
+      const existingRequest = requests[0];
+      if (existingRequest) {
+        await this.db
+          .update(bookingRequests)
+          .set({
+            status: "confirmed",
+            orderId,
+            expiresAt: null,
+          })
+          .where(eq(bookingRequests.id, existingRequest.id));
+      }
     }
 
     // Create booking record
@@ -213,7 +216,8 @@ export class FulfillOrderUseCase {
       .where(eq(bookingAvailability.id, cartItem.bookingAvailabilityId))
       .limit(1);
 
-    if (availabilityRows.length === 0) {
+    const availabilityRow = availabilityRows[0];
+    if (!availabilityRow) {
       throw new Error(
         `Booking availability ${cartItem.bookingAvailabilityId} not found`,
       );
@@ -222,7 +226,7 @@ export class FulfillOrderUseCase {
     const bookingRows = await this.db
       .insert(bookings)
       .values({
-        storeId: availabilityRows[0].storeId,
+        storeId: availabilityRow.storeId,
         orderItemId: orderItem?.id ?? null,
         userId,
         bookingAvailabilityId: cartItem.bookingAvailabilityId,
@@ -231,9 +235,12 @@ export class FulfillOrderUseCase {
       .returning();
 
     const booking = bookingRows[0];
+    if (!booking) {
+      throw new Error("Failed to create booking record");
+    }
 
     // Create booking items from personTypeQuantities if present
-    if (cartItem.personTypeQuantities && booking) {
+    if (cartItem.personTypeQuantities) {
       // Fetch prices for this availability
       const prices = await this.db
         .select()

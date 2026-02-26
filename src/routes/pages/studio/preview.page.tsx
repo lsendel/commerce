@@ -37,7 +37,7 @@ export const StudioPreviewPage: FC<StudioPreviewPageProps> = ({
 
       {/* Header */}
       <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">Your Pet Artwork</h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Your Pet Artwork</h1>
         <p class="mt-1 text-sm text-gray-500">
           Preview, download, or order a print of your creation
         </p>
@@ -54,7 +54,7 @@ export const StudioPreviewPage: FC<StudioPreviewPageProps> = ({
       />
 
       {/* Additional actions */}
-      <div class="mt-10 border-t border-gray-200 pt-8">
+      <div class="mt-10 border-t border-gray-200 dark:border-gray-700 pt-8">
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
           {/* Order as print */}
           <Button

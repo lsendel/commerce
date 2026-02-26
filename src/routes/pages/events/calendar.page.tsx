@@ -117,8 +117,8 @@ export const EventCalendarPage: FC<EventCalendarPageProps> = ({
       {/* Header */}
       <div class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">Event Calendar</h1>
-          <p class="mt-1 text-gray-500">Browse all upcoming pet events at a glance.</p>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Event Calendar</h1>
+          <p class="mt-1 text-gray-500 dark:text-gray-400">Browse all upcoming pet events at a glance.</p>
         </div>
         <a
           href="/events"
@@ -131,27 +131,27 @@ export const EventCalendarPage: FC<EventCalendarPageProps> = ({
       <div class="grid lg:grid-cols-4 gap-8">
         {/* Calendar */}
         <div class="lg:col-span-3">
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
             {/* Month navigation */}
             <div class="flex items-center justify-between mb-6">
               <a
                 href={prevUrl}
-                class="p-2 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+                class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                 aria-label="Previous month"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
               </a>
-              <h2 class="text-xl font-bold text-gray-900">
+              <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">
                 {MONTH_NAMES[month - 1]} {year}
               </h2>
               <a
                 href={nextUrl}
-                class="p-2 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+                class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                 aria-label="Next month"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
               </a>
@@ -187,8 +187,8 @@ export const EventCalendarPage: FC<EventCalendarPageProps> = ({
                       isSelected
                         ? "bg-brand-50 border-2 border-brand-400 shadow-sm"
                         : hasEvents
-                        ? "bg-white border border-gray-100 hover:border-brand-200 hover:shadow-sm cursor-pointer"
-                        : "bg-gray-50/50 border border-transparent"
+                        ? "bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:border-brand-200 hover:shadow-sm cursor-pointer"
+                        : "bg-gray-50/50 dark:bg-gray-800/50 border border-transparent"
                     }`}
                   >
                     <span
@@ -232,13 +232,13 @@ export const EventCalendarPage: FC<EventCalendarPageProps> = ({
         {/* Sidebar: Legend + Selected Day */}
         <div class="space-y-6">
           {/* Legend */}
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Event Types</h3>
+          <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Event Types</h3>
             <div class="space-y-2">
               {eventTypes.map((et) => (
                 <div class="flex items-center gap-2">
                   <span class={`w-3 h-3 rounded-full ${et.dotClass || typeColorMap[et.key] || "bg-gray-400"}`} />
-                  <span class="text-sm text-gray-600">{et.label}</span>
+                  <span class="text-sm text-gray-600 dark:text-gray-400">{et.label}</span>
                 </div>
               ))}
             </div>
@@ -246,8 +246,8 @@ export const EventCalendarPage: FC<EventCalendarPageProps> = ({
 
           {/* Selected day events */}
           {selectedDate && (
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 class="text-sm font-semibold text-gray-900 mb-3">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                 Events on {selectedDate}
               </h3>
 
@@ -258,7 +258,7 @@ export const EventCalendarPage: FC<EventCalendarPageProps> = ({
                   {selectedDayEvents.map((ev) => (
                     <a
                       href={`/events/${ev.slug}`}
-                      class="block p-3 rounded-xl bg-gray-50 hover:bg-brand-50 transition-colors group"
+                      class="block p-3 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-brand-50 dark:hover:bg-gray-600 transition-colors group"
                     >
                       <div class="flex items-start gap-2.5">
                         <span
@@ -267,7 +267,7 @@ export const EventCalendarPage: FC<EventCalendarPageProps> = ({
                           }`}
                         />
                         <div class="min-w-0 flex-1">
-                          <p class="text-sm font-medium text-gray-900 group-hover:text-brand-700 truncate">
+                          <p class="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-brand-700 dark:group-hover:text-brand-400 truncate">
                             {ev.name}
                           </p>
                           <div class="flex items-center gap-2 mt-1 text-xs text-gray-400">
@@ -293,7 +293,7 @@ export const EventCalendarPage: FC<EventCalendarPageProps> = ({
           )}
 
           {!selectedDate && (
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 text-center">
               <p class="text-sm text-gray-400">
                 Click a day with events to see details.
               </p>

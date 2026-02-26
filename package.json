@@ -12,7 +12,9 @@
     "db:seed": "tsx scripts/seed.ts",
     "css:build": "tailwindcss -i src/styles/input.css -o public/styles/output.css --minify",
     "css:watch": "tailwindcss -i src/styles/input.css -o public/styles/output.css --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.1",
@@ -32,6 +34,7 @@
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
+    "prettier": "^3.4.0",
     "wrangler": "^3.99.0"
   },
   "pnpm": {

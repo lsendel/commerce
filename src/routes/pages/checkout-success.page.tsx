@@ -35,20 +35,20 @@ export const CheckoutSuccessPage: FC<CheckoutSuccessPageProps> = ({ order }) => 
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 class="text-3xl font-bold text-gray-900">Order Confirmed!</h1>
-        <p class="mt-2 text-gray-500">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Order Confirmed!</h1>
+        <p class="mt-2 text-gray-500 dark:text-gray-400">
           Thank you for your purchase. We have received your order and will process it shortly.
         </p>
       </div>
 
       {/* Order info card */}
-      <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+      <div class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
         {/* Order header */}
-        <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
+        <div class="bg-gray-50 dark:bg-gray-900 px-6 py-4 border-b border-gray-100 dark:border-gray-700">
           <div class="flex items-center justify-between flex-wrap gap-2">
             <div>
               <div class="text-xs text-gray-500">Order Number</div>
-              <div class="text-lg font-bold text-gray-900 font-mono">#{orderNumber}</div>
+              <div class="text-lg font-bold text-gray-900 dark:text-gray-100 font-mono">#{orderNumber}</div>
             </div>
             <div class="text-right">
               <div class="text-xs text-gray-500">Status</div>
@@ -72,12 +72,12 @@ export const CheckoutSuccessPage: FC<CheckoutSuccessPageProps> = ({ order }) => 
 
         {/* Order items */}
         <div class="px-6 py-4">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3">Order Summary</h3>
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Order Summary</h3>
           <div class="space-y-3">
             {order.items.map((item) => (
               <div key={item.id} class="flex items-center justify-between gap-4 py-2">
                 <div class="min-w-0 flex-1">
-                  <div class="text-sm font-medium text-gray-900 truncate">{item.productName}</div>
+                  <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{item.productName}</div>
                   {item.variantTitle && (
                     <div class="text-xs text-gray-500">{item.variantTitle}</div>
                   )}

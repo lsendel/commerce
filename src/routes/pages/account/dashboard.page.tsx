@@ -39,30 +39,30 @@ export const DashboardPage: FC<DashboardPageProps> = ({
     <div class="max-w-5xl mx-auto px-4 py-8">
       {/* Welcome */}
       <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Welcome back, {userName}
         </h1>
-        <p class="mt-1 text-gray-500">Manage your account and view your activity.</p>
+        <p class="mt-1 text-gray-500 dark:text-gray-400">Manage your account and view your activity.</p>
       </div>
 
       {/* Quick Links Grid */}
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <a
           href="/account/orders"
-          class="group bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition-all duration-200"
+          class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-700 transition-all duration-200"
         >
           <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center mb-3 group-hover:bg-brand-100 transition-colors">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
-          <h3 class="font-semibold text-gray-900 text-sm">Orders</h3>
-          <p class="text-xs text-gray-400 mt-0.5">View order history</p>
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Orders</h3>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">View order history</p>
         </a>
 
         <a
           href="/account/addresses"
-          class="group bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition-all duration-200"
+          class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-700 transition-all duration-200"
         >
           <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center mb-3 group-hover:bg-brand-100 transition-colors">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,42 +70,42 @@ export const DashboardPage: FC<DashboardPageProps> = ({
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <h3 class="font-semibold text-gray-900 text-sm">Addresses</h3>
-          <p class="text-xs text-gray-400 mt-0.5">Manage shipping addresses</p>
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Addresses</h3>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Manage shipping addresses</p>
         </a>
 
         <a
           href="/account/subscriptions"
-          class="group bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition-all duration-200"
+          class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-700 transition-all duration-200"
         >
           <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center mb-3 group-hover:bg-brand-100 transition-colors">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </div>
-          <h3 class="font-semibold text-gray-900 text-sm">Subscriptions</h3>
-          <p class="text-xs text-gray-400 mt-0.5">Manage your plan</p>
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Subscriptions</h3>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Manage your plan</p>
         </a>
 
         <a
           href="/account/pets"
-          class="group bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition-all duration-200"
+          class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-700 transition-all duration-200"
         >
           <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center mb-3 group-hover:bg-brand-100 transition-colors">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 class="font-semibold text-gray-900 text-sm">Pets</h3>
-          <p class="text-xs text-gray-400 mt-0.5">Your pet profiles</p>
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Pets</h3>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Your pet profiles</p>
         </a>
       </div>
 
       <div class="grid md:grid-cols-3 gap-6">
         {/* Recent Orders */}
-        <div class="md:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div class="md:col-span-2 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-900">Recent Orders</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Orders</h2>
             <a href="/account/orders" class="text-sm text-brand-600 hover:text-brand-700 font-medium">
               View all
             </a>
@@ -126,13 +126,13 @@ export const DashboardPage: FC<DashboardPageProps> = ({
               {recentOrders.map((order) => (
                 <a
                   href={`/account/orders#order-${order.id}`}
-                  class="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-brand-50 transition-colors group"
+                  class="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-900 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors group"
                 >
                   <div>
                     <p class="font-medium text-sm text-gray-900 group-hover:text-brand-700">
                       #{order.orderNumber}
                     </p>
-                    <p class="text-xs text-gray-400 mt-0.5">
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                       {order.date} &middot; {order.itemCount}{" "}
                       {order.itemCount === 1 ? "item" : "items"}
                     </p>
@@ -151,7 +151,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
 
         {/* Subscription Status */}
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Subscription</h2>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscription</h2>
 
           {subscription ? (
             <div class="space-y-4">

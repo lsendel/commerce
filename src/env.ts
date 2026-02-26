@@ -31,6 +31,9 @@ export interface Env {
   // Encryption
   ENCRYPTION_KEY?: string;
 
+  // Cache invalidation
+  CACHE_WEBHOOK_SECRET?: string;
+
   // Cloudflare bindings
   IMAGES: R2Bucket;
   AI_QUEUE: Queue;

@@ -47,7 +47,7 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
     <div class="max-w-4xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Orders</h1>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Orders</h1>
           <p class="mt-1 text-sm text-gray-500">View and track your order history.</p>
         </div>
         <a
@@ -59,7 +59,7 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
       </div>
 
       {orders.length === 0 ? (
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-12 text-center">
           <div class="w-16 h-16 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-4">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -70,7 +70,7 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
               />
             </svg>
           </div>
-          <h2 class="text-lg font-semibold text-gray-900 mb-1">No orders yet</h2>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">No orders yet</h2>
           <p class="text-sm text-gray-400 mb-4">
             When you place your first order, it will appear here.
           </p>
@@ -86,13 +86,13 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
           {orders.map((order) => (
             <details
               id={`order-${order.id}`}
-              class="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+              class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden"
             >
               {/* Order summary row */}
               <summary class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 cursor-pointer list-none hover:bg-gray-50 transition-colors">
                 <div class="flex items-center gap-4">
                   <div>
-                    <p class="font-semibold text-gray-900">#{order.orderNumber}</p>
+                    <p class="font-semibold text-gray-900 dark:text-gray-100">#{order.orderNumber}</p>
                     <p class="text-xs text-gray-400 mt-0.5">{order.date}</p>
                   </div>
                 </div>
@@ -116,7 +116,7 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
               </summary>
 
               {/* Order detail */}
-              <div class="border-t border-gray-100 p-5">
+              <div class="border-t border-gray-100 dark:border-gray-700 p-5">
                 {/* Items */}
                 <div class="space-y-3 mb-5">
                   {order.items.map((item) => (
@@ -145,7 +145,7 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
                 </div>
 
                 {/* Price breakdown */}
-                <div class="border-t border-gray-100 pt-4 space-y-2">
+                <div class="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-2">
                   <div class="flex justify-between text-sm text-gray-500">
                     <span>Subtotal</span>
                     <span>${order.subtotal}</span>
@@ -158,7 +158,7 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
                     <span>Tax</span>
                     <span>${order.tax}</span>
                   </div>
-                  <div class="flex justify-between text-sm font-bold text-gray-900 pt-2 border-t border-gray-100">
+                  <div class="flex justify-between text-sm font-bold text-gray-900 pt-2 border-t border-gray-100 dark:border-gray-700">
                     <span>Total</span>
                     <span>${order.total}</span>
                   </div>

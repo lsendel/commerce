@@ -91,12 +91,12 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
   return (
     <div class="max-w-6xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
-      <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6">
+      <nav class="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 mb-6" aria-label="Breadcrumb">
         <a href="/events" class="hover:text-brand-600 transition-colors">Events</a>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
-        <span class="text-gray-700 font-medium truncate">{name}</span>
+        <span class="text-gray-700 dark:text-gray-300 font-medium truncate">{name}</span>
       </nav>
 
       {/* Hero image */}
@@ -122,8 +122,8 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
         <div class="lg:col-span-2 space-y-8">
           {/* Title & meta */}
           <div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-3">{name}</h1>
-            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-3">{name}</h1>
+            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
               <span class="flex items-center gap-1.5">
                 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -142,7 +142,7 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
 
           {/* Description */}
           <div class="prose prose-gray max-w-none">
-            <p class="text-gray-600 leading-relaxed whitespace-pre-line">{description}</p>
+            <p class="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">{description}</p>
           </div>
 
           {/* What's included */}
@@ -194,16 +194,16 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
           {/* Itinerary */}
           {itinerary && itinerary.length > 0 && (
             <div>
-              <h2 class="text-xl font-bold text-gray-900 mb-4">Itinerary</h2>
-              <div class="relative pl-6 border-l-2 border-brand-200 space-y-6">
+              <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Itinerary</h2>
+              <div class="relative pl-6 border-l-2 border-brand-200 dark:border-brand-700 space-y-6">
                 {itinerary.map((step, idx) => (
                   <div class="relative">
-                    <div class="absolute -left-[25px] w-4 h-4 rounded-full bg-brand-500 border-4 border-brand-100" />
-                    <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                    <div class="absolute -left-[25px] w-4 h-4 rounded-full bg-brand-500 border-4 border-brand-100 dark:border-brand-900" />
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 shadow-sm">
                       <span class="text-xs font-medium text-brand-600 uppercase tracking-wide">
                         {step.time}
                       </span>
-                      <h4 class="font-semibold text-gray-900 mt-1">{step.title}</h4>
+                      <h4 class="font-semibold text-gray-900 dark:text-gray-100 mt-1">{step.title}</h4>
                       {step.description && (
                         <p class="text-sm text-gray-500 mt-1">{step.description}</p>
                       )}
@@ -217,12 +217,12 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
           {/* FAQs */}
           {faqs && faqs.length > 0 && (
             <div>
-              <h2 class="text-xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+              <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Frequently Asked Questions</h2>
               <div class="space-y-3">
                 {faqs.map((faq, idx) => (
-                  <details class="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-gray-50 transition-colors">
-                      <span class="font-medium text-gray-900 text-sm">{faq.question}</span>
+                  <details class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <span class="font-medium text-gray-900 dark:text-gray-100 text-sm">{faq.question}</span>
                       <svg
                         class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180 flex-shrink-0 ml-4"
                         fill="none"
@@ -232,7 +232,7 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                       </svg>
                     </summary>
-                    <div class="px-4 pb-4 text-sm text-gray-600 leading-relaxed">
+                    <div class="px-4 pb-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                       {faq.answer}
                     </div>
                   </details>
@@ -260,8 +260,8 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
           )}
 
           {/* Reviews placeholder */}
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">Reviews</h2>
+          <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Reviews</h2>
             <div class="text-center py-8">
               <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-300 flex items-center justify-center mx-auto mb-3">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -294,7 +294,7 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
             {/* Slots for selected date */}
             {selectedDate && slots && slots.length > 0 && (
               <div>
-                <h3 class="text-sm font-semibold text-gray-900 mb-3">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                   Available slots for {selectedDate}
                 </h3>
                 <div class="space-y-3">
@@ -315,7 +315,7 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
             )}
 
             {selectedDate && (!slots || slots.length === 0) && (
-              <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+              <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 text-center">
                 <p class="text-sm text-gray-400">No slots available for this date.</p>
               </div>
             )}

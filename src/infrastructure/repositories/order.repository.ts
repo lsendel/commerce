@@ -59,6 +59,9 @@ export class OrderRepository {
       .returning();
 
     const order = orderRows[0];
+    if (!order) {
+      throw new Error("Failed to create order");
+    }
 
     // Insert order items sequentially
     type OrderItemRow = {

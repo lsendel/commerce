@@ -17,31 +17,31 @@ interface StatusBadgeProps {
 const statusConfig: Record<BookingStatus, { label: string; classes: string }> = {
   confirmed: {
     label: "Confirmed",
-    classes: "bg-green-100 text-green-700 border-green-200",
+    classes: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
   },
   checked_in: {
     label: "Checked In",
-    classes: "bg-blue-100 text-blue-700 border-blue-200",
+    classes: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",
   },
   cancelled: {
     label: "Cancelled",
-    classes: "bg-red-100 text-red-700 border-red-200",
+    classes: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800",
   },
   no_show: {
     label: "No Show",
-    classes: "bg-gray-100 text-gray-600 border-gray-200",
+    classes: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600",
   },
   available: {
     label: "Available",
-    classes: "bg-green-100 text-green-700 border-green-200",
+    classes: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
   },
   full: {
     label: "Full",
-    classes: "bg-amber-100 text-amber-700 border-amber-200",
+    classes: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
   },
   closed: {
     label: "Closed",
-    classes: "bg-gray-100 text-gray-500 border-gray-200",
+    classes: "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600",
   },
 };
 

@@ -33,12 +33,12 @@ export const Footer: FC = () => {
   const year = new Date().getFullYear();
 
   return (
-    <footer class="border-t border-gray-200 bg-white">
+    <footer class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900" role="contentinfo">
       <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div class="grid grid-cols-2 gap-8 md:grid-cols-4">
           {/* Brand column */}
           <div class="col-span-2 md:col-span-1">
-            <a href="/" class="flex items-center gap-1.5">
+            <a href="/" class="flex items-center gap-1.5" aria-label="petm8 home">
               <span class="text-2xl" aria-hidden="true">
                 🐾
               </span>
@@ -46,7 +46,7 @@ export const Footer: FC = () => {
                 petm8
               </span>
             </a>
-            <p class="mt-3 text-sm text-gray-500 max-w-xs">
+            <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
               Personalized pet products, local events, and AI-powered designs
               — made for pets and the people who love them.
             </p>
@@ -55,13 +55,13 @@ export const Footer: FC = () => {
           {/* Link columns */}
           {columns.map((col) => (
             <div key={col.title}>
-              <h4 class="text-sm font-semibold text-gray-900">{col.title}</h4>
-              <ul class="mt-3 flex flex-col gap-2">
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{col.title}</h4>
+              <ul class="mt-3 flex flex-col gap-2" role="list">
                 {col.links.map((link) => (
                   <li key={link.href}>
                     <a
                       href={link.href}
-                      class="text-sm text-gray-500 hover:text-brand-500 transition-colors"
+                      class="text-sm text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400 transition-colors"
                     >
                       {link.label}
                     </a>
@@ -72,8 +72,8 @@ export const Footer: FC = () => {
           ))}
         </div>
 
-        <div class="mt-10 border-t border-gray-100 pt-6">
-          <p class="text-center text-xs text-gray-400">
+        <div class="mt-10 border-t border-gray-100 dark:border-gray-800 pt-6">
+          <p class="text-center text-xs text-gray-400 dark:text-gray-500">
             &copy; {year} petm8. All rights reserved.
           </p>
         </div>

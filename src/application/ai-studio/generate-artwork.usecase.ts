@@ -44,7 +44,7 @@ export class GenerateArtworkUseCase {
     }
 
     // 3. Create generation job in DB with status 'queued'
-    const job = await this.repo.createJob({
+    const jobResult = await this.repo.createJob({
       userId,
       petProfileId,
       templateId,
@@ -52,9 +52,13 @@ export class GenerateArtworkUseCase {
       prompt: stylePrompt,
     });
 
+    if (!jobResult) {
+      throw new Error("Failed to create generation job");
+    }
+
     // 4. Enqueue to AI_QUEUE
     await this.queue.send({
-      jobId: job.id,
+      jobId: jobResult.id,
       inputImageUrl: pet.photoUrl,
       stylePrompt,
       petName: pet.name,
@@ -62,15 +66,15 @@ export class GenerateArtworkUseCase {
 
     // 5. Return the job ID for polling
     return {
-      id: job.id,
-      petProfileId: job.petProfileId,
-      templateId: job.templateId,
+      id: jobResult.id,
+      petProfileId: jobResult.petProfileId,
+      templateId: jobResult.templateId,
       customPrompt: customPrompt ?? null,
-      status: job.status,
+      status: jobResult.status,
       resultImageUrl: null,
       errorMessage: null,
-      createdAt: job.createdAt?.toISOString() ?? new Date().toISOString(),
-      updatedAt: job.updatedAt?.toISOString() ?? new Date().toISOString(),
+      createdAt: jobResult.createdAt?.toISOString() ?? new Date().toISOString(),
+      updatedAt: jobResult.updatedAt?.toISOString() ?? new Date().toISOString(),
     };
   }
 }

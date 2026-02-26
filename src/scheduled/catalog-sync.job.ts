@@ -89,6 +89,7 @@ export async function runCatalogSync(env: Env): Promise<void> {
     }
 
     const localSync = existingSync[0];
+    if (!localSync) continue;
     const productId = localSync.productId;
 
     // Update product name and featured image from Printful
@@ -123,6 +124,7 @@ export async function runCatalogSync(env: Env): Promise<void> {
       }
 
       const localVariantSync = existingVariantSync[0];
+      if (!localVariantSync) continue;
 
       // Update variant price and title from Printful
       await db

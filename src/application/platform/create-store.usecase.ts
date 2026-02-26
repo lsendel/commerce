@@ -30,6 +30,10 @@ export class CreateStoreUseCase {
       planId: input.planId,
     });
 
+    if (!store) {
+      throw new Error("Failed to create store");
+    }
+
     await this.storeRepo.addMember(store.id, input.ownerId, "owner");
 
     return store;

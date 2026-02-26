@@ -80,14 +80,14 @@ export const StoreIntegrationsPage: FC<StoreIntegrationsProps> = ({
   <div class="max-w-5xl mx-auto py-8 px-4">
     <div class="flex items-center justify-between mb-8">
       <div>
-        <h1 class="text-3xl font-bold">Integrations</h1>
-        <p class="text-gray-500">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Integrations</h1>
+        <p class="text-gray-500 dark:text-gray-400">
           {store.name} — {store.slug}.petm8.io
         </p>
       </div>
       <a
         href={`/platform/stores/${store.id}/dashboard`}
-        class="text-sm text-indigo-600 hover:underline"
+        class="text-sm text-brand-600 dark:text-brand-400 hover:underline"
       >
         Back to Dashboard
       </a>
@@ -128,7 +128,7 @@ export const StoreIntegrationsPage: FC<StoreIntegrationsProps> = ({
                 <div class="text-center mb-4">
                   <button
                     type="button"
-                    class="override-btn text-sm text-indigo-600 hover:underline"
+                    class="override-btn text-sm text-brand-600 dark:text-brand-400 hover:underline"
                     data-provider={integration.provider}
                     data-store-id={store.id}
                   >

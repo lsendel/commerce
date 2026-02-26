@@ -18,7 +18,8 @@ export function requireRole(role: string) {
       .where(eq(users.id, userId))
       .limit(1);
 
-    if (userRows.length === 0 || userRows[0].platformRole !== role) {
+    const user = userRows[0];
+    if (!user || user.platformRole !== role) {
       return c.json({ error: "Insufficient permissions" }, 403);
     }
 
@@ -47,10 +48,8 @@ export function requireStoreMember(roles: string[] = ["owner", "admin"]) {
       )
       .limit(1);
 
-    if (
-      memberRows.length === 0 ||
-      !roles.includes(memberRows[0].role ?? "")
-    ) {
+    const member = memberRows[0];
+    if (!member || !roles.includes(member.role ?? "")) {
       return c.json({ error: "Insufficient store permissions" }, 403);
     }
 

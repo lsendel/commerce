@@ -7,13 +7,13 @@ interface VenueListProps {
 export const VenueListPage: FC<VenueListProps> = ({ venues }) => {
   return (
     <div class="max-w-6xl mx-auto py-8 px-4">
-      <h1 class="text-3xl font-bold mb-8">Venues</h1>
+      <h1 class="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100">Venues</h1>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Map */}
         <div
           id="venue-map"
-          class="h-96 lg:h-full min-h-[400px] rounded-lg border bg-gray-100"
+          class="h-96 lg:h-full min-h-[400px] rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
           data-venues={JSON.stringify(
             venues
               .filter((v: any) => v.latitude && v.longitude)
@@ -33,7 +33,7 @@ export const VenueListPage: FC<VenueListProps> = ({ venues }) => {
           <div class="mb-4">
             <button
               id="near-me-btn"
-              class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700"
+              class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-700"
             >
               Find Near Me
             </button>
@@ -42,10 +42,10 @@ export const VenueListPage: FC<VenueListProps> = ({ venues }) => {
           {venues.map((v: any) => (
             <a
               href={`/venues/${v.slug}`}
-              class="block bg-white border rounded-lg p-4 hover:shadow-md transition-shadow"
+              class="block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
             >
-              <h3 class="font-semibold text-lg">{v.name}</h3>
-              <p class="text-sm text-gray-600 mt-1">
+              <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">{v.name}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 {v.address}, {v.city}
                 {v.state ? `, ${v.state}` : ""}, {v.country}
               </p>
@@ -57,7 +57,7 @@ export const VenueListPage: FC<VenueListProps> = ({ venues }) => {
               {v.amenities && (v.amenities as string[]).length > 0 && (
                 <div class="flex gap-1 mt-2">
                   {(v.amenities as string[]).slice(0, 4).map((a: string) => (
-                    <span class="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                    <span class="text-xs bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded">
                       {a}
                     </span>
                   ))}

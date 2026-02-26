@@ -27,8 +27,8 @@ export const ArtPreview: FC<ArtPreviewProps> = ({
   return (
     <div data-art-preview data-job-id={jobId || ""} class="w-full max-w-2xl mx-auto">
       {/* Preview area */}
-      <div class="relative rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm">
-        <div class="aspect-square flex items-center justify-center bg-gray-50 p-4">
+      <div class="relative rounded-2xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="aspect-square flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
           {svgMarkup ? (
             <div
               data-art-svg-container
@@ -44,8 +44,8 @@ export const ArtPreview: FC<ArtPreviewProps> = ({
               class="max-w-full max-h-full object-contain rounded-xl"
             />
           ) : (
-            <div class="flex flex-col items-center gap-3 text-gray-400">
-              <svg class="w-20 h-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+            <div class="flex flex-col items-center gap-3 text-gray-400 dark:text-gray-500">
+              <svg class="w-20 h-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
               </svg>
               <p class="text-sm">Your artwork will appear here</p>
@@ -56,7 +56,7 @@ export const ArtPreview: FC<ArtPreviewProps> = ({
 
       {/* Generation details */}
       {(templateName || generationTime !== undefined) && (
-        <div class="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
+        <div class="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
           {templateName && (
             <span class="inline-flex items-center gap-1">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -108,8 +108,9 @@ export const ArtPreview: FC<ArtPreviewProps> = ({
           <button
             type="button"
             data-share-art="copy"
-            class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+            class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
             title="Copy link"
+            aria-label="Copy link"
           >
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-5.94a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L5.25 9.503" />
@@ -118,8 +119,9 @@ export const ArtPreview: FC<ArtPreviewProps> = ({
           <button
             type="button"
             data-share-art="twitter"
-            class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+            class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
             title="Share on X"
+            aria-label="Share on X"
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -128,8 +130,9 @@ export const ArtPreview: FC<ArtPreviewProps> = ({
           <button
             type="button"
             data-share-art="facebook"
-            class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+            class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
             title="Share on Facebook"
+            aria-label="Share on Facebook"
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />

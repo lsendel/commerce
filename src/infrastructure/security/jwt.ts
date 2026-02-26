@@ -58,7 +58,10 @@ export async function verifyJwt(
   const parts = token.split(".");
   if (parts.length !== 3) return null;
 
-  const [encodedHeader, encodedPayload, encodedSignature] = parts;
+  const encodedHeader = parts[0];
+  const encodedPayload = parts[1];
+  const encodedSignature = parts[2];
+  if (!encodedHeader || !encodedPayload || !encodedSignature) return null;
   const signingInput = `${encodedHeader}.${encodedPayload}`;
 
   const key = await getSigningKey(secret);

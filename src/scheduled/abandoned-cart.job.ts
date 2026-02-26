@@ -33,11 +33,12 @@ export async function runAbandonedCartDetection(env: Env) {
     let enqueued = 0;
 
     for (const cart of candidateCarts) {
-      const [{ total }] = await db
+      const countResult = await db
         .select({ total: count() })
         .from(cartItems)
         .where(eq(cartItems.cartId, cart.cartId));
 
+      const total = countResult[0]?.total;
       if (!total || total <= 0) continue;
 
       await env.NOTIFICATION_QUEUE.send({
