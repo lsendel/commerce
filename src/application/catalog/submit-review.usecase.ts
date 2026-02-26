@@ -42,10 +42,11 @@ export class SubmitReviewUseCase {
     }
 
     // 3. Check if user purchased this product (verified purchase flag)
-    const isVerifiedPurchase = await this.checkVerifiedPurchase(
+    const verifiedOrderId = await this.findVerifiedPurchaseOrderId(
       input.userId,
       input.productId,
     );
+    const isVerifiedPurchase = !!verifiedOrderId;
 
     // 4. Content filter: check for excessive caps, URLs
     const contentText = [input.title ?? "", input.content ?? ""].join(" ");
@@ -62,19 +63,20 @@ export class SubmitReviewUseCase {
       title: input.title ?? null,
       content: input.content ?? null,
       isVerifiedPurchase,
+      verifiedPurchaseOrderId: verifiedOrderId,
       status,
     });
 
     return review;
   }
 
-  private async checkVerifiedPurchase(
+  private async findVerifiedPurchaseOrderId(
     userId: string,
     productId: string,
-  ): Promise<boolean> {
-    // Join orders -> orderItems -> productVariants to see if user has bought this product
+  ): Promise<string | null> {
+    // Join orders -> orderItems -> productVariants to find the order where user bought this product
     const rows = await this.db
-      .select({ id: orderItems.id })
+      .select({ orderId: orders.id })
       .from(orders)
       .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
       .innerJoin(
@@ -90,7 +92,7 @@ export class SubmitReviewUseCase {
       )
       .limit(1);
 
-    return rows.length > 0;
+    return rows[0]?.orderId ?? null;
   }
 
   private isContentSuspicious(text: string): boolean {

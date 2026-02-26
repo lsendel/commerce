@@ -7,6 +7,7 @@ import { ReviewRepository } from "../../infrastructure/repositories/review.repos
 import { SubmitReviewUseCase } from "../../application/catalog/submit-review.usecase";
 import { ListReviewsUseCase } from "../../application/catalog/list-reviews.usecase";
 import { ModerateReviewUseCase } from "../../application/catalog/moderate-review.usecase";
+import { RespondToReviewUseCase } from "../../application/catalog/respond-to-review.usecase";
 import {
   submitReviewSchema,
   moderateReviewSchema,
@@ -112,6 +113,25 @@ reviews.patch(
     const { action } = c.req.valid("json");
     const review = await useCase.execute(reviewId, action);
 
+    return c.json(review, 200);
+  },
+);
+
+// POST /reviews/:id/respond — add store owner response (admin)
+reviews.post(
+  "/reviews/:id/respond",
+  requireAuth(),
+  requireRole("admin"),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const storeId = c.get("storeId") as string;
+    const reviewId = c.req.param("id");
+    const body = await c.req.json<{ responseText: string }>();
+
+    const reviewRepo = new ReviewRepository(db, storeId);
+    const useCase = new RespondToReviewUseCase(reviewRepo);
+
+    const review = await useCase.execute(reviewId, body.responseText);
     return c.json(review, 200);
   },
 );

@@ -10,6 +10,7 @@ export interface CreateReviewData {
   title: string | null;
   content: string | null;
   isVerifiedPurchase: boolean;
+  verifiedPurchaseOrderId?: string | null;
   status: ReviewStatus;
 }
 
@@ -30,6 +31,7 @@ export class ReviewRepository {
         title: data.title,
         content: data.content,
         isVerifiedPurchase: data.isVerifiedPurchase,
+        verifiedPurchaseOrderId: data.verifiedPurchaseOrderId ?? null,
         status: data.status,
       })
       .returning();
@@ -181,6 +183,29 @@ export class ReviewRepository {
     };
   }
 
+  async getStarDistribution(productId: string) {
+    const result = await this.db
+      .select({
+        rating: productReviews.rating,
+        count: count(),
+      })
+      .from(productReviews)
+      .where(
+        and(
+          eq(productReviews.productId, productId),
+          eq(productReviews.storeId, this.storeId),
+          eq(productReviews.status, "approved"),
+        ),
+      )
+      .groupBy(productReviews.rating);
+
+    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const row of result) {
+      distribution[row.rating] = row.count;
+    }
+    return distribution;
+  }
+
   async incrementHelpful(id: string) {
     const rows = await this.db
       .update(productReviews)
@@ -228,6 +253,50 @@ export class ReviewRepository {
     }
 
     return review;
+  }
+
+  async addResponse(id: string, responseText: string) {
+    const rows = await this.db
+      .update(productReviews)
+      .set({
+        responseText,
+        responseAt: new Date(),
+      })
+      .where(
+        and(
+          eq(productReviews.id, id),
+          eq(productReviews.storeId, this.storeId),
+        ),
+      )
+      .returning();
+
+    return rows[0] ?? null;
+  }
+
+  async listAll(page = 1, limit = 50, statusFilter?: string) {
+    const offset = (page - 1) * limit;
+    const conditions = [eq(productReviews.storeId, this.storeId)];
+
+    if (statusFilter) {
+      conditions.push(eq(productReviews.status, statusFilter as any));
+    }
+
+    const countResult = await this.db
+      .select({ total: count() })
+      .from(productReviews)
+      .where(and(...conditions));
+
+    const total = countResult[0]?.total ?? 0;
+
+    const rows = await this.db
+      .select()
+      .from(productReviews)
+      .where(and(...conditions))
+      .orderBy(desc(productReviews.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return { reviews: rows, total, page, limit };
   }
 
   async findById(id: string) {
