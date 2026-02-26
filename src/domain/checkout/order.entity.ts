@@ -20,6 +20,8 @@ export interface Order {
   discountTotal: number;
   grandTotal: number;
   currency: string;
+  exchangeRate: number | null;
+  couponCode: string | null;
   stripePaymentIntentId: string | null;
   shippingName: string;
   shippingStreet: string;
@@ -34,10 +36,12 @@ export interface Order {
 }
 
 export function createOrder(
-  params: Omit<Order, "createdAt" | "updatedAt" | "status" | "notes" | "stripePaymentIntentId" | "items"> & {
+  params: Omit<Order, "createdAt" | "updatedAt" | "status" | "notes" | "stripePaymentIntentId" | "items" | "exchangeRate" | "couponCode"> & {
     status?: OrderStatus;
     notes?: string | null;
     stripePaymentIntentId?: string | null;
+    exchangeRate?: number | null;
+    couponCode?: string | null;
     items?: OrderItem[];
   }
 ): Order {
@@ -47,6 +51,8 @@ export function createOrder(
     status: params.status ?? "pending",
     notes: params.notes ?? null,
     stripePaymentIntentId: params.stripePaymentIntentId ?? null,
+    exchangeRate: params.exchangeRate ?? null,
+    couponCode: params.couponCode ?? null,
     items: params.items ?? [],
     createdAt: now,
     updatedAt: now,
