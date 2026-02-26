@@ -90,6 +90,8 @@ import { FulfillmentDashboardPage as _FulfillmentDashboardPage } from "./routes/
 import { AdminProductsPage as _AdminProductsPage } from "./routes/pages/admin/products.page";
 import { ProductEditPage as _ProductEditPage } from "./routes/pages/admin/product-edit.page";
 import { AdminCollectionsPage as _AdminCollectionsPage } from "./routes/pages/admin/collections.page";
+import { AdminOrdersPage as _AdminOrdersPage } from "./routes/pages/admin/orders.page";
+import { AdminOrderDetailPage as _AdminOrderDetailPage } from "./routes/pages/admin/order-detail.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 import { NotFoundPage } from "./routes/pages/404.page";
 import { ErrorPage } from "./components/ui/error-page";
@@ -130,6 +132,8 @@ const FulfillmentDashboardPage = _FulfillmentDashboardPage as any;
 const AdminProductsPage = _AdminProductsPage as any;
 const ProductEditPage = _ProductEditPage as any;
 const AdminCollectionsPage = _AdminCollectionsPage as any;
+const AdminOrdersPage = _AdminOrdersPage as any;
+const AdminOrderDetailPage = _AdminOrderDetailPage as any;
 const ResetPasswordPage = _ResetPasswordPage as any;
 const VerifyEmailPage = _VerifyEmailPage as any;
 
@@ -1562,6 +1566,57 @@ app.get("/admin/collections", async (c) => {
   return c.html(
     <Layout title="Collections – Admin" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <AdminCollectionsPage collections={cols as any} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Orders Pages ──────────────────────────────────
+app.get("/admin/orders", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const page = parseInt(c.req.query("page") || "1", 10);
+  const limit = 20;
+  const status = c.req.query("status") || undefined;
+  const search = c.req.query("search") || undefined;
+  const dateFrom = c.req.query("dateFrom") || undefined;
+  const dateTo = c.req.query("dateTo") || undefined;
+
+  const orderRepo = new OrderRepository(db, storeId);
+  const result = await orderRepo.findByStore({ page, limit, status, search, dateFrom, dateTo });
+
+  return c.html(
+    <Layout title="Orders – Admin" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminOrdersPage
+        orders={result.orders as any}
+        total={result.total}
+        page={page}
+        limit={limit}
+        filters={{ status, search, dateFrom, dateTo }}
+      />
+    </Layout>,
+  );
+});
+
+app.get("/admin/orders/:id", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const orderId = c.req.param("id");
+  const orderRepo = new OrderRepository(db, storeId);
+  const order = await orderRepo.findById(orderId);
+  if (!order) return c.notFound();
+
+  const userRepo = new UserRepository(db);
+  const customer = await userRepo.findById(order.userId);
+
+  return c.html(
+    <Layout title={`Order #${orderId.slice(0, 8)} – Admin`} isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminOrderDetailPage
+        order={order as any}
+        customerName={customer?.name}
+        customerEmail={customer?.email}
+      />
     </Layout>,
   );
 });
