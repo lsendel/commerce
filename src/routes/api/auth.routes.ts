@@ -32,7 +32,7 @@ auth.use("/forgot-password", rateLimit({ windowMs: 60_000, max: 3 }));
 
 auth.post("/register", zValidator("json", registerSchema), async (c) => {
   const db = createDb(c.env.DATABASE_URL);
-  const useCase = new RegisterUseCase(new UserRepository(db));
+  const useCase = new RegisterUseCase(new UserRepository(db), c.env.NOTIFICATION_QUEUE);
   const user = await useCase.execute(c.req.valid("json"));
 
   const token = await signJwt({ sub: user.id, email: user.email, name: user.name }, c.env.JWT_SECRET);
