@@ -47,7 +47,7 @@ export class FulfillmentWebhookRouter {
 
     // 2. Find the fulfillment request by externalId
     const request = await requestRepo.findByExternalId(
-      event.provider,
+      event.provider as "printful" | "gooten" | "prodigi" | "shapeways",
       event.externalOrderId,
     );
 

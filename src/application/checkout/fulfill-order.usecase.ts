@@ -246,7 +246,7 @@ export class FulfillOrderUseCase {
 
         const request = await requestRepo.create({
           orderId: order.id,
-          provider: providerType,
+          provider: providerType as "printful" | "gooten" | "prodigi" | "shapeways",
           providerId: firstRouting?.providerId,
           itemsSnapshot: items,
           items: items.map((i) => ({
