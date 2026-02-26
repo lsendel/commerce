@@ -12,6 +12,9 @@ import { errorHandler } from "./middleware/error-handler.middleware";
 import { tenantMiddleware } from "./middleware/tenant.middleware";
 import { affiliateMiddleware } from "./middleware/affiliate.middleware";
 
+// Repositories
+import { RedirectRepository } from "./infrastructure/repositories/redirect.repository";
+
 // API Routes
 import { authRoutes } from "./routes/api/auth.routes";
 import { productRoutes } from "./routes/api/products.routes";
@@ -54,6 +57,9 @@ import { CartPage as _CartPage } from "./routes/pages/cart.page";
 import { CheckoutSuccessPage as _CheckoutSuccessPage } from "./routes/pages/checkout-success.page";
 import { LoginPage } from "./routes/pages/auth/login.page";
 import { RegisterPage } from "./routes/pages/auth/register.page";
+import { ForgotPasswordPage } from "./routes/pages/auth/forgot-password.page";
+import { ResetPasswordPage as _ResetPasswordPage } from "./routes/pages/auth/reset-password.page";
+import { VerifyEmailPage as _VerifyEmailPage } from "./routes/pages/auth/verify-email.page";
 import { DashboardPage as _DashboardPage } from "./routes/pages/account/dashboard.page";
 import { OrdersPage as _OrdersPage } from "./routes/pages/account/orders.page";
 import { AddressesPage as _AddressesPage } from "./routes/pages/account/addresses.page";
@@ -114,6 +120,8 @@ const AdminIntegrationsPage = _AdminIntegrationsPage as any;
 const StoreIntegrationsPage = _StoreIntegrationsPage as any;
 const CreateProductPage = _CreateProductPage as any;
 const FulfillmentDashboardPage = _FulfillmentDashboardPage as any;
+const ResetPasswordPage = _ResetPasswordPage as any;
+const VerifyEmailPage = _VerifyEmailPage as any;
 
 // Infrastructure
 import { createDb } from "./infrastructure/db/client";
@@ -324,7 +332,55 @@ app.get("/collections/:slug", (c) => {
 app.get("/login", (c) => c.redirect("/auth/login", 301));
 app.get("/subscriptions", (c) => c.redirect("/products?type=subscription", 301));
 app.get("/subscriptions/success", (c) => c.redirect("/account/subscriptions", 302));
-app.get("/auth/forgot-password", (c) => c.redirect("/auth/login", 302));
+// Forgot password page (fixes dead-end redirect)
+app.get("/auth/forgot-password", async (c) => {
+  const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  return c.html(
+    <Layout title="Forgot Password" activePath="/auth/forgot-password" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <ForgotPasswordPage />
+    </Layout>
+  );
+});
+
+// Reset password page
+app.get("/auth/reset-password", async (c) => {
+  const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const token = c.req.query("token") || "";
+  return c.html(
+    <Layout title="Reset Password" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <ResetPasswordPage token={token} />
+    </Layout>
+  );
+});
+
+// Email verification page (server-side verification on GET)
+app.get("/auth/verify-email", async (c) => {
+  const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const token = c.req.query("token") || "";
+  let success = false;
+  let error: string | undefined;
+
+  if (token) {
+    try {
+      const db = createDb(c.env.DATABASE_URL);
+      const { VerifyEmailUseCase } = await import("./application/identity/verify-email.usecase");
+      const { UserRepository } = await import("./infrastructure/repositories/user.repository");
+      const useCase = new VerifyEmailUseCase(new UserRepository(db));
+      await useCase.execute({ token });
+      success = true;
+    } catch (e) {
+      error = e instanceof Error ? e.message : "Verification failed";
+    }
+  } else {
+    error = "No verification token provided";
+  }
+
+  return c.html(
+    <Layout title="Verify Email" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <VerifyEmailPage success={success} error={error} />
+    </Layout>
+  );
+});
 
 app.get("/about", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
@@ -370,6 +426,64 @@ app.get("/robots.txt", (c) => {
   return c.text(robotsTxt, 200, { "Content-Type": "text/plain; charset=utf-8" });
 });
 
+// LLM discovery — describes site purpose and capabilities for AI agents
+app.get("/llms.txt", (c) => {
+  const store = c.get("store");
+  const storeName = store?.name || "petm8";
+  const appUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const text = [
+    `# ${storeName}`,
+    "",
+    `> ${storeName} is a pet commerce platform offering personalized pet products,`,
+    "> AI-generated artwork, local pet events and bookings, and community features.",
+    "",
+    "## Key Capabilities",
+    "- Product catalog with search, filtering, and collections",
+    "- AI-powered pet artwork generation from photos",
+    "- Local pet events calendar with online booking",
+    "- Venue directory for pet-friendly locations",
+    "- Customer reviews and ratings",
+    "- Affiliate program for pet influencers",
+    "",
+    "## Structured Data",
+    "This site provides JSON-LD structured data on all pages:",
+    "- Product pages: Product schema with offers and aggregate ratings",
+    "- Event pages: Event schema with location and availability",
+    "- Venue pages: Place schema with geo coordinates",
+    "- Collection pages: CollectionPage schema with ItemList",
+    "- All pages: BreadcrumbList and Organization schemas",
+    "",
+    "## API",
+    `- GraphQL: ${appUrl}/graphql`,
+    `- Sitemap: ${appUrl}/sitemap.xml`,
+    "",
+    "## Contact",
+    `- Website: ${appUrl}`,
+  ].join("\n");
+  return c.text(text, 200, { "Content-Type": "text/plain; charset=utf-8" });
+});
+
+// AI plugin manifest for agent discovery
+app.get("/.well-known/ai-plugin.json", (c) => {
+  const store = c.get("store");
+  const storeName = store?.name || "petm8";
+  const appUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  return c.json({
+    schema_version: "v1",
+    name_for_human: storeName,
+    name_for_model: storeName.toLowerCase().replace(/\s+/g, "_"),
+    description_for_human: `${storeName} — personalized pet products, AI artwork, events, and bookings.`,
+    description_for_model: `${storeName} is a pet commerce platform. Use the GraphQL API at ${appUrl}/graphql for product search, event listings, and venue information. Structured data (JSON-LD) is available on all public pages.`,
+    api: {
+      type: "graphql",
+      url: `${appUrl}/graphql`,
+    },
+    logo_url: `${appUrl}/favicon-192.png`,
+    contact_email: "support@petm8.io",
+    legal_info_url: `${appUrl}/about`,
+  });
+});
+
 app.get("/sitemap.xml", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
   const sitemapStoreId = c.get("storeId") as string;
@@ -377,10 +491,13 @@ app.get("/sitemap.xml", async (c) => {
   const appUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
   const now = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-  const [productsResult, eventsResult, allCollections] = await Promise.all([
+  const venueRepo = new VenueRepository(db, sitemapStoreId);
+
+  const [productsResult, eventsResult, allCollections, allVenues] = await Promise.all([
     productRepo.findAll({ limit: 1000, available: true }),
     productRepo.findAll({ limit: 1000, type: "bookable", available: true }),
     productRepo.findCollections(),
+    venueRepo.findAll(1, 500),
   ]);
 
   // Helper to build a <url> element with all SEO attributes
@@ -411,6 +528,11 @@ app.get("/sitemap.xml", async (c) => {
     ...eventsResult.products.map((event: any) =>
       urlEntry(`${appUrl}/events/${event.slug}`, now, "weekly", "0.8"),
     ),
+    // Venue detail pages
+    ...allVenues.map((venue: any) => {
+      const lastmod = venue.updatedAt ? new Date(venue.updatedAt).toISOString().slice(0, 10) : now;
+      return urlEntry(`${appUrl}/venues/${venue.slug}`, lastmod, "weekly", "0.7");
+    }),
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
@@ -1440,6 +1562,24 @@ app.get("/cdn/*", async (c) => {
 
   headers.set("ETag", object.httpEtag);
   return new Response(object.body as ReadableStream, { headers });
+});
+
+// Redirect middleware — check for stored redirects before 404
+app.use("*", async (c, next) => {
+  await next();
+  if (c.res.status === 404 && !c.req.path.startsWith("/api/")) {
+    try {
+      const db = createDb(c.env.DATABASE_URL);
+      const storeId = c.get("storeId") as string;
+      const redirectRepo = new RedirectRepository(db, storeId);
+      const redirect = await redirectRepo.findByPath(c.req.path);
+      if (redirect) {
+        return c.redirect(redirect.toPath, redirect.statusCode as 301 | 302);
+      }
+    } catch {
+      // If redirect lookup fails, continue to 404
+    }
+  }
 });
 
 // 404 catch-all

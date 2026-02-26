@@ -397,6 +397,12 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   platformRole: platformRoleEnum("platform_role").default("user"),
   stripeCustomerId: text("stripe_customer_id"),
+  emailVerifiedAt: timestamp("email_verified_at"),
+  avatarUrl: text("avatar_url"),
+  locale: text("locale").default("en"),
+  timezone: text("timezone").default("UTC"),
+  marketingOptIn: boolean("marketing_opt_in").default(false),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -412,6 +418,26 @@ export const usersRelations = relations(users, ({ many }) => ({
   bookings: many(bookings),
   reviews: many(productReviews),
 }));
+
+// ─── Auth Tokens ────────────────────────────────────────────────────────────
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const addresses = pgTable("addresses", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -2296,3 +2322,32 @@ export const digitalAssetsRelations = relations(digitalAssets, ({ one }) => ({
 
 // Note: downloadTokens table already exists in Fulfillment Requests Context above.
 // It will be extended with digitalAssetId FK in Slice 8 (Digital Downloads).
+
+// ─── Redirects ──────────────────────────────────────────────────────────────
+
+export const redirects = pgTable("redirects", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  fromPath: text("from_path").notNull(),
+  toPath: text("to_path").notNull(),
+  statusCode: integer("status_code").notNull().default(301),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  storeFromIdx: uniqueIndex("redirects_store_from_idx").on(table.storeId, table.fromPath),
+}));
+
+// ─── Audit Log ──────────────────────────────────────────────────────────────
+
+export const auditLog = pgTable("audit_log", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  userId: uuid("user_id"),
+  action: text("action").notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: uuid("entity_id"),
+  details: jsonb("details"),
+  ipAddress: text("ip_address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  storeEntityIdx: index("audit_log_store_entity_idx").on(table.storeId, table.entityType, table.createdAt),
+}));

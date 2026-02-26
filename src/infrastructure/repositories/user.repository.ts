@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { Database } from "../db/client";
-import { users, addresses } from "../db/schema";
+import { users, addresses, passwordResetTokens, emailVerificationTokens } from "../db/schema";
 
 export class UserRepository {
   constructor(private db: Database) {}
@@ -31,6 +31,58 @@ export class UserRepository {
 
   async updateStripeCustomerId(userId: string, stripeCustomerId: string) {
     await this.db.update(users).set({ stripeCustomerId }).where(eq(users.id, userId));
+  }
+
+  async updatePassword(userId: string, passwordHash: string) {
+    await this.db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, userId));
+  }
+
+  async updateProfile(userId: string, data: Partial<{
+    name: string;
+    avatarUrl: string | null;
+    locale: string;
+    timezone: string;
+    marketingOptIn: boolean;
+  }>) {
+    await this.db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.id, userId));
+  }
+
+  async setEmailVerified(userId: string) {
+    await this.db.update(users).set({ emailVerifiedAt: new Date(), updatedAt: new Date() }).where(eq(users.id, userId));
+  }
+
+  async updateLastLogin(userId: string) {
+    await this.db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, userId));
+  }
+
+  // Password reset tokens
+  async createPasswordResetToken(userId: string, token: string, expiresAt: Date) {
+    const result = await this.db.insert(passwordResetTokens).values({ userId, token, expiresAt }).returning();
+    return result[0];
+  }
+
+  async findPasswordResetToken(token: string) {
+    const result = await this.db.select().from(passwordResetTokens).where(eq(passwordResetTokens.token, token)).limit(1);
+    return result[0] ?? null;
+  }
+
+  async markPasswordResetTokenUsed(id: string) {
+    await this.db.update(passwordResetTokens).set({ usedAt: new Date() }).where(eq(passwordResetTokens.id, id));
+  }
+
+  // Email verification tokens
+  async createEmailVerificationToken(userId: string, token: string, expiresAt: Date) {
+    const result = await this.db.insert(emailVerificationTokens).values({ userId, token, expiresAt }).returning();
+    return result[0];
+  }
+
+  async findEmailVerificationToken(token: string) {
+    const result = await this.db.select().from(emailVerificationTokens).where(eq(emailVerificationTokens.token, token)).limit(1);
+    return result[0] ?? null;
+  }
+
+  async markEmailVerificationTokenUsed(id: string) {
+    await this.db.update(emailVerificationTokens).set({ usedAt: new Date() }).where(eq(emailVerificationTokens.id, id));
   }
 
   // Address methods
