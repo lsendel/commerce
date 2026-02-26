@@ -26,6 +26,13 @@ export class GenerateArtworkUseCase {
       throw new NotFoundError("Pet profile", petProfileId);
     }
 
+    // 1b. Validate pet has a photo
+    if (!pet.photoUrl) {
+      throw new ValidationError(
+        "Pet profile must have a photo before generating artwork. Please upload a photo first.",
+      );
+    }
+
     // 2. Get template if templateId provided (or use custom prompt)
     let stylePrompt: string;
 

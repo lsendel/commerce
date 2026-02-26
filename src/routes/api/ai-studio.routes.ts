@@ -9,6 +9,9 @@ import { GenerateArtworkUseCase } from "../../application/ai-studio/generate-art
 import { GetGenerationStatusUseCase } from "../../application/ai-studio/get-generation-status.usecase";
 import { ListTemplatesUseCase } from "../../application/ai-studio/list-templates.usecase";
 import { ManagePetProfileUseCase } from "../../application/ai-studio/manage-pet-profile.usecase";
+import { RetryGenerationUseCase } from "../../application/ai-studio/retry-generation.usecase";
+import { ListUserArtworkUseCase } from "../../application/ai-studio/list-user-artwork.usecase";
+import { DeleteArtworkUseCase } from "../../application/ai-studio/delete-artwork.usecase";
 import {
   generateArtworkSchema,
   createPetProfileSchema,
@@ -193,6 +196,58 @@ studio.delete("/pets/:id", async (c) => {
   try {
     const petId = c.req.param("id");
     await useCase.delete(c.get("userId"), petId);
+    return c.json({ success: true }, 200);
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return c.json({ error: error.message }, 404);
+    }
+    throw error;
+  }
+});
+
+// POST /studio/jobs/:id/retry — retry a failed job
+studio.post("/jobs/:id/retry", async (c) => {
+  const db = createDb(c.env.DATABASE_URL);
+  const repo = new AiJobRepository(db, c.get("storeId") as string);
+  const useCase = new RetryGenerationUseCase(repo, c.env.AI_QUEUE);
+
+  try {
+    const jobId = c.req.param("id");
+    const result = await useCase.execute(jobId, c.get("userId"));
+    return c.json(result, 200);
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return c.json({ error: error.message }, 404);
+    }
+    if (error instanceof ValidationError) {
+      return c.json({ error: error.message }, 400);
+    }
+    throw error;
+  }
+});
+
+// GET /studio/gallery — list completed artwork for current user
+studio.get("/gallery", async (c) => {
+  const db = createDb(c.env.DATABASE_URL);
+  const storeId = c.get("storeId") as string;
+  const useCase = new ListUserArtworkUseCase(db, storeId);
+
+  const page = Number(c.req.query("page") || "1");
+  const limit = Number(c.req.query("limit") || "20");
+  const result = await useCase.execute(c.get("userId"), { page, limit });
+  return c.json(result, 200);
+});
+
+// DELETE /studio/jobs/:id — delete a generation job and its artifacts
+studio.delete("/jobs/:id", async (c) => {
+  const db = createDb(c.env.DATABASE_URL);
+  const repo = new AiJobRepository(db, c.get("storeId") as string);
+  const storage = new R2StorageAdapter(c.env.IMAGES);
+  const useCase = new DeleteArtworkUseCase(repo, storage);
+
+  try {
+    const jobId = c.req.param("id");
+    await useCase.execute(jobId, c.get("userId"));
     return c.json({ success: true }, 200);
   } catch (error) {
     if (error instanceof NotFoundError) {

@@ -10,6 +10,8 @@ interface StudioPreviewPageProps {
   generationTime?: number;
   /** Product slug for the print product to order */
   printProductSlug?: string;
+  /** Whether the current user is an admin */
+  isAdmin?: boolean;
 }
 
 export const StudioPreviewPage: FC<StudioPreviewPageProps> = ({
@@ -19,6 +21,7 @@ export const StudioPreviewPage: FC<StudioPreviewPageProps> = ({
   templateName,
   generationTime,
   printProductSlug,
+  isAdmin,
 }) => {
   return (
     <div class="max-w-4xl mx-auto px-4 py-8 sm:py-12">
@@ -56,23 +59,32 @@ export const StudioPreviewPage: FC<StudioPreviewPageProps> = ({
       {/* Additional actions */}
       <div class="mt-10 border-t border-gray-200 dark:border-gray-700 pt-8">
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          {/* Create product from art */}
-          <Button
-            variant="primary"
-            size="lg"
-            href={`/products/create/${jobId}`}
-          >
-            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Create Product
-          </Button>
+          {/* Download button — prominent */}
+          {imageUrl && (
+            <Button variant="primary" size="lg" href={imageUrl} download>
+              <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Download
+            </Button>
+          )}
+
+          {/* Create product — admin only */}
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="lg"
+              href={`/products/create/${jobId}`}
+            >
+              <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Create Product
+            </Button>
+          )}
 
           {/* Create another */}
           <Button variant="outline" size="lg" href="/studio/create">
-            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
             Create Another
           </Button>
         </div>

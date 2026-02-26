@@ -67,6 +67,7 @@ import { OrdersPage as _OrdersPage } from "./routes/pages/account/orders.page";
 import { AddressesPage as _AddressesPage } from "./routes/pages/account/addresses.page";
 import { SubscriptionsPage as _SubscriptionsPage } from "./routes/pages/account/subscriptions.page";
 import { PetsPage as _PetsPage } from "./routes/pages/account/pets.page";
+import { ArtworkPage as _ArtworkPage } from "./routes/pages/account/artwork.page";
 import { SettingsPage as _SettingsPage } from "./routes/pages/account/settings.page";
 import { StudioCreatePage as _StudioCreatePage } from "./routes/pages/studio/create.page";
 import { StudioPreviewPage as _StudioPreviewPage } from "./routes/pages/studio/preview.page";
@@ -93,6 +94,9 @@ import { AdminCollectionsPage as _AdminCollectionsPage } from "./routes/pages/ad
 import { AdminOrdersPage as _AdminOrdersPage } from "./routes/pages/admin/orders.page";
 import { AdminOrderDetailPage as _AdminOrderDetailPage } from "./routes/pages/admin/order-detail.page";
 import { AdminBookingsPage as _AdminBookingsPage } from "./routes/pages/admin/bookings.page";
+import { FulfillmentDetailPage as _FulfillmentDetailPage } from "./routes/pages/admin/fulfillment-detail.page";
+import { ShippingPage as _ShippingPage } from "./routes/pages/admin/shipping.page";
+import { TaxPage as _TaxPage } from "./routes/pages/admin/tax.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 import { NotFoundPage } from "./routes/pages/404.page";
 import { ErrorPage } from "./components/ui/error-page";
@@ -109,6 +113,7 @@ const OrdersPage = _OrdersPage as any;
 const AddressesPage = _AddressesPage as any;
 const SubscriptionsPage = _SubscriptionsPage as any;
 const PetsPage = _PetsPage as any;
+const ArtworkPage = _ArtworkPage as any;
 const SettingsPage = _SettingsPage as any;
 const StudioCreatePage = _StudioCreatePage as any;
 const StudioPreviewPage = _StudioPreviewPage as any;
@@ -136,6 +141,9 @@ const AdminCollectionsPage = _AdminCollectionsPage as any;
 const AdminOrdersPage = _AdminOrdersPage as any;
 const AdminOrderDetailPage = _AdminOrderDetailPage as any;
 const AdminBookingsPage = _AdminBookingsPage as any;
+const FulfillmentDetailPage = _FulfillmentDetailPage as any;
+const ShippingPage = _ShippingPage as any;
+const TaxPage = _TaxPage as any;
 const ResetPasswordPage = _ResetPasswordPage as any;
 const VerifyEmailPage = _VerifyEmailPage as any;
 
@@ -942,6 +950,20 @@ accountPages.get("/pets", async (c) => {
   );
 });
 
+accountPages.get("/artwork", async (c) => {
+  const { db, storeId, cartCount, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const { ListUserArtworkUseCase } = await import("./application/ai-studio/list-user-artwork.usecase");
+  const useCase = new ListUserArtworkUseCase(db, storeId);
+  const page = Number(c.req.query("page") || "1");
+  const result = await useCase.execute(user!.sub, { page, limit: 12 });
+
+  return c.html(
+    <Layout title="My Artwork" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <ArtworkPage artwork={result.artwork as any} total={result.total} page={result.page} limit={result.limit} />
+    </Layout>
+  );
+});
+
 accountPages.get("/settings", async (c) => {
   const { db, cartCount, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   const userRepo = new UserRepository(db);
@@ -1417,24 +1439,28 @@ app.get("/admin/fulfillment", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
 
-  const { eq, desc, sql } = await import("drizzle-orm");
+  const { eq, desc, sql, and, like } = await import("drizzle-orm");
   const { fulfillmentRequests: frTable } = await import("./infrastructure/db/schema");
 
-  const requests = await db
-    .select()
-    .from(frTable)
-    .where(eq(frTable.storeId, storeId))
-    .orderBy(desc(frTable.createdAt))
-    .limit(100);
+  const pageNum = parseInt(c.req.query("page") || "1", 10);
+  const limit = 50;
+  const statusFilter = c.req.query("status") || "";
+  const providerFilter = c.req.query("provider") || "";
+  const searchFilter = c.req.query("search") || "";
 
-  const countRows = await db
-    .select({
-      status: frTable.status,
-      count: sql<number>`count(*)`,
-    })
-    .from(frTable)
-    .where(eq(frTable.storeId, storeId))
-    .groupBy(frTable.status);
+  const conditions = [eq(frTable.storeId, storeId)];
+  if (statusFilter) conditions.push(eq(frTable.status, statusFilter as any));
+  if (providerFilter) conditions.push(eq(frTable.provider, providerFilter as any));
+  if (searchFilter) conditions.push(like(frTable.orderId, `%${searchFilter}%`));
+
+  const [requests, countRows, totalCountRows] = await Promise.all([
+    db.select().from(frTable).where(and(...conditions)).orderBy(desc(frTable.createdAt)).limit(limit).offset((pageNum - 1) * limit),
+    db.select({ status: frTable.status, count: sql<number>`count(*)` }).from(frTable).where(eq(frTable.storeId, storeId)).groupBy(frTable.status),
+    db.select({ count: sql<number>`count(*)` }).from(frTable).where(and(...conditions)),
+  ]);
+
+  const totalFiltered = Number(totalCountRows[0]?.count ?? 0);
+  const totalPages = Math.ceil(totalFiltered / limit);
 
   const counts: Record<string, number> = {};
   let total = 0;
@@ -1455,6 +1481,15 @@ app.get("/admin/fulfillment", async (c) => {
     cancelled: counts.cancelled ?? 0,
   };
 
+  let health: any[] = [];
+  try {
+    const { GetProviderHealthUseCase } = await import("./application/fulfillment/get-provider-health.usecase");
+    const useCase = new GetProviderHealthUseCase(db, storeId);
+    health = await useCase.execute(30);
+  } catch {
+    // Health data is optional
+  }
+
   const formatted = requests.map((r: any) => ({
     id: r.id,
     orderId: r.orderId,
@@ -1468,7 +1503,106 @@ app.get("/admin/fulfillment", async (c) => {
 
   return c.html(
     <Layout title="Fulfillment Dashboard" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <FulfillmentDashboardPage requests={formatted} stats={stats} />
+      <FulfillmentDashboardPage
+        requests={formatted}
+        stats={stats}
+        health={health as any}
+        page={pageNum}
+        totalPages={totalPages}
+        filters={{ status: statusFilter || undefined, provider: providerFilter || undefined, search: searchFilter || undefined }}
+      />
+    </Layout>,
+  );
+});
+
+app.get("/admin/fulfillment/:id", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const requestId = c.req.param("id");
+  const { FulfillmentRequestRepository } = await import("./infrastructure/repositories/fulfillment-request.repository");
+  const repo = new FulfillmentRequestRepository(db, storeId);
+  const request = await repo.findById(requestId);
+  if (!request) return c.notFound();
+
+  const { eq, desc } = await import("drizzle-orm");
+  const { providerEvents, shipments: shipmentsTable } = await import("./infrastructure/db/schema");
+
+  const [items, events, shipmentRows] = await Promise.all([
+    repo.findItemsByRequestId(requestId),
+    db.select().from(providerEvents).where(eq(providerEvents.externalOrderId, request.externalId ?? "")).orderBy(desc(providerEvents.receivedAt)),
+    db.select().from(shipmentsTable).where(eq(shipmentsTable.fulfillmentRequestId, requestId)).limit(1),
+  ]);
+
+  const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null;
+
+  return c.html(
+    <Layout title="Fulfillment Request" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <FulfillmentDetailPage
+        request={{
+          id: request.id,
+          orderId: request.orderId,
+          provider: request.provider,
+          externalId: request.externalId,
+          status: request.status ?? "pending",
+          errorMessage: request.errorMessage,
+          costEstimatedTotal: request.costEstimatedTotal,
+          costActualTotal: request.costActualTotal,
+          costShipping: request.costShipping,
+          costTax: request.costTax,
+          currency: request.currency ?? "USD",
+          submittedAt: fmtDate(request.submittedAt),
+          completedAt: fmtDate(request.completedAt),
+          createdAt: fmtDate(request.createdAt) ?? "",
+        }}
+        items={items.map((i: any) => ({
+          id: i.id,
+          orderItemId: i.orderItemId,
+          providerLineId: i.providerLineId,
+          quantity: i.quantity,
+          status: i.status,
+        }))}
+        events={events.map((e: any) => ({
+          id: e.id,
+          eventType: e.eventType,
+          externalEventId: e.externalEventId,
+          receivedAt: fmtDate(e.receivedAt) ?? "",
+          processedAt: fmtDate(e.processedAt),
+        }))}
+        shipment={shipmentRows[0] ? {
+          carrier: (shipmentRows[0] as any).carrier,
+          trackingNumber: (shipmentRows[0] as any).trackingNumber,
+          trackingUrl: (shipmentRows[0] as any).trackingUrl,
+          status: (shipmentRows[0] as any).status,
+          shippedAt: fmtDate((shipmentRows[0] as any).shippedAt),
+          deliveredAt: fmtDate((shipmentRows[0] as any).deliveredAt),
+        } : null}
+      />
+    </Layout>,
+  );
+});
+
+app.get("/admin/shipping", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const { ShippingRepository } = await import("./infrastructure/repositories/shipping.repository");
+  const { ManageShippingZonesUseCase } = await import("./application/fulfillment/manage-shipping-zones.usecase");
+  const shippingRepo = new ShippingRepository(db, storeId);
+  const useCase = new ManageShippingZonesUseCase(shippingRepo);
+  const zones = await useCase.listZones();
+  return c.html(
+    <Layout title="Shipping Zones" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <ShippingPage zones={zones as any} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/tax", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  // Tax zones are not yet implemented in a use case — render empty for now
+  return c.html(
+    <Layout title="Tax Settings" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <TaxPage zones={[]} />
     </Layout>,
   );
 });

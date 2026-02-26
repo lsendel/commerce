@@ -63,8 +63,18 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
               {pet.breed ? ` \u00B7 ${pet.breed}` : ""}
             </p>
 
-            {/* Actions */}
+            {/* Actions — always visible */}
             <div class="flex items-center justify-center gap-2 mt-4">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                data-upload-photo={pet.id}
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Photo
+              </button>
               <button
                 type="button"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors"
@@ -327,6 +337,33 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
               }
             });
 
+            // Standalone photo upload via button on card
+            document.querySelectorAll('[data-upload-photo]').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var id = this.getAttribute('data-upload-photo');
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/jpeg,image/png,image/webp';
+                input.onchange = async function() {
+                  if (!input.files[0]) return;
+                  btn.textContent = 'Uploading...';
+                  btn.disabled = true;
+                  var fd = new FormData();
+                  fd.append('photo', input.files[0]);
+                  try {
+                    var res = await fetch('/api/studio/pets/' + id + '/photo', { method: 'POST', body: fd });
+                    if (!res.ok) throw new Error('Upload failed');
+                    window.location.reload();
+                  } catch (err) {
+                    alert(err.message);
+                    btn.textContent = 'Photo';
+                    btn.disabled = false;
+                  }
+                };
+                input.click();
+              });
+            });
+
             form.addEventListener('submit', async function(e) {
               e.preventDefault();
               var btn = document.getElementById('pet-submit-btn');
@@ -339,6 +376,7 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
               var method = petId ? 'PATCH' : 'POST';
 
               try {
+                // Step 1: Save profile data as JSON
                 var res = await fetch(url, {
                   method: method,
                   headers: { 'Content-Type': 'application/json' },
@@ -352,6 +390,16 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
                 if (!res.ok) {
                   var data = await res.json().catch(function() { return {}; });
                   throw new Error(data.error || data.message || 'Failed to save pet');
+                }
+
+                var savedPet = await res.json();
+
+                // Step 2: Upload photo separately if one was selected
+                var photoFile = photoInput.files[0];
+                if (photoFile && savedPet.id) {
+                  var photoFd = new FormData();
+                  photoFd.append('photo', photoFile);
+                  await fetch('/api/studio/pets/' + savedPet.id + '/photo', { method: 'POST', body: photoFd });
                 }
 
                 window.location.reload();
