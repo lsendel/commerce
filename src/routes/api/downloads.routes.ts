@@ -1,16 +1,20 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import type { Env } from "../../env";
 import { createDb } from "../../infrastructure/db/client";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { GenerateDownloadUrlUseCase } from "../../application/catalog/generate-download-url.usecase";
+import { RedeemDownloadUseCase } from "../../application/catalog/redeem-download.usecase";
+import { DownloadRepository } from "../../infrastructure/repositories/download.repository";
 import {
   downloadTokens,
   orderItems,
   productVariants,
+  digitalAssets,
 } from "../../infrastructure/db/schema";
+import { NotFoundError, ValidationError } from "../../shared/errors";
 
 const downloads = new Hono<{ Bindings: Env }>();
 
@@ -45,41 +49,31 @@ downloads.post(
  */
 downloads.get("/downloads/:token", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
-  const token = c.req.param("token");
+  const tokenValue = c.req.param("token");
+  const storeId = (c.get("storeId") as string | undefined) ?? "";
+  const repo = new DownloadRepository(db, storeId);
+  const useCase = new RedeemDownloadUseCase(repo);
 
-  // 1. Look up token
-  const tokenRows = await db
-    .select()
-    .from(downloadTokens)
-    .where(
-      and(
-        eq(downloadTokens.token, token),
-        eq(downloadTokens.revoked, false),
-      ),
-    )
-    .limit(1);
-
-  const downloadToken = tokenRows[0];
-  if (!downloadToken) {
-    return c.json({ error: "Invalid or expired download link" }, 404);
+  let downloadToken;
+  try {
+    downloadToken = await useCase.validateAndConsume(tokenValue);
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return c.json({ error: "Invalid or expired download link" }, 404);
+    }
+    if (err instanceof ValidationError) {
+      return c.json({ error: (err as Error).message }, 410);
+    }
+    throw err;
   }
 
-  // 2. Check expiry
-  if (downloadToken.expiresAt < new Date()) {
-    return c.json({ error: "This download link has expired" }, 410);
-  }
-
-  // 3. Resolve digital asset key from the order item's variant
-  if (!downloadToken.orderItemId) {
-    return c.json({ error: "No downloadable content" }, 404);
-  }
-
+  // Resolve digital asset key from the order item's variant
   const itemRows = await db
     .select({
       variantId: orderItems.variantId,
     })
     .from(orderItems)
-    .where(eq(orderItems.id, downloadToken.orderItemId))
+    .where(eq(orderItems.id, downloadToken.orderItemId!))
     .limit(1);
 
   const item = itemRows[0];
@@ -98,15 +92,7 @@ downloads.get("/downloads/:token", async (c) => {
     return c.json({ error: "No downloadable content" }, 404);
   }
 
-  // 4. Mark as downloaded
-  if (!downloadToken.downloadedAt) {
-    await db
-      .update(downloadTokens)
-      .set({ downloadedAt: new Date() })
-      .where(eq(downloadTokens.id, downloadToken.id));
-  }
-
-  // 5. Serve from R2
+  // Serve from R2
   const object = await c.env.IMAGES.get(variant.digitalAssetKey);
   if (!object) {
     return c.json({ error: "File not found" }, 404);

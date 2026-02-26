@@ -33,6 +33,12 @@ import { browserCaching } from "./middleware/browser-cache.middleware";
 import { adminProductRoutes } from "./routes/api/admin-products.routes";
 import { cancellationRoutes } from "./routes/api/cancellations.routes";
 import { downloadRoutes } from "./routes/api/downloads.routes";
+import promotionRoutes from "./routes/api/promotions.routes";
+import { shippingZoneRoutes } from "./routes/api/shipping-zones.routes";
+import { taxRoutes } from "./routes/api/tax.routes";
+import { reviewRoutes } from "./routes/api/reviews.routes";
+import { analyticsRoutes } from "./routes/api/analytics.routes";
+import { currencyRoutes } from "./routes/api/currency.routes";
 
 // GraphQL
 import { schema } from "./graphql/schema";
@@ -181,6 +187,12 @@ app.route("/api", cacheRoutes);
 app.route("/api/admin", adminProductRoutes);
 app.route("/api", cancellationRoutes);
 app.route("/api", downloadRoutes);
+app.route("/api", promotionRoutes);
+app.route("/api", shippingZoneRoutes);
+app.route("/api", taxRoutes);
+app.route("/api", reviewRoutes);
+app.route("/api", analyticsRoutes);
+app.route("/api", currencyRoutes);
 
 // ─── GraphQL ───────────────────────────────────────────────
 const yoga = createYoga({ schema, graphqlEndpoint: "/graphql" });

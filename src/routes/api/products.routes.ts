@@ -13,8 +13,9 @@ import {
   paginationSchema,
   productFilterSchema,
 } from "../../shared/validators";
-import { optionalAuth } from "../../middleware/auth.middleware";
+import { optionalAuth, requireAuth } from "../../middleware/auth.middleware";
 import { cacheResponse } from "../../middleware/cache.middleware";
+import { ExportProductsCsvUseCase } from "../../application/catalog/export-products-csv.usecase";
 
 const catalog = new Hono<{ Bindings: Env }>();
 
@@ -47,6 +48,21 @@ catalog.get(
     return c.json(result, 200);
   },
 );
+
+// GET /products/export/csv - export all products as CSV
+catalog.get("/products/export/csv", requireAuth(), async (c) => {
+  const db = createDb(c.env.DATABASE_URL);
+  const storeId = c.get("storeId") as string;
+  const useCase = new ExportProductsCsvUseCase(db, storeId);
+  const csv = await useCase.execute();
+
+  return new Response(csv, {
+    headers: {
+      "Content-Type": "text/csv",
+      "Content-Disposition": "attachment; filename=products.csv",
+    },
+  });
+});
 
 // GET /products/:slug - single product by slug (cache 1h)
 catalog.get("/products/:slug", cacheResponse({
