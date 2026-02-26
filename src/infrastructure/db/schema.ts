@@ -1369,6 +1369,55 @@ export const providerEventsRelations = relations(
   }),
 );
 
+// ─── Download Tokens (Digital Products) ─────────────────────────────────────
+
+export const downloadTokens = pgTable(
+  "download_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id),
+    orderItemId: uuid("order_item_id").references(() => orderItems.id),
+    token: text("token").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    downloadedAt: timestamp("downloaded_at"),
+    revoked: boolean("revoked").default(false),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    tokenIdx: uniqueIndex("download_tokens_token_idx").on(table.token),
+  }),
+);
+
+export const downloadTokensRelations = relations(
+  downloadTokens,
+  ({ one }) => ({
+    store: one(stores, {
+      fields: [downloadTokens.storeId],
+      references: [stores.id],
+    }),
+    user: one(users, {
+      fields: [downloadTokens.userId],
+      references: [users.id],
+    }),
+    order: one(orders, {
+      fields: [downloadTokens.orderId],
+      references: [orders.id],
+    }),
+    orderItem: one(orderItems, {
+      fields: [downloadTokens.orderItemId],
+      references: [orderItems.id],
+    }),
+  }),
+);
+
 // ─── Affiliate Context (Phase 4) ────────────────────────────────────────────
 
 export const affiliateTiers = pgTable("affiliate_tiers", {

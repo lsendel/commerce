@@ -97,3 +97,19 @@ ALTER TABLE shipments ADD COLUMN IF NOT EXISTS raw JSONB;
 -- Step 9: Modify orders — add cancel_reason and cancelled_at
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancel_reason TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP;
+
+-- Step 10: Create download_tokens table
+CREATE TABLE IF NOT EXISTS download_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id UUID NOT NULL REFERENCES stores(id),
+  user_id UUID NOT NULL REFERENCES users(id),
+  order_id UUID NOT NULL REFERENCES orders(id),
+  order_item_id UUID REFERENCES order_items(id),
+  token TEXT NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  downloaded_at TIMESTAMP,
+  revoked BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS download_tokens_token_idx ON download_tokens(token);
