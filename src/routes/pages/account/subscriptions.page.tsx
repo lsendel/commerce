@@ -17,11 +17,11 @@ interface SubscriptionsPageProps {
   subscription?: Subscription | null;
 }
 
-const statusVariant: Record<string, "success" | "warning" | "danger" | "info"> = {
+const statusVariant: Record<string, "success" | "warning" | "error" | "info"> = {
   active: "success",
   trialing: "info",
   past_due: "warning",
-  cancelled: "danger",
+  cancelled: "error",
 };
 
 const statusLabel: Record<string, string> = {
@@ -56,7 +56,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription }) 
                 <div>
                   <h2 class="text-lg font-bold text-gray-900">{subscription.planName}</h2>
                   <div class="flex items-center gap-2 mt-1">
-                    <Badge variant={statusVariant[subscription.status] || "default"}>
+                    <Badge variant={statusVariant[subscription.status] || "neutral"}>
                       {statusLabel[subscription.status] || subscription.status}
                     </Badge>
                     {subscription.cancelAtPeriodEnd && (

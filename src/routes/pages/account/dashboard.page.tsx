@@ -22,12 +22,12 @@ interface DashboardPageProps {
   subscription?: Subscription | null;
 }
 
-const orderStatusVariant: Record<string, "default" | "success" | "warning" | "danger" | "info"> = {
+const orderStatusVariant: Record<string, "success" | "warning" | "error" | "info" | "neutral"> = {
   pending: "warning",
   processing: "info",
   shipped: "info",
   delivered: "success",
-  cancelled: "danger",
+  cancelled: "error",
 };
 
 export const DashboardPage: FC<DashboardPageProps> = ({
@@ -138,7 +138,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
                     </p>
                   </div>
                   <div class="flex items-center gap-3">
-                    <Badge variant={orderStatusVariant[order.status] || "default"}>
+                    <Badge variant={orderStatusVariant[order.status] || "neutral"}>
                       {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                     </Badge>
                     <span class="text-sm font-semibold text-gray-900">${order.total}</span>
@@ -163,7 +163,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
                       ? "success"
                       : subscription.status === "past_due"
                       ? "warning"
-                      : "danger"
+                      : "error"
                   }
                   class="mt-2"
                 >
