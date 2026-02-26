@@ -164,9 +164,10 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
                   </div>
                 </div>
 
-                {/* Tracking link */}
-                {order.trackingUrl && (
-                  <div class="mt-4">
+                {/* Actions row */}
+                <div class="mt-4 flex items-center gap-4">
+                  {/* Tracking link */}
+                  {order.trackingUrl && (
                     <a
                       href={order.trackingUrl}
                       target="_blank"
@@ -183,13 +184,25 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
                         />
                       </svg>
                     </a>
-                  </div>
-                )}
+                  )}
+
+                  {/* Cancel button for pending/processing orders */}
+                  {(order.status === "pending" || order.status === "processing") && (
+                    <button
+                      type="button"
+                      class="cancel-order-btn inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg px-3 py-1.5 font-medium transition-colors"
+                      data-order-id={order.id}
+                    >
+                      Cancel Order
+                    </button>
+                  )}
+                </div>
               </div>
             </details>
           ))}
         </div>
       )}
+      <script src="/scripts/order-cancel.js" defer></script>
     </div>
   );
 };
