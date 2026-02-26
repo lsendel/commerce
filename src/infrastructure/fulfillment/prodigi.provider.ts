@@ -15,6 +15,7 @@ export class ProdigiProvider implements FulfillmentProvider {
   constructor(
     private apiKey: string,
     private breaker: CircuitBreaker,
+    private webhookSecret?: string,
   ) {}
 
   private async request<T>(
@@ -152,7 +153,29 @@ export class ProdigiProvider implements FulfillmentProvider {
     }));
   }
 
-  verifyWebhook(_payload: string, _signature: string): boolean {
-    return true;
+  async verifyWebhook(payload: string, signature: string): Promise<boolean> {
+    if (!this.webhookSecret) return false;
+
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(this.webhookSecret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+
+    const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+    const computed = Array.from(new Uint8Array(sig))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    // Constant-time comparison
+    if (computed.length !== signature.length) return false;
+    let mismatch = 0;
+    for (let i = 0; i < computed.length; i++) {
+      mismatch |= computed.charCodeAt(i) ^ signature.charCodeAt(i);
+    }
+    return mismatch === 0;
   }
 }

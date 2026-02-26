@@ -23,11 +23,11 @@ export function createFulfillmentProvider(
 
   switch (type) {
     case "printful":
-      return new PrintfulProvider(config.apiKey, breaker);
+      return new PrintfulProvider(config.apiKey, breaker, config.apiSecret);
     case "gooten":
       return new GootenProvider(config.apiKey, breaker);
     case "prodigi":
-      return new ProdigiProvider(config.apiKey, breaker);
+      return new ProdigiProvider(config.apiKey, breaker, config.apiSecret);
     case "shapeways":
       return new ShapewaysProvider(config.apiKey, breaker);
     default:
