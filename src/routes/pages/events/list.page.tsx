@@ -16,12 +16,30 @@ interface EventsListPageProps {
   events: EventProduct[];
   filterDateFrom?: string;
   filterDateTo?: string;
+  filterSearch?: string;
+  page: number;
+  totalPages: number;
+  total: number;
+}
+
+function formatHumanDate(dateStr?: string): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 export const EventsListPage: FC<EventsListPageProps> = ({
   events,
   filterDateFrom,
   filterDateTo,
+  filterSearch,
+  page,
+  totalPages,
+  total,
 }) => {
   return (
     <div class="max-w-6xl mx-auto px-4 py-8">
@@ -33,9 +51,19 @@ export const EventsListPage: FC<EventsListPageProps> = ({
         </p>
       </div>
 
-      {/* Date range filter */}
+      {/* Search & date filter */}
       <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 mb-8">
         <form method="get" class="flex flex-wrap items-end gap-4">
+          <div class="flex-1 min-w-[200px] flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Search</label>
+            <input
+              type="text"
+              name="search"
+              value={filterSearch || ""}
+              placeholder="Search events..."
+              class="rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
+            />
+          </div>
           <div class="flex flex-col gap-1.5">
             <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">From</label>
             <input
@@ -57,7 +85,7 @@ export const EventsListPage: FC<EventsListPageProps> = ({
           <Button type="submit" variant="primary" size="sm">
             Filter
           </Button>
-          {(filterDateFrom || filterDateTo) && (
+          {(filterDateFrom || filterDateTo || filterSearch) && (
             <a href="/events" class="text-sm text-gray-500 hover:text-brand-600 font-medium">
               Clear
             </a>
@@ -150,13 +178,40 @@ export const EventsListPage: FC<EventsListPageProps> = ({
                           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                         />
                       </svg>
-                      Next: {event.nextAvailableDate}
+                      Next: {formatHumanDate(event.nextAvailableDate)}
                     </span>
                   )}
                 </div>
               </div>
             </a>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div class="mt-8 flex items-center justify-between">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Showing {(page - 1) * 12 + 1}–{Math.min(page * 12, total)} of {total} events
+          </p>
+          <div class="flex items-center gap-2">
+            {page > 1 && (
+              <a
+                href={`/events?page=${page - 1}${filterSearch ? `&search=${filterSearch}` : ""}${filterDateFrom ? `&dateFrom=${filterDateFrom}` : ""}${filterDateTo ? `&dateTo=${filterDateTo}` : ""}`}
+                class="px-3 py-2 text-sm font-medium rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Previous
+              </a>
+            )}
+            {page < totalPages && (
+              <a
+                href={`/events?page=${page + 1}${filterSearch ? `&search=${filterSearch}` : ""}${filterDateFrom ? `&dateFrom=${filterDateFrom}` : ""}${filterDateTo ? `&dateTo=${filterDateTo}` : ""}`}
+                class="px-3 py-2 text-sm font-medium rounded-xl bg-brand-500 text-white hover:bg-brand-600 transition-colors"
+              >
+                Next
+              </a>
+            )}
+          </div>
         </div>
       )}
     </div>

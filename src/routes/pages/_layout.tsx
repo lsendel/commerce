@@ -23,7 +23,21 @@ interface LayoutProps {
   ogPriceAmount?: string;
   /** Product-specific OG: price currency (e.g. "USD") */
   ogPriceCurrency?: string;
+  /** Additional scripts to load (e.g. ["gallery.js", "variant-selector.js"]) */
+  scripts?: string[];
+  /** User name for header dropdown */
+  userName?: string;
+  /** User role for conditional nav links */
+  userRole?: string;
+  /** Whether user is a registered affiliate */
+  isAffiliate?: boolean;
+  /** Breadcrumbs for JSON-LD BreadcrumbList */
+  breadcrumbs?: { name: string; url: string }[];
+  /** Pagination links for rel=prev/next */
+  paginationLinks?: { prev?: string; next?: string };
 }
+
+const alwaysLoadScripts = ["darkmode.js", "toast.js", "cart.js", "auth.js"];
 
 export const Layout: FC<LayoutProps> = ({
   title,
@@ -43,6 +57,12 @@ export const Layout: FC<LayoutProps> = ({
   secondaryColor,
   ogPriceAmount,
   ogPriceCurrency,
+  scripts = [],
+  userName,
+  userRole,
+  isAffiliate,
+  breadcrumbs,
+  paginationLinks,
 }) => (
   <html lang="en">
     <head>
@@ -72,13 +92,32 @@ export const Layout: FC<LayoutProps> = ({
       {description && <meta property="twitter:description" content={description} />}
       <meta property="twitter:image" content={ogImage} />
 
-      {/* JSON-LD Structured Data */}
+      {/* JSON-LD Structured Data — server-generated from trusted DB values */}
       {jsonLd && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": breadcrumbs.map((crumb, idx) => ({
+              "@type": "ListItem",
+              "position": idx + 1,
+              "name": crumb.name,
+              "item": crumb.url,
+            })),
+          }) }}
+        />
+      )}
+
+      {/* Pagination links */}
+      {paginationLinks?.prev && <link rel="prev" href={paginationLinks.prev} />}
+      {paginationLinks?.next && <link rel="next" href={paginationLinks.next} />}
 
       {/* E2: Font optimization — preload Inter WOFF2 so text renders immediately */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -161,6 +200,9 @@ export const Layout: FC<LayoutProps> = ({
         cartCount={cartCount}
         storeName={storeName}
         storeLogo={storeLogo}
+        userName={userName}
+        userRole={userRole}
+        isAffiliate={isAffiliate}
       />
       <main id="main-content" role="main" class="flex-1">{children}</main>
       <Footer />
@@ -199,14 +241,14 @@ export const Layout: FC<LayoutProps> = ({
           `,
         }}
       />
-      <script src="/scripts/darkmode.js" defer />
-      <script src="/scripts/toast.js" defer />
-      <script src="/scripts/cart.js" defer />
-      <script src="/scripts/gallery.js" defer />
-      <script src="/scripts/variant-selector.js" defer />
-      <script src="/scripts/booking.js" defer />
-      <script src="/scripts/studio.js" defer />
-      <script src="/scripts/auth.js" defer />
+      {/* Always-load scripts */}
+      {alwaysLoadScripts.map((s) => (
+        <script key={s} src={`/scripts/${s}`} defer />
+      ))}
+      {/* Page-specific scripts */}
+      {scripts.map((s) => (
+        <script key={s} src={`/scripts/${s}`} defer />
+      ))}
     </body>
   </html>
 );

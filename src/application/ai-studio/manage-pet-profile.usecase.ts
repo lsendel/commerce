@@ -59,6 +59,51 @@ export class ManagePetProfileUseCase {
     return this.formatPet(updated);
   }
 
+  async uploadPhoto(
+    petId: string,
+    userId: string,
+    file: { data: ArrayBuffer; contentType: string; size: number },
+  ) {
+    const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+    if (!ALLOWED_TYPES.includes(file.contentType)) {
+      throw new Error("Invalid file type. Allowed: JPEG, PNG, WebP");
+    }
+    if (file.size > MAX_SIZE) {
+      throw new Error("File too large. Maximum size is 5MB");
+    }
+
+    const existing = await this.repo.findPetById(petId);
+    if (!existing || existing.userId !== userId) {
+      throw new NotFoundError("Pet profile", petId);
+    }
+
+    // Remove old photo if it exists
+    if (existing.photoUrl) {
+      const oldKey = this.extractKeyFromUrl(existing.photoUrl);
+      if (oldKey) {
+        await this.storage.delete(oldKey);
+      }
+    }
+
+    const ext = this.getExtension(file.contentType);
+    const key = `pets/${petId}/${Date.now()}.${ext}`;
+    await this.storage.upload(key, file.data, file.contentType);
+    const photoUrl = this.storage.getUrl(key);
+
+    const updated = await this.repo.updatePetProfile(petId, {
+      photoUrl,
+      photoStorageKey: key,
+    });
+
+    if (!updated) {
+      throw new NotFoundError("Pet profile", petId);
+    }
+
+    return this.formatPet(updated);
+  }
+
   async delete(userId: string, petId: string) {
     const existing = await this.repo.findPetById(petId);
     if (!existing || existing.userId !== userId) {

@@ -51,8 +51,24 @@ export const StudioCreatePage: FC<StudioCreatePageProps> = ({
         {/* ── Step 1: Select or create pet profile ────────────────────────── */}
         <section data-step-section="pet" class={hasActiveJob || isComplete ? "hidden" : ""}>
           <div class="flex items-center gap-3 mb-4">
-            <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white text-sm font-bold">1</span>
+            <span data-step-indicator="1" class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white text-sm font-bold">1</span>
             <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Choose Your Pet</h2>
+          </div>
+
+          {/* No-photo warning (hidden by default, shown via JS when pet has no photo) */}
+          <div data-no-photo-warning class="hidden mb-4 rounded-xl bg-amber-50 border border-amber-200 p-4">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div>
+                <p class="text-sm font-medium text-amber-800">This pet has no photo</p>
+                <p class="text-xs text-amber-600 mt-0.5">
+                  Upload a photo first to generate artwork.
+                  <a href="/account/pets" class="underline hover:text-amber-800">Go to Pet Profiles</a>
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Existing pet selector */}
@@ -115,7 +131,7 @@ export const StudioCreatePage: FC<StudioCreatePageProps> = ({
         {/* ── Step 2: Upload pet photo ─────────────────────────────────── */}
         <section data-step-section="upload" class={hasActiveJob || isComplete ? "hidden" : "mt-8"}>
           <div class="flex items-center gap-3 mb-4">
-            <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white text-sm font-bold">2</span>
+            <span data-step-indicator="2" class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white text-sm font-bold">2</span>
             <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Upload Photo</h2>
           </div>
           <UploadZone />
@@ -124,7 +140,7 @@ export const StudioCreatePage: FC<StudioCreatePageProps> = ({
         {/* ── Step 3: Pick art template ────────────────────────────────── */}
         <section data-step-section="template" class={hasActiveJob || isComplete ? "hidden" : "mt-10"}>
           <div class="flex items-center gap-3 mb-4">
-            <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white text-sm font-bold">3</span>
+            <span data-step-indicator="3" class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white text-sm font-bold">3</span>
             <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pick a Style</h2>
           </div>
           <TemplatePicker templates={templates} showCustomPrompt={true} />

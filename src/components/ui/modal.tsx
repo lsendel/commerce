@@ -1,12 +1,6 @@
 import type { FC } from "hono/jsx";
 import { html } from "hono/html";
-
-interface ModalProps {
-  id: string;
-  title?: string;
-  size?: "sm" | "md" | "lg";
-  children: any;
-}
+import type { ModalProps } from "./types";
 
 const sizeClasses: Record<string, string> = {
   sm: "max-w-sm",
@@ -19,6 +13,7 @@ export const Modal: FC<ModalProps> = ({
   title,
   size = "md",
   children,
+  footer,
 }) => {
   const titleId = `${id}-title`;
 
@@ -40,42 +35,49 @@ export const Modal: FC<ModalProps> = ({
 
       {/* Card */}
       <div
-        class={`relative w-full ${sizeClasses[size]} mx-4 rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-xl dark:shadow-gray-900/50`}
+        class={`relative w-full ${sizeClasses[size]} mx-4 rounded-2xl bg-white dark:bg-gray-800 shadow-xl dark:shadow-gray-900/50 flex flex-col`}
       >
-        {/* Close button */}
-        <button
-          type="button"
-          class="absolute right-4 top-4 rounded-lg p-1 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          data-modal-close={id}
-          aria-label="Close dialog"
-        >
-          <svg
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
+        {/* Header */}
+        <div class="flex items-center justify-between p-6 pb-0">
+          {title && (
+            <h3 id={titleId} class="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+          )}
+          <button
+            type="button"
+            class="rounded-lg p-1 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ml-auto"
+            data-modal-close={id}
+            aria-label="Close dialog"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
+            <svg
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-        {title && (
-          <h3 id={titleId} class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+        {/* Body */}
+        <div class="p-6">
+          {children}
+        </div>
+
+        {/* Footer */}
+        {footer && (
+          <div class="border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-end gap-3">
+            {footer}
+          </div>
         )}
-
-        {children}
       </div>
 
       {html`
         <script>
           (function () {
-            const modal = document.getElementById("${id}");
+            var modal = document.getElementById("${id}");
             if (!modal) return;
 
             var triggerElement = null;
@@ -106,7 +108,6 @@ export const Modal: FC<ModalProps> = ({
               modal.classList.add("flex");
               modal.focus();
               document.addEventListener("keydown", trapFocus);
-              // Announce for screen readers
               var announcer = document.getElementById("announcer");
               if (announcer) announcer.textContent = "Dialog opened";
             }
@@ -123,26 +124,26 @@ export const Modal: FC<ModalProps> = ({
               if (announcer) announcer.textContent = "Dialog closed";
             }
 
-            // Open
             document.querySelectorAll('[data-modal-open="${id}"]').forEach(function (btn) {
               btn.addEventListener("click", function () {
                 openModal(this);
               });
             });
 
-            // Close
             modal.querySelectorAll('[data-modal-close="${id}"]').forEach(function (btn) {
               btn.addEventListener("click", function () {
                 closeModal();
               });
             });
 
-            // Escape key
             document.addEventListener("keydown", function (e) {
               if (e.key === "Escape" && !modal.classList.contains("hidden")) {
                 closeModal();
               }
             });
+
+            // Expose for programmatic use
+            window["modal_" + "${id}"] = { open: openModal, close: closeModal };
           })();
         </script>
       `}

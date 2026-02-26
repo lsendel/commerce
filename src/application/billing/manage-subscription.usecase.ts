@@ -81,6 +81,50 @@ export class ManageSubscriptionUseCase {
   }
 
   /**
+   * Change a subscription to a different plan with proration.
+   */
+  async changePlan(userId: string, subscriptionId: string, newPlanId: string) {
+    const subscription = await this.subscriptionRepo.findById(subscriptionId, userId);
+    if (!subscription) {
+      throw new NotFoundError("Subscription", subscriptionId);
+    }
+
+    if (!subscription.stripeSubscriptionId) {
+      throw new ValidationError("This subscription has no associated Stripe subscription");
+    }
+
+    if (subscription.status === "cancelled") {
+      throw new ValidationError("Cannot change plan on a cancelled subscription");
+    }
+
+    const newPlan = await this.subscriptionRepo.findPlanById(newPlanId);
+    if (!newPlan) {
+      throw new NotFoundError("Subscription plan", newPlanId);
+    }
+
+    if (!newPlan.stripePriceId) {
+      throw new ValidationError("New plan is not configured for Stripe billing");
+    }
+
+    // Retrieve the Stripe subscription to get the current item ID
+    const stripeSub = await this.stripe.subscriptions.retrieve(subscription.stripeSubscriptionId);
+    const currentItem = stripeSub.items.data[0];
+    if (!currentItem) {
+      throw new ValidationError("No subscription item found on Stripe");
+    }
+
+    // Update the subscription with the new price (prorated by default)
+    await this.stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+      items: [{ id: currentItem.id, price: newPlan.stripePriceId }],
+      proration_behavior: "create_prorations",
+    });
+
+    // Update local plan reference
+    const updated = await this.subscriptionRepo.updatePlan(subscriptionId, newPlanId);
+    return updated;
+  }
+
+  /**
    * Cancel a subscription at the end of its current billing period.
    * Updates both Stripe and the local record.
    */

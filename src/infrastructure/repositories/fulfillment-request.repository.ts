@@ -7,9 +7,11 @@ import {
 } from "../db/schema";
 import type { FulfillmentRequestStatus } from "../../domain/fulfillment/fulfillment-request.entity";
 
+type FulfillmentProvider = "printful" | "gooten" | "prodigi" | "shapeways";
+
 interface CreateRequestData {
   orderId: string;
-  provider: string;
+  provider: FulfillmentProvider;
   providerId?: string;
   itemsSnapshot?: unknown;
   costEstimatedTotal?: string;
@@ -39,7 +41,7 @@ export class FulfillmentRequestRepository {
       .values({
         storeId: this.storeId,
         orderId: data.orderId,
-        provider: data.provider,
+        provider: data.provider as any,
         providerId: data.providerId,
         itemsSnapshot: data.itemsSnapshot,
         costEstimatedTotal: data.costEstimatedTotal,
@@ -88,13 +90,13 @@ export class FulfillmentRequestRepository {
       );
   }
 
-  async findByExternalId(provider: string, externalId: string) {
+  async findByExternalId(provider: FulfillmentProvider, externalId: string) {
     const rows = await this.db
       .select()
       .from(fulfillmentRequests)
       .where(
         and(
-          eq(fulfillmentRequests.provider, provider),
+          eq(fulfillmentRequests.provider, provider as any),
           eq(fulfillmentRequests.externalId, externalId),
           eq(fulfillmentRequests.storeId, this.storeId),
         ),
@@ -144,17 +146,31 @@ export class FulfillmentRequestRepository {
     return rows[0] ?? null;
   }
 
-  async findPendingByProvider(provider: string) {
+  async findPendingByProvider(provider: FulfillmentProvider) {
     return this.db
       .select()
       .from(fulfillmentRequests)
       .where(
         and(
-          eq(fulfillmentRequests.provider, provider),
+          eq(fulfillmentRequests.provider, provider as any),
           eq(fulfillmentRequests.storeId, this.storeId),
           inArray(fulfillmentRequests.status, ["submitted", "processing"]),
         ),
       );
+  }
+
+  async findFailed(provider?: string) {
+    const conditions = [
+      eq(fulfillmentRequests.storeId, this.storeId),
+      eq(fulfillmentRequests.status, "failed"),
+    ];
+    if (provider) {
+      conditions.push(eq(fulfillmentRequests.provider, provider as any));
+    }
+    return this.db
+      .select()
+      .from(fulfillmentRequests)
+      .where(and(...conditions));
   }
 
   async insertProviderEvent(data: CreateEventData) {

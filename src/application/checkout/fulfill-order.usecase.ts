@@ -24,6 +24,8 @@ import { CommitInventoryUseCase } from "../catalog/commit-inventory.usecase";
 import { RedeemPromotionUseCase } from "../promotions/redeem-promotion.usecase";
 import { GenerateDownloadTokenUseCase } from "../catalog/generate-download-token.usecase";
 import { TrackEventUseCase } from "../analytics/track-event.usecase";
+import { AffiliateRepository } from "../../infrastructure/repositories/affiliate.repository";
+import { AttributeConversionUseCase } from "../affiliates/attribute-conversion.usecase";
 
 interface FulfillOrderInput {
   session: Stripe.Checkout.Session;
@@ -93,10 +95,16 @@ export class FulfillOrderUseCase {
       };
     });
 
-    const subtotal = cartWithItems.subtotal;
-    const total = session.amount_total
-      ? (session.amount_total / 100)
-      : subtotal;
+    const metadata = session.metadata ?? {};
+    const subtotal = metadata.subtotal ? Number(metadata.subtotal) : cartWithItems.subtotal;
+    const tax = metadata.tax ? Number(metadata.tax) : 0;
+    const shippingCost = metadata.shipping ? Number(metadata.shipping) : 0;
+    const discount = metadata.discount ? Number(metadata.discount) : 0;
+    const total = metadata.total
+      ? Number(metadata.total)
+      : session.amount_total
+        ? (session.amount_total / 100)
+        : subtotal;
 
     const order = await this.orderRepo.create(
       {
@@ -108,10 +116,12 @@ export class FulfillOrderUseCase {
             : session.payment_intent?.id ?? null,
         status: "processing",
         subtotal: subtotal.toFixed(2),
-        tax: "0",
-        shippingCost: "0",
+        tax: tax.toFixed(2),
+        shippingCost: shippingCost.toFixed(2),
+        discount: discount.toFixed(2),
         total: total.toFixed(2),
         shippingAddress: null,
+        couponCode: metadata.couponCode ?? null,
       },
       orderItems,
     );
@@ -149,8 +159,8 @@ export class FulfillOrderUseCase {
     }
 
     // 7. Redeem promotions (if coupon was applied via session metadata)
-    const discountStr = session.metadata?.discount;
-    const couponCode = session.metadata?.couponCode;
+    const discountStr = metadata.discount;
+    const couponCode = metadata.couponCode;
     if (discountStr && Number(discountStr) > 0) {
       try {
         const promoRepo = new PromotionRepository(this.db, this.storeId);
@@ -173,7 +183,23 @@ export class FulfillOrderUseCase {
       }
     }
 
-    // 8. Generate download tokens for digital products
+    // 8. Attribute affiliate conversion (if referral code in metadata)
+    const referralCode = metadata.referralCode;
+    if (referralCode) {
+      try {
+        const affiliateRepo = new AffiliateRepository(this.db, this.storeId);
+        const attributeUseCase = new AttributeConversionUseCase(affiliateRepo);
+        await attributeUseCase.execute({
+          referralCode,
+          orderId: order.id,
+          orderTotal: total.toFixed(2),
+        });
+      } catch {
+        // Affiliate attribution failure should not block fulfillment
+      }
+    }
+
+    // 9. Generate download tokens for digital products
     const digitalItems = cartWithItems.items.filter((item) => {
       const variant = variantMap.get(item.variantId);
       const product = variant ? productMap.get(variant.productId) : null;
@@ -211,10 +237,11 @@ export class FulfillOrderUseCase {
       const routingMap = await router.selectProvidersForVariants(physicalVariantIds);
 
       // Group items by provider
-      const byProvider = new Map<string, Array<{ orderItemId: string; variantId: string; quantity: number }>>();
+      type FulfillmentProviderKey = "printful" | "gooten" | "prodigi" | "shapeways" | "manual";
+      const byProvider = new Map<FulfillmentProviderKey, Array<{ orderItemId: string; variantId: string; quantity: number }>>();
       for (const item of physicalItems) {
         const routing = routingMap.get(item.variantId);
-        const providerKey = routing?.providerType ?? "manual";
+        const providerKey = (routing?.providerType ?? "manual") as FulfillmentProviderKey;
         const group = byProvider.get(providerKey) ?? [];
         const orderItem = order.items.find(
           (oi) => oi.variantId === item.variantId && !oi.bookingAvailabilityId,
@@ -238,7 +265,7 @@ export class FulfillOrderUseCase {
 
         const request = await requestRepo.create({
           orderId: order.id,
-          provider: providerType,
+          provider: providerType as "printful" | "gooten" | "prodigi" | "shapeways",
           providerId: firstRouting?.providerId,
           itemsSnapshot: items,
           items: items.map((i) => ({

@@ -6,11 +6,13 @@ import {
   boolean,
   integer,
   decimal,
+  date,
   jsonb,
   pgEnum,
   uniqueIndex,
   index,
   primaryKey,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -23,6 +25,12 @@ export const productTypeEnum = pgEnum("product_type", [
   "bookable",
 ]);
 
+export const productStatusEnum = pgEnum("product_status", ["draft", "active", "archived"]);
+
+export const inventoryTransactionTypeEnum = pgEnum("inventory_transaction_type", [
+  "adjustment", "sale", "return", "restock", "reservation", "release",
+]);
+
 export const orderStatusEnum = pgEnum("order_status", [
   "pending",
   "processing",
@@ -30,6 +38,19 @@ export const orderStatusEnum = pgEnum("order_status", [
   "delivered",
   "cancelled",
   "refunded",
+]);
+
+export const refundStatusEnum = pgEnum("refund_status", [
+  "pending",
+  "processing",
+  "succeeded",
+  "failed",
+]);
+
+export const orderNoteTypeEnum = pgEnum("order_note_type", [
+  "customer",
+  "internal",
+  "system",
 ]);
 
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
@@ -61,6 +82,13 @@ export const bookingStatusEnum = pgEnum("booking_status", [
 ]);
 
 export const personTypeEnum = pgEnum("person_type", ["adult", "child", "pet"]);
+
+export const waitlistStatusEnum = pgEnum("waitlist_status", [
+  "waiting",
+  "notified",
+  "expired",
+  "converted",
+]);
 
 export const generationStatusEnum = pgEnum("generation_status", [
   "queued",
@@ -103,6 +131,12 @@ export const platformRoleEnum = pgEnum("platform_role", [
   "super_admin",
   "group_admin",
   "user",
+]);
+
+export const invitationStatusEnum = pgEnum("invitation_status", [
+  "pending",
+  "accepted",
+  "expired",
 ]);
 
 export const domainVerificationStatusEnum = pgEnum(
@@ -281,6 +315,8 @@ export const stores = pgTable(
     subdomain: text("subdomain").unique(),
     customDomain: text("custom_domain"),
     logo: text("logo"),
+    logoUrl: text("logo_url"),
+    faviconUrl: text("favicon_url"),
     primaryColor: text("primary_color"),
     secondaryColor: text("secondary_color"),
     status: storeStatusEnum("status").default("trial"),
@@ -397,6 +433,12 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   platformRole: platformRoleEnum("platform_role").default("user"),
   stripeCustomerId: text("stripe_customer_id"),
+  emailVerifiedAt: timestamp("email_verified_at"),
+  avatarUrl: text("avatar_url"),
+  locale: text("locale").default("en"),
+  timezone: text("timezone").default("UTC"),
+  marketingOptIn: boolean("marketing_opt_in").default(false),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -412,6 +454,26 @@ export const usersRelations = relations(users, ({ many }) => ({
   bookings: many(bookings),
   reviews: many(productReviews),
 }));
+
+// ─── Auth Tokens ────────────────────────────────────────────────────────────
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const addresses = pgTable("addresses", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -447,6 +509,7 @@ export const products = pgTable("products", {
   description: text("description"),
   descriptionHtml: text("description_html"),
   type: productTypeEnum("type").notNull(),
+  status: productStatusEnum("status").notNull().default("active"),
   availableForSale: boolean("available_for_sale").default(true),
   downloadUrl: text("download_url"),
   stripePriceId: text("stripe_price_id"),
@@ -457,7 +520,9 @@ export const products = pgTable("products", {
   artJobId: uuid("art_job_id").references(() => generationJobs.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  storeStatusIdx: index("products_store_status_idx").on(table.storeId, table.status),
+}));
 
 export const productsRelations = relations(products, ({ many, one }) => ({
   variants: many(productVariants),
@@ -493,10 +558,12 @@ export const productVariants = pgTable("product_variants", {
   weightUnit: text("weight_unit").default("oz"),
   reservedQuantity: integer("reserved_quantity").default(0),
   digitalAssetKey: text("digital_asset_key"),
-  fulfillmentProvider: text("fulfillment_provider"),
+  fulfillmentProvider: fulfillmentProviderTypeEnum("fulfillment_provider"),
   estimatedProductionDays: integer("estimated_production_days"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  productIdx: index("product_variants_product_idx").on(table.productId),
+}));
 
 export const productVariantsRelations = relations(
   productVariants,
@@ -519,7 +586,9 @@ export const productImages = pgTable("product_images", {
   url: text("url").notNull(),
   altText: text("alt_text"),
   position: integer("position").default(0),
-});
+}, (table) => ({
+  productIdx: index("product_images_product_idx").on(table.productId),
+}));
 
 export const productImagesRelations = relations(productImages, ({ one }) => ({
   product: one(products, {
@@ -585,6 +654,7 @@ export const carts = pgTable("carts", {
     .references(() => stores.id),
   userId: uuid("user_id").references(() => users.id),
   sessionId: text("session_id").notNull(),
+  couponCodeId: uuid("coupon_code_id").references(() => couponCodes.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -597,21 +667,27 @@ export const cartsRelations = relations(carts, ({ one, many }) => ({
   items: many(cartItems),
 }));
 
-export const cartItems = pgTable("cart_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  cartId: uuid("cart_id")
-    .notNull()
-    .references(() => carts.id),
-  variantId: uuid("variant_id")
-    .notNull()
-    .references(() => productVariants.id),
-  quantity: integer("quantity").notNull().default(1),
-  bookingAvailabilityId: uuid("booking_availability_id").references(
-    () => bookingAvailability.id,
-  ),
-  personTypeQuantities: jsonb("person_type_quantities"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const cartItems = pgTable(
+  "cart_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    cartId: uuid("cart_id")
+      .notNull()
+      .references(() => carts.id),
+    variantId: uuid("variant_id")
+      .notNull()
+      .references(() => productVariants.id),
+    quantity: integer("quantity").notNull().default(1),
+    bookingAvailabilityId: uuid("booking_availability_id").references(
+      () => bookingAvailability.id,
+    ),
+    personTypeQuantities: jsonb("person_type_quantities"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    cartIdx: index("cart_items_cart_id_idx").on(table.cartId),
+  }),
+);
 
 export const cartItemsRelations = relations(cartItems, ({ one, many }) => ({
   cart: one(carts, {
@@ -631,33 +707,44 @@ export const cartItemsRelations = relations(cartItems, ({ one, many }) => ({
 
 // ─── Checkout Context ────────────────────────────────────────────────────────
 
-export const orders = pgTable("orders", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  storeId: uuid("store_id")
-    .notNull()
-    .references(() => stores.id),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id),
-  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
-  stripePaymentIntentId: text("stripe_payment_intent_id"),
-  status: orderStatusEnum("status").default("pending"),
-  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
-  tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
-  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default(
-    "0",
-  ),
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  shippingAddress: jsonb("shipping_address"),
-  discount: decimal("discount", { precision: 10, scale: 2 }).default("0"),
-  couponCode: text("coupon_code"),
-  currency: text("currency").default("USD"),
-  exchangeRate: decimal("exchange_rate", { precision: 12, scale: 6 }),
-  cancelReason: text("cancel_reason"),
-  cancelledAt: timestamp("cancelled_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export const orders = pgTable(
+  "orders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    status: orderStatusEnum("status").default("pending"),
+    subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+    tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
+    shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default(
+      "0",
+    ),
+    total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+    shippingAddress: jsonb("shipping_address"),
+    discount: decimal("discount", { precision: 10, scale: 2 }).default("0"),
+    couponCode: text("coupon_code"),
+    currency: text("currency").default("USD"),
+    exchangeRate: decimal("exchange_rate", { precision: 12, scale: 6 }),
+    notes: text("notes"),
+    internalNotes: text("internal_notes"),
+    cancelReason: text("cancel_reason"),
+    cancelledAt: timestamp("cancelled_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    userIdx: index("orders_user_idx").on(table.userId),
+    storeStatusIdx: index("orders_store_status_idx").on(table.storeId, table.status),
+    stripeSessionIdx: index("orders_stripe_session_idx").on(table.stripeCheckoutSessionId),
+    stripePaymentIdx: index("orders_stripe_payment_idx").on(table.stripePaymentIntentId),
+  }),
+);
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
   user: one(users, {
@@ -668,24 +755,33 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
   shipments: many(shipments),
   bookingRequests: many(bookingRequests),
   fulfillmentRequests: many(fulfillmentRequests),
+  refunds: many(refunds),
+  notes: many(orderNotes),
 }));
 
-export const orderItems = pgTable("order_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  orderId: uuid("order_id")
-    .notNull()
-    .references(() => orders.id),
-  variantId: uuid("variant_id").references(() => productVariants.id),
-  productName: text("product_name").notNull(),
-  variantTitle: text("variant_title"),
-  quantity: integer("quantity").notNull(),
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
-  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
-  bookingAvailabilityId: uuid("booking_availability_id").references(
-    () => bookingAvailability.id,
-  ),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const orderItems = pgTable(
+  "order_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id),
+    variantId: uuid("variant_id").references(() => productVariants.id),
+    productName: text("product_name").notNull(),
+    variantTitle: text("variant_title"),
+    quantity: integer("quantity").notNull(),
+    unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+    totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+    currency: text("currency").default("USD"),
+    bookingAvailabilityId: uuid("booking_availability_id").references(
+      () => bookingAvailability.id,
+    ),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    orderIdx: index("order_items_order_idx").on(table.orderId),
+  }),
+);
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   order: one(orders, {
@@ -701,6 +797,73 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
     references: [bookingAvailability.id],
   }),
   booking: one(bookings),
+}));
+
+// ─── Refunds ─────────────────────────────────────────────────────────────────
+
+export const refunds = pgTable(
+  "refunds",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id),
+    fulfillmentRequestId: uuid("fulfillment_request_id").references(
+      () => fulfillmentRequests.id,
+    ),
+    stripeRefundId: text("stripe_refund_id"),
+    amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+    currency: text("currency").notNull().default("USD"),
+    reason: text("reason"),
+    status: refundStatusEnum("status").notNull().default("pending"),
+    lineItems: jsonb("line_items"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    processedAt: timestamp("processed_at"),
+  },
+  (table) => ({
+    orderIdx: index("refunds_order_idx").on(table.orderId),
+    storeIdx: index("refunds_store_idx").on(table.storeId),
+  }),
+);
+
+export const refundsRelations = relations(refunds, ({ one }) => ({
+  order: one(orders, {
+    fields: [refunds.orderId],
+    references: [orders.id],
+  }),
+  fulfillmentRequest: one(fulfillmentRequests, {
+    fields: [refunds.fulfillmentRequestId],
+    references: [fulfillmentRequests.id],
+  }),
+}));
+
+// ─── Order Notes ─────────────────────────────────────────────────────────────
+
+export const orderNotes = pgTable(
+  "order_notes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    userId: uuid("user_id"),
+    type: orderNoteTypeEnum("type").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    orderIdx: index("order_notes_order_idx").on(table.orderId),
+  }),
+);
+
+export const orderNotesRelations = relations(orderNotes, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderNotes.orderId],
+    references: [orders.id],
+  }),
 }));
 
 // ─── Billing Context ─────────────────────────────────────────────────────────
@@ -748,7 +911,9 @@ export const subscriptions = pgTable("subscriptions", {
   cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  userIdx: index("subscriptions_user_idx").on(table.userId),
+}));
 
 export const subscriptionsRelations = relations(
   subscriptions,
@@ -843,6 +1008,10 @@ export const bookingAvailability = pgTable(
       table.productId,
       table.slotDate,
     ),
+    storeDatetimeIdx: index("booking_availability_store_datetime_idx").on(
+      table.storeId,
+      table.slotDatetime,
+    ),
   }),
 );
 
@@ -897,7 +1066,10 @@ export const bookingRequests = pgTable("booking_requests", {
   orderId: uuid("order_id").references(() => orders.id),
   cartItemId: uuid("cart_item_id").references(() => cartItems.id),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  userStatusIdx: index("booking_requests_user_status_idx").on(table.userId, table.status),
+  availabilityStatusIdx: index("booking_requests_availability_status_idx").on(table.availabilityId, table.status),
+}));
 
 export const bookingRequestsRelations = relations(
   bookingRequests,
@@ -927,6 +1099,7 @@ export const bookings = pgTable("bookings", {
     .notNull()
     .references(() => stores.id),
   orderItemId: uuid("order_item_id").references(() => orderItems.id),
+  bookingRequestId: uuid("booking_request_id").references(() => bookingRequests.id),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id),
@@ -972,6 +1145,40 @@ export const bookingItemsRelations = relations(bookingItems, ({ one }) => ({
   }),
 }));
 
+export const bookingWaitlist = pgTable("booking_waitlist", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  availabilityId: uuid("availability_id")
+    .notNull()
+    .references(() => bookingAvailability.id),
+  position: integer("position").notNull(),
+  status: waitlistStatusEnum("status").notNull().default("waiting"),
+  notifiedAt: timestamp("notified_at"),
+  expiredAt: timestamp("expired_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  availabilityStatusIdx: index("booking_waitlist_availability_status_idx").on(
+    table.availabilityId,
+    table.status,
+  ),
+}));
+
+export const bookingWaitlistRelations = relations(bookingWaitlist, ({ one }) => ({
+  user: one(users, {
+    fields: [bookingWaitlist.userId],
+    references: [users.id],
+  }),
+  availability: one(bookingAvailability, {
+    fields: [bookingWaitlist.availabilityId],
+    references: [bookingAvailability.id],
+  }),
+}));
+
 // ─── AI Studio Context ───────────────────────────────────────────────────────
 
 export const petProfiles = pgTable("pet_profiles", {
@@ -986,6 +1193,7 @@ export const petProfiles = pgTable("pet_profiles", {
   species: text("species").notNull(),
   breed: text("breed"),
   photoUrl: text("photo_url"),
+  photoStorageKey: text("photo_storage_key"),
   dateOfBirth: timestamp("date_of_birth"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -1042,7 +1250,10 @@ export const generationJobs = pgTable("generation_jobs", {
   errorMessage: text("error_message"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  userStatusIdx: index("generation_jobs_user_status_idx").on(table.userId, table.status),
+  storeStatusIdx: index("generation_jobs_store_status_idx").on(table.storeId, table.status),
+}));
 
 export const generationJobsRelations = relations(
   generationJobs,
@@ -1126,7 +1337,9 @@ export const shipments = pgTable("shipments", {
   deliveredAt: timestamp("delivered_at"),
   raw: jsonb("raw"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  orderIdx: index("shipments_order_idx").on(table.orderId),
+}));
 
 export const shipmentsRelations = relations(shipments, ({ one }) => ({
   order: one(orders, {
@@ -1146,12 +1359,18 @@ export const productReviews = pgTable("product_reviews", {
   title: text("title"),
   content: text("content"),
   isVerifiedPurchase: boolean("is_verified_purchase").default(false),
+  verifiedPurchaseOrderId: uuid("verified_purchase_order_id").references(() => orders.id),
   status: reviewStatusEnum("status").default("approved"),
   moderatedAt: timestamp("moderated_at"),
+  responseText: text("response_text"),
+  responseAt: timestamp("response_at"),
   helpfulCount: integer("helpful_count").default(0),
   reportedCount: integer("reported_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  productUserIdx: uniqueIndex("reviews_product_user_idx").on(table.productId, table.userId),
+  storeStatusIdx: index("reviews_store_status_idx").on(table.storeId, table.status),
+}));
 
 export const productReviewsRelations = relations(productReviews, ({ one }) => ({
   product: one(products, {
@@ -1214,7 +1433,9 @@ export const platformTransactions = pgTable("platform_transactions", {
   }).notNull(),
   stripeTransferId: text("stripe_transfer_id"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  storeCreatedIdx: index("platform_transactions_store_created_idx").on(table.storeId, table.createdAt),
+}));
 
 export const platformTransactionsRelations = relations(
   platformTransactions,
@@ -1341,7 +1562,7 @@ export const fulfillmentRequests = pgTable(
     orderId: uuid("order_id")
       .notNull()
       .references(() => orders.id),
-    provider: text("provider").notNull(),
+    provider: fulfillmentProviderTypeEnum("provider").notNull(),
     providerId: uuid("provider_id").references(() => fulfillmentProviders.id),
     externalId: text("external_id"),
     status: fulfillmentRequestStatusEnum("status").default("pending"),
@@ -1401,7 +1622,10 @@ export const fulfillmentRequestItems = pgTable("fulfillment_request_items", {
   status: text("status"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  requestIdx: index("fulfillment_request_items_request_idx").on(table.fulfillmentRequestId),
+  orderItemIdx: index("fulfillment_request_items_order_item_idx").on(table.orderItemId),
+}));
 
 export const fulfillmentRequestItemsRelations = relations(
   fulfillmentRequestItems,
@@ -1448,6 +1672,29 @@ export const providerEventsRelations = relations(
     }),
   }),
 );
+
+// ─── Provider Health Snapshots ───────────────────────────────────────────────
+
+export const providerHealthSnapshots = pgTable("provider_health_snapshots", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  provider: text("provider").notNull(),
+  period: date("period").notNull(),
+  totalRequests: integer("total_requests").notNull().default(0),
+  successCount: integer("success_count").notNull().default(0),
+  failureCount: integer("failure_count").notNull().default(0),
+  avgResponseMs: integer("avg_response_ms"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  storeProviderPeriodIdx: uniqueIndex("health_store_provider_period_idx").on(table.storeId, table.provider, table.period),
+}));
+
+export const providerHealthSnapshotsRelations = relations(providerHealthSnapshots, ({ one }) => ({
+  store: one(stores, {
+    fields: [providerHealthSnapshots.storeId],
+    references: [stores.id],
+  }),
+}));
 
 // ─── Download Tokens (Digital Products) ─────────────────────────────────────
 
@@ -1516,6 +1763,7 @@ export const affiliateTiers = pgTable("affiliate_tiers", {
     .default("0"),
   minSales: integer("min_sales").default(0),
   minRevenue: decimal("min_revenue", { precision: 10, scale: 2 }).default("0"),
+  minimumPayoutAmount: decimal("minimum_payout_amount", { precision: 10, scale: 2 }).default("25.00"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -1547,8 +1795,9 @@ export const affiliates = pgTable(
       precision: 5,
       scale: 2,
     }).notNull(),
-    parentAffiliateId: uuid("parent_affiliate_id"),
+    parentAffiliateId: uuid("parent_affiliate_id").references((): AnyPgColumn => affiliates.id),
     tierId: uuid("tier_id").references(() => affiliateTiers.id),
+    payoutEmail: text("payout_email"),
     totalEarnings: decimal("total_earnings", { precision: 10, scale: 2 })
       .notNull()
       .default("0"),
@@ -1664,9 +1913,12 @@ export const affiliateConversions = pgTable("affiliate_conversions", {
   attributionMethod: attributionMethodEnum("attribution_method").notNull(),
   clickId: uuid("click_id").references(() => affiliateClicks.id),
   couponCode: text("coupon_code"),
-  parentConversionId: uuid("parent_conversion_id"),
+  parentConversionId: uuid("parent_conversion_id").references((): AnyPgColumn => affiliateConversions.id),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  affiliateStatusIdx: index("conversions_affiliate_status_idx").on(table.affiliateId, table.status),
+  orderIdx: index("conversions_order_idx").on(table.orderId),
+}));
 
 export const affiliateConversionsRelations = relations(
   affiliateConversions,
@@ -1881,6 +2133,7 @@ export const couponCodes = pgTable(
       table.promotionId,
       table.code,
     ),
+    codeLookupIdx: index("coupon_codes_code_idx").on(table.code),
   }),
 );
 
@@ -1906,7 +2159,10 @@ export const promotionRedemptions = pgTable("promotion_redemptions", {
   discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull(),
   lineItemsAffected: jsonb("line_items_affected"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  promotionIdx: index("redemptions_promotion_idx").on(table.promotionId),
+  orderIdx: index("redemptions_order_idx").on(table.orderId),
+}));
 
 export const promotionRedemptionsRelations = relations(
   promotionRedemptions,
@@ -2203,6 +2459,10 @@ export const analyticsEvents = pgTable(
       table.eventType,
       table.createdAt,
     ),
+    storeCreatedIdx: index("analytics_events_store_created_idx").on(
+      table.storeId,
+      table.createdAt,
+    ),
   }),
 );
 
@@ -2228,6 +2488,22 @@ export const analyticsDailyRollups = pgTable(
     ),
   }),
 );
+
+export const funnelStepEnum = pgEnum("funnel_step", [
+  "page_view", "product_view", "add_to_cart", "checkout_started", "order_completed",
+]);
+
+export const analyticsFunnels = pgTable("analytics_funnels", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  sessionId: text("session_id").notNull(),
+  step: funnelStepEnum("step").notNull(),
+  productId: uuid("product_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  storeStepIdx: index("funnels_store_step_idx").on(table.storeId, table.step, table.createdAt),
+  sessionIdx: index("funnels_session_idx").on(table.sessionId),
+}));
 
 // ─── Currency Context ───────────────────────────────────────────────────────
 
@@ -2296,3 +2572,82 @@ export const digitalAssetsRelations = relations(digitalAssets, ({ one }) => ({
 
 // Note: downloadTokens table already exists in Fulfillment Requests Context above.
 // It will be extended with digitalAssetId FK in Slice 8 (Digital Downloads).
+
+// ─── Redirects ──────────────────────────────────────────────────────────────
+
+export const redirects = pgTable("redirects", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  fromPath: text("from_path").notNull(),
+  toPath: text("to_path").notNull(),
+  statusCode: integer("status_code").notNull().default(301),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  storeFromIdx: uniqueIndex("redirects_store_from_idx").on(table.storeId, table.fromPath),
+}));
+
+// ─── Audit Log ──────────────────────────────────────────────────────────────
+
+export const auditLog = pgTable("audit_log", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  userId: uuid("user_id"),
+  action: text("action").notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: uuid("entity_id"),
+  details: jsonb("details"),
+  ipAddress: text("ip_address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  storeEntityIdx: index("audit_log_store_entity_idx").on(table.storeId, table.entityType, table.createdAt),
+}));
+
+// ─── Inventory Transactions ─────────────────────────────────────────────────
+
+export const inventoryTransactions = pgTable("inventory_transactions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  variantId: uuid("variant_id").notNull().references(() => productVariants.id),
+  type: inventoryTransactionTypeEnum("type").notNull(),
+  quantity: integer("quantity").notNull(),
+  reference: text("reference"),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  variantIdx: index("inventory_transactions_variant_idx").on(table.variantId, table.createdAt),
+}));
+
+export const inventoryTransactionsRelations = relations(inventoryTransactions, ({ one }) => ({
+  variant: one(productVariants, {
+    fields: [inventoryTransactions.variantId],
+    references: [productVariants.id],
+  }),
+}));
+
+// ─── Store Invitations ──────────────────────────────────────────────────────
+
+export const storeInvitations = pgTable("store_invitations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  email: text("email").notNull(),
+  role: storeMemberRoleEnum("role").notNull(),
+  token: text("token").notNull().unique(),
+  invitedBy: uuid("invited_by").notNull().references(() => users.id),
+  status: invitationStatusEnum("status").notNull().default("pending"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  storeEmailIdx: index("store_invitations_store_email_idx").on(table.storeId, table.email),
+  tokenIdx: uniqueIndex("store_invitations_token_idx").on(table.token),
+}));
+
+export const storeInvitationsRelations = relations(storeInvitations, ({ one }) => ({
+  store: one(stores, {
+    fields: [storeInvitations.storeId],
+    references: [stores.id],
+  }),
+  inviter: one(users, {
+    fields: [storeInvitations.invitedBy],
+    references: [users.id],
+  }),
+}));

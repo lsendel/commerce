@@ -18,7 +18,18 @@ export class CheckInUseCase {
       );
     }
 
-    // 3. Update to checked_in
+    // 3. Validate booking is for today (within a reasonable window)
+    const slotDate = booking.availability?.slotDate;
+    if (slotDate) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (slotDate !== today) {
+        throw new ConflictError(
+          `Cannot check in: booking is for ${slotDate}, not today (${today}).`,
+        );
+      }
+    }
+
+    // 4. Update to checked_in
     const updated = await this.bookingRepo.updateBookingStatus(bookingId, "checked_in");
     if (!updated) {
       throw new NotFoundError("Booking", bookingId);

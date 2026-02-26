@@ -101,6 +101,7 @@ export const LoginPage: FC<LoginPageProps> = ({ error }) => {
                   body: JSON.stringify({
                     email: formData.get('email'),
                     password: formData.get('password'),
+                    rememberMe: !!formData.get('remember'),
                   }),
                 });
 

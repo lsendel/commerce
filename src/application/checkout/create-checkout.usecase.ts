@@ -21,6 +21,7 @@ import { ReserveInventoryUseCase } from "../catalog/reserve-inventory.usecase";
 import { CalculateShippingUseCase } from "../fulfillment/calculate-shipping.usecase";
 import { CalculateTaxUseCase } from "../tax/calculate-tax.usecase";
 import { TrackEventUseCase } from "../analytics/track-event.usecase";
+import { ValidateCartUseCase } from "../cart/validate-cart.usecase";
 
 interface CreateCheckoutInput {
   sessionId: string;
@@ -34,6 +35,16 @@ interface CreateCheckoutInput {
     postalCode?: string;
   };
   storeId: string;
+  couponCode?: string;
+}
+
+interface CheckoutBreakdown {
+  url: string;
+  subtotal: number;
+  discount: number;
+  shipping: number;
+  tax: number;
+  total: number;
 }
 
 export class CreateCheckoutUseCase {
@@ -45,8 +56,8 @@ export class CreateCheckoutUseCase {
     private stripe: Stripe,
   ) {}
 
-  async execute(input: CreateCheckoutInput): Promise<{ url: string }> {
-    const { sessionId, userId, userEmail, successUrl, cancelUrl, shippingAddress, storeId } = input;
+  async execute(input: CreateCheckoutInput): Promise<CheckoutBreakdown> {
+    const { sessionId, userId, userEmail, successUrl, cancelUrl, shippingAddress, storeId, couponCode } = input;
 
     // 1. Get the user's cart with items
     const cart = await this.cartRepo.findOrCreateCart(sessionId, userId);
@@ -54,6 +65,17 @@ export class CreateCheckoutUseCase {
 
     if (!cartWithItems || cartWithItems.items.length === 0) {
       throw new ValidationError("Cart is empty");
+    }
+
+    // 1b. Validate cart — reject if any blockers (out of stock, unavailable)
+    const validateUseCase = new ValidateCartUseCase(this.cartRepo, this.db);
+    const validation = await validateUseCase.execute(sessionId, userId);
+    const blockers = validation.problems.filter(
+      (p) => p.type === "out_of_stock" || p.type === "unavailable",
+    );
+    if (blockers.length > 0) {
+      const messages = blockers.map((b) => b.message);
+      throw new ValidationError(`Cart has issues: ${messages.join("; ")}`);
     }
 
     // 2. For bookable items, create/update booking requests with pending_payment status
@@ -188,6 +210,7 @@ export class CreateCheckoutUseCase {
     }));
 
     // 8. Create Stripe Checkout Session
+    const grandTotal = subtotalAfterDiscount + shippingCost + taxAmount;
     const { url } = await this.adapter.createCheckoutSession({
       stripe: this.stripe,
       lineItems,
@@ -197,9 +220,12 @@ export class CreateCheckoutUseCase {
       metadata: {
         cartId: cart.id,
         userId,
+        subtotal: cartWithItems.subtotal.toFixed(2),
         discount: totalDiscount.toFixed(2),
-        shippingCost: shippingCost.toFixed(2),
-        taxAmount: taxAmount.toFixed(2),
+        shipping: shippingCost.toFixed(2),
+        tax: taxAmount.toFixed(2),
+        total: grandTotal.toFixed(2),
+        ...(couponCode ? { couponCode } : {}),
       },
     });
 
@@ -215,9 +241,9 @@ export class CreateCheckoutUseCase {
           cartId: cart.id,
           subtotal: cartWithItems.subtotal,
           discount: totalDiscount,
-          shippingCost,
-          taxAmount,
-          total: subtotalAfterDiscount + shippingCost + taxAmount,
+          shipping: shippingCost,
+          tax: taxAmount,
+          total: grandTotal,
           itemCount: cartWithItems.items.length,
         },
       });
@@ -225,7 +251,14 @@ export class CreateCheckoutUseCase {
       // Analytics failure should not block checkout
     }
 
-    return { url };
+    return {
+      url,
+      subtotal: cartWithItems.subtotal,
+      discount: totalDiscount,
+      shipping: shippingCost,
+      tax: taxAmount,
+      total: grandTotal,
+    };
   }
 
   /**

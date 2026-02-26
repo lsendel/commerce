@@ -26,12 +26,12 @@ interface OrdersPageProps {
   orders: Order[];
 }
 
-const statusVariant: Record<string, "default" | "success" | "warning" | "danger" | "info"> = {
+const statusVariant: Record<string, "success" | "warning" | "error" | "info" | "neutral"> = {
   pending: "warning",
   processing: "info",
   shipped: "info",
   delivered: "success",
-  cancelled: "danger",
+  cancelled: "error",
 };
 
 const statusLabel: Record<string, string> = {
@@ -100,7 +100,7 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
                   <span class="text-xs text-gray-500">
                     {order.itemCount} {order.itemCount === 1 ? "item" : "items"}
                   </span>
-                  <Badge variant={statusVariant[order.status] || "default"}>
+                  <Badge variant={statusVariant[order.status] || "neutral"}>
                     {statusLabel[order.status] || order.status}
                   </Badge>
                   <span class="text-sm font-bold text-gray-900">${order.total}</span>

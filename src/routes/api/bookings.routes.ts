@@ -9,6 +9,8 @@ import { ListAvailabilityUseCase } from "../../application/booking/list-availabi
 import { CreateBookingRequestUseCase } from "../../application/booking/create-booking-request.usecase";
 import { CheckInUseCase } from "../../application/booking/check-in.usecase";
 import { CancelBookingUseCase } from "../../application/booking/cancel-booking.usecase";
+import { JoinWaitlistUseCase } from "../../application/booking/join-waitlist.usecase";
+import { MarkNoShowUseCase } from "../../application/booking/mark-no-show.usecase";
 import {
   createAvailabilitySchema,
   bulkCreateAvailabilitySchema,
@@ -163,6 +165,78 @@ bookings.post(
     const userId = c.get("userId");
 
     const result = await useCase.execute(bookingId, userId);
+
+    return c.json(result, 200);
+  },
+);
+
+// ─── POST /bookings/availability/:id/waitlist ──────────────────────────────
+// Join the waitlist for a full slot (requireAuth)
+bookings.post(
+  "/availability/:id/waitlist",
+  requireAuth(),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
+    const useCase = new JoinWaitlistUseCase(bookingRepo);
+
+    const availabilityId = c.req.param("id");
+    const userId = c.get("userId");
+
+    const result = await useCase.execute(availabilityId, userId);
+    return c.json(result, 201);
+  },
+);
+
+// ─── GET /bookings/waitlist ────────────────────────────────────────────────
+// List user's waitlist entries (requireAuth)
+bookings.get(
+  "/waitlist",
+  requireAuth(),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
+
+    const userId = c.get("userId");
+    const entries = await bookingRepo.findWaitlistByUserId(userId);
+
+    return c.json({ entries }, 200);
+  },
+);
+
+// ─── DELETE /bookings/waitlist/:id ─────────────────────────────────────────
+// Remove from waitlist (requireAuth)
+bookings.delete(
+  "/waitlist/:id",
+  requireAuth(),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
+
+    const entryId = c.req.param("id");
+    const userId = c.get("userId");
+
+    const removed = await bookingRepo.removeFromWaitlist(entryId, userId);
+    if (!removed) {
+      return c.json({ error: "Waitlist entry not found" }, 404);
+    }
+
+    return c.json({ success: true }, 200);
+  },
+);
+
+// ─── POST /bookings/:id/no-show ───────────────────────────────────────────
+// Admin marks booking as no-show (requireAuth)
+bookings.post(
+  "/:id/no-show",
+  requireAuth(),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
+    const useCase = new MarkNoShowUseCase(bookingRepo);
+
+    const bookingId = c.req.param("id");
+    const result = await useCase.execute(bookingId);
 
     return c.json(result, 200);
   },

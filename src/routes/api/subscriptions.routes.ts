@@ -1,11 +1,13 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 import type { Env } from "../../env";
 import { createDb } from "../../infrastructure/db/client";
 import { createStripeClient } from "../../infrastructure/stripe/stripe.client";
 import { SubscriptionRepository } from "../../infrastructure/repositories/subscription.repository";
 import { UserRepository } from "../../infrastructure/repositories/user.repository";
 import { ManageSubscriptionUseCase } from "../../application/billing/manage-subscription.usecase";
+import { ResumeSubscriptionUseCase } from "../../application/billing/resume-subscription.usecase";
 import { CreatePortalSessionUseCase } from "../../application/billing/create-portal-session.usecase";
 import { createSubscriptionSchema } from "../../shared/validators";
 import { requireAuth } from "../../middleware/auth.middleware";
@@ -148,5 +150,62 @@ subscriptionRoutes.delete("/subscriptions/:id", async (c) => {
     throw err;
   }
 });
+
+// PATCH /subscriptions/:id/change-plan — switch to a different plan
+const changePlanSchema = z.object({
+  newPlanId: z.string().uuid(),
+});
+
+subscriptionRoutes.patch(
+  "/subscriptions/:id/change-plan",
+  requireAuth(),
+  zValidator("json", changePlanSchema),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const stripe = createStripeClient(c.env.STRIPE_SECRET_KEY);
+    const subscriptionRepo = new SubscriptionRepository(db, c.get("storeId") as string);
+    const userRepo = new UserRepository(db);
+
+    const useCase = new ManageSubscriptionUseCase(subscriptionRepo, userRepo, stripe);
+
+    try {
+      const userId = c.get("userId");
+      const subscriptionId = c.req.param("id");
+      const { newPlanId } = c.req.valid("json");
+
+      const updated = await useCase.changePlan(userId, subscriptionId, newPlanId);
+      return c.json({ subscription: updated });
+    } catch (err) {
+      if (err instanceof NotFoundError) return c.json({ error: err.message }, 404);
+      if (err instanceof ValidationError) return c.json({ error: err.message }, 400);
+      throw err;
+    }
+  },
+);
+
+// POST /subscriptions/:id/resume — resume a subscription scheduled for cancellation
+subscriptionRoutes.post(
+  "/subscriptions/:id/resume",
+  requireAuth(),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const stripe = createStripeClient(c.env.STRIPE_SECRET_KEY);
+    const subscriptionRepo = new SubscriptionRepository(db, c.get("storeId") as string);
+
+    const useCase = new ResumeSubscriptionUseCase(subscriptionRepo, stripe);
+
+    try {
+      const userId = c.get("userId");
+      const subscriptionId = c.req.param("id");
+
+      const updated = await useCase.execute(userId, subscriptionId);
+      return c.json({ subscription: updated });
+    } catch (err) {
+      if (err instanceof NotFoundError) return c.json({ error: err.message }, 404);
+      if (err instanceof ValidationError) return c.json({ error: err.message }, 400);
+      throw err;
+    }
+  },
+);
 
 export { subscriptionRoutes };

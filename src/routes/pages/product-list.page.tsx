@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { ProductGrid } from "../../components/product/product-grid";
+import { EmptyState } from "../../components/ui/empty-state";
 import { Button } from "../../components/ui/button";
 
 interface ProductSummary {
@@ -63,6 +64,26 @@ export const ProductListPage: FC<ProductListPageProps> = ({
 }) => {
   const totalPages = Math.ceil(total / limit);
 
+  const hasFilters = !!(filters.type || filters.collection || filters.search || filters.minPrice !== undefined || filters.maxPrice !== undefined);
+
+  const activeFilters: Array<{ label: string; key: string }> = [];
+  if (filters.type) {
+    const label = productTypes.find((pt) => pt.value === filters.type)?.label ?? filters.type;
+    activeFilters.push({ label: `Type: ${label}`, key: "type" });
+  }
+  if (filters.collection) {
+    activeFilters.push({ label: `Collection: ${filters.collection}`, key: "collection" });
+  }
+  if (filters.search) {
+    activeFilters.push({ label: `Search: "${filters.search}"`, key: "search" });
+  }
+  if (filters.minPrice !== undefined) {
+    activeFilters.push({ label: `Min: $${filters.minPrice}`, key: "minPrice" });
+  }
+  if (filters.maxPrice !== undefined) {
+    activeFilters.push({ label: `Max: $${filters.maxPrice}`, key: "maxPrice" });
+  }
+
   const buildUrl = (overrides: Record<string, string | number | undefined>) => {
     const params = new URLSearchParams();
     const merged = { ...filters, page: String(page), limit: String(limit), ...overrides };
@@ -76,6 +97,14 @@ export const ProductListPage: FC<ProductListPageProps> = ({
 
   return (
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Pagination rel links for SEO */}
+      {page > 1 && (
+        <link rel="prev" href={buildUrl({ page: page - 1 })} />
+      )}
+      {page < totalPages && (
+        <link rel="next" href={buildUrl({ page: page + 1 })} />
+      )}
+
       {/* Page header */}
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Products</h1>
@@ -139,25 +168,31 @@ export const ProductListPage: FC<ProductListPageProps> = ({
             <div>
               <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Price Range</label>
               <div class="flex items-center gap-2">
-                <input
-                  type="number"
-                  name="minPrice"
-                  value={filters.minPrice !== undefined ? String(filters.minPrice) : ""}
-                  placeholder="Min"
-                  min="0"
-                  step="0.01"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
-                />
-                <span class="text-gray-400 text-sm">-</span>
-                <input
-                  type="number"
-                  name="maxPrice"
-                  value={filters.maxPrice !== undefined ? String(filters.maxPrice) : ""}
-                  placeholder="Max"
-                  min="0"
-                  step="0.01"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
-                />
+                <div class="relative w-full">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                  <input
+                    type="number"
+                    name="minPrice"
+                    value={filters.minPrice !== undefined ? String(filters.minPrice) : ""}
+                    placeholder="Min"
+                    min="0"
+                    step="0.01"
+                    class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                  />
+                </div>
+                <span class="text-gray-400 text-sm">–</span>
+                <div class="relative w-full">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                  <input
+                    type="number"
+                    name="maxPrice"
+                    value={filters.maxPrice !== undefined ? String(filters.maxPrice) : ""}
+                    placeholder="Max"
+                    min="0"
+                    step="0.01"
+                    class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                  />
+                </div>
               </div>
             </div>
 
@@ -283,7 +318,40 @@ export const ProductListPage: FC<ProductListPageProps> = ({
 
         {/* Main content */}
         <div class="flex-1 min-w-0">
-          <ProductGrid products={products} />
+          {/* Active filter chips */}
+          {activeFilters.length > 0 && (
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+              {activeFilters.map((f) => (
+                <a
+                  key={f.key}
+                  href={buildUrl({ [f.key]: undefined, page: 1 })}
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-50 text-brand-700 text-xs font-medium hover:bg-brand-100 transition-colors"
+                >
+                  {f.label}
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </a>
+              ))}
+              <a
+                href="/products"
+                class="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Clear all
+              </a>
+            </div>
+          )}
+
+          {products.length === 0 && hasFilters ? (
+            <EmptyState
+              title="No products found"
+              description="Try adjusting your filters or search criteria."
+              actionLabel="Clear Filters"
+              actionHref="/products"
+            />
+          ) : (
+            <ProductGrid products={products} />
+          )}
 
           {/* Pagination */}
           {totalPages > 1 && (

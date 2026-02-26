@@ -4,12 +4,25 @@ import { Button } from "../ui/button";
 interface CartSummaryProps {
   subtotal: number;
   itemCount: number;
+  discount?: number;
+  shippingEstimate?: number;
+  taxEstimate?: number;
+  total?: number;
 }
 
-export const CartSummary: FC<CartSummaryProps> = ({ subtotal, itemCount }) => {
+export const CartSummary: FC<CartSummaryProps> = ({
+  subtotal,
+  itemCount,
+  discount = 0,
+  shippingEstimate,
+  taxEstimate,
+  total,
+}) => {
+  const computedTotal = total ?? subtotal - discount;
+
   return (
     <div class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm p-6 sticky top-6">
-      <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100 mb-4">Order Summary</h2>
+      <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Order Summary</h2>
 
       <div class="space-y-3 text-sm">
         <div class="flex justify-between">
@@ -19,14 +32,38 @@ export const CartSummary: FC<CartSummaryProps> = ({ subtotal, itemCount }) => {
           <span class="font-medium text-gray-900 dark:text-gray-100" data-cart-subtotal>${subtotal.toFixed(2)}</span>
         </div>
 
+        {discount > 0 && (
+          <div class="flex justify-between text-emerald-600">
+            <span>Discount</span>
+            <span class="font-medium">-${discount.toFixed(2)}</span>
+          </div>
+        )}
+
         <div class="flex justify-between">
           <span class="text-gray-600 dark:text-gray-400">Shipping</span>
-          <span class="text-gray-500 italic text-xs">Calculated at checkout</span>
+          {shippingEstimate !== undefined ? (
+            <span class="font-medium text-gray-900 dark:text-gray-100">
+              {shippingEstimate === 0 ? (
+                <span class="text-emerald-600">Free</span>
+              ) : (
+                `$${shippingEstimate.toFixed(2)}`
+              )}
+            </span>
+          ) : (
+            <span class="text-gray-500 italic text-xs">Calculated at checkout</span>
+          )}
         </div>
+
+        {taxEstimate !== undefined && taxEstimate > 0 && (
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Tax (est.)</span>
+            <span class="font-medium text-gray-900 dark:text-gray-100">${taxEstimate.toFixed(2)}</span>
+          </div>
+        )}
 
         <div class="border-t border-gray-100 dark:border-gray-700 pt-3 flex justify-between">
           <span class="font-bold text-gray-900 dark:text-gray-100">Total</span>
-          <span class="font-bold text-lg text-gray-900" data-cart-total>${subtotal.toFixed(2)}</span>
+          <span class="font-bold text-lg text-gray-900 dark:text-gray-100" data-cart-total>${computedTotal.toFixed(2)}</span>
         </div>
       </div>
 

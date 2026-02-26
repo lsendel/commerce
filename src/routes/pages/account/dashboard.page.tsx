@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import { html } from "hono/html";
 import { Badge } from "../../../components/ui/badge";
 
 interface Order {
@@ -22,12 +23,12 @@ interface DashboardPageProps {
   subscription?: Subscription | null;
 }
 
-const orderStatusVariant: Record<string, "default" | "success" | "warning" | "danger" | "info"> = {
+const orderStatusVariant: Record<string, "success" | "warning" | "error" | "info" | "neutral"> = {
   pending: "warning",
   processing: "info",
   shipped: "info",
   delivered: "success",
-  cancelled: "danger",
+  cancelled: "error",
 };
 
 export const DashboardPage: FC<DashboardPageProps> = ({
@@ -38,11 +39,23 @@ export const DashboardPage: FC<DashboardPageProps> = ({
   return (
     <div class="max-w-5xl mx-auto px-4 py-8">
       {/* Welcome */}
-      <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Welcome back, {userName}
-        </h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Manage your account and view your activity.</p>
+      <div class="flex items-start justify-between mb-8">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Welcome back, {userName}
+          </h1>
+          <p class="mt-1 text-gray-500 dark:text-gray-400">Manage your account and view your activity.</p>
+        </div>
+        <button
+          type="button"
+          id="dashboard-signout"
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Sign Out
+        </button>
       </div>
 
       {/* Quick Links Grid */}
@@ -99,6 +112,33 @@ export const DashboardPage: FC<DashboardPageProps> = ({
           <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Pets</h3>
           <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Your pet profiles</p>
         </a>
+
+        <a
+          href="/account/artwork"
+          class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-700 transition-all duration-200"
+        >
+          <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center mb-3 group-hover:bg-brand-100 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Artwork</h3>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">AI-generated art</p>
+        </a>
+
+        <a
+          href="/account/settings"
+          class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-700 transition-all duration-200"
+        >
+          <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center mb-3 group-hover:bg-brand-100 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Settings</h3>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Profile & preferences</p>
+        </a>
       </div>
 
       <div class="grid md:grid-cols-3 gap-6">
@@ -138,7 +178,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
                     </p>
                   </div>
                   <div class="flex items-center gap-3">
-                    <Badge variant={orderStatusVariant[order.status] || "default"}>
+                    <Badge variant={orderStatusVariant[order.status] || "neutral"}>
                       {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                     </Badge>
                     <span class="text-sm font-semibold text-gray-900">${order.total}</span>
@@ -163,7 +203,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
                       ? "success"
                       : subscription.status === "past_due"
                       ? "warning"
-                      : "danger"
+                      : "error"
                   }
                   class="mt-2"
                 >
@@ -208,6 +248,35 @@ export const DashboardPage: FC<DashboardPageProps> = ({
           )}
         </div>
       </div>
+
+      {/* Static trusted script — no user input interpolated */}
+      {html`
+        <script>
+          (function() {
+            /* Sign out button */
+            var signOutBtn = document.getElementById('dashboard-signout');
+            if (signOutBtn) {
+              signOutBtn.addEventListener('click', async function() {
+                try {
+                  await fetch('/api/auth/logout', { method: 'POST' });
+                } finally {
+                  window.location.href = '/';
+                }
+              });
+            }
+
+            /* Auto-open details matching URL hash (e.g. #order-abc123) */
+            if (location.hash) {
+              var target = document.getElementById(location.hash.slice(1));
+              if (target) {
+                var details = target.closest('details');
+                if (details) details.open = true;
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }
+          })();
+        </script>
+      `}
     </div>
   );
 };

@@ -1,7 +1,16 @@
 import type { FC } from "hono/jsx";
 
+interface PayoutRow {
+  id: string;
+  amount: string;
+  status: string;
+  periodStart: string;
+  periodEnd: string;
+  createdAt: string;
+}
+
 interface PayoutsProps {
-  payouts: any[];
+  payouts: PayoutRow[];
   totalEarnings: string;
 }
 
@@ -33,7 +42,7 @@ export const AffiliatePayoutsPage: FC<PayoutsProps> = ({
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-            {payouts.map((p: any) => (
+            {payouts.map((p) => (
               <tr>
                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                   {new Date(p.periodStart).toLocaleDateString()} –{" "}

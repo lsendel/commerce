@@ -14,8 +14,10 @@ export const Pagination: FC<PaginationProps> = ({
   if (totalPages <= 1) return null;
 
   const buildUrl = (page: number): string => {
-    const separator = baseUrl.includes("?") ? "&" : "?";
-    return `${baseUrl}${separator}page=${page}`;
+    // Preserve all existing query params, just update page
+    const url = new URL(baseUrl, "http://localhost");
+    url.searchParams.set("page", String(page));
+    return `${url.pathname}${url.search}`;
   };
 
   // Build visible page range: show up to 5 pages centered on current

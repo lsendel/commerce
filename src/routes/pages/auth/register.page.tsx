@@ -85,6 +85,25 @@ export const RegisterPage: FC<RegisterPageProps> = ({ error }) => {
               autocomplete="new-password"
             />
 
+            <label class="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+              <input
+                type="checkbox"
+                name="tos"
+                required
+                class="mt-0.5 rounded border-gray-300 text-brand-500 focus:ring-brand-300"
+              />
+              <span>
+                I agree to the{" "}
+                <a href="/about" class="text-brand-600 hover:text-brand-700 underline" target="_blank">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="/about" class="text-brand-600 hover:text-brand-700 underline" target="_blank">
+                  Privacy Policy
+                </a>
+              </span>
+            </label>
+
             <Button type="submit" variant="primary" size="lg" class="w-full" id="register-btn">
               Create Account
             </Button>
@@ -150,6 +169,14 @@ export const RegisterPage: FC<RegisterPageProps> = ({ error }) => {
 
                 if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
                   errorEl.textContent = 'Password does not meet requirements';
+                  errorEl.classList.remove('hidden');
+                  btn.disabled = false;
+                  btn.textContent = 'Create Account';
+                  return;
+                }
+
+                if (!formData.get('tos')) {
+                  errorEl.textContent = 'You must agree to the Terms of Service';
                   errorEl.classList.remove('hidden');
                   btn.disabled = false;
                   btn.textContent = 'Create Account';

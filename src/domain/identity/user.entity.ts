@@ -4,8 +4,18 @@ export interface User {
   name: string;
   passwordHash: string;
   stripeCustomerId: string | null;
+  emailVerifiedAt: Date | null;
+  avatarUrl: string | null;
+  locale: string;
+  timezone: string;
+  marketingOptIn: boolean;
+  lastLoginAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export function isEmailVerified(user: User): boolean {
+  return user.emailVerifiedAt !== null;
 }
 
 export function createUser(

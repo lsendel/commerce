@@ -12,6 +12,7 @@ export interface ProductFilters {
   page?: number;
   limit?: number;
   type?: string;
+  status?: string;
   collection?: string;
   search?: string;
   minPrice?: number;
@@ -38,6 +39,10 @@ export class ProductRepository {
 
     if (filters.type) {
       conditions.push(eq(products.type, filters.type as any));
+    }
+
+    if (filters.status) {
+      conditions.push(eq(products.status, filters.status as any));
     }
 
     if (filters.available !== undefined) {
@@ -191,6 +196,7 @@ export class ProductRepository {
         compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
         sku: v.sku,
         availableForSale: v.availableForSale ?? true,
+        inventoryQuantity: v.inventoryQuantity ?? 0,
         options: (v.options as Record<string, string>) ?? {},
       }));
 
@@ -199,6 +205,8 @@ export class ProductRepository {
         min: prices.length > 0 ? Math.min(...prices) : 0,
         max: prices.length > 0 ? Math.max(...prices) : 0,
       };
+
+      const totalInventory = variants.reduce((sum, v) => sum + v.inventoryQuantity, 0);
 
       const images = (imagesByProduct.get(p.id) ?? [])
         .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
@@ -217,11 +225,14 @@ export class ProductRepository {
         description: p.description ?? null,
         descriptionHtml: p.descriptionHtml ?? null,
         type: p.type,
+        status: p.status ?? "active",
         availableForSale: p.availableForSale ?? true,
         featuredImageUrl: p.featuredImageUrl ?? null,
         seoTitle: p.seoTitle ?? null,
         seoDescription: p.seoDescription ?? null,
         priceRange,
+        variantCount: variants.length,
+        totalInventory,
         variants,
         images,
       };
@@ -357,6 +368,8 @@ export class ProductRepository {
       compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
       sku: v.sku,
       availableForSale: v.availableForSale ?? true,
+      inventoryQuantity: v.inventoryQuantity ?? 0,
+      fulfillmentProvider: v.fulfillmentProvider ?? null,
       options: (v.options as Record<string, string>) ?? {},
     }));
 
@@ -383,6 +396,7 @@ export class ProductRepository {
       description: product.description ?? null,
       descriptionHtml: product.descriptionHtml ?? null,
       type: product.type,
+      status: product.status ?? "active",
       availableForSale: product.availableForSale ?? true,
       featuredImageUrl: product.featuredImageUrl ?? null,
       seoTitle: product.seoTitle ?? null,
@@ -395,12 +409,31 @@ export class ProductRepository {
 
   async findCollections() {
     const rows = await this.db.select().from(collections).where(eq(collections.storeId, this.storeId));
+
+    // Count products per collection
+    const counts = await this.db
+      .select({
+        collectionId: collectionProducts.collectionId,
+        count: sql<number>`count(*)`,
+      })
+      .from(collectionProducts)
+      .where(
+        inArray(
+          collectionProducts.collectionId,
+          rows.map((r) => r.id),
+        ),
+      )
+      .groupBy(collectionProducts.collectionId);
+
+    const countMap = new Map(counts.map((c) => [c.collectionId, Number(c.count)]));
+
     return rows.map((c) => ({
       id: c.id,
       name: c.name,
       slug: c.slug,
       description: c.description ?? null,
       imageUrl: c.imageUrl ?? null,
+      productCount: countMap.get(c.id) ?? 0,
     }));
   }
 

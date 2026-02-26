@@ -1,10 +1,11 @@
-import { eq, and, desc, sql, count } from "drizzle-orm";
+import { eq, and, desc, sql, count, like, gte, lte } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   orders,
   orderItems,
   productVariants,
   products,
+  users,
 } from "../db/schema";
 
 export interface CreateOrderData {
@@ -15,8 +16,10 @@ export interface CreateOrderData {
   subtotal: string; // decimal string
   tax?: string;
   shippingCost?: string;
+  discount?: string;
   total: string;
   shippingAddress?: Record<string, unknown> | null;
+  couponCode?: string | null;
 }
 
 export interface CreateOrderItemData {
@@ -53,8 +56,10 @@ export class OrderRepository {
         subtotal: data.subtotal,
         tax: data.tax ?? "0",
         shippingCost: data.shippingCost ?? "0",
+        discount: data.discount ?? "0",
         total: data.total,
         shippingAddress: data.shippingAddress ?? null,
+        couponCode: data.couponCode ?? null,
       })
       .returning();
 
@@ -187,6 +192,87 @@ export class OrderRepository {
       .limit(1);
 
     return orderRows[0] ?? null;
+  }
+
+  /**
+   * Admin: list all orders for the store with filters and pagination.
+   */
+  async findByStore(filters: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }) {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+    const offset = (page - 1) * limit;
+
+    const conditions = [eq(orders.storeId, this.storeId)];
+    if (filters.status) {
+      conditions.push(eq(orders.status, filters.status as any));
+    }
+    if (filters.dateFrom) {
+      conditions.push(gte(orders.createdAt, new Date(filters.dateFrom)));
+    }
+    if (filters.dateTo) {
+      conditions.push(lte(orders.createdAt, new Date(filters.dateTo)));
+    }
+
+    const where = and(...conditions);
+
+    const countResult = await this.db
+      .select({ total: count() })
+      .from(orders)
+      .where(where);
+
+    const total = countResult[0]?.total ?? 0;
+
+    const orderRows = await this.db
+      .select({
+        id: orders.id,
+        userId: orders.userId,
+        status: orders.status,
+        total: orders.total,
+        subtotal: orders.subtotal,
+        tax: orders.tax,
+        shippingCost: orders.shippingCost,
+        createdAt: orders.createdAt,
+        updatedAt: orders.updatedAt,
+        customerName: users.name,
+        customerEmail: users.email,
+      })
+      .from(orders)
+      .leftJoin(users, eq(orders.userId, users.id))
+      .where(where)
+      .orderBy(desc(orders.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return { orders: orderRows, total, page, limit };
+  }
+
+  /**
+   * Admin: append a note to an order's internalNotes field.
+   */
+  async addNote(orderId: string, author: string, text: string) {
+    const order = await this.db
+      .select({ internalNotes: orders.internalNotes })
+      .from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.storeId, this.storeId)))
+      .limit(1);
+
+    const existing = order[0]?.internalNotes || "";
+    const entry = `[${new Date().toISOString()}] ${author}: ${text}`;
+    const updated = existing ? `${existing}\n${entry}` : entry;
+
+    await this.db
+      .update(orders)
+      .set({ internalNotes: updated, updatedAt: new Date() })
+      .where(and(eq(orders.id, orderId), eq(orders.storeId, this.storeId)));
+
+    return updated;
   }
 
   /**

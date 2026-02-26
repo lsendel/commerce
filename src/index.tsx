@@ -12,6 +12,9 @@ import { errorHandler } from "./middleware/error-handler.middleware";
 import { tenantMiddleware } from "./middleware/tenant.middleware";
 import { affiliateMiddleware } from "./middleware/affiliate.middleware";
 
+// Repositories
+import { RedirectRepository } from "./infrastructure/repositories/redirect.repository";
+
 // API Routes
 import { authRoutes } from "./routes/api/auth.routes";
 import { productRoutes } from "./routes/api/products.routes";
@@ -31,6 +34,8 @@ import { cacheRoutes } from "./routes/api/cache.routes";
 import { cacheResponse } from "./middleware/cache.middleware";
 import { browserCaching } from "./middleware/browser-cache.middleware";
 import { adminProductRoutes } from "./routes/api/admin-products.routes";
+import { adminCollectionRoutes } from "./routes/api/admin-collections.routes";
+import { adminOrderRoutes } from "./routes/api/admin-orders.routes";
 import { cancellationRoutes } from "./routes/api/cancellations.routes";
 import { downloadRoutes } from "./routes/api/downloads.routes";
 import promotionRoutes from "./routes/api/promotions.routes";
@@ -54,11 +59,16 @@ import { CartPage as _CartPage } from "./routes/pages/cart.page";
 import { CheckoutSuccessPage as _CheckoutSuccessPage } from "./routes/pages/checkout-success.page";
 import { LoginPage } from "./routes/pages/auth/login.page";
 import { RegisterPage } from "./routes/pages/auth/register.page";
+import { ForgotPasswordPage } from "./routes/pages/auth/forgot-password.page";
+import { ResetPasswordPage as _ResetPasswordPage } from "./routes/pages/auth/reset-password.page";
+import { VerifyEmailPage as _VerifyEmailPage } from "./routes/pages/auth/verify-email.page";
 import { DashboardPage as _DashboardPage } from "./routes/pages/account/dashboard.page";
 import { OrdersPage as _OrdersPage } from "./routes/pages/account/orders.page";
 import { AddressesPage as _AddressesPage } from "./routes/pages/account/addresses.page";
 import { SubscriptionsPage as _SubscriptionsPage } from "./routes/pages/account/subscriptions.page";
 import { PetsPage as _PetsPage } from "./routes/pages/account/pets.page";
+import { ArtworkPage as _ArtworkPage } from "./routes/pages/account/artwork.page";
+import { SettingsPage as _SettingsPage } from "./routes/pages/account/settings.page";
 import { StudioCreatePage as _StudioCreatePage } from "./routes/pages/studio/create.page";
 import { StudioPreviewPage as _StudioPreviewPage } from "./routes/pages/studio/preview.page";
 import { StudioGalleryPage as _StudioGalleryPage } from "./routes/pages/studio/gallery.page";
@@ -78,6 +88,21 @@ import { VenueDetailPage as _VenueDetailPage } from "./routes/pages/venues/detai
 import { AdminIntegrationsPage as _AdminIntegrationsPage } from "./routes/pages/admin/integrations.page";
 import { CreateProductPage as _CreateProductPage } from "./routes/pages/platform/create-product.page";
 import { FulfillmentDashboardPage as _FulfillmentDashboardPage } from "./routes/pages/admin/fulfillment-dashboard.page";
+import { AdminProductsPage as _AdminProductsPage } from "./routes/pages/admin/products.page";
+import { ProductEditPage as _ProductEditPage } from "./routes/pages/admin/product-edit.page";
+import { AdminCollectionsPage as _AdminCollectionsPage } from "./routes/pages/admin/collections.page";
+import { AdminOrdersPage as _AdminOrdersPage } from "./routes/pages/admin/orders.page";
+import { AdminOrderDetailPage as _AdminOrderDetailPage } from "./routes/pages/admin/order-detail.page";
+import { AdminBookingsPage as _AdminBookingsPage } from "./routes/pages/admin/bookings.page";
+import { FulfillmentDetailPage as _FulfillmentDetailPage } from "./routes/pages/admin/fulfillment-detail.page";
+import { ShippingPage as _ShippingPage } from "./routes/pages/admin/shipping.page";
+import { TaxPage as _TaxPage } from "./routes/pages/admin/tax.page";
+import { PromotionsPage as _PromotionsPage } from "./routes/pages/admin/promotions.page";
+import { PromotionCodesPage as _PromotionCodesPage } from "./routes/pages/admin/promotion-codes.page";
+import { SegmentsPage as _SegmentsPage } from "./routes/pages/admin/segments.page";
+import { AdminReviewsPage as _AdminReviewsPage } from "./routes/pages/admin/reviews.page";
+import { AdminAffiliatesPage as _AdminAffiliatesPage } from "./routes/pages/admin/affiliates.page";
+import { AdminAnalyticsPage as _AdminAnalyticsPage } from "./routes/pages/admin/analytics.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 import { NotFoundPage } from "./routes/pages/404.page";
 import { ErrorPage } from "./components/ui/error-page";
@@ -94,6 +119,8 @@ const OrdersPage = _OrdersPage as any;
 const AddressesPage = _AddressesPage as any;
 const SubscriptionsPage = _SubscriptionsPage as any;
 const PetsPage = _PetsPage as any;
+const ArtworkPage = _ArtworkPage as any;
+const SettingsPage = _SettingsPage as any;
 const StudioCreatePage = _StudioCreatePage as any;
 const StudioPreviewPage = _StudioPreviewPage as any;
 const StudioGalleryPage = _StudioGalleryPage as any;
@@ -114,10 +141,27 @@ const AdminIntegrationsPage = _AdminIntegrationsPage as any;
 const StoreIntegrationsPage = _StoreIntegrationsPage as any;
 const CreateProductPage = _CreateProductPage as any;
 const FulfillmentDashboardPage = _FulfillmentDashboardPage as any;
+const AdminProductsPage = _AdminProductsPage as any;
+const ProductEditPage = _ProductEditPage as any;
+const AdminCollectionsPage = _AdminCollectionsPage as any;
+const AdminOrdersPage = _AdminOrdersPage as any;
+const AdminOrderDetailPage = _AdminOrderDetailPage as any;
+const AdminBookingsPage = _AdminBookingsPage as any;
+const FulfillmentDetailPage = _FulfillmentDetailPage as any;
+const ShippingPage = _ShippingPage as any;
+const TaxPage = _TaxPage as any;
+const PromotionsPage = _PromotionsPage as any;
+const PromotionCodesPage = _PromotionCodesPage as any;
+const SegmentsPage = _SegmentsPage as any;
+const AdminReviewsPage = _AdminReviewsPage as any;
+const AdminAffiliatesPage = _AdminAffiliatesPage as any;
+const AdminAnalyticsPage = _AdminAnalyticsPage as any;
+const ResetPasswordPage = _ResetPasswordPage as any;
+const VerifyEmailPage = _VerifyEmailPage as any;
 
 // Infrastructure
 import { createDb } from "./infrastructure/db/client";
-import { fulfillmentProviders } from "./infrastructure/db/schema";
+import { fulfillmentProviders, couponCodes, promotions } from "./infrastructure/db/schema";
 import { ProductRepository } from "./infrastructure/repositories/product.repository";
 import { CartRepository } from "./infrastructure/repositories/cart.repository";
 import { OrderRepository } from "./infrastructure/repositories/order.repository";
@@ -129,6 +173,9 @@ import { StoreRepository } from "./infrastructure/repositories/store.repository"
 import { AffiliateRepository } from "./infrastructure/repositories/affiliate.repository";
 import { VenueRepository } from "./infrastructure/repositories/venue.repository";
 import { IntegrationRepository as IntegrationRepoImpl, IntegrationSecretRepository as SecretRepoImpl } from "./infrastructure/repositories/integration.repository";
+import { ReviewRepository } from "./infrastructure/repositories/review.repository";
+import { PromotionRepository } from "./infrastructure/repositories/promotion.repository";
+import { AnalyticsRepository } from "./infrastructure/repositories/analytics.repository";
 import { ListIntegrationsUseCase } from "./application/platform/list-integrations.usecase";
 import { CheckInfrastructureUseCase } from "./application/platform/check-infrastructure.usecase";
 import { verifyJwt } from "./infrastructure/security/jwt";
@@ -160,13 +207,6 @@ app.use(
 
 // ─── Health Check ──────────────────────────────────────────
 app.get("/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }));
-app.post("/api/analytics/events", async (c) => {
-  const body = await c.req.json().catch(() => null);
-  if (body && body.eventName) {
-    console.log("[analytics]", body.eventName, body.payload ?? {});
-  }
-  return c.json({ ok: true }, 202);
-});
 
 // ─── API Routes ────────────────────────────────────────────
 app.route("/api/auth", authRoutes);
@@ -185,9 +225,11 @@ app.route("/api/venues", venueRoutes);
 app.route("/api/integrations", integrationRoutes);
 app.route("/api", cacheRoutes);
 app.route("/api/admin", adminProductRoutes);
+app.route("/api/admin/collections", adminCollectionRoutes);
+app.route("/api/admin", adminOrderRoutes);
 app.route("/api", cancellationRoutes);
 app.route("/api", downloadRoutes);
-app.route("/api", promotionRoutes);
+app.route("/api/promotions", promotionRoutes);
 app.route("/api", shippingZoneRoutes);
 app.route("/api", taxRoutes);
 app.route("/api", reviewRoutes);
@@ -324,12 +366,60 @@ app.get("/collections/:slug", (c) => {
 app.get("/login", (c) => c.redirect("/auth/login", 301));
 app.get("/subscriptions", (c) => c.redirect("/products?type=subscription", 301));
 app.get("/subscriptions/success", (c) => c.redirect("/account/subscriptions", 302));
-app.get("/auth/forgot-password", (c) => c.redirect("/auth/login", 302));
+// Forgot password page (fixes dead-end redirect)
+app.get("/auth/forgot-password", async (c) => {
+  const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  return c.html(
+    <Layout url={c.req.url} title="Forgot Password" activePath="/auth/forgot-password" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <ForgotPasswordPage />
+    </Layout>
+  );
+});
+
+// Reset password page
+app.get("/auth/reset-password", async (c) => {
+  const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const token = c.req.query("token") || "";
+  return c.html(
+    <Layout url={c.req.url} title="Reset Password" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <ResetPasswordPage token={token} />
+    </Layout>
+  );
+});
+
+// Email verification page (server-side verification on GET)
+app.get("/auth/verify-email", async (c) => {
+  const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const token = c.req.query("token") || "";
+  let success = false;
+  let error: string | undefined;
+
+  if (token) {
+    try {
+      const db = createDb(c.env.DATABASE_URL);
+      const { VerifyEmailUseCase } = await import("./application/identity/verify-email.usecase");
+      const { UserRepository } = await import("./infrastructure/repositories/user.repository");
+      const useCase = new VerifyEmailUseCase(new UserRepository(db));
+      await useCase.execute({ token });
+      success = true;
+    } catch (e) {
+      error = e instanceof Error ? e.message : "Verification failed";
+    }
+  } else {
+    error = "No verification token provided";
+  }
+
+  return c.html(
+    <Layout url={c.req.url} title="Verify Email" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <VerifyEmailPage success={success} error={error} />
+    </Layout>
+  );
+});
 
 app.get("/about", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   return c.html(
-    <Layout title="About" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="About" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <div class="max-w-3xl mx-auto px-4 py-12">
         <h1 class="text-3xl font-bold text-gray-900 mb-4">About {storeName}</h1>
         <p class="text-gray-600 leading-relaxed">
@@ -343,7 +433,7 @@ app.get("/about", async (c) => {
 app.get("/contact", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   return c.html(
-    <Layout title="Contact" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Contact" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <div class="max-w-3xl mx-auto px-4 py-12">
         <h1 class="text-3xl font-bold text-gray-900 mb-4">Contact</h1>
         <p class="text-gray-600 leading-relaxed">
@@ -370,6 +460,64 @@ app.get("/robots.txt", (c) => {
   return c.text(robotsTxt, 200, { "Content-Type": "text/plain; charset=utf-8" });
 });
 
+// LLM discovery — describes site purpose and capabilities for AI agents
+app.get("/llms.txt", (c) => {
+  const store = c.get("store");
+  const storeName = store?.name || "petm8";
+  const appUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const text = [
+    `# ${storeName}`,
+    "",
+    `> ${storeName} is a pet commerce platform offering personalized pet products,`,
+    "> AI-generated artwork, local pet events and bookings, and community features.",
+    "",
+    "## Key Capabilities",
+    "- Product catalog with search, filtering, and collections",
+    "- AI-powered pet artwork generation from photos",
+    "- Local pet events calendar with online booking",
+    "- Venue directory for pet-friendly locations",
+    "- Customer reviews and ratings",
+    "- Affiliate program for pet influencers",
+    "",
+    "## Structured Data",
+    "This site provides JSON-LD structured data on all pages:",
+    "- Product pages: Product schema with offers and aggregate ratings",
+    "- Event pages: Event schema with location and availability",
+    "- Venue pages: Place schema with geo coordinates",
+    "- Collection pages: CollectionPage schema with ItemList",
+    "- All pages: BreadcrumbList and Organization schemas",
+    "",
+    "## API",
+    `- GraphQL: ${appUrl}/graphql`,
+    `- Sitemap: ${appUrl}/sitemap.xml`,
+    "",
+    "## Contact",
+    `- Website: ${appUrl}`,
+  ].join("\n");
+  return c.text(text, 200, { "Content-Type": "text/plain; charset=utf-8" });
+});
+
+// AI plugin manifest for agent discovery
+app.get("/.well-known/ai-plugin.json", (c) => {
+  const store = c.get("store");
+  const storeName = store?.name || "petm8";
+  const appUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  return c.json({
+    schema_version: "v1",
+    name_for_human: storeName,
+    name_for_model: storeName.toLowerCase().replace(/\s+/g, "_"),
+    description_for_human: `${storeName} — personalized pet products, AI artwork, events, and bookings.`,
+    description_for_model: `${storeName} is a pet commerce platform. Use the GraphQL API at ${appUrl}/graphql for product search, event listings, and venue information. Structured data (JSON-LD) is available on all public pages.`,
+    api: {
+      type: "graphql",
+      url: `${appUrl}/graphql`,
+    },
+    logo_url: `${appUrl}/favicon-192.png`,
+    contact_email: "support@petm8.io",
+    legal_info_url: `${appUrl}/about`,
+  });
+});
+
 app.get("/sitemap.xml", async (c) => {
   const db = createDb(c.env.DATABASE_URL);
   const sitemapStoreId = c.get("storeId") as string;
@@ -377,10 +525,13 @@ app.get("/sitemap.xml", async (c) => {
   const appUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
   const now = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-  const [productsResult, eventsResult, allCollections] = await Promise.all([
+  const venueRepo = new VenueRepository(db, sitemapStoreId);
+
+  const [productsResult, eventsResult, allCollections, allVenues] = await Promise.all([
     productRepo.findAll({ limit: 1000, available: true }),
     productRepo.findAll({ limit: 1000, type: "bookable", available: true }),
     productRepo.findCollections(),
+    venueRepo.findAll(1, 500),
   ]);
 
   // Helper to build a <url> element with all SEO attributes
@@ -411,6 +562,11 @@ app.get("/sitemap.xml", async (c) => {
     ...eventsResult.products.map((event: any) =>
       urlEntry(`${appUrl}/events/${event.slug}`, now, "weekly", "0.8"),
     ),
+    // Venue detail pages
+    ...allVenues.map((venue: any) => {
+      const lastmod = venue.updatedAt ? new Date(venue.updatedAt).toISOString().slice(0, 10) : now;
+      return urlEntry(`${appUrl}/venues/${venue.slug}`, lastmod, "weekly", "0.7");
+    }),
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
@@ -477,7 +633,7 @@ app.get("/products/:slug", async (c) => {
   const product = await productRepo.findBySlug(c.req.param("slug"));
   if (!product) {
     return c.html(
-      <Layout title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <Layout url={c.req.url} title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
         <NotFoundPage />
       </Layout>,
       404
@@ -497,6 +653,35 @@ app.get("/products/:slug", async (c) => {
 
   // Fetch related products (same collections, or recently added fallback)
   const relatedProducts = await productRepo.findRelatedProducts(product.id, 4);
+
+  // Fetch reviews and summary
+  const reviewRepo = new ReviewRepository(db, storeId);
+  const [reviewResult, ratingResult] = await Promise.all([
+    reviewRepo.findByProduct(product.id, 1, 10),
+    reviewRepo.getAverageRating(product.id),
+  ]);
+
+  const formattedReviews = reviewResult.reviews.map((r: any) => ({
+    id: r.id,
+    rating: r.rating,
+    title: r.title ?? null,
+    content: r.content ?? null,
+    authorName: r.authorName ?? "Anonymous",
+    verified: r.isVerifiedPurchase ?? false,
+    storeResponse: r.storeResponse ?? null,
+    createdAt: r.createdAt ? formatDateUs(r.createdAt) : "",
+  }));
+
+  // Compute rating distribution from reviews
+  const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (const r of reviewResult.reviews) {
+    const rating = (r as any).rating;
+    if (rating >= 1 && rating <= 5) distribution[rating]!++;
+  }
+
+  const reviewSummary = ratingResult.count > 0
+    ? { averageRating: ratingResult.average, totalCount: ratingResult.count, distribution }
+    : null;
 
   const siteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
   const productUrl = `${siteUrl}/products/${product.slug}`;
@@ -551,6 +736,10 @@ app.get("/products/:slug", async (c) => {
         }}
         slots={availability as any}
         relatedProducts={relatedProducts as any}
+        reviews={formattedReviews}
+        reviewSummary={reviewSummary}
+        isAuthenticated={isAuthenticated}
+        siteUrl={siteUrl}
       />
     </Layout>
   );
@@ -561,18 +750,25 @@ app.get("/cart", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   const cartSessionId = getCookie(c, CART_COOKIE_NAME);
   let items: any[] = [];
+  let totals: any = null;
+  let warnings: string[] = [];
+  let couponCode: string | null = null;
+
   if (cartSessionId) {
     try {
       const cartRepo = new CartRepository(db, storeId);
-      const cart = await cartRepo.findOrCreateCart(cartSessionId, user?.sub);
-      const cartData = await cartRepo.findCartWithItems(cart.id);
+      const { GetCartUseCase } = await import("./application/cart/get-cart.usecase");
+      const useCase = new GetCartUseCase(cartRepo, db);
+      const cartData = await useCase.execute(cartSessionId, user?.sub);
       items = (cartData as any)?.items ?? [];
+      totals = (cartData as any)?.totals ?? null;
+      warnings = (cartData as any)?.warnings ?? [];
     } catch { /* empty cart */ }
   }
 
   return c.html(
-    <Layout title="Cart" activePath="/cart" isAuthenticated={isAuthenticated} cartCount={cartCount} stripePublishableKey={c.env.STRIPE_PUBLISHABLE_KEY} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <CartPage items={items as any} />
+    <Layout url={c.req.url} title="Cart" activePath="/cart" isAuthenticated={isAuthenticated} cartCount={cartCount} stripePublishableKey={c.env.STRIPE_PUBLISHABLE_KEY} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <CartPage items={items as any} totals={totals} warnings={warnings} couponCode={couponCode} />
     </Layout>
   );
 });
@@ -602,7 +798,7 @@ app.get("/checkout/success", async (c) => {
   };
 
   return c.html(
-    <Layout title="Order Confirmed" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Order Confirmed" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <CheckoutSuccessPage order={safeOrder as any} />
     </Layout>
   );
@@ -612,7 +808,7 @@ app.get("/checkout/success", async (c) => {
 app.get("/auth/login", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   return c.html(
-    <Layout title="Sign In" activePath="/auth/login" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Sign In" activePath="/auth/login" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <LoginPage />
     </Layout>
   );
@@ -621,7 +817,7 @@ app.get("/auth/login", async (c) => {
 app.get("/auth/register", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   return c.html(
-    <Layout title="Create Account" activePath="/auth/register" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Create Account" activePath="/auth/register" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <RegisterPage />
     </Layout>
   );
@@ -664,7 +860,7 @@ accountPages.get("/", async (c) => {
     : null;
 
   return c.html(
-    <Layout title="Account" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Account" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <DashboardPage
         userName={user!.name || "there"}
         recentOrders={recentOrders as any}
@@ -701,7 +897,7 @@ accountPages.get("/orders", async (c) => {
   }));
 
   return c.html(
-    <Layout title="Orders" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Orders" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <OrdersPage orders={orders as any} />
     </Layout>
   );
@@ -724,7 +920,7 @@ accountPages.get("/addresses", async (c) => {
   }));
 
   return c.html(
-    <Layout title="Addresses" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Addresses" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <AddressesPage addresses={addresses as any} />
     </Layout>
   );
@@ -750,7 +946,7 @@ accountPages.get("/subscriptions", async (c) => {
     : null;
 
   return c.html(
-    <Layout title="Subscriptions" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Subscriptions" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <SubscriptionsPage subscription={subscription as any} />
     </Layout>
   );
@@ -762,8 +958,44 @@ accountPages.get("/pets", async (c) => {
   const pets = await aiRepo.findPetsByUserId(user!.sub);
 
   return c.html(
-    <Layout title="My Pets" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="My Pets" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <PetsPage pets={pets as any} />
+    </Layout>
+  );
+});
+
+accountPages.get("/artwork", async (c) => {
+  const { db, storeId, cartCount, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const { ListUserArtworkUseCase } = await import("./application/ai-studio/list-user-artwork.usecase");
+  const useCase = new ListUserArtworkUseCase(db, storeId);
+  const page = Number(c.req.query("page") || "1");
+  const result = await useCase.execute(user!.sub, { page, limit: 12 });
+
+  return c.html(
+    <Layout url={c.req.url} title="My Artwork" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <ArtworkPage artwork={result.artwork as any} total={result.total} page={result.page} limit={result.limit} />
+    </Layout>
+  );
+});
+
+accountPages.get("/settings", async (c) => {
+  const { db, cartCount, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const userRepo = new UserRepository(db);
+  const profile = await userRepo.findById(user!.sub);
+
+  return c.html(
+    <Layout url={c.req.url} title="Settings" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <SettingsPage
+        user={{
+          name: profile?.name || "",
+          email: profile?.email || "",
+          avatarUrl: profile?.avatarUrl ?? null,
+          emailVerifiedAt: profile?.emailVerifiedAt ?? null,
+          locale: profile?.locale ?? "en",
+          timezone: profile?.timezone ?? "UTC",
+          marketingOptIn: !!profile?.marketingOptIn,
+        }}
+      />
     </Layout>
   );
 });
@@ -778,7 +1010,7 @@ app.get("/studio", async (c) => {
   const pets = user ? await aiRepo.findPetsByUserId(user.sub) : [];
 
   return c.html(
-    <Layout title="AI Studio" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="AI Studio" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <StudioCreatePage
         templates={templates as any}
         pets={pets as any}
@@ -795,7 +1027,7 @@ app.get("/studio/create", async (c) => {
   const pets = await aiRepo.findPetsByUserId(user.sub);
 
   return c.html(
-    <Layout title="Create Art" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Create Art" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <StudioCreatePage
         templates={templates as any}
         pets={pets as any}
@@ -811,7 +1043,7 @@ app.get("/studio/preview/:id", async (c) => {
   const job = await aiRepo.findById(c.req.param("id"));
   if (!job || job.userId !== user.sub) {
     return c.html(
-      <Layout title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <Layout url={c.req.url} title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
         <NotFoundPage />
       </Layout>,
       404,
@@ -819,7 +1051,7 @@ app.get("/studio/preview/:id", async (c) => {
   }
 
   return c.html(
-    <Layout title="Art Preview" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Art Preview" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <StudioPreviewPage
         jobId={job.id}
         imageUrl={job.outputRasterUrl ?? job.outputSvgUrl ?? undefined}
@@ -842,7 +1074,7 @@ app.get("/products/create/:artJobId", async (c) => {
   const job = await aiRepo.findById(c.req.param("artJobId"));
   if (!job || job.userId !== user.sub) {
     return c.html(
-      <Layout title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <Layout url={c.req.url} title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
         <NotFoundPage />
       </Layout>,
       404,
@@ -855,7 +1087,7 @@ app.get("/products/create/:artJobId", async (c) => {
   );
 
   return c.html(
-    <Layout title="Create Product" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Create Product" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <CreateProductPage
         artJobId={job.id}
         artImageUrl={job.outputRasterUrl ?? job.outputSvgUrl ?? null}
@@ -874,7 +1106,7 @@ app.get("/studio/gallery", async (c) => {
   const categories = [...new Set(allTemplates.map((t: any) => t.category).filter(Boolean))] as string[];
 
   return c.html(
-    <Layout title="Template Gallery" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Template Gallery" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <StudioGalleryPage
         templates={templates as any}
         categories={categories}
@@ -915,7 +1147,7 @@ app.get("/events", async (c) => {
   );
 
   return c.html(
-    <Layout title="Events" activePath="/events" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Events" activePath="/events" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <EventsListPage events={eventsWithDates as any} filterDateFrom={dateFrom} filterDateTo={dateTo} />
     </Layout>
   );
@@ -970,7 +1202,7 @@ app.get("/events/calendar", async (c) => {
   ];
 
   return c.html(
-    <Layout title="Events Calendar" activePath="/events" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Events Calendar" activePath="/events" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <EventCalendarPage
         eventsByDate={eventsByDate}
         selectedDate={selectedDate}
@@ -989,7 +1221,7 @@ app.get("/events/:slug", async (c) => {
   const product = await productRepo.findBySlug(c.req.param("slug"));
   if (!product || product.type !== "bookable") {
     return c.html(
-      <Layout title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <Layout url={c.req.url} title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
         <NotFoundPage />
       </Layout>,
       404
@@ -1137,7 +1369,7 @@ app.get("/events/:slug", async (c) => {
 app.get("/platform/create-store", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   return c.html(
-    <Layout title="Create Store" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Create Store" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <CreateStorePage />
     </Layout>
   );
@@ -1147,18 +1379,20 @@ app.get("/platform/dashboard", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
   const storeRepo = new StoreRepository(db);
-  const store = await storeRepo.findById(storeId);
-  const members = store ? await storeRepo.findMembers(storeId) : [];
-  const domains = store ? await storeRepo.findDomains(storeId) : [];
-  const billing = store ? await storeRepo.getBilling(storeId) : null;
+  const { GetStoreDashboardUseCase: DashUC } = await import("./application/platform/get-store-dashboard.usecase");
+  const dashUC = new DashUC(storeRepo);
+  const { store, members, domains, billing, pendingInvitations } = await dashUC.execute(storeId);
+  const plan = billing?.platformPlanId ? await storeRepo.findPlanById(billing.platformPlanId) : null;
 
   return c.html(
-    <Layout title="Store Dashboard" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Store Dashboard" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <StoreDashboardPage
         store={store as any}
         members={members as any}
         domains={domains as any}
         billing={billing as any}
+        plan={plan as any}
+        pendingInvitations={pendingInvitations as any}
       />
     </Layout>
   );
@@ -1168,16 +1402,21 @@ app.get("/platform/settings", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
   const storeRepo = new StoreRepository(db);
-  const store = await storeRepo.findById(storeId);
-  const plans = await storeRepo.findAllPlans();
-  const billing = store ? await storeRepo.getBilling(storeId) : null;
+  const [store, plans, billing, domains] = await Promise.all([
+    storeRepo.findById(storeId),
+    storeRepo.findAllPlans(),
+    storeRepo.getBilling(storeId),
+    storeRepo.findDomains(storeId),
+  ]);
 
   return c.html(
-    <Layout title="Store Settings" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Store Settings" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <StoreSettingsPage
         store={store as any}
         plans={plans as any}
         billing={billing as any}
+        connectStatus={null}
+        domains={domains as any}
       />
     </Layout>
   );
@@ -1190,7 +1429,7 @@ app.get("/platform/members", async (c) => {
   const members = await storeRepo.findMembers(storeId);
 
   return c.html(
-    <Layout title="Team Members" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Team Members" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <MembersPage storeId={storeId} members={members as any} />
     </Layout>
   );
@@ -1210,7 +1449,7 @@ app.get("/admin/integrations", async (c) => {
   const infraHealth = await checkUseCase.execute(c.env, db);
 
   return c.html(
-    <Layout title="Platform Integrations" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Platform Integrations" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <AdminIntegrationsPage integrations={integrations as any} infraHealth={infraHealth as any} />
     </Layout>,
   );
@@ -1221,24 +1460,28 @@ app.get("/admin/fulfillment", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
 
-  const { eq, desc, sql } = await import("drizzle-orm");
+  const { eq, desc, sql, and, like } = await import("drizzle-orm");
   const { fulfillmentRequests: frTable } = await import("./infrastructure/db/schema");
 
-  const requests = await db
-    .select()
-    .from(frTable)
-    .where(eq(frTable.storeId, storeId))
-    .orderBy(desc(frTable.createdAt))
-    .limit(100);
+  const pageNum = parseInt(c.req.query("page") || "1", 10);
+  const limit = 50;
+  const statusFilter = c.req.query("status") || "";
+  const providerFilter = c.req.query("provider") || "";
+  const searchFilter = c.req.query("search") || "";
 
-  const countRows = await db
-    .select({
-      status: frTable.status,
-      count: sql<number>`count(*)`,
-    })
-    .from(frTable)
-    .where(eq(frTable.storeId, storeId))
-    .groupBy(frTable.status);
+  const conditions = [eq(frTable.storeId, storeId)];
+  if (statusFilter) conditions.push(eq(frTable.status, statusFilter as any));
+  if (providerFilter) conditions.push(eq(frTable.provider, providerFilter as any));
+  if (searchFilter) conditions.push(like(frTable.orderId, `%${searchFilter}%`));
+
+  const [requests, countRows, totalCountRows] = await Promise.all([
+    db.select().from(frTable).where(and(...conditions)).orderBy(desc(frTable.createdAt)).limit(limit).offset((pageNum - 1) * limit),
+    db.select({ status: frTable.status, count: sql<number>`count(*)` }).from(frTable).where(eq(frTable.storeId, storeId)).groupBy(frTable.status),
+    db.select({ count: sql<number>`count(*)` }).from(frTable).where(and(...conditions)),
+  ]);
+
+  const totalFiltered = Number(totalCountRows[0]?.count ?? 0);
+  const totalPages = Math.ceil(totalFiltered / limit);
 
   const counts: Record<string, number> = {};
   let total = 0;
@@ -1259,6 +1502,15 @@ app.get("/admin/fulfillment", async (c) => {
     cancelled: counts.cancelled ?? 0,
   };
 
+  let health: any[] = [];
+  try {
+    const { GetProviderHealthUseCase } = await import("./application/fulfillment/get-provider-health.usecase");
+    const useCase = new GetProviderHealthUseCase(db, storeId);
+    health = await useCase.execute(30);
+  } catch {
+    // Health data is optional
+  }
+
   const formatted = requests.map((r: any) => ({
     id: r.id,
     orderId: r.orderId,
@@ -1271,8 +1523,431 @@ app.get("/admin/fulfillment", async (c) => {
   }));
 
   return c.html(
-    <Layout title="Fulfillment Dashboard" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <FulfillmentDashboardPage requests={formatted} stats={stats} />
+    <Layout url={c.req.url} title="Fulfillment Dashboard" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <FulfillmentDashboardPage
+        requests={formatted}
+        stats={stats}
+        health={health as any}
+        page={pageNum}
+        totalPages={totalPages}
+        filters={{ status: statusFilter || undefined, provider: providerFilter || undefined, search: searchFilter || undefined }}
+      />
+    </Layout>,
+  );
+});
+
+app.get("/admin/fulfillment/:id", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const requestId = c.req.param("id");
+  const { FulfillmentRequestRepository } = await import("./infrastructure/repositories/fulfillment-request.repository");
+  const repo = new FulfillmentRequestRepository(db, storeId);
+  const request = await repo.findById(requestId);
+  if (!request) return c.notFound();
+
+  const { eq, desc } = await import("drizzle-orm");
+  const { providerEvents, shipments: shipmentsTable } = await import("./infrastructure/db/schema");
+
+  const [items, events, shipmentRows] = await Promise.all([
+    repo.findItemsByRequestId(requestId),
+    db.select().from(providerEvents).where(eq(providerEvents.externalOrderId, request.externalId ?? "")).orderBy(desc(providerEvents.receivedAt)),
+    db.select().from(shipmentsTable).where(eq(shipmentsTable.fulfillmentRequestId, requestId)).limit(1),
+  ]);
+
+  const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null;
+
+  return c.html(
+    <Layout url={c.req.url} title="Fulfillment Request" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <FulfillmentDetailPage
+        request={{
+          id: request.id,
+          orderId: request.orderId,
+          provider: request.provider,
+          externalId: request.externalId,
+          status: request.status ?? "pending",
+          errorMessage: request.errorMessage,
+          costEstimatedTotal: request.costEstimatedTotal,
+          costActualTotal: request.costActualTotal,
+          costShipping: request.costShipping,
+          costTax: request.costTax,
+          currency: request.currency ?? "USD",
+          submittedAt: fmtDate(request.submittedAt),
+          completedAt: fmtDate(request.completedAt),
+          createdAt: fmtDate(request.createdAt) ?? "",
+        }}
+        items={items.map((i: any) => ({
+          id: i.id,
+          orderItemId: i.orderItemId,
+          providerLineId: i.providerLineId,
+          quantity: i.quantity,
+          status: i.status,
+        }))}
+        events={events.map((e: any) => ({
+          id: e.id,
+          eventType: e.eventType,
+          externalEventId: e.externalEventId,
+          receivedAt: fmtDate(e.receivedAt) ?? "",
+          processedAt: fmtDate(e.processedAt),
+        }))}
+        shipment={shipmentRows[0] ? {
+          carrier: (shipmentRows[0] as any).carrier,
+          trackingNumber: (shipmentRows[0] as any).trackingNumber,
+          trackingUrl: (shipmentRows[0] as any).trackingUrl,
+          status: (shipmentRows[0] as any).status,
+          shippedAt: fmtDate((shipmentRows[0] as any).shippedAt),
+          deliveredAt: fmtDate((shipmentRows[0] as any).deliveredAt),
+        } : null}
+      />
+    </Layout>,
+  );
+});
+
+app.get("/admin/shipping", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const { ShippingRepository } = await import("./infrastructure/repositories/shipping.repository");
+  const { ManageShippingZonesUseCase } = await import("./application/fulfillment/manage-shipping-zones.usecase");
+  const shippingRepo = new ShippingRepository(db, storeId);
+  const useCase = new ManageShippingZonesUseCase(shippingRepo);
+  const zones = await useCase.listZones();
+  return c.html(
+    <Layout url={c.req.url} title="Shipping Zones" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <ShippingPage zones={zones as any} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/tax", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  // Tax zones are not yet implemented in a use case — render empty for now
+  return c.html(
+    <Layout url={c.req.url} title="Tax Settings" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <TaxPage zones={[]} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Promotions Pages ──────────────────────────────
+app.get("/admin/promotions", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const promoRepo = new PromotionRepository(db, storeId);
+  const allPromos = await promoRepo.listAll();
+  const statusFilter = c.req.query("status") || undefined;
+  const typeFilter = c.req.query("type") || undefined;
+  const filtered = allPromos.filter((p: any) => {
+    if (statusFilter && p.status !== statusFilter) return false;
+    if (typeFilter && p.type !== typeFilter) return false;
+    return true;
+  });
+  return c.html(
+    <Layout url={c.req.url} title="Promotions" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <PromotionsPage promotions={filtered as any} filters={{ status: statusFilter, type: typeFilter }} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/promotions/codes", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const { eq } = await import("drizzle-orm");
+  const promoRepo = new PromotionRepository(db, storeId);
+  const [allPromos, codeRows] = await Promise.all([
+    promoRepo.listAll(),
+    db.select({
+      id: couponCodes.id,
+      promotionId: couponCodes.promotionId,
+      promotionName: promotions.name,
+      code: couponCodes.code,
+      maxRedemptions: couponCodes.maxRedemptions,
+      redemptionCount: couponCodes.redemptionCount,
+      singleUsePerCustomer: couponCodes.singleUsePerCustomer,
+      createdAt: couponCodes.createdAt,
+    })
+      .from(couponCodes)
+      .innerJoin(promotions, eq(couponCodes.promotionId, promotions.id))
+      .where(eq(promotions.storeId, storeId)),
+  ]);
+  return c.html(
+    <Layout url={c.req.url} title="Coupon Codes" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <PromotionCodesPage codes={codeRows as any} promotions={allPromos as any} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/segments", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const promoRepo = new PromotionRepository(db, storeId);
+  const segments = await promoRepo.listSegments();
+  return c.html(
+    <Layout url={c.req.url} title="Customer Segments" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <SegmentsPage segments={segments as any} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Reviews Page ──────────────────────────────────
+app.get("/admin/reviews", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const reviewRepo = new ReviewRepository(db, storeId);
+  const page = parseInt(c.req.query("page") || "1", 10);
+  const limit = 20;
+  const statusFilter = c.req.query("status") || undefined;
+  const result = await reviewRepo.listAll(page, limit, statusFilter);
+  const totalPages = Math.ceil(result.total / limit);
+  return c.html(
+    <Layout url={c.req.url} title="Reviews" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminReviewsPage reviews={result.reviews as any} total={result.total} page={page} totalPages={totalPages} filters={{ status: statusFilter }} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Affiliates Page ────────────────────────────────
+app.get("/admin/affiliates", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const affiliateRepo = new AffiliateRepository(db, storeId);
+  const allAffiliates = await affiliateRepo.listAll();
+  return c.html(
+    <Layout url={c.req.url} title="Affiliates" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminAffiliatesPage affiliates={allAffiliates as any} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Analytics Page ─────────────────────────────────
+app.get("/admin/analytics", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const now = new Date();
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  const defaultFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const defaultTo = now.toISOString().slice(0, 10);
+  const requestedFrom = c.req.query("from");
+  const requestedTo = c.req.query("to");
+  const parsedFrom = requestedFrom && datePattern.test(requestedFrom) ? requestedFrom : defaultFrom;
+  const parsedTo = requestedTo && datePattern.test(requestedTo) ? requestedTo : defaultTo;
+  const dateFrom = parsedFrom <= parsedTo ? parsedFrom : parsedTo;
+  const dateTo = parsedFrom <= parsedTo ? parsedTo : parsedFrom;
+
+  const analyticsRepo = new AnalyticsRepository(db, storeId);
+  const { GetDashboardMetricsUseCase: DashMetrics } = await import("./application/analytics/get-dashboard-metrics.usecase");
+  const { GetConversionFunnelUseCase: FunnelUC } = await import("./application/analytics/get-conversion-funnel.usecase");
+  const { GetTopProductsUseCase: TopProdUC } = await import("./application/analytics/get-top-products.usecase");
+  const { GetRevenueMetricsUseCase: RevUC } = await import("./application/analytics/get-revenue-metrics.usecase");
+
+  const [dashMetrics, funnel, topProducts, revenue] = await Promise.all([
+    new DashMetrics(analyticsRepo).execute(dateFrom, dateTo),
+    new FunnelUC(db, storeId).execute(dateFrom, dateTo),
+    new TopProdUC(db, storeId).execute(dateFrom, dateTo),
+    new RevUC(analyticsRepo).execute(dateFrom, dateTo),
+  ]);
+
+  const metrics = [
+    { label: "Revenue", value: `$${dashMetrics.totalRevenue.toFixed(2)}` },
+    { label: "Orders", value: String(dashMetrics.orderCount) },
+    { label: "Visitors", value: String(dashMetrics.uniqueVisitors) },
+    { label: "Page Views", value: String(dashMetrics.pageViews) },
+    { label: "Add to Cart", value: String(dashMetrics.addToCartCount) },
+    { label: "Checkout Started", value: String(dashMetrics.checkoutStartedCount) },
+    { label: "Conversion Rate", value: `${(dashMetrics.conversionRate * 100).toFixed(1)}%` },
+    { label: "Avg Order Value", value: `$${dashMetrics.averageOrderValue.toFixed(2)}` },
+  ];
+
+  return c.html(
+    <Layout url={c.req.url} title="Analytics" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminAnalyticsPage
+        metrics={metrics}
+        funnel={funnel as any}
+        topProducts={topProducts as any}
+        dailyRevenue={revenue.dailyRevenue as any}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+      />
+    </Layout>,
+  );
+});
+
+// ─── Admin Products Pages ─────────────────────────────────
+app.get("/admin/products", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const page = parseInt(c.req.query("page") || "1", 10);
+  const limit = 20;
+  const status = c.req.query("status") || undefined;
+  const type = c.req.query("type") || undefined;
+  const search = c.req.query("search") || undefined;
+
+  const productRepo = new ProductRepository(db, storeId);
+  const result = await productRepo.findAll({ page, limit, status, type, search });
+
+  const productRows = result.products.map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    type: p.type,
+    status: p.status ?? "active",
+    featuredImageUrl: p.featuredImageUrl,
+    availableForSale: p.availableForSale,
+    priceRange: p.priceRange,
+    variantCount: p.variantCount ?? p.variants?.length ?? 0,
+    totalInventory: p.totalInventory ?? 0,
+  }));
+
+  return c.html(
+    <Layout url={c.req.url} title="Products – Admin" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminProductsPage
+        products={productRows}
+        total={result.total}
+        page={page}
+        limit={limit}
+        filters={{ status, type, search }}
+      />
+    </Layout>,
+  );
+});
+
+app.get("/admin/products/new", async (c) => {
+  const { cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const emptyProduct = {
+    id: "new",
+    name: "",
+    slug: "",
+    description: null,
+    descriptionHtml: null,
+    type: "physical",
+    status: "draft",
+    availableForSale: true,
+    featuredImageUrl: null,
+    seoTitle: null,
+    seoDescription: null,
+  };
+
+  return c.html(
+    <Layout url={c.req.url} title="New Product – Admin" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <ProductEditPage product={emptyProduct} variants={[]} images={[]} isNew />
+    </Layout>,
+  );
+});
+
+app.get("/admin/products/:id", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const productRepo = new ProductRepository(db, storeId);
+  const product = await productRepo.findById(c.req.param("id"));
+  if (!product) return c.notFound();
+
+  return c.html(
+    <Layout url={c.req.url} title={`${product.name} – Admin`} isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <ProductEditPage
+        product={product as any}
+        variants={product.variants as any}
+        images={product.images as any}
+      />
+    </Layout>,
+  );
+});
+
+// ─── Admin Collections Page ───────────────────────────────
+app.get("/admin/collections", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const productRepo = new ProductRepository(db, storeId);
+  const cols = await productRepo.findCollections();
+
+  return c.html(
+    <Layout url={c.req.url} title="Collections – Admin" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminCollectionsPage collections={cols as any} />
+    </Layout>,
+  );
+});
+
+// ─── Admin Orders Pages ──────────────────────────────────
+app.get("/admin/orders", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const page = parseInt(c.req.query("page") || "1", 10);
+  const limit = 20;
+  const status = c.req.query("status") || undefined;
+  const search = c.req.query("search") || undefined;
+  const dateFrom = c.req.query("dateFrom") || undefined;
+  const dateTo = c.req.query("dateTo") || undefined;
+
+  const orderRepo = new OrderRepository(db, storeId);
+  const result = await orderRepo.findByStore({ page, limit, status, search, dateFrom, dateTo });
+
+  return c.html(
+    <Layout url={c.req.url} title="Orders – Admin" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminOrdersPage
+        orders={result.orders as any}
+        total={result.total}
+        page={page}
+        limit={limit}
+        filters={{ status, search, dateFrom, dateTo }}
+      />
+    </Layout>,
+  );
+});
+
+app.get("/admin/orders/:id", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const orderId = c.req.param("id");
+  const orderRepo = new OrderRepository(db, storeId);
+  const order = await orderRepo.findById(orderId);
+  if (!order) return c.notFound();
+
+  const userRepo = new UserRepository(db);
+  const customer = await userRepo.findById(order.userId);
+
+  return c.html(
+    <Layout url={c.req.url} title={`Order #${orderId.slice(0, 8)} – Admin`} isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminOrderDetailPage
+        order={order as any}
+        customerName={customer?.name}
+        customerEmail={customer?.email}
+      />
+    </Layout>,
+  );
+});
+
+// ─── Admin Bookings Page ──────────────────────────────────
+app.get("/admin/bookings", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const page = Number(c.req.query("page") || "1");
+  const limit = 20;
+  const status = c.req.query("status");
+  const date = c.req.query("date");
+  const search = c.req.query("search");
+
+  const bookingRepo = new BookingRepository(db, storeId);
+  const { bookings: bookingsList, total } = await bookingRepo.findBookingsForAdmin({ page, limit, status, date, search });
+  const stats = await bookingRepo.getBookingStats();
+  const waitlist = await bookingRepo.findWaitlistForAdmin();
+
+  return c.html(
+    <Layout url={c.req.url} title="Bookings – Admin" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <AdminBookingsPage
+        bookings={bookingsList as any}
+        total={total}
+        page={page}
+        limit={limit}
+        filters={{ status, date, search }}
+        stats={stats}
+        waitlist={waitlist as any}
+      />
     </Layout>,
   );
 });
@@ -1293,7 +1968,7 @@ app.get("/platform/integrations", async (c) => {
   const integrations = await listUseCase.listForStore(storeId);
 
   return c.html(
-    <Layout title="Store Integrations" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Store Integrations" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <StoreIntegrationsPage store={store as any} integrations={integrations as any} />
     </Layout>,
   );
@@ -1310,7 +1985,7 @@ app.get("/affiliates", async (c) => {
   const conversions = await affiliateRepo.findConversions(affiliate.id);
 
   return c.html(
-    <Layout title="Affiliate Dashboard" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Affiliate Dashboard" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <AffiliateDashboardPage
         affiliate={affiliate as any}
         links={links as any}
@@ -1329,7 +2004,7 @@ app.get("/affiliates/links", async (c) => {
   const links = await affiliateRepo.findLinks(affiliate.id);
 
   return c.html(
-    <Layout title="Affiliate Links" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Affiliate Links" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <AffiliateLinksPage affiliate={affiliate as any} links={links as any} />
     </Layout>
   );
@@ -1344,7 +2019,7 @@ app.get("/affiliates/payouts", async (c) => {
   const payouts = await affiliateRepo.findPayouts(affiliate.id);
 
   return c.html(
-    <Layout title="Affiliate Payouts" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Affiliate Payouts" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <AffiliatePayoutsPage payouts={payouts as any} />
     </Layout>
   );
@@ -1354,7 +2029,7 @@ app.get("/affiliates/register", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
 
   return c.html(
-    <Layout title="Become an Affiliate" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Become an Affiliate" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <AffiliateRegisterPage />
     </Layout>
   );
@@ -1367,7 +2042,7 @@ app.get("/venues", async (c) => {
   const venues = await venueRepo.findAll();
 
   return c.html(
-    <Layout title="Venues" activePath="/venues" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Venues" activePath="/venues" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <VenueListPage venues={venues as any} />
     </Layout>
   );
@@ -1379,7 +2054,7 @@ app.get("/venues/:slug", async (c) => {
   const venue = await venueRepo.findBySlug(c.req.param("slug"));
   if (!venue) {
     return c.html(
-      <Layout title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <Layout url={c.req.url} title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
         <NotFoundPage />
       </Layout>,
       404
@@ -1387,7 +2062,7 @@ app.get("/venues/:slug", async (c) => {
   }
 
   return c.html(
-    <Layout title={venue.name} isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title={venue.name} isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <VenueDetailPage venue={venue as any} />
     </Layout>
   );
@@ -1442,11 +2117,29 @@ app.get("/cdn/*", async (c) => {
   return new Response(object.body as ReadableStream, { headers });
 });
 
+// Redirect middleware — check for stored redirects before 404
+app.use("*", async (c, next) => {
+  await next();
+  if (c.res.status === 404 && !c.req.path.startsWith("/api/")) {
+    try {
+      const db = createDb(c.env.DATABASE_URL);
+      const storeId = c.get("storeId") as string;
+      const redirectRepo = new RedirectRepository(db, storeId);
+      const redirect = await redirectRepo.findByPath(c.req.path);
+      if (redirect) {
+        return c.redirect(redirect.toPath, redirect.statusCode as 301 | 302);
+      }
+    } catch {
+      // If redirect lookup fails, continue to 404
+    }
+  }
+});
+
 // 404 catch-all
 app.notFound(async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   return c.html(
-    <Layout title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <NotFoundPage />
     </Layout>,
     404
@@ -1462,7 +2155,7 @@ app.onError(async (err, c) => {
   try {
     const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
     return c.html(
-      <Layout title="Error" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <Layout url={c.req.url} title="Error" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
         <ErrorPage status={500} />
       </Layout>,
       500

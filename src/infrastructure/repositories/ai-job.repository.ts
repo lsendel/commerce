@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc, count } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   generationJobs,
@@ -83,6 +83,14 @@ export class AiJobRepository {
     return result[0] ?? null;
   }
 
+  async deleteJob(id: string) {
+    const result = await this.db
+      .delete(generationJobs)
+      .where(and(eq(generationJobs.id, id), eq(generationJobs.storeId, this.storeId)))
+      .returning();
+    return result[0] ?? null;
+  }
+
   // ─── Pet Profiles ───────────────────────────────────────────────────────────
 
   async createPetProfile(
@@ -131,6 +139,7 @@ export class AiJobRepository {
       species: string;
       breed: string;
       photoUrl: string;
+      photoStorageKey: string;
     }>,
   ) {
     const result = await this.db

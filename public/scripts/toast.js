@@ -1,6 +1,6 @@
 /**
  * Toast notification system — lightweight, vanilla JS.
- * Supports: success (green), error (red), info (blue).
+ * Supports: success (green), error (red), warning (amber), info (blue).
  * Auto-dismiss after 3s with fade-out. Stacks vertically bottom-right.
  */
 (function () {
@@ -15,12 +15,15 @@
     success: "M4.5 12.75l6 6 9-13.5",
     error:
       "M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z",
+    warning:
+      "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z",
     info: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
   };
 
   var colorClasses = {
     success: "toast--success",
     error: "toast--error",
+    warning: "toast--warning",
     info: "toast--info",
   };
 
@@ -36,6 +39,34 @@
     container.setAttribute("aria-live", "polite");
     container.setAttribute("aria-atomic", "false");
     document.body.appendChild(container);
+
+    // Inject toast styles if not already present
+    if (!document.getElementById("toast-styles")) {
+      var style = document.createElement("style");
+      style.id = "toast-styles";
+      style.textContent = [
+        ".toast-container{position:fixed;bottom:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;pointer-events:none;}",
+        ".toast{pointer-events:auto;display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;border-radius:.75rem;font-size:.875rem;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.15);transform:translateX(100%);opacity:0;transition:all .3s ease;}",
+        ".toast--visible{transform:translateX(0);opacity:1;}",
+        ".toast--exit{transform:translateX(100%);opacity:0;}",
+        ".toast--success{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;}",
+        ".toast--error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}",
+        ".toast--warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}",
+        ".toast--info{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;}",
+        ".toast__icon{width:1.25rem;height:1.25rem;flex-shrink:0;}",
+        ".toast__text{flex:1;}",
+        ".toast__close{background:none;border:none;cursor:pointer;opacity:.5;padding:.25rem;border-radius:.25rem;color:inherit;}",
+        ".toast__close:hover{opacity:1;}",
+        "@media(prefers-color-scheme:dark){",
+        ".toast--success{background:#064e3b;color:#a7f3d0;border-color:#065f46;}",
+        ".toast--error{background:#7f1d1d;color:#fecaca;border-color:#991b1b;}",
+        ".toast--warning{background:#78350f;color:#fde68a;border-color:#92400e;}",
+        ".toast--info{background:#1e3a5f;color:#bfdbfe;border-color:#1e40af;}",
+        "}",
+      ].join("\n");
+      document.head.appendChild(style);
+    }
+
     return container;
   }
 
@@ -79,7 +110,7 @@
     textSpan.className = "toast__text";
     textSpan.textContent = message;
 
-    // Build close button (safe DOM construction, no innerHTML)
+    // Build close button
     var closeBtn = document.createElement("button");
     closeBtn.className = "toast__close";
     closeBtn.setAttribute("aria-label", "Dismiss");

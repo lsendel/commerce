@@ -140,6 +140,10 @@ export class GootenProvider implements FulfillmentProvider {
     }));
   }
 
+  /**
+   * Gooten does not support webhooks — order status is tracked via polling
+   * (see Gooten status polling cron job). Always returns true as a no-op.
+   */
   verifyWebhook(_payload: string, _signature: string): boolean {
     return true;
   }

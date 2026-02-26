@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import { html } from "hono/html";
 
 interface CalendarEvent {
   id: string;
@@ -143,9 +144,26 @@ export const EventCalendarPage: FC<EventCalendarPageProps> = ({
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
               </a>
-              <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">
-                {MONTH_NAMES[month - 1]} {year}
-              </h2>
+              <div class="flex items-center gap-2">
+                <select
+                  id="month-jump"
+                  class="text-lg font-bold text-gray-900 dark:text-gray-100 bg-transparent border-none focus:ring-0 cursor-pointer pr-1"
+                  aria-label="Select month"
+                >
+                  {MONTH_NAMES.map((name, idx) => (
+                    <option value={idx + 1} selected={idx + 1 === month}>{name}</option>
+                  ))}
+                </select>
+                <select
+                  id="year-jump"
+                  class="text-lg font-bold text-gray-900 dark:text-gray-100 bg-transparent border-none focus:ring-0 cursor-pointer"
+                  aria-label="Select year"
+                >
+                  {[year - 1, year, year + 1, year + 2].map((y) => (
+                    <option value={y} selected={y === year}>{y}</option>
+                  ))}
+                </select>
+              </div>
               <a
                 href={nextUrl}
                 class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
@@ -301,6 +319,30 @@ export const EventCalendarPage: FC<EventCalendarPageProps> = ({
           )}
         </div>
       </div>
+
+      {html`<script>
+        // Month/year jump
+        var monthEl = document.getElementById('month-jump');
+        var yearEl = document.getElementById('year-jump');
+        function jumpTo() {
+          var m = monthEl.value;
+          var y = yearEl.value;
+          window.location.href = '/events/calendar?year=' + y + '&month=' + m;
+        }
+        monthEl.addEventListener('change', jumpTo);
+        yearEl.addEventListener('change', jumpTo);
+
+        // Keyboard navigation on calendar grid
+        document.addEventListener('keydown', function(e) {
+          if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+          var base = '/events/calendar';
+          if (e.key === 'ArrowLeft') {
+            window.location.href = '${prevUrl}';
+          } else if (e.key === 'ArrowRight') {
+            window.location.href = '${nextUrl}';
+          }
+        });
+      </script>`}
     </div>
   );
 };

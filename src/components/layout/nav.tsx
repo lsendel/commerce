@@ -5,6 +5,10 @@ export interface NavLink {
   href: string;
   /** Only show when user is authenticated */
   auth?: boolean;
+  /** Only show for specific roles */
+  roles?: string[];
+  /** Only show for affiliates */
+  affiliate?: boolean;
 }
 
 export const navLinks: NavLink[] = [
@@ -12,11 +16,15 @@ export const navLinks: NavLink[] = [
   { label: "Events", href: "/events" },
   { label: "Studio", href: "/studio" },
   { label: "Account", href: "/account", auth: true },
+  { label: "Admin", href: "/admin/products", auth: true, roles: ["owner", "admin", "store_owner"] },
+  { label: "Affiliates", href: "/affiliates/dashboard", auth: true, affiliate: true },
 ];
 
 interface NavProps {
   activePath?: string;
   isAuthenticated?: boolean;
+  userRole?: string;
+  isAffiliate?: boolean;
   /** Vertical layout for mobile menu */
   vertical?: boolean;
 }
@@ -24,11 +32,16 @@ interface NavProps {
 export const Nav: FC<NavProps> = ({
   activePath = "",
   isAuthenticated = false,
+  userRole,
+  isAffiliate = false,
   vertical = false,
 }) => {
-  const filteredLinks = navLinks.filter(
-    (link) => !link.auth || isAuthenticated
-  );
+  const filteredLinks = navLinks.filter((link) => {
+    if (link.auth && !isAuthenticated) return false;
+    if (link.roles && (!userRole || !link.roles.includes(userRole))) return false;
+    if (link.affiliate && !isAffiliate) return false;
+    return true;
+  });
 
   const containerClass = vertical
     ? "flex flex-col gap-1"
