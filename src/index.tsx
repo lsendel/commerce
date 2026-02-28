@@ -46,6 +46,8 @@ import { taxRoutes } from "./routes/api/tax.routes";
 import { reviewRoutes } from "./routes/api/reviews.routes";
 import { analyticsRoutes } from "./routes/api/analytics.routes";
 import { currencyRoutes } from "./routes/api/currency.routes";
+import { eventRoutes } from "./routes/api/events.routes";
+import { accountRoutes } from "./routes/api/account.routes";
 
 // GraphQL
 import { schema } from "./graphql/schema";
@@ -183,6 +185,7 @@ import { CheckInfrastructureUseCase } from "./application/platform/check-infrast
 import { verifyJwt } from "./infrastructure/security/jwt";
 import { getCookie } from "hono/cookie";
 import { AUTH_COOKIE_NAME, CART_COOKIE_NAME } from "./shared/constants";
+import { resolveFeatureFlags } from "./shared/feature-flags";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -262,6 +265,8 @@ app.route("/api/tax", taxRoutes);
 app.route("/api", reviewRoutes);
 app.route("/api", analyticsRoutes);
 app.route("/api", currencyRoutes);
+app.route("/api/events", eventRoutes);
+app.route("/api/account", accountRoutes);
 
 // ─── GraphQL ───────────────────────────────────────────────
 const yoga = createYoga({ schema, graphqlEndpoint: "/graphql" });
@@ -808,10 +813,19 @@ app.get("/products/:slug", async (c) => {
 app.get("/cart", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   const cartSessionId = getCookie(c, CART_COOKIE_NAME);
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
   let items: any[] = [];
   let totals: any = null;
   let warnings: string[] = [];
   let couponCode: string | null = null;
+  let bundleSuggestions: Array<{
+    productId: string;
+    name: string;
+    slug: string;
+    imageUrl?: string | null;
+    variantId: string;
+    price: number;
+  }> = [];
 
   if (cartSessionId) {
     try {
@@ -825,9 +839,61 @@ app.get("/cart", async (c) => {
     } catch { /* empty cart */ }
   }
 
+  if (featureFlags.dynamic_bundles) {
+    const productRepo = new ProductRepository(db, storeId);
+    const excludedSlugs = new Set(
+      items
+        .map((item: any) => item?.variant?.product?.slug)
+        .filter(Boolean),
+    );
+    const catalog = await productRepo.findAll({
+      page: 1,
+      limit: 12,
+      status: "active",
+      available: true,
+      sort: "newest",
+    });
+    bundleSuggestions = catalog.products
+      .filter((product: any) => !excludedSlugs.has(product.slug))
+      .map((product: any) => {
+        const primaryVariant = product.variants?.[0];
+        return {
+          productId: product.id,
+          name: product.name,
+          slug: product.slug,
+          imageUrl: product.featuredImageUrl ?? product.images?.[0]?.url ?? null,
+          variantId: primaryVariant?.id ?? "",
+          price: Number(primaryVariant?.price ?? product.priceRange?.min ?? 0),
+        };
+      })
+      .filter((item) => Boolean(item.variantId))
+      .slice(0, 4);
+  }
+
+  const freeShippingTarget = 50;
+  const goalBase = Math.max(
+    0,
+    Number(totals?.subtotal ?? 0) - Number(totals?.discount ?? 0),
+  );
+  const goalProgress = featureFlags.cart_goal_progress
+    ? {
+      target: freeShippingTarget,
+      remaining: Math.max(0, freeShippingTarget - goalBase),
+      percent: Math.min(100, Math.round((goalBase / freeShippingTarget) * 100)),
+      reached: goalBase >= freeShippingTarget,
+    }
+    : undefined;
+
   return c.html(
     <Layout url={c.req.url} title="Cart" activePath="/cart" isAuthenticated={isAuthenticated} cartCount={cartCount} stripePublishableKey={c.env.STRIPE_PUBLISHABLE_KEY} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <CartPage items={items as any} totals={totals} warnings={warnings} couponCode={couponCode} />
+      <CartPage
+        items={items as any}
+        totals={totals}
+        warnings={warnings}
+        couponCode={couponCode}
+        bundleSuggestions={bundleSuggestions}
+        goalProgress={goalProgress}
+      />
     </Layout>
   );
 });
