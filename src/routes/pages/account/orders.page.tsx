@@ -166,6 +166,14 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
 
                 {/* Actions row */}
                 <div class="mt-4 flex items-center gap-4">
+                  <button
+                    type="button"
+                    class="reorder-btn inline-flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg px-3 py-1.5 font-medium transition-colors"
+                    data-order-id={order.id}
+                  >
+                    Order Again
+                  </button>
+
                   {/* Tracking link */}
                   {order.trackingUrl && (
                     <a
@@ -203,6 +211,7 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
         </div>
       )}
       <script src="/scripts/order-cancel.js" defer></script>
+      <script src="/scripts/order-reorder.js" defer></script>
     </div>
   );
 };

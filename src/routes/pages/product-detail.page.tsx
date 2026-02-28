@@ -5,6 +5,7 @@ import { VariantSelector } from "../../components/product/variant-selector";
 import { ProductCard } from "../../components/product/product-card";
 import { ImageGallery } from "../../components/product/image-gallery";
 import { Button } from "../../components/ui/button";
+import { getStockConfidence } from "../../shared/stock-confidence";
 
 interface ProductImage {
   id: string;
@@ -20,6 +21,7 @@ interface Variant {
   compareAtPrice?: string | null;
   availableForSale?: boolean | null;
   inventoryQuantity?: number | null;
+  estimatedProductionDays?: number | null;
   status?: string | null;
   options?: Record<string, string> | null;
 }
@@ -71,6 +73,7 @@ interface Review {
   content?: string | null;
   authorName: string;
   verified: boolean;
+  helpfulCount?: number;
   storeResponse?: string | null;
   createdAt: string;
 }
@@ -101,6 +104,7 @@ interface ProductDetailPageProps {
   reviews?: Review[];
   reviewSummary?: ReviewSummary | null;
   isAuthenticated?: boolean;
+  isReviewIntelligenceEnabled?: boolean;
   siteUrl?: string;
 }
 
@@ -111,6 +115,7 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
   reviews = [],
   reviewSummary,
   isAuthenticated = false,
+  isReviewIntelligenceEnabled = false,
   siteUrl = "",
 }) => {
   const {
@@ -149,6 +154,11 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
 
   const productUrl = siteUrl ? `${siteUrl}/products/${product.slug}` : `/products/${product.slug}`;
   const lowestPrice = variants.length > 0 ? Math.min(...variants.map((v) => parseFloat(v.price))) : 0;
+  const primaryVariant = variants.find((variant) => variant.availableForSale !== false) ?? variants[0];
+  const stockConfidence = getStockConfidence(
+    primaryVariant?.inventoryQuantity,
+    primaryVariant?.estimatedProductionDays,
+  );
 
   // Breadcrumb JSON-LD
   const breadcrumbJsonLd = JSON.stringify({
@@ -234,12 +244,31 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
               </svg>
               Currently unavailable
             </div>
-          ) : product.type === "physical" && variants[0]?.inventoryQuantity !== undefined && variants[0].inventoryQuantity !== null && variants[0].inventoryQuantity < 5 ? (
-            <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 text-orange-600 text-xs font-medium animate-pulse">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Hurry! Only {variants[0].inventoryQuantity} left in stock.
+          ) : product.type === "physical" ? (
+            <div class="mt-3">
+              <div
+                class={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+                  stockConfidence.level === "low"
+                    ? "bg-orange-50 text-orange-600 animate-pulse"
+                    : stockConfidence.level === "out"
+                      ? "bg-red-50 text-red-600"
+                      : "bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {stockConfidence.level === "out" ? (
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  )}
+                </svg>
+                {stockConfidence.message}
+              </div>
+              {stockConfidence.etaMessage && (
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  {stockConfidence.etaMessage}
+                </p>
+              )}
             </div>
           ) : null}
 
@@ -487,6 +516,29 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
                   {review.content && (
                     <p class="text-sm text-gray-600 dark:text-gray-400">{review.content}</p>
                   )}
+                  {isReviewIntelligenceEnabled && (
+                    <div class="mt-3 flex items-center gap-2">
+                      <button
+                        type="button"
+                        data-review-helpful
+                        data-review-id={review.id}
+                        class="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        Helpful
+                        <span data-helpful-count data-review-id={review.id}>
+                          ({review.helpfulCount ?? 0})
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        data-review-report
+                        data-review-id={review.id}
+                        class="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        Report
+                      </button>
+                    </div>
+                  )}
                   {review.storeResponse && (
                     <div class="mt-3 pl-4 border-l-2 border-brand-300">
                       <p class="text-xs font-semibold text-brand-600 mb-1">Store Response</p>
@@ -613,7 +665,6 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
             if (reviewForm) {
               reviewForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                var productId = reviewForm.dataset.productId;
                 var fd = new FormData(reviewForm);
                 var rating = parseInt(fd.get('rating'));
                 if (!rating || rating < 1) {
@@ -621,13 +672,13 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
                   document.getElementById('review-error').classList.remove('hidden');
                   return;
                 }
-                var body = { productId: productId, rating: rating };
+                var body = { rating: rating };
                 var title = fd.get('title');
                 var content = fd.get('content');
                 if (title) body.title = title;
                 if (content) body.content = content;
 
-                fetch('/api/reviews', {
+                fetch('/api/products/${product.slug}/reviews', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(body),
@@ -649,6 +700,41 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
                   });
               });
             }
+
+            /* Review intelligence actions */
+            var helpfulButtons = Array.prototype.slice.call(document.querySelectorAll('[data-review-helpful]'));
+            helpfulButtons.forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var reviewId = btn.getAttribute('data-review-id');
+                if (!reviewId) return;
+                fetch('/api/reviews/' + reviewId + '/helpful', { method: 'POST' })
+                  .then(function(r) {
+                    if (!r.ok) throw new Error('Failed to mark helpful');
+                    return r.json();
+                  })
+                  .then(function(data) {
+                    var countEl = document.querySelector('[data-helpful-count][data-review-id="' + reviewId + '"]');
+                    if (countEl) countEl.textContent = '(' + String(data.helpfulCount || 0) + ')';
+                    btn.setAttribute('disabled', 'true');
+                  })
+                  .catch(function() {});
+              });
+            });
+
+            var reportButtons = Array.prototype.slice.call(document.querySelectorAll('[data-review-report]'));
+            reportButtons.forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var reviewId = btn.getAttribute('data-review-id');
+                if (!reviewId) return;
+                fetch('/api/reviews/' + reviewId + '/report', { method: 'POST' })
+                  .then(function(r) {
+                    if (!r.ok) throw new Error('Failed to report review');
+                    btn.textContent = 'Reported';
+                    btn.setAttribute('disabled', 'true');
+                  })
+                  .catch(function() {});
+              });
+            });
 
             /* Notify form */
             var notifyForm = document.getElementById('notify-form');

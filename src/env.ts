@@ -29,6 +29,7 @@ export interface Env {
   // App
   APP_URL: string;
   APP_NAME: string;
+  FEATURE_FLAGS?: string; // comma-separated feature flag keys
 
   // Platform
   PLATFORM_DOMAINS: string; // comma-separated: "petm8.io,premiumstores.net,premiums.shop"

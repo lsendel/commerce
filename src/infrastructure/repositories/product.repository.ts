@@ -303,6 +303,8 @@ export class ProductRepository {
       compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
       sku: v.sku,
       availableForSale: v.availableForSale ?? true,
+      inventoryQuantity: v.inventoryQuantity ?? 0,
+      estimatedProductionDays: v.estimatedProductionDays ?? null,
       options: (v.options as Record<string, string>) ?? {},
     }));
 

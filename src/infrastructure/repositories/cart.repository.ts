@@ -111,11 +111,16 @@ export class CartRepository {
         variantId: item.variantId,
         quantity: item.quantity,
         variant: {
+          id: variant?.id ?? "",
           title: variant?.title ?? "",
           price,
+          compareAtPrice: variant?.compareAtPrice ? Number(variant.compareAtPrice) : null,
+          inventoryQuantity: variant?.inventoryQuantity ?? 0,
+          estimatedProductionDays: variant?.estimatedProductionDays ?? null,
           product: {
             name: product?.name ?? "",
             slug: product?.slug ?? "",
+            type: (product?.type as "physical" | "digital" | "subscription" | "bookable") ?? "physical",
             featuredImageUrl: product?.featuredImageUrl ?? null,
           },
         },

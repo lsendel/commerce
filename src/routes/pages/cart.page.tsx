@@ -13,6 +13,8 @@ interface CartItemData {
     title: string;
     price: string;
     compareAtPrice?: string | null;
+    inventoryQuantity?: number | null;
+    estimatedProductionDays?: number | null;
     product: {
       name: string;
       slug: string;
@@ -39,11 +41,32 @@ interface CartTotals {
   total: number;
 }
 
+interface BundleSuggestion {
+  productId: string;
+  name: string;
+  slug: string;
+  imageUrl?: string | null;
+  variantId: string;
+  price: number;
+}
+
 interface CartPageProps {
   items: CartItemData[];
   totals?: CartTotals | null;
   warnings?: string[];
   couponCode?: string | null;
+  bundleSuggestions?: BundleSuggestion[];
+  goalProgress?: {
+    target: number;
+    remaining: number;
+    percent: number;
+    reached: boolean;
+  };
+  deliveryPromise?: {
+    minDays: number;
+    maxDays: number;
+    label: string;
+  };
 }
 
 export const CartPage: FC<CartPageProps> = ({
@@ -51,6 +74,9 @@ export const CartPage: FC<CartPageProps> = ({
   totals,
   warnings = [],
   couponCode,
+  bundleSuggestions = [],
+  goalProgress,
+  deliveryPromise,
 }) => {
   const subtotal = totals?.subtotal ?? items.reduce((sum, item) => {
     const isBookable = item.variant.product.type === "bookable";
@@ -147,6 +173,58 @@ export const CartPage: FC<CartPageProps> = ({
               <CartItem key={item.id} item={item} />
             ))}
 
+            {bundleSuggestions.length > 0 && (
+              <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="rounded-2xl border border-brand-100 dark:border-brand-900/50 bg-brand-50/40 dark:bg-brand-900/20 p-4">
+                  <div class="flex items-center justify-between gap-2 mb-3">
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Build your bundle
+                    </h2>
+                    <span class="text-xs text-gray-500">Recommended add-ons</span>
+                  </div>
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    {bundleSuggestions.map((bundle) => (
+                      <div
+                        key={bundle.productId}
+                        class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3"
+                      >
+                        <div class="flex gap-3">
+                          {bundle.imageUrl ? (
+                            <img
+                              src={bundle.imageUrl}
+                              alt={bundle.name}
+                              class="w-16 h-16 rounded-lg object-cover bg-gray-100 dark:bg-gray-700"
+                            />
+                          ) : (
+                            <div class="w-16 h-16 rounded-lg bg-gray-100 dark:bg-gray-700" />
+                          )}
+                          <div class="min-w-0 flex-1">
+                            <a
+                              href={`/products/${bundle.slug}`}
+                              class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-brand-600 line-clamp-2"
+                            >
+                              {bundle.name}
+                            </a>
+                            <p class="mt-1 text-xs text-gray-500">${bundle.price.toFixed(2)}</p>
+                            <button
+                              type="button"
+                              data-bundle-add
+                              data-variant-id={bundle.variantId}
+                              data-product-name={bundle.name}
+                              class="mt-2 inline-flex items-center rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-medium px-3 py-1.5"
+                            >
+                              Add to cart
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div id="bundle-error" class="hidden mt-2 text-sm text-red-600" />
+                </div>
+              </div>
+            )}
+
             {/* Coupon input */}
             <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
               <div id="coupon-section">
@@ -214,6 +292,8 @@ export const CartPage: FC<CartPageProps> = ({
               shippingEstimate={totals?.shippingEstimate}
               taxEstimate={totals?.taxEstimate}
               total={totals?.total}
+              goalProgress={goalProgress}
+              deliveryPromise={deliveryPromise}
             />
           </div>
         </div>
@@ -259,6 +339,39 @@ export const CartPage: FC<CartPageProps> = ({
                   .then(function() { location.reload(); });
               });
             }
+
+            /* Dynamic bundles */
+            var bundleButtons = Array.prototype.slice.call(document.querySelectorAll('[data-bundle-add]'));
+            bundleButtons.forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var variantId = btn.getAttribute('data-variant-id');
+                var productName = btn.getAttribute('data-product-name') || 'bundle_item';
+                if (!variantId) return;
+
+                fetch('/api/cart/items', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ variantId: variantId, quantity: 1 }),
+                })
+                  .then(function(r) {
+                    if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Unable to add item'); });
+                    return r.json();
+                  })
+                  .then(function() {
+                    if (window.petm8Track) {
+                      window.petm8Track('bundle_add_to_cart', { productName: productName, variantId: variantId });
+                    }
+                    location.reload();
+                  })
+                  .catch(function(err) {
+                    var errEl = document.getElementById('bundle-error');
+                    if (errEl) {
+                      errEl.textContent = err.message;
+                      errEl.classList.remove('hidden');
+                    }
+                  });
+              });
+            });
           })();
         </script>
       `}

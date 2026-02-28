@@ -15,12 +15,15 @@ import { runExpirePromotions } from "./expire-promotions.job";
 import { runRollupAnalytics } from "./rollup-analytics.job";
 import { runPushAnalyticsExternal } from "./push-analytics-external.job";
 import { runSyncExchangeRates } from "./sync-exchange-rates.job";
+import { resolveFeatureFlags } from "../shared/feature-flags";
 
 export async function handleScheduled(
   ctrl: ScheduledController,
   env: Env,
   ctx: ExecutionContext,
 ) {
+  const featureFlags = resolveFeatureFlags(env.FEATURE_FLAGS);
+
   switch (ctrl.cron) {
     case "0 0 * * *": // Daily at midnight UTC
       ctx.waitUntil(runBookingReminders(env));
@@ -30,7 +33,9 @@ export async function handleScheduled(
       ctx.waitUntil(runAffiliatePayouts(env));
       break;
     case "0 * * * *": // Every 1 hour
-      ctx.waitUntil(runAbandonedCartDetection(env));
+      if (featureFlags.checkout_recovery) {
+        ctx.waitUntil(runAbandonedCartDetection(env));
+      }
       ctx.waitUntil(runExpirePromotions(env));
       break;
     case "0 2 * * *": // Daily at 2am UTC — analytics rollup

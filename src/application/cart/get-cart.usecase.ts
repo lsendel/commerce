@@ -3,6 +3,7 @@ import type { Database } from "../../infrastructure/db/client";
 import { eq, inArray } from "drizzle-orm";
 import { productVariants } from "../../infrastructure/db/schema";
 import { recalculate } from "../../domain/cart/cart-total.vo";
+import { getStockConfidence } from "../../shared/stock-confidence";
 
 export class GetCartUseCase {
   constructor(
@@ -50,6 +51,18 @@ export class GetCartUseCase {
           warnings.push(
             `Only ${inv} left of "${(item as any).variant?.product?.name ?? "item"}"`,
           );
+        }
+
+        if ((item as any).variant?.product?.type === "physical") {
+          const confidence = getStockConfidence(
+            fresh.inventoryQuantity,
+            null,
+          );
+          if (confidence.level === "low" || confidence.level === "out") {
+            warnings.push(
+              `"${(item as any).variant?.product?.name ?? "item"}": ${confidence.message}`,
+            );
+          }
         }
 
         if (fresh.availableForSale === false) {

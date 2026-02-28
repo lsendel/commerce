@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import { getStockConfidence } from "../../shared/stock-confidence";
 
 interface CartItemProps {
   item: {
@@ -9,6 +10,9 @@ interface CartItemProps {
       id: string;
       title: string;
       price: string;
+      compareAtPrice?: string | null;
+      inventoryQuantity?: number | null;
+      estimatedProductionDays?: number | null;
       product: {
         name: string;
         slug: string;
@@ -34,6 +38,10 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
   const unitPrice = parseFloat(variant.price);
   const lineTotal = unitPrice * quantity;
   const isBookable = product.type === "bookable";
+  const stockConfidence = getStockConfidence(
+    variant.inventoryQuantity,
+    variant.estimatedProductionDays,
+  );
 
   let bookingTotal = 0;
   if (isBookable && personTypeQuantities && bookingAvailability?.prices) {
@@ -170,6 +178,17 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
             )}
           </div>
         </div>
+
+        {!isBookable && product.type === "physical" && stockConfidence.level !== "healthy" && (
+          <div
+            class={`mt-2 text-xs ${
+              stockConfidence.level === "out" ? "text-red-600" : "text-orange-600"
+            }`}
+          >
+            {stockConfidence.message}
+            {stockConfidence.etaMessage ? ` ${stockConfidence.etaMessage}` : ""}
+          </div>
+        )}
       </div>
     </div>
   );

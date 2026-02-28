@@ -693,6 +693,7 @@ app.get("/products", async (c) => {
 // Product Detail
 app.get("/products/:slug", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
   const productRepo = new ProductRepository(db, storeId);
   const product = await productRepo.findBySlug(c.req.param("slug"));
   if (!product) {
@@ -732,7 +733,8 @@ app.get("/products/:slug", async (c) => {
     content: r.content ?? null,
     authorName: r.authorName ?? "Anonymous",
     verified: r.isVerifiedPurchase ?? false,
-    storeResponse: r.storeResponse ?? null,
+    helpfulCount: r.helpfulCount ?? 0,
+    storeResponse: r.responseText ?? null,
     createdAt: r.createdAt ? formatDateUs(r.createdAt) : "",
   }));
 
@@ -803,6 +805,7 @@ app.get("/products/:slug", async (c) => {
         reviews={formattedReviews}
         reviewSummary={reviewSummary}
         isAuthenticated={isAuthenticated}
+        isReviewIntelligenceEnabled={featureFlags.review_intelligence}
         siteUrl={siteUrl}
       />
     </Layout>
@@ -884,6 +887,18 @@ app.get("/cart", async (c) => {
     }
     : undefined;
 
+  const physicalProductionDays = items
+    .filter((item: any) => item?.variant?.product?.type === "physical")
+    .map((item: any) => Number(item?.variant?.estimatedProductionDays ?? 0))
+    .filter((days: number) => Number.isFinite(days) && days > 0);
+  const deliveryPromise = featureFlags.delivery_promise_engine && physicalProductionDays.length > 0
+    ? {
+      minDays: Math.max(2, Math.min(...physicalProductionDays)),
+      maxDays: Math.max(...physicalProductionDays) + 3,
+      label: "Delivery promise",
+    }
+    : undefined;
+
   return c.html(
     <Layout url={c.req.url} title="Cart" activePath="/cart" isAuthenticated={isAuthenticated} cartCount={cartCount} stripePublishableKey={c.env.STRIPE_PUBLISHABLE_KEY} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <CartPage
@@ -893,6 +908,7 @@ app.get("/cart", async (c) => {
         couponCode={couponCode}
         bundleSuggestions={bundleSuggestions}
         goalProgress={goalProgress}
+        deliveryPromise={deliveryPromise}
       />
     </Layout>
   );

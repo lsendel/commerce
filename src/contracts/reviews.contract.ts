@@ -82,4 +82,31 @@ export const reviewsContract = c.router({
       404: z.object({ error: z.string() }),
     },
   },
+  markHelpful: {
+    method: "POST",
+    path: "/api/reviews/:id/helpful",
+    pathParams: idParamSchema,
+    body: z.object({}),
+    responses: {
+      200: z.object({
+        id: z.string(),
+        helpfulCount: z.number(),
+      }),
+      404: z.object({ error: z.string() }),
+    },
+  },
+  report: {
+    method: "POST",
+    path: "/api/reviews/:id/report",
+    pathParams: idParamSchema,
+    body: z.object({}),
+    responses: {
+      200: z.object({
+        id: z.string(),
+        reportedCount: z.number(),
+        status: z.enum(["pending", "approved", "rejected", "flagged"]),
+      }),
+      404: z.object({ error: z.string() }),
+    },
+  },
 });

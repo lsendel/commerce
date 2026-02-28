@@ -36,6 +36,16 @@ export interface BirthdayOfferData {
   offerCode: string;
 }
 
+export interface CheckoutRecoveryData {
+  stage: "recovery_1h" | "recovery_24h" | "recovery_72h";
+  userName: string;
+  cartId: string;
+  itemCount: number;
+  idleHours: number;
+  recoveryUrl: string;
+  incentiveCode?: string | null;
+}
+
 export class EmailAdapter {
   private appName: string;
   private appUrl: string;
@@ -118,6 +128,38 @@ export class EmailAdapter {
        <p>It's <strong>${data.petName}'s</strong> birthday! To celebrate, here's a special offer:</p>
        <p>Use code <strong>${data.offerCode}</strong> for a discount on your next order.</p>
        <p><a href="${this.appUrl}">Shop now</a></p>`,
+    );
+  }
+
+  async sendCheckoutRecovery(to: string, data: CheckoutRecoveryData): Promise<void> {
+    const stageContent: Record<CheckoutRecoveryData["stage"], { subject: string; intro: string }> = {
+      recovery_1h: {
+        subject: "Your cart is ready when you are",
+        intro: `You still have ${data.itemCount} item(s) waiting in your cart.`,
+      },
+      recovery_24h: {
+        subject: "Still deciding? Your cart is saved",
+        intro: `Your ${data.itemCount} item(s) are still available.`,
+      },
+      recovery_72h: {
+        subject: "Last reminder before your cart expires",
+        intro: `Final reminder: you have ${data.itemCount} item(s) saved in your cart.`,
+      },
+    };
+
+    const stage = stageContent[data.stage];
+    const incentive = data.incentiveCode
+      ? `<p>Use code <strong>${data.incentiveCode}</strong> at checkout for a special offer.</p>`
+      : "";
+
+    await this.send(
+      to,
+      stage.subject,
+      `<h2>Hi ${data.userName},</h2>
+       <p>${stage.intro}</p>
+       <p>It has been about ${data.idleHours} hour(s) since your last visit.</p>
+       ${incentive}
+       <p><a href="${data.recoveryUrl}">Return to your cart</a></p>`,
     );
   }
 }

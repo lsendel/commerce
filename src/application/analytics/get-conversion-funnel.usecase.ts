@@ -1,15 +1,10 @@
 import { eq, and, gte, lte, count, inArray } from "drizzle-orm";
 import type { Database } from "../../infrastructure/db/client";
 import { analyticsEvents } from "../../infrastructure/db/schema";
-
-const FUNNEL_STEPS = ["page_view", "product_view", "add_to_cart", "checkout_started", "order_completed"] as const;
-const EVENT_TYPES_BY_STEP: Record<(typeof FUNNEL_STEPS)[number], string[]> = {
-  page_view: ["page_view"],
-  product_view: ["product_view"],
-  add_to_cart: ["add_to_cart"],
-  checkout_started: ["checkout_started", "begin_checkout"],
-  order_completed: ["purchase", "order_completed"],
-};
+import {
+  ANALYTICS_EVENT_TYPES_BY_FUNNEL_STEP,
+  ANALYTICS_FUNNEL_STEPS,
+} from "../../shared/analytics-taxonomy";
 
 export class GetConversionFunnelUseCase {
   constructor(private db: Database, private storeId: string) {}
@@ -17,7 +12,7 @@ export class GetConversionFunnelUseCase {
   async execute(dateFrom: string, dateTo: string) {
     const includedEventTypes = Array.from(
       new Set(
-        Object.values(EVENT_TYPES_BY_STEP).flat(),
+        Object.values(ANALYTICS_EVENT_TYPES_BY_FUNNEL_STEP).flat(),
       ),
     );
 
@@ -40,8 +35,8 @@ export class GetConversionFunnelUseCase {
     const countMap = new Map(eventCounts.map((r) => [r.eventType, r.total]));
 
     const totalsByStep = new Map<string, number>();
-    for (const step of FUNNEL_STEPS) {
-      const stepEventTypes = EVENT_TYPES_BY_STEP[step] ?? [step];
+    for (const step of ANALYTICS_FUNNEL_STEPS) {
+      const stepEventTypes = ANALYTICS_EVENT_TYPES_BY_FUNNEL_STEP[step] ?? [step];
       const total = stepEventTypes.reduce(
         (sum, eventType) => sum + (countMap.get(eventType) ?? 0),
         0,
@@ -49,9 +44,10 @@ export class GetConversionFunnelUseCase {
       totalsByStep.set(step, total);
     }
 
-    return FUNNEL_STEPS.map((step, i) => {
+    return ANALYTICS_FUNNEL_STEPS.map((step, i) => {
       const total = totalsByStep.get(step) ?? 0;
-      const prevTotal = i > 0 ? (totalsByStep.get(FUNNEL_STEPS[i - 1]!) ?? 0) : total;
+      const prevTotal =
+        i > 0 ? (totalsByStep.get(ANALYTICS_FUNNEL_STEPS[i - 1]!) ?? 0) : total;
       const dropOff = prevTotal > 0 ? ((prevTotal - total) / prevTotal) * 100 : 0;
       return { step, count: total, dropOffPercent: Number(dropOff.toFixed(1)) };
     });

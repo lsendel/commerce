@@ -74,4 +74,20 @@ export const ordersContract = c.router({
       404: z.object({ error: z.string() }),
     },
   },
+  reorder: {
+    method: "POST",
+    path: "/api/orders/:id/reorder",
+    pathParams: idParamSchema,
+    body: z.object({}).optional(),
+    responses: {
+      200: z.object({
+        orderId: z.string(),
+        addedLineCount: z.number(),
+        skippedLineCount: z.number(),
+        skipped: z.array(z.string()),
+      }),
+      401: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
+    },
+  },
 });

@@ -224,6 +224,35 @@ export class AnalyticsRepository {
   }
 
   /**
+   * Count events grouped by event type for a date range.
+   */
+  async countEventsByType(
+    dateFrom: string,
+    dateTo: string,
+    eventTypes: string[],
+  ) {
+    if (eventTypes.length === 0) return new Map<string, number>();
+
+    const rows = await this.db
+      .select({
+        eventType: analyticsEvents.eventType,
+        total: count(),
+      })
+      .from(analyticsEvents)
+      .where(
+        and(
+          eq(analyticsEvents.storeId, this.storeId),
+          gte(analyticsEvents.createdAt, new Date(`${dateFrom}T00:00:00Z`)),
+          lte(analyticsEvents.createdAt, new Date(`${dateTo}T23:59:59Z`)),
+          inArray(analyticsEvents.eventType, eventTypes),
+        ),
+      )
+      .groupBy(analyticsEvents.eventType);
+
+    return new Map(rows.map((row) => [row.eventType, row.total]));
+  }
+
+  /**
    * Aggregate attribution fields from analytics event properties.
    */
   async getAttributionBreakdown(dateFrom: string, dateTo: string, limit = 10) {

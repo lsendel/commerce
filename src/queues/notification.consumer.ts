@@ -1,7 +1,7 @@
 import type { Env } from "../env";
 import { EmailAdapter } from "../infrastructure/notifications/email.adapter";
 import { createDb } from "../infrastructure/db/client";
-import { users } from "../infrastructure/db/schema";
+import { analyticsEvents, users } from "../infrastructure/db/schema";
 import { and, eq, isNotNull } from "drizzle-orm";
 
 interface BookingReminderNotification {
@@ -52,6 +52,23 @@ interface AbandonedCartNotification {
   };
 }
 
+interface CheckoutRecoveryNotification {
+  type: "checkout_recovery";
+  data: {
+    stage: "recovery_1h" | "recovery_24h" | "recovery_72h";
+    channel: "email";
+    cartId: string;
+    storeId: string;
+    userId: string;
+    userEmail: string;
+    userName: string;
+    itemCount: number;
+    idleHours: number;
+    recoveryUrl: string;
+    incentiveCode?: string | null;
+  };
+}
+
 interface BirthdayOfferNotification {
   type: "birthday_offer";
   data: {
@@ -68,6 +85,7 @@ type NotificationMessage =
   | OrderConfirmationNotification
   | ShipmentUpdateNotification
   | AbandonedCartNotification
+  | CheckoutRecoveryNotification
   | BirthdayOfferNotification;
 
 async function canSendMarketingMessage(env: Env, userId: string): Promise<boolean> {
@@ -173,6 +191,59 @@ export async function handleNotificationMessage(
 
       console.log(
         `[notifications] Abandoned cart email sent to ${userEmail} for cart ${cartId}`,
+      );
+      break;
+    }
+
+    case "checkout_recovery": {
+      const {
+        stage,
+        channel,
+        cartId,
+        storeId,
+        userId,
+        userEmail,
+        userName,
+        itemCount,
+        idleHours,
+        recoveryUrl,
+        incentiveCode,
+      } = payload.data;
+      const allowed = await canSendMarketingMessage(env, userId);
+      if (!allowed) {
+        console.log(
+          `[notifications] Skipped checkout recovery for ${userEmail} (marketing suppression)`,
+        );
+        break;
+      }
+
+      await emailAdapter.sendCheckoutRecovery(userEmail, {
+        stage,
+        userName,
+        cartId,
+        itemCount,
+        idleHours,
+        recoveryUrl,
+        incentiveCode: incentiveCode ?? null,
+      });
+
+      const db = createDb(env.DATABASE_URL);
+      await db.insert(analyticsEvents).values({
+        storeId,
+        userId,
+        eventType: "checkout_recovery_sent",
+        properties: {
+          stage,
+          channel,
+          cartId,
+          itemCount,
+          idleHours,
+          incentiveCode: incentiveCode ?? null,
+        },
+      });
+
+      console.log(
+        `[notifications] Checkout recovery (${stage}) sent to ${userEmail} for cart ${cartId}`,
       );
       break;
     }

@@ -9,8 +9,14 @@ import { GetDashboardMetricsUseCase } from "../../application/analytics/get-dash
 import { GetConversionFunnelUseCase } from "../../application/analytics/get-conversion-funnel.usecase";
 import { GetTopProductsUseCase } from "../../application/analytics/get-top-products.usecase";
 import { GetRevenueMetricsUseCase } from "../../application/analytics/get-revenue-metrics.usecase";
+import { GetBaselineReadinessUseCase } from "../../application/analytics/get-baseline-readiness.usecase";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { requireRole } from "../../middleware/role.middleware";
+import { normalizeAnalyticsEventType } from "../../shared/analytics-taxonomy";
+import {
+  YOLO_WEEKLY_FLAG_MATRIX,
+  resolveFeatureFlags,
+} from "../../shared/feature-flags";
 
 const analytics = new Hono<{ Bindings: Env }>();
 
@@ -29,18 +35,6 @@ const trackEventBodySchema = z.object({
   path: ["eventType"],
 });
 
-const EVENT_TYPE_ALIASES: Record<string, string> = {
-  begin_checkout: "checkout_started",
-  checkout_begin: "checkout_started",
-  order_completed: "purchase",
-  purchase_completed: "purchase",
-};
-
-function normalizeEventType(eventType: string): string {
-  const key = eventType.trim().toLowerCase();
-  return EVENT_TYPE_ALIASES[key] ?? key;
-}
-
 analytics.post(
   "/analytics/events",
   zValidator("json", trackEventBodySchema),
@@ -51,7 +45,7 @@ analytics.post(
     const useCase = new TrackEventUseCase(analyticsRepo);
 
     const body = c.req.valid("json");
-    const normalizedEventType = normalizeEventType(
+    const normalizedEventType = normalizeAnalyticsEventType(
       body.eventType ?? body.eventName ?? "",
     );
     const properties = body.properties ?? body.payload ?? {};
@@ -90,6 +84,37 @@ const dashboardQuerySchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
+
+const readinessQuerySchema = z.object({
+  days: z.coerce.number().int().min(3).max(30).optional(),
+});
+
+analytics.get(
+  "/analytics/readiness",
+  requireAuth(),
+  requireRole("admin"),
+  zValidator("query", readinessQuerySchema),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const storeId = c.get("storeId") as string;
+    const analyticsRepo = new AnalyticsRepository(db, storeId);
+    const useCase = new GetBaselineReadinessUseCase(analyticsRepo);
+    const { days } = c.req.valid("query");
+    const readiness = await useCase.execute(days ?? 7);
+    const flags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+
+    return c.json(
+      {
+        ...readiness,
+        featureFlags: {
+          enabled: flags,
+          matrix: YOLO_WEEKLY_FLAG_MATRIX,
+        },
+      },
+      200,
+    );
+  },
+);
 
 analytics.get(
   "/analytics/dashboard",

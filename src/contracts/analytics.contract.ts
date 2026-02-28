@@ -16,6 +16,10 @@ const dashboardQuerySchema = z.object({
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
+const readinessQuerySchema = z.object({
+  days: z.coerce.number().int().min(3).max(30).optional(),
+});
+
 const dailyBreakdownItemSchema = z.object({
   date: z.string(),
   metric: z.string(),
@@ -37,6 +41,43 @@ const dashboardMetricsSchema = z.object({
   dailyBreakdown: z.array(dailyBreakdownItemSchema),
 });
 
+const readinessWindowSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  pageViews: z.number(),
+  addToCartCount: z.number(),
+  checkoutStartedCount: z.number(),
+  purchaseCount: z.number(),
+  conversionRate: z.number(),
+});
+
+const readinessSchema = z.object({
+  windowDays: z.number(),
+  currentWindow: readinessWindowSchema,
+  previousWindow: readinessWindowSchema,
+  safetyRails: z.object({
+    conversionDropPercent: z.number().nullable(),
+    conversionDropThresholdPercent: z.number(),
+    conversionDropTriggered: z.boolean(),
+    fulfillmentFailureRatePercent: z.number().nullable(),
+    fulfillmentFailureThresholdPercent: z.number(),
+    fulfillmentFailureTriggered: z.boolean(),
+    p1Over60IncidentCount: z.number(),
+    p1Over60Triggered: z.boolean(),
+  }),
+  featureFlags: z.object({
+    enabled: z.record(z.string(), z.boolean()),
+    matrix: z.array(
+      z.object({
+        key: z.string(),
+        featureId: z.number(),
+        week: z.number(),
+        description: z.string(),
+      }),
+    ),
+  }),
+});
+
 export const analyticsContract = c.router({
   trackEvent: {
     method: "POST",
@@ -53,6 +94,17 @@ export const analyticsContract = c.router({
     query: dashboardQuerySchema,
     responses: {
       200: dashboardMetricsSchema,
+      400: z.object({ error: z.string() }),
+      401: z.object({ error: z.string() }),
+      403: z.object({ error: z.string() }),
+    },
+  },
+  getReadiness: {
+    method: "GET",
+    path: "/api/analytics/readiness",
+    query: readinessQuerySchema,
+    responses: {
+      200: readinessSchema,
       400: z.object({ error: z.string() }),
       401: z.object({ error: z.string() }),
       403: z.object({ error: z.string() }),

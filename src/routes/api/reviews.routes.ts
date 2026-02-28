@@ -136,4 +136,47 @@ reviews.post(
   },
 );
 
+// POST /reviews/:id/helpful — increment helpful count (public)
+reviews.post("/reviews/:id/helpful", async (c) => {
+  const db = createDb(c.env.DATABASE_URL);
+  const storeId = c.get("storeId") as string;
+  const reviewId = c.req.param("id");
+
+  const reviewRepo = new ReviewRepository(db, storeId);
+  const review = await reviewRepo.incrementHelpful(reviewId);
+  if (!review) {
+    return c.json({ error: "Review not found" }, 404);
+  }
+
+  return c.json(
+    {
+      id: review.id,
+      helpfulCount: review.helpfulCount ?? 0,
+    },
+    200,
+  );
+});
+
+// POST /reviews/:id/report — report review for moderation (public)
+reviews.post("/reviews/:id/report", async (c) => {
+  const db = createDb(c.env.DATABASE_URL);
+  const storeId = c.get("storeId") as string;
+  const reviewId = c.req.param("id");
+
+  const reviewRepo = new ReviewRepository(db, storeId);
+  const review = await reviewRepo.incrementReported(reviewId);
+  if (!review) {
+    return c.json({ error: "Review not found" }, 404);
+  }
+
+  return c.json(
+    {
+      id: review.id,
+      reportedCount: review.reportedCount ?? 0,
+      status: review.status,
+    },
+    200,
+  );
+});
+
 export { reviews as reviewRoutes };
