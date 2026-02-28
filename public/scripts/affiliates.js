@@ -1,6 +1,27 @@
 // Affiliate program client-side logic
 
 document.addEventListener("DOMContentLoaded", () => {
+  let flashTimeout;
+  const flashId = "affiliates-flash-banner";
+  function showFlash(message, type = "error") {
+    let banner = document.getElementById(flashId);
+    if (!banner) {
+      banner = document.createElement("div");
+      banner.id = flashId;
+      banner.className = "fixed top-4 right-4 z-50 max-w-sm rounded-lg px-4 py-3 text-sm font-medium shadow-lg";
+      document.body.appendChild(banner);
+    }
+    banner.textContent = message;
+    banner.classList.remove("bg-red-50", "text-red-700", "border", "border-red-200", "bg-emerald-50", "text-emerald-700", "border-emerald-200", "hidden");
+    if (type === "success") {
+      banner.classList.add("bg-emerald-50", "text-emerald-700", "border", "border-emerald-200");
+    } else {
+      banner.classList.add("bg-red-50", "text-red-700", "border", "border-red-200");
+    }
+    clearTimeout(flashTimeout);
+    flashTimeout = setTimeout(() => banner.classList.add("hidden"), 4000);
+  }
+
   // Register form
   const registerForm = document.getElementById("affiliate-register-form");
   if (registerForm) {
@@ -16,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "/affiliates/dashboard";
       } else {
         const data = await res.json();
-        alert(data.error || "Registration failed");
+        showFlash(data.error || "Registration failed");
       }
     });
   }
@@ -34,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }),
       });
       if (res.ok) location.reload();
-      else alert("Failed to create link");
+      else showFlash("Failed to create link");
     });
   }
 });

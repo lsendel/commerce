@@ -232,6 +232,16 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
       {html`
         <script>
           (function() {
+            function getErrorMessage(err, fallback) {
+              if (err && err.message) return err.message;
+              return fallback;
+            }
+
+            function notifyError(err, fallback) {
+              var message = getErrorMessage(err, fallback);
+              if (window.showToast) window.showToast(message, 'error');
+            }
+
             /* Profile form */
             var profileForm = document.getElementById('profile-form');
             if (profileForm) {
@@ -370,7 +380,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
                   if (!res.ok) throw new Error('Failed to delete account');
                   window.location.href = '/';
                 } catch (err) {
-                  alert(err.message);
+                  notifyError(err, 'Failed to delete account');
                   this.disabled = false;
                   this.textContent = 'Delete My Account';
                 }
@@ -390,7 +400,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
                 } catch (err) {
                   this.textContent = 'Verify email';
                   this.disabled = false;
-                  alert(err.message);
+                  notifyError(err, 'Failed to send verification email');
                 }
               });
             }

@@ -3,16 +3,20 @@ import { zValidator } from "@hono/zod-validator";
 import type { Env } from "../../env";
 import { createDb } from "../../infrastructure/db/client";
 import { requireAuth } from "../../middleware/auth.middleware";
+import { requireRole } from "../../middleware/role.middleware";
 import { ManageTaxZonesUseCase } from "../../application/tax/manage-tax-zones.usecase";
 import { CalculateTaxUseCase } from "../../application/tax/calculate-tax.usecase";
 import {
   createTaxZoneSchema,
   updateTaxZoneSchema,
   createTaxRateSchema,
+  updateTaxRateSchema,
   calculateTaxSchema,
 } from "../../contracts/tax.contract";
 
 const taxRoutes = new Hono<{ Bindings: Env }>();
+
+taxRoutes.use("/*", requireAuth(), requireRole("admin"));
 
 // ─── GET /zones — List all tax zones ──────────────────────────
 
@@ -129,6 +133,31 @@ taxRoutes.post(
         createdAt: rate.createdAt.toISOString(),
       },
       201,
+    );
+  },
+);
+
+// ─── PATCH /zones/:id/rates/:rateId — Update a rate in a zone ─────────────
+
+taxRoutes.patch(
+  "/zones/:id/rates/:rateId",
+  requireAuth(),
+  zValidator("json", updateTaxRateSchema),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const storeId = c.get("storeId") as string;
+    const rateId = c.req.param("rateId");
+    const body = c.req.valid("json");
+
+    const useCase = new ManageTaxZonesUseCase();
+    const rate = await useCase.updateRate({ db, storeId, rateId, ...body });
+
+    return c.json(
+      {
+        ...rate,
+        createdAt: rate.createdAt.toISOString(),
+      },
+      200,
     );
   },
 );

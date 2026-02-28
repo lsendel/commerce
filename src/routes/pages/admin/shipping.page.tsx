@@ -488,7 +488,7 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
                 var zoneName = card.dataset.zoneName;
                 if (!confirm('Delete shipping zone "' + zoneName + '" and all its rates?')) return;
 
-                fetch('/api/admin/shipping/zones/' + card.dataset.zoneId, { method: 'DELETE' })
+                fetch('/api/shipping/zones/' + card.dataset.zoneId, { method: 'DELETE' })
                   .then(function(r) {
                     if (!r.ok) throw new Error('Delete failed');
                     card.remove();
@@ -517,7 +517,7 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
                 countries: checkedCountries,
               };
 
-              var url = id ? '/api/admin/shipping/zones/' + id : '/api/admin/shipping/zones';
+              var url = id ? '/api/shipping/zones/' + id : '/api/shipping/zones';
               var method = id ? 'PATCH' : 'POST';
 
               fetch(url, {
@@ -577,7 +577,7 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
                 var card = row.closest('[data-zone-row]');
                 if (!confirm('Delete this shipping rate?')) return;
 
-                fetch('/api/admin/shipping/zones/' + card.dataset.zoneId + '/rates/' + row.dataset.rateId, { method: 'DELETE' })
+                fetch('/api/shipping/zones/' + card.dataset.zoneId + '/rates/' + row.dataset.rateId, { method: 'DELETE' })
                   .then(function(r) {
                     if (!r.ok) throw new Error('Delete failed');
                     row.remove();
@@ -595,17 +595,20 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
 
               var body = {
                 name: rateForm.querySelector('[name="rateName"]').value,
+                type: (rateForm.querySelector('[name="minWeight"]').value || rateForm.querySelector('[name="maxWeight"]').value)
+                  ? 'weight_based'
+                  : 'flat',
                 minWeight: rateForm.querySelector('[name="minWeight"]').value || null,
                 maxWeight: rateForm.querySelector('[name="maxWeight"]').value || null,
                 price: rateForm.querySelector('[name="ratePrice"]').value,
                 currency: rateForm.querySelector('[name="rateCurrency"]').value,
-                minDeliveryDays: Number(rateForm.querySelector('[name="minDeliveryDays"]').value),
-                maxDeliveryDays: Number(rateForm.querySelector('[name="maxDeliveryDays"]').value),
+                estimatedDaysMin: Number(rateForm.querySelector('[name="minDeliveryDays"]').value),
+                estimatedDaysMax: Number(rateForm.querySelector('[name="maxDeliveryDays"]').value),
               };
 
               var url = rateId
-                ? '/api/admin/shipping/zones/' + zoneId + '/rates/' + rateId
-                : '/api/admin/shipping/zones/' + zoneId + '/rates';
+                ? '/api/shipping/zones/' + zoneId + '/rates/' + rateId
+                : '/api/shipping/zones/' + zoneId + '/rates';
               var method = rateId ? 'PATCH' : 'POST';
 
               fetch(url, {
@@ -641,13 +644,27 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
               calcResults.classList.add('hidden');
               calcNoResults.classList.add('hidden');
 
-              fetch('/api/admin/shipping/calculate?country=' + encodeURIComponent(country) + '&weight=' + encodeURIComponent(weight))
+              fetch('/api/shipping/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  items: [{
+                    variantId: '00000000-0000-0000-0000-000000000000',
+                    quantity: 1,
+                    price: 0,
+                    weight: Number(weight),
+                    weightUnit: 'kg',
+                  }],
+                  address: { country: country },
+                  subtotal: 0,
+                }),
+              })
                 .then(function(r) {
                   if (!r.ok) throw new Error('Calculation failed');
                   return r.json();
                 })
                 .then(function(data) {
-                  var rates = data.rates || [];
+                  var rates = data.options || [];
                   if (rates.length === 0) {
                     calcNoResults.classList.remove('hidden');
                     return;
@@ -667,13 +684,13 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
                     nameP.textContent = rate.name;
                     var detailP = document.createElement('p');
                     detailP.className = 'text-xs text-gray-500';
-                    detailP.textContent = rate.zoneName + ' \u00b7 ' + rate.minDeliveryDays + '-' + rate.maxDeliveryDays + ' days';
+                    detailP.textContent = data.zoneName + ' \u00b7 ' + (rate.estimatedDaysMin ?? 0) + '-' + (rate.estimatedDaysMax ?? 0) + ' days';
                     infoDiv.appendChild(nameP);
                     infoDiv.appendChild(detailP);
 
                     var priceSpan = document.createElement('span');
                     priceSpan.className = 'text-sm font-semibold text-gray-900 dark:text-gray-100';
-                    priceSpan.textContent = rate.formattedPrice;
+                    priceSpan.textContent = rate.price == null ? 'Carrier calculated' : ('$' + Number(rate.price).toFixed(2));
 
                     row.appendChild(infoDiv);
                     row.appendChild(priceSpan);

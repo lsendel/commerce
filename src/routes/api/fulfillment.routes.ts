@@ -74,6 +74,7 @@ fulfillment.post(
     z.object({
       productId: z.string().uuid(),
       imageUrl: z.string().url(),
+      printfulProductId: z.number().int().positive().optional(),
       waitAndApply: z.boolean().optional(),
       timeoutMs: z.number().int().min(5_000).max(300_000).optional(),
       pollIntervalMs: z.number().int().min(500).max(10_000).optional(),
@@ -81,8 +82,14 @@ fulfillment.post(
   ),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
-    const { productId, imageUrl, waitAndApply, timeoutMs, pollIntervalMs } =
-      c.req.valid("json");
+    const {
+      productId,
+      imageUrl,
+      printfulProductId,
+      waitAndApply,
+      timeoutMs,
+      pollIntervalMs,
+    } = c.req.valid("json");
 
     const useCase = new GenerateMockupUseCase();
     const result = waitAndApply
@@ -91,6 +98,7 @@ fulfillment.post(
           db,
           productId,
           imageUrl,
+          printfulProductId,
           timeoutMs,
           pollIntervalMs,
         })
@@ -99,6 +107,7 @@ fulfillment.post(
           db,
           productId,
           imageUrl,
+          printfulProductId,
         });
 
     return c.json(result, 201);

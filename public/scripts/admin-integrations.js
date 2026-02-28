@@ -1,6 +1,42 @@
 (function () {
   "use strict";
 
+  var flashTimeout = null;
+  function showFlash(message, type) {
+    var banner = document.getElementById("admin-integrations-flash");
+    if (!banner) {
+      banner = document.createElement("div");
+      banner.id = "admin-integrations-flash";
+      banner.className =
+        "fixed top-4 right-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm font-medium shadow-lg";
+      document.body.appendChild(banner);
+    }
+    banner.textContent = message;
+    banner.classList.remove(
+      "bg-red-50",
+      "text-red-700",
+      "border-red-200",
+      "bg-amber-50",
+      "text-amber-800",
+      "border-amber-200",
+      "bg-emerald-50",
+      "text-emerald-700",
+      "border-emerald-200",
+      "hidden",
+    );
+    if (type === "success") {
+      banner.classList.add("bg-emerald-50", "text-emerald-700", "border-emerald-200");
+    } else if (type === "warning") {
+      banner.classList.add("bg-amber-50", "text-amber-800", "border-amber-200");
+    } else {
+      banner.classList.add("bg-red-50", "text-red-700", "border-red-200");
+    }
+    if (flashTimeout) clearTimeout(flashTimeout);
+    flashTimeout = setTimeout(function () {
+      banner.classList.add("hidden");
+    }, 4000);
+  }
+
   // ─── Tab Switching ──────────────────────────────────────────
   document.querySelectorAll("[data-tab-target]").forEach(function (btn) {
     btn.addEventListener("click", function () {
@@ -78,18 +114,19 @@
         })
         .then(function (data) {
           if (data.verification && data.verification.success) {
-            alert(data.verification.message || "Connected successfully!");
+            showFlash(data.verification.message || "Connected successfully!", "success");
           } else if (data.verification) {
-            alert(
+            showFlash(
               "Saved but verification failed: " + data.verification.message,
+              "warning",
             );
           } else {
-            alert("Saved!");
+            showFlash("Saved!", "success");
           }
           window.location.reload();
         })
         .catch(function (err) {
-          alert("Error: " + err.message);
+          showFlash("Error: " + err.message, "error");
         });
     });
   });
@@ -113,15 +150,16 @@
           return r.json();
         })
         .then(function (data) {
-          alert(
+          showFlash(
             data.success
               ? data.message
               : "Verification failed: " + data.message,
+            data.success ? "success" : "warning",
           );
           window.location.reload();
         })
         .catch(function (err) {
-          alert("Error: " + err.message);
+          showFlash("Error: " + err.message, "error");
           btn.textContent = "Verify Connection";
           btn.disabled = false;
         });
@@ -148,7 +186,7 @@
           window.location.reload();
         })
         .catch(function (err) {
-          alert("Error: " + err.message);
+          showFlash("Error: " + err.message, "error");
         });
     });
   });
@@ -168,7 +206,7 @@
           window.location.reload();
         })
         .catch(function (err) {
-          alert("Error: " + err.message);
+          showFlash("Error: " + err.message, "error");
         });
     });
   });

@@ -294,6 +294,23 @@ export const AdminBookingsPage: FC<AdminBookingsPageProps> = ({
       )}
 
       {html`<script>
+        function showAdminBookingsError(message) {
+          if (window.showToast) {
+            window.showToast(message, 'error');
+            return;
+          }
+          var banner = document.getElementById('admin-bookings-flash');
+          if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'admin-bookings-flash';
+            banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-lg';
+            document.body.appendChild(banner);
+          }
+          banner.textContent = message;
+          banner.classList.remove('hidden');
+          setTimeout(function() { banner.classList.add('hidden'); }, 4000);
+        }
+
         document.addEventListener('click', async (e) => {
           const btn = e.target.closest('[data-action]');
           if (!btn) return;
@@ -305,14 +322,14 @@ export const AdminBookingsPage: FC<AdminBookingsPageProps> = ({
             if (!confirm('Check in this booking?')) return;
             const res = await fetch('/api/bookings/' + bookingId + '/check-in', { method: 'POST' });
             if (res.ok) location.reload();
-            else alert('Check-in failed: ' + (await res.text()));
+            else showAdminBookingsError('Check-in failed: ' + (await res.text()));
           }
 
           if (action === 'no-show') {
             if (!confirm('Mark this booking as no-show?')) return;
             const res = await fetch('/api/bookings/' + bookingId + '/no-show', { method: 'POST' });
             if (res.ok) location.reload();
-            else alert('No-show failed: ' + (await res.text()));
+            else showAdminBookingsError('No-show failed: ' + (await res.text()));
           }
         });
       </script>`}

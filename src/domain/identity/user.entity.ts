@@ -3,6 +3,9 @@ export interface User {
   email: string;
   name: string;
   passwordHash: string;
+  googleSub: string | null;
+  appleSub: string | null;
+  metaSub: string | null;
   stripeCustomerId: string | null;
   emailVerifiedAt: Date | null;
   avatarUrl: string | null;

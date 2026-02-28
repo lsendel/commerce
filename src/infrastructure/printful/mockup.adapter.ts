@@ -7,6 +7,35 @@ interface MockupTaskCreated {
   status: string;
 }
 
+interface ProductVariantsResponse {
+  product: {
+    id: number;
+    title: string;
+  };
+  variants: Array<{
+    id: number;
+  }>;
+}
+
+interface MockupTemplateResponse {
+  variant_mapping: Array<{
+    variant_id: number;
+    templates: Array<{
+      placement: string;
+      template_id: number;
+    }>;
+  }>;
+  templates: Array<{
+    template_id: number;
+    template_width: number;
+    template_height: number;
+    print_area_width: number;
+    print_area_height: number;
+    print_area_top: number;
+    print_area_left: number;
+  }>;
+}
+
 interface MockupTaskResult {
   task_key: string;
   status: "pending" | "completed" | "error";
@@ -40,22 +69,54 @@ export class PrintfulMockupAdapter {
     printfulProductId: number,
     imageUrl: string,
   ): Promise<{ taskKey: string }> {
+    const [productData, templateData] = await Promise.all([
+      client.get<ProductVariantsResponse>(`/products/${printfulProductId}`),
+      client.get<MockupTemplateResponse>(
+        `/mockup-generator/templates/${printfulProductId}`,
+      ),
+    ]);
+
+    const variantIds = (productData.result.variants ?? [])
+      .map((v) => v.id)
+      .filter((id) => Number.isFinite(id));
+
+    if (variantIds.length === 0) {
+      throw new Error(
+        `Printful product ${printfulProductId} has no variants for mockups`,
+      );
+    }
+
+    const firstMapping = templateData.result.variant_mapping?.[0];
+    const firstPlacement = firstMapping?.templates?.[0];
+    const placement = firstPlacement?.placement ?? "front";
+
+    const template =
+      templateData.result.templates.find(
+        (t) => t.template_id === firstPlacement?.template_id,
+      ) ?? templateData.result.templates[0];
+
+    if (!template) {
+      throw new Error(
+        `No mockup templates available for Printful product ${printfulProductId}`,
+      );
+    }
+
     const response = await client.post<MockupTaskCreated>(
       `/mockup-generator/create-task/${printfulProductId}`,
       {
-        variant_ids: [],
+        variant_ids: variantIds,
         format: "jpg",
         files: [
           {
-            placement: "front",
+            placement,
             image_url: imageUrl,
             position: {
-              area_width: 1800,
-              area_height: 2400,
-              width: 1800,
-              height: 2400,
-              top: 0,
-              left: 0,
+              area_width: template.template_width,
+              area_height: template.template_height,
+              width: template.print_area_width,
+              height: template.print_area_height,
+              top: template.print_area_top,
+              left: template.print_area_left,
             },
           },
         ],

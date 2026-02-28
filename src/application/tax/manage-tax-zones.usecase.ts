@@ -63,6 +63,17 @@ interface DeleteRateInput {
   rateId: string;
 }
 
+interface UpdateRateInput {
+  db: Database;
+  storeId: string;
+  rateId: string;
+  name?: string;
+  rate?: number;
+  type?: TaxType;
+  appliesTo?: TaxAppliesTo;
+  compound?: boolean;
+}
+
 export class ManageTaxZonesUseCase {
   // ─── Zone CRUD ──────────────────────────────────────────
 
@@ -135,6 +146,28 @@ export class ManageTaxZonesUseCase {
   async listRates(input: ListRatesInput): Promise<TaxRate[]> {
     const repo = new TaxRepository(input.db, input.storeId);
     return repo.listRatesByZone(input.zoneId);
+  }
+
+  async updateRate(input: UpdateRateInput): Promise<TaxRate> {
+    if (input.name !== undefined && !input.name.trim()) {
+      throw new ValidationError("Rate name is required");
+    }
+    if (input.rate !== undefined && input.rate < 0) {
+      throw new ValidationError("Rate must be non-negative");
+    }
+
+    const repo = new TaxRepository(input.db, input.storeId);
+    const rate = await repo.updateRate(input.rateId, {
+      name: input.name?.trim(),
+      rate: input.rate,
+      type: input.type,
+      appliesTo: input.appliesTo,
+      compound: input.compound,
+    });
+    if (!rate) {
+      throw new NotFoundError("TaxRate", input.rateId);
+    }
+    return rate;
   }
 
   async deleteRate(input: DeleteRateInput): Promise<void> {

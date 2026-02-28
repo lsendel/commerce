@@ -37,7 +37,7 @@ interface LayoutProps {
   paginationLinks?: { prev?: string; next?: string };
 }
 
-const alwaysLoadScripts = ["darkmode.js", "toast.js", "cart.js", "auth.js"];
+const alwaysLoadScripts = ["darkmode.js", "toast.js", "cart.js", "auth.js", "analytics.js"];
 
 export const Layout: FC<LayoutProps> = ({
   title,
@@ -49,7 +49,7 @@ export const Layout: FC<LayoutProps> = ({
   cartCount,
   ogImage = "https://petm8.io/og-image.jpg",
   ogType = "website",
-  url = "https://petm8.io",
+  url,
   jsonLd,
   storeName = "petm8",
   storeLogo,
@@ -71,14 +71,14 @@ export const Layout: FC<LayoutProps> = ({
       <title>{title ? `${title} | ${storeName}` : `${storeName} — Commerce`}</title>
       {description && <meta name="description" content={description} />}
       <meta name="robots" content="index,follow" />
-      <link rel="canonical" href={url} />
+      {url && <link rel="canonical" href={url} />}
       <link rel="icon" href="/favicon.ico" sizes="any" />
       <link rel="apple-touch-icon" href="/favicon-192.png" />
 
       {/* Open Graph / Facebook */}
       <meta property="og:site_name" content={storeName} />
       <meta property="og:type" content={ogType} />
-      <meta property="og:url" content={url} />
+      {url && <meta property="og:url" content={url} />}
       <meta property="og:title" content={title ? `${title} | ${storeName}` : `${storeName} — Commerce`} />
       {description && <meta property="og:description" content={description} />}
       <meta property="og:image" content={ogImage} />
@@ -87,7 +87,7 @@ export const Layout: FC<LayoutProps> = ({
 
       {/* Twitter */}
       <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={url} />
+      {url && <meta property="twitter:url" content={url} />}
       <meta property="twitter:title" content={title ? `${title} | ${storeName}` : `${storeName} — Commerce`} />
       {description && <meta property="twitter:description" content={description} />}
       <meta property="twitter:image" content={ogImage} />
@@ -220,23 +220,133 @@ export const Layout: FC<LayoutProps> = ({
         dangerouslySetInnerHTML={{
           __html: `
             (function () {
+              var SESSION_KEY = "petm8-analytics-session";
+              var ATTRIBUTION_KEY = "petm8-analytics-attribution";
+              function ensureSessionId() {
+                try {
+                  var existing = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+                  if (existing) {
+                    return existing;
+                  }
+                  var created =
+                    (window.crypto && window.crypto.randomUUID && window.crypto.randomUUID()) ||
+                    ("sid_" + Date.now() + "_" + Math.random().toString(36).slice(2));
+                  sessionStorage.setItem(SESSION_KEY, created);
+                  localStorage.setItem(SESSION_KEY, created);
+                  return created;
+                } catch (_) {
+                  return "sid_" + Date.now();
+                }
+              }
+              function loadAttribution() {
+                try {
+                  var raw = sessionStorage.getItem(ATTRIBUTION_KEY) || localStorage.getItem(ATTRIBUTION_KEY);
+                  if (!raw) return null;
+                  var parsed = JSON.parse(raw);
+                  return parsed && typeof parsed === "object" ? parsed : null;
+                } catch (_) {
+                  return null;
+                }
+              }
+              function saveAttribution(value) {
+                try {
+                  var raw = JSON.stringify(value);
+                  sessionStorage.setItem(ATTRIBUTION_KEY, raw);
+                  localStorage.setItem(ATTRIBUTION_KEY, raw);
+                } catch (_) {}
+              }
+              function getAttribution() {
+                var params = new URLSearchParams(window.location.search);
+                var campaignData = {
+                  utmSource: params.get("utm_source") || "",
+                  utmMedium: params.get("utm_medium") || "",
+                  utmCampaign: params.get("utm_campaign") || "",
+                  utmTerm: params.get("utm_term") || "",
+                  utmContent: params.get("utm_content") || "",
+                  gclid: params.get("gclid") || "",
+                  fbclid: params.get("fbclid") || "",
+                  ttclid: params.get("ttclid") || "",
+                  msclkid: params.get("msclkid") || "",
+                };
+                var hasCampaign = Object.values(campaignData).some(function (v) { return Boolean(v); });
+                var existing = loadAttribution();
+                if (hasCampaign) {
+                  var merged = {
+                    landingPath: (existing && existing.landingPath) || (window.location.pathname + window.location.search),
+                    firstSeenAt: (existing && existing.firstSeenAt) || new Date().toISOString(),
+                    ...campaignData,
+                  };
+                  saveAttribution(merged);
+                  return merged;
+                }
+                if (existing) return existing;
+                var fallback = {
+                  landingPath: window.location.pathname + window.location.search,
+                  firstSeenAt: new Date().toISOString(),
+                  ...campaignData,
+                };
+                saveAttribution(fallback);
+                return fallback;
+              }
+              function normalizeEventName(eventName) {
+                if (!eventName) return "unknown";
+                var map = {
+                  begin_checkout: "checkout_started",
+                  checkout_begin: "checkout_started",
+                  order_completed: "purchase",
+                  purchase_completed: "purchase",
+                };
+                var key = String(eventName).trim().toLowerCase();
+                return map[key] || key;
+              }
               window.petm8Track = function (eventName, payload) {
                 try {
+                  var normalizedEventName = normalizeEventName(eventName);
+                  var eventPayload = payload && typeof payload === "object"
+                    ? payload
+                    : { value: payload };
+                  var attribution = getAttribution();
+                  var trackedPayload = {
+                    ...eventPayload,
+                    attribution: attribution,
+                  };
                   window.dataLayer = window.dataLayer || [];
                   window.dataLayer.push({
-                    event: eventName,
-                    ...payload,
+                    event: normalizedEventName,
+                    ...trackedPayload,
                     ts: new Date().toISOString(),
                   });
                   if (window.gtag) {
-                    window.gtag("event", eventName, payload || {});
+                    window.gtag("event", normalizedEventName, trackedPayload);
                   }
-                  navigator.sendBeacon(
-                    "/api/analytics/events",
-                    JSON.stringify({ eventName: eventName, payload: payload || {} })
-                  );
+                  var body = JSON.stringify({
+                    eventType: normalizedEventName,
+                    sessionId: ensureSessionId(),
+                    properties: trackedPayload,
+                    pageUrl: window.location.href,
+                    referrer: document.referrer || undefined,
+                  });
+                  var sent = false;
+                  if (navigator.sendBeacon) {
+                    sent = navigator.sendBeacon(
+                      "/api/analytics/events",
+                      new Blob([body], { type: "application/json" })
+                    );
+                  }
+                  if (!sent) {
+                    fetch("/api/analytics/events", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: body,
+                      keepalive: true,
+                    }).catch(function () {});
+                  }
                 } catch (_) {}
               };
+              if (!window.__petm8PageTracked) {
+                window.__petm8PageTracked = true;
+                window.petm8Track("page_view", { path: window.location.pathname });
+              }
             })();
           `,
         }}

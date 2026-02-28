@@ -9,6 +9,7 @@ interface GenerateMockupInput {
   db: Database;
   productId: string;
   imageUrl: string;
+  printfulProductId?: number;
 }
 
 interface GenerateAndApplyMockupInput extends GenerateMockupInput {
@@ -24,41 +25,22 @@ export class GenerateMockupUseCase {
    * Returns the task key that can be used to poll for the result.
    */
   async execute(input: GenerateMockupInput) {
-    const { apiKey, db, productId, imageUrl } = input;
+    const { apiKey, db, productId, imageUrl, printfulProductId } = input;
     const client = new PrintfulClient(apiKey);
-
-    // Look up the Printful sync product to get the printful product ID
-    const syncProducts = await db
-      .select()
-      .from(printfulSyncProducts)
-      .where(eq(printfulSyncProducts.productId, productId))
-      .limit(1);
-
-    if (syncProducts.length === 0) {
-      throw new Error(
-        `Product ${productId} is not linked to a Printful product`,
-      );
-    }
-
-    const syncProduct = syncProducts[0];
-    if (!syncProduct) {
-      throw new Error(
-        `Product ${productId} is not linked to a Printful product`,
-      );
-    }
-    const printfulProductId = syncProduct.printfulId;
+    const resolvedPrintfulProductId =
+      printfulProductId ?? (await this.resolveLinkedPrintfulProductId(db, productId));
 
     // Create the mockup task
     const { taskKey } = await this.adapter.createMockupTask(
       client,
-      printfulProductId,
+      resolvedPrintfulProductId,
       imageUrl,
     );
 
     return {
       taskKey,
       productId,
-      printfulProductId,
+      printfulProductId: resolvedPrintfulProductId,
     };
   }
 
@@ -147,6 +129,28 @@ export class GenerateMockupUseCase {
         position: index,
       })),
     );
+  }
+
+  private async resolveLinkedPrintfulProductId(db: Database, productId: string) {
+    const syncProducts = await db
+      .select()
+      .from(printfulSyncProducts)
+      .where(eq(printfulSyncProducts.productId, productId))
+      .limit(1);
+
+    if (syncProducts.length === 0) {
+      throw new Error(
+        `Product ${productId} is not linked to a Printful product. Pass printfulProductId explicitly.`,
+      );
+    }
+
+    const syncProduct = syncProducts[0];
+    if (!syncProduct) {
+      throw new Error(
+        `Product ${productId} is not linked to a Printful product. Pass printfulProductId explicitly.`,
+      );
+    }
+    return syncProduct.printfulId;
   }
 }
 

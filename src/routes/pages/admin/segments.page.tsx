@@ -99,6 +99,23 @@ export const SegmentsPage: FC<SegmentsPageProps> = ({ segments }) => {
       {html`
         <script>
           (function() {
+            function showSegmentsError(message) {
+              if (window.showToast) {
+                window.showToast(message, 'error');
+                return;
+              }
+              var banner = document.getElementById('admin-segments-flash');
+              if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'admin-segments-flash';
+                banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-lg';
+                document.body.appendChild(banner);
+              }
+              banner.textContent = message;
+              banner.classList.remove('hidden');
+              setTimeout(function() { banner.classList.add('hidden'); }, 4000);
+            }
+
             var formSection = document.getElementById('segment-form-section');
             var form = document.getElementById('segment-form');
             document.getElementById('btn-add-segment').addEventListener('click', function() {
@@ -124,7 +141,7 @@ export const SegmentsPage: FC<SegmentsPageProps> = ({ segments }) => {
                 });
                 if (!res.ok) throw new Error('Failed to create segment');
                 window.location.reload();
-              } catch (err) { alert(err.message); }
+              } catch (err) { showSegmentsError(err.message || 'Failed to create segment'); }
             });
           })();
         </script>

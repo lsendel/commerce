@@ -44,9 +44,13 @@
       submitBtn.appendChild(document.createTextNode(" Signing in..."));
 
       try {
+        var sessionId = getAnalyticsSessionId();
         var res = await fetch("/api/auth/login", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(sessionId ? { "x-session-id": sessionId } : {}),
+          },
           credentials: "same-origin",
           body: JSON.stringify({ email: emailVal, password: passwordVal }),
         });
@@ -126,10 +130,14 @@
       try {
         var payload = { email: emailVal, password: passwordVal };
         if (nameVal) payload.name = nameVal;
+        var sessionId = getAnalyticsSessionId();
 
         var res = await fetch("/api/auth/register", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(sessionId ? { "x-session-id": sessionId } : {}),
+          },
           credentials: "same-origin",
           body: JSON.stringify(payload),
         });
@@ -302,6 +310,15 @@
       return redirect;
     }
     return null;
+  }
+
+  function getAnalyticsSessionId() {
+    var key = "petm8-analytics-session";
+    try {
+      return sessionStorage.getItem(key) || localStorage.getItem(key) || "";
+    } catch (_) {
+      return "";
+    }
   }
 
   // ─── Init ────────────────────────────────────────────────────────────────────

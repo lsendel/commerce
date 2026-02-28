@@ -105,6 +105,33 @@ export class TaxRepository {
     return this.toRateDomain(rows[0]!);
   }
 
+  async updateRate(
+    id: string,
+    data: {
+      name?: string;
+      rate?: number;
+      type?: TaxType;
+      appliesTo?: TaxAppliesTo;
+      compound?: boolean;
+    },
+  ): Promise<TaxRate | null> {
+    const values: Record<string, unknown> = {};
+    if (data.name !== undefined) values.name = data.name;
+    if (data.rate !== undefined) values.rate = String(data.rate);
+    if (data.type !== undefined) values.type = data.type;
+    if (data.appliesTo !== undefined) values.appliesTo = data.appliesTo;
+    if (data.compound !== undefined) values.compound = data.compound;
+
+    const rows = await this.db
+      .update(taxRates)
+      .set(values)
+      .where(eq(taxRates.id, id))
+      .returning();
+
+    const row = rows[0];
+    return row ? this.toRateDomain(row) : null;
+  }
+
   async listRatesByZone(zoneId: string): Promise<TaxRate[]> {
     const rows = await this.db
       .select()

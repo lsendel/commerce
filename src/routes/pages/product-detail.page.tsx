@@ -562,6 +562,19 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
       {html`
         <script>
           (function() {
+            function trackProductView() {
+              if (!window.petm8Track) return;
+              window.petm8Track("product_view", {
+                productId: '${product.id}',
+                productSlug: '${product.slug}',
+              });
+            }
+            if (document.readyState === "loading") {
+              document.addEventListener("DOMContentLoaded", trackProductView, { once: true });
+            } else {
+              setTimeout(trackProductView, 0);
+            }
+
             /* Share button */
             var shareBtn = document.getElementById('share-btn');
             if (shareBtn) {
@@ -646,7 +659,7 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
                 fetch('/api/analytics/events', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ eventName: 'notify_restock', payload: { email: email, productId: '${product.id}' } }),
+                  body: JSON.stringify({ eventType: 'notify_restock', properties: { email: email, productId: '${product.id}' } }),
                 }).then(function() {
                   notifyForm.querySelector('[name=email]').value = '';
                   notifyForm.querySelector('[name=email]').placeholder = 'We will notify you!';

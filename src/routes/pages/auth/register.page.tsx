@@ -109,6 +109,36 @@ export const RegisterPage: FC<RegisterPageProps> = ({ error }) => {
             </Button>
           </form>
 
+          <div class="my-6 flex items-center gap-3">
+            <div class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+            <span class="text-xs uppercase tracking-wide text-gray-400">Or continue with</span>
+            <div class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+          </div>
+
+          <div class="space-y-3">
+            <a
+              id="oauth-google"
+              href="/api/auth/oauth/google/start?source=register"
+              class="flex w-full items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Continue with Google
+            </a>
+            <a
+              id="oauth-apple"
+              href="/api/auth/oauth/apple/start?source=register"
+              class="flex w-full items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Continue with Apple
+            </a>
+            <a
+              id="oauth-meta"
+              href="/api/auth/oauth/meta/start?source=register"
+              class="flex w-full items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Continue with Meta
+            </a>
+          </div>
+
           <div class="mt-6 text-center">
             <p class="text-sm text-gray-500 dark:text-gray-400">
               Already have an account?{" "}
@@ -125,6 +155,36 @@ export const RegisterPage: FC<RegisterPageProps> = ({ error }) => {
         dangerouslySetInnerHTML={{
           __html: `
             (function() {
+              function getAnalyticsSessionId() {
+                var key = 'petm8-analytics-session';
+                try {
+                  return sessionStorage.getItem(key) || localStorage.getItem(key) || '';
+                } catch (_) {
+                  return '';
+                }
+              }
+
+              function getSafeRedirect() {
+                var params = new URLSearchParams(window.location.search);
+                var redirect = params.get('redirect');
+                if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
+                  return redirect;
+                }
+                return '';
+              }
+
+              (function setupOAuthLinks() {
+                var redirect = getSafeRedirect();
+                if (!redirect) return;
+                ['oauth-google', 'oauth-apple', 'oauth-meta'].forEach(function(id) {
+                  var link = document.getElementById(id);
+                  if (!link) return;
+                  var url = new URL(link.getAttribute('href'), window.location.origin);
+                  url.searchParams.set('redirect', redirect);
+                  link.setAttribute('href', url.pathname + url.search);
+                });
+              })();
+
               var pwInput = document.querySelector('input[name="password"]');
               if (pwInput) {
                 pwInput.addEventListener('input', function() {
@@ -184,9 +244,13 @@ export const RegisterPage: FC<RegisterPageProps> = ({ error }) => {
                 }
 
                 try {
+                  var sessionId = getAnalyticsSessionId();
                   var res = await fetch('/api/auth/register', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                      'Content-Type': 'application/json',
+                      ...(sessionId ? { 'x-session-id': sessionId } : {}),
+                    },
                     body: JSON.stringify({
                       name: formData.get('name'),
                       email: formData.get('email'),

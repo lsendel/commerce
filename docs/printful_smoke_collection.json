@@ -1,0 +1,115 @@
+{
+  "info": {
+    "name": "Printful API Smoke",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Read-only smoke checks for Printful connectivity and mockup prerequisites."
+  },
+  "auth": {
+    "type": "oauth2",
+    "oauth2": [
+      {
+        "key": "tokenType",
+        "value": "Bearer",
+        "type": "string"
+      },
+      {
+        "key": "accessToken",
+        "value": "{{oauth}}",
+        "type": "string"
+      },
+      {
+        "key": "addTokenTo",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "oauth",
+      "value": ""
+    },
+    {
+      "key": "product_id",
+      "value": "19"
+    }
+  ],
+  "item": [
+    {
+      "name": "Get Stores",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+              "var json = pm.response.json();",
+              "pm.test('stores list exists', function () { pm.expect(Array.isArray(json.result)).to.eql(true); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "https://api.printful.com/stores",
+          "protocol": "https",
+          "host": ["api", "printful", "com"],
+          "path": ["stores"]
+        }
+      }
+    },
+    {
+      "name": "Get Product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+              "var json = pm.response.json();",
+              "pm.test('product payload exists', function () { pm.expect(json.result && json.result.product).to.exist; });",
+              "pm.test('variants exist', function () { pm.expect(Array.isArray(json.result.variants)).to.eql(true); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "https://api.printful.com/products/{{product_id}}",
+          "protocol": "https",
+          "host": ["api", "printful", "com"],
+          "path": ["products", "{{product_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Get Mockup Templates",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+              "var json = pm.response.json();",
+              "pm.test('template payload exists', function () { pm.expect(json.result).to.exist; });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "https://api.printful.com/mockup-generator/templates/{{product_id}}",
+          "protocol": "https",
+          "host": ["api", "printful", "com"],
+          "path": ["mockup-generator", "templates", "{{product_id}}"]
+        }
+      }
+    }
+  ]
+}

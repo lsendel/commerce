@@ -117,6 +117,23 @@ export const AdminAffiliatesPage: FC<AdminAffiliatesPageProps> = ({ affiliates }
       {html`
         <script>
           (function() {
+            function showAffiliatesError(message) {
+              if (window.showToast) {
+                window.showToast(message, 'error');
+                return;
+              }
+              var banner = document.getElementById('admin-affiliates-flash');
+              if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'admin-affiliates-flash';
+                banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-lg';
+                document.body.appendChild(banner);
+              }
+              banner.textContent = message;
+              banner.classList.remove('hidden');
+              setTimeout(function() { banner.classList.add('hidden'); }, 4000);
+            }
+
             document.querySelectorAll('.approve-btn').forEach(function(btn) {
               btn.addEventListener('click', async function() {
                 var id = this.getAttribute('data-aff-id');
@@ -124,7 +141,7 @@ export const AdminAffiliatesPage: FC<AdminAffiliatesPageProps> = ({ affiliates }
                   var res = await fetch('/api/affiliates/admin/' + id + '/approve', { method: 'PATCH' });
                   if (!res.ok) throw new Error('Failed to approve');
                   window.location.reload();
-                } catch (err) { alert(err.message); }
+                } catch (err) { showAffiliatesError(err.message || 'Failed to approve affiliate'); }
               });
             });
             document.querySelectorAll('.suspend-btn').forEach(function(btn) {
@@ -137,7 +154,7 @@ export const AdminAffiliatesPage: FC<AdminAffiliatesPageProps> = ({ affiliates }
                   });
                   if (!res.ok) throw new Error('Failed to suspend');
                   window.location.reload();
-                } catch (err) { alert(err.message); }
+                } catch (err) { showAffiliatesError(err.message || 'Failed to suspend affiliate'); }
               });
             });
           })();

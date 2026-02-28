@@ -1,5 +1,8 @@
 import type { Env } from "../env";
 import { EmailAdapter } from "../infrastructure/notifications/email.adapter";
+import { createDb } from "../infrastructure/db/client";
+import { users } from "../infrastructure/db/schema";
+import { and, eq, isNotNull } from "drizzle-orm";
 
 interface BookingReminderNotification {
   type: "booking_reminder";
@@ -66,6 +69,23 @@ type NotificationMessage =
   | ShipmentUpdateNotification
   | AbandonedCartNotification
   | BirthdayOfferNotification;
+
+async function canSendMarketingMessage(env: Env, userId: string): Promise<boolean> {
+  if (!userId) return false;
+  const db = createDb(env.DATABASE_URL);
+  const row = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(
+      and(
+        eq(users.id, userId),
+        eq(users.marketingOptIn, true),
+        isNotNull(users.emailVerifiedAt),
+      ),
+    )
+    .limit(1);
+  return row.length > 0;
+}
 
 export async function handleNotificationMessage(
   message: Message,
@@ -136,7 +156,14 @@ export async function handleNotificationMessage(
     }
 
     case "abandoned_cart": {
-      const { userEmail, userName, cartId, itemCount } = payload.data;
+      const { userId, userEmail, userName, cartId, itemCount } = payload.data;
+      const allowed = await canSendMarketingMessage(env, userId);
+      if (!allowed) {
+        console.log(
+          `[notifications] Skipped abandoned cart email for ${userEmail} (marketing suppression)`,
+        );
+        break;
+      }
 
       await emailAdapter.sendAbandonedCart(userEmail, {
         userName,
@@ -151,7 +178,14 @@ export async function handleNotificationMessage(
     }
 
     case "birthday_offer": {
-      const { userEmail, userName, petName, offerCode } = payload.data;
+      const { userId, userEmail, userName, petName, offerCode } = payload.data;
+      const allowed = await canSendMarketingMessage(env, userId);
+      if (!allowed) {
+        console.log(
+          `[notifications] Skipped birthday offer for ${userEmail} (marketing suppression)`,
+        );
+        break;
+      }
 
       await emailAdapter.sendBirthdayOffer(userEmail, {
         userName,

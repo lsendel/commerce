@@ -681,7 +681,7 @@
 
       var data = await res.json();
       if (window.petm8Track) {
-        window.petm8Track("begin_checkout", { cartHasUrl: !!data.url });
+        window.petm8Track("checkout_started", { cartHasUrl: !!data.url });
       }
       if (data.url) {
         window.location.href = data.url;
@@ -1007,7 +1007,7 @@
 
         var data = await res.json();
         if (window.petm8Track) {
-          window.petm8Track("begin_checkout", { cartHasUrl: !!data.url });
+          window.petm8Track("checkout_started", { cartHasUrl: !!data.url });
         }
         if (data.url) {
           window.location.href = data.url;

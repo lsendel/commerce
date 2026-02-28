@@ -39,11 +39,12 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const STRATEGY_LABELS: Record<string, string> = {
-  percentage: "% Off",
+  percentage_off: "% Off",
   fixed_amount: "$ Off",
   buy_x_get_y: "BOGO",
   free_shipping: "Free Ship",
   tiered: "Tiered",
+  bundle: "Bundle",
 };
 
 export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters }) => {
@@ -110,11 +111,12 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
             <div>
               <label class="text-sm font-medium text-gray-700 block mb-1">Strategy</label>
               <select name="strategyType" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white">
-                <option value="percentage">Percentage Off</option>
+                <option value="percentage_off">Percentage Off</option>
                 <option value="fixed_amount">Fixed Amount Off</option>
                 <option value="buy_x_get_y">Buy X Get Y</option>
                 <option value="free_shipping">Free Shipping</option>
                 <option value="tiered">Tiered</option>
+                <option value="bundle">Bundle</option>
               </select>
             </div>
             <div>
@@ -222,6 +224,32 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
       {html`
         <script>
           (function() {
+            var flashTimer = null;
+            function showFlash(message, type) {
+              var banner = document.getElementById('admin-promotions-flash');
+              if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'admin-promotions-flash';
+                banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm font-medium shadow-lg';
+                document.body.appendChild(banner);
+              }
+              banner.textContent = message;
+              banner.classList.remove(
+                'bg-red-50', 'text-red-700', 'border-red-200',
+                'bg-emerald-50', 'text-emerald-700', 'border-emerald-200',
+                'hidden'
+              );
+              if (type === 'success') {
+                banner.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-200');
+              } else {
+                banner.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
+              }
+              if (flashTimer) clearTimeout(flashTimer);
+              flashTimer = setTimeout(function() {
+                banner.classList.add('hidden');
+              }, 4000);
+            }
+
             var formSection = document.getElementById('promo-form-section');
             var form = document.getElementById('promo-form');
             document.getElementById('btn-add-promo').addEventListener('click', function() {
@@ -255,7 +283,7 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
                 });
                 if (!res.ok) throw new Error('Failed to create promotion');
                 window.location.reload();
-              } catch (err) { alert(err.message); }
+              } catch (err) { showFlash(err.message || 'Failed to create promotion'); }
             });
             document.querySelectorAll('.disable-btn').forEach(function(btn) {
               btn.addEventListener('click', async function() {
@@ -265,7 +293,7 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
                   var res = await fetch('/api/promotions/' + id, { method: 'DELETE' });
                   if (!res.ok) throw new Error('Failed to disable');
                   window.location.reload();
-                } catch (err) { alert(err.message); }
+                } catch (err) { showFlash(err.message || 'Failed to disable promotion'); }
               });
             });
             document.querySelectorAll('.enable-btn').forEach(function(btn) {
@@ -279,7 +307,7 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
                   });
                   if (!res.ok) throw new Error('Failed to enable');
                   window.location.reload();
-                } catch (err) { alert(err.message); }
+                } catch (err) { showFlash(err.message || 'Failed to enable promotion'); }
               });
             });
           })();

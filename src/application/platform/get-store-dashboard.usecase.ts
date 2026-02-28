@@ -10,10 +10,13 @@ export class GetStoreDashboardUseCase {
       throw new NotFoundError("Store", storeId);
     }
 
-    const members = await this.storeRepo.findMembers(storeId);
-    const domains = await this.storeRepo.findDomains(storeId);
-    const billing = await this.storeRepo.getBilling(storeId);
+    const [members, domains, billing, pendingInvitations] = await Promise.all([
+      this.storeRepo.findMembersWithUsers(storeId),
+      this.storeRepo.findDomains(storeId),
+      this.storeRepo.getBilling(storeId),
+      this.storeRepo.findPendingInvitations(storeId),
+    ]);
 
-    return { store, members, domains, billing };
+    return { store, members, domains, billing, pendingInvitations };
   }
 }

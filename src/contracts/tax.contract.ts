@@ -62,6 +62,8 @@ export const createTaxRateSchema = z.object({
   compound: z.boolean().optional(),
 });
 
+export const updateTaxRateSchema = createTaxRateSchema.partial();
+
 export const calculateTaxSchema = z.object({
   lineItems: z.array(
     z.object({
@@ -140,6 +142,21 @@ export const taxContract = c.router({
       201: taxRateSchema,
       400: z.object({ error: z.string() }),
       401: z.object({ error: z.string() }),
+    },
+  },
+  updateRate: {
+    method: "PATCH",
+    path: "/api/tax/zones/:id/rates/:rateId",
+    pathParams: z.object({
+      id: z.string().uuid(),
+      rateId: z.string().uuid(),
+    }),
+    body: updateTaxRateSchema,
+    responses: {
+      200: taxRateSchema,
+      400: z.object({ error: z.string() }),
+      401: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
     },
   },
   deleteRate: {

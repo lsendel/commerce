@@ -115,6 +115,23 @@ export const PromotionCodesPage: FC<PromotionCodesPageProps> = ({ codes, promoti
       {html`
         <script>
           (function() {
+            function showPromotionCodesError(message) {
+              if (window.showToast) {
+                window.showToast(message, 'error');
+                return;
+              }
+              var banner = document.getElementById('admin-promotion-codes-flash');
+              if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'admin-promotion-codes-flash';
+                banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-lg';
+                document.body.appendChild(banner);
+              }
+              banner.textContent = message;
+              banner.classList.remove('hidden');
+              setTimeout(function() { banner.classList.add('hidden'); }, 4000);
+            }
+
             var formSection = document.getElementById('code-form-section');
             var form = document.getElementById('code-form');
             document.getElementById('btn-add-code').addEventListener('click', function() {
@@ -140,7 +157,7 @@ export const PromotionCodesPage: FC<PromotionCodesPageProps> = ({ codes, promoti
                 });
                 if (!res.ok) throw new Error('Failed to create code');
                 window.location.reload();
-              } catch (err) { alert(err.message); }
+              } catch (err) { showPromotionCodesError(err.message || 'Failed to create code'); }
             });
           })();
         </script>

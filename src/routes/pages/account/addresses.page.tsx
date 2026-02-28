@@ -254,6 +254,16 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
             var deleteConfirm = document.getElementById('delete-confirm');
             var pendingDeleteId = null;
 
+            function showError(err, fallback) {
+              var message = (typeof err === 'string')
+                ? err
+                : (err && err.message ? err.message : fallback);
+              if (!message) message = 'Something went wrong';
+              formError.textContent = message;
+              formError.classList.remove('hidden');
+              if (window.showToast) window.showToast(message, 'error');
+            }
+
             function showForm(title) {
               formTitle.textContent = title || 'Add New Address';
               formSection.classList.remove('hidden');
@@ -316,7 +326,7 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
                 if (!res.ok) throw new Error('Failed to delete');
                 window.location.reload();
               } catch (err) {
-                alert(err.message);
+                showError(err, 'Failed to delete address');
               } finally {
                 deleteConfirm.classList.add('hidden');
                 pendingDeleteId = null;
@@ -335,7 +345,7 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
                   if (!res.ok) throw new Error('Failed to update');
                   window.location.reload();
                 } catch (err) {
-                  alert(err.message);
+                  showError(err, 'Failed to update default address');
                 }
               });
             });

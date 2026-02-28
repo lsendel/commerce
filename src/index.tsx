@@ -6,6 +6,8 @@ import { createYoga } from "graphql-yoga";
 import type { Env } from "./env";
 import { handleScheduled } from "./scheduled/handler";
 import { handleQueue } from "./queues/handler";
+import { requireAuth } from "./middleware/auth.middleware";
+import { requireRole } from "./middleware/role.middleware";
 
 // Middleware
 import { errorHandler } from "./middleware/error-handler.middleware";
@@ -188,6 +190,31 @@ const app = new Hono<{ Bindings: Env }>();
 app.use("*", logger());
 app.use("*", secureHeaders());
 app.use("*", errorHandler());
+
+function isAdminPlatformRole(role: string | null | undefined) {
+  return role === "super_admin" || role === "group_admin";
+}
+
+// Protect admin pages at the app boundary.
+app.use("/admin/*", async (c, next) => {
+  const token = getCookie(c, AUTH_COOKIE_NAME);
+  if (!token) return c.redirect("/auth/login");
+
+  const payload = await verifyJwt(token, c.env.JWT_SECRET);
+  if (!payload) return c.redirect("/auth/login");
+
+  const db = createDb(c.env.DATABASE_URL);
+  const userRepo = new UserRepository(db);
+  const dbUser = await userRepo.findById(payload.sub);
+
+  if (!isAdminPlatformRole(dbUser?.platformRole)) {
+    return c.text("Forbidden", 403);
+  }
+
+  await next();
+});
+
+app.use("/api/admin/*", requireAuth(), requireRole("admin"));
 app.use("*", tenantMiddleware());
 app.use("*", affiliateMiddleware());
 app.use("/api/*", cors());
@@ -231,7 +258,7 @@ app.route("/api", cancellationRoutes);
 app.route("/api", downloadRoutes);
 app.route("/api/promotions", promotionRoutes);
 app.route("/api", shippingZoneRoutes);
-app.route("/api", taxRoutes);
+app.route("/api/tax", taxRoutes);
 app.route("/api", reviewRoutes);
 app.route("/api", analyticsRoutes);
 app.route("/api", currencyRoutes);
@@ -305,6 +332,38 @@ function escapeXml(value: string) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&apos;");
+}
+
+function escapeCsv(value: string | number | null | undefined) {
+  const text = value == null ? "" : String(value);
+  if (/[",\n\r]/.test(text)) {
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+  return text;
+}
+
+function getPreviousDateRange(dateFrom: string, dateTo: string) {
+  const startMs = Date.parse(`${dateFrom}T00:00:00Z`);
+  const endMs = Date.parse(`${dateTo}T00:00:00Z`);
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs < startMs) {
+    return { previousFrom: dateFrom, previousTo: dateTo };
+  }
+
+  const dayCount = Math.floor((endMs - startMs) / dayMs) + 1;
+  const previousEndMs = startMs - dayMs;
+  const previousStartMs = previousEndMs - (dayCount - 1) * dayMs;
+
+  return {
+    previousFrom: new Date(previousStartMs).toISOString().slice(0, 10),
+    previousTo: new Date(previousEndMs).toISOString().slice(0, 10),
+  };
+}
+
+function calculateTrendPercent(current: number, previous: number): number | null {
+  if (previous <= 0) return null;
+  return Number((((current - previous) / previous) * 100).toFixed(1));
 }
 
 // ─── Page Routes ───────────────────────────────────────────
@@ -807,18 +866,20 @@ app.get("/checkout/success", async (c) => {
 // Auth Pages
 app.get("/auth/login", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const error = c.req.query("error");
   return c.html(
     <Layout url={c.req.url} title="Sign In" activePath="/auth/login" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <LoginPage />
+      <LoginPage error={error || undefined} />
     </Layout>
   );
 });
 
 app.get("/auth/register", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const error = c.req.query("error");
   return c.html(
     <Layout url={c.req.url} title="Create Account" activePath="/auth/register" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <RegisterPage />
+      <RegisterPage error={error || undefined} />
     </Layout>
   );
 });
@@ -1125,6 +1186,7 @@ app.get("/events", async (c) => {
   const query = c.req.query();
   const dateFrom = query.dateFrom;
   const dateTo = query.dateTo;
+  const filterSearch = query.search?.trim() ?? "";
 
   const eventsWithDates = await Promise.all(
     result.products.map(async (product: any) => {
@@ -1145,10 +1207,34 @@ app.get("/events", async (c) => {
       };
     })
   );
+  const normalizedSearch = filterSearch.toLowerCase();
+  const filteredEvents = normalizedSearch.length === 0
+    ? eventsWithDates
+    : eventsWithDates.filter((event) =>
+      event.name.toLowerCase().includes(normalizedSearch)
+      || (event.shortDescription ?? "").toLowerCase().includes(normalizedSearch)
+      || event.location.toLowerCase().includes(normalizedSearch),
+    );
+
+  const pageSize = 12;
+  const requestedPage = Number.parseInt(query.page ?? "1", 10);
+  const total = filteredEvents.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Number.isFinite(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, totalPages) : 1;
+  const start = (page - 1) * pageSize;
+  const pagedEvents = filteredEvents.slice(start, start + pageSize);
 
   return c.html(
     <Layout url={c.req.url} title="Events" activePath="/events" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <EventsListPage events={eventsWithDates as any} filterDateFrom={dateFrom} filterDateTo={dateTo} />
+      <EventsListPage
+        events={pagedEvents as any}
+        filterDateFrom={dateFrom}
+        filterDateTo={dateTo}
+        filterSearch={filterSearch}
+        page={page}
+        totalPages={totalPages}
+        total={total}
+      />
     </Layout>
   );
 });
@@ -1370,7 +1456,7 @@ app.get("/platform/create-store", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   return c.html(
     <Layout url={c.req.url} title="Create Store" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <CreateStorePage />
+      <CreateStorePage isAuthenticated={isAuthenticated} />
     </Layout>
   );
 });
@@ -1426,11 +1512,16 @@ app.get("/platform/members", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
   const storeRepo = new StoreRepository(db);
-  const members = await storeRepo.findMembers(storeId);
+  const [store, members, pendingInvitations] = await Promise.all([
+    storeRepo.findById(storeId),
+    storeRepo.findMembersWithUsers(storeId),
+    storeRepo.findPendingInvitations(storeId),
+  ]);
+  if (!store) return c.notFound();
 
   return c.html(
     <Layout url={c.req.url} title="Team Members" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <MembersPage storeId={storeId} members={members as any} />
+      <MembersPage store={store as any} members={members as any} pendingInvitations={pendingInvitations as any} />
     </Layout>
   );
 });
@@ -1610,9 +1701,28 @@ app.get("/admin/shipping", async (c) => {
   const shippingRepo = new ShippingRepository(db, storeId);
   const useCase = new ManageShippingZonesUseCase(shippingRepo);
   const zones = await useCase.listZones();
+  const zonesWithRates = await Promise.all(
+    zones.map(async (zone) => {
+      const rates = await useCase.listRates(zone.id);
+      return {
+        ...zone,
+        countries: (zone.countries as string[]) ?? [],
+        rates: rates.map((rate) => ({
+          id: rate.id,
+          name: rate.name,
+          minWeight: rate.minWeight ?? null,
+          maxWeight: rate.maxWeight ?? null,
+          price: rate.price ?? "0",
+          currency: "USD",
+          minDeliveryDays: rate.estimatedDaysMin ?? 0,
+          maxDeliveryDays: rate.estimatedDaysMax ?? 0,
+        })),
+      };
+    }),
+  );
   return c.html(
     <Layout url={c.req.url} title="Shipping Zones" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <ShippingPage zones={zones as any} />
+      <ShippingPage zones={zonesWithRates as any} />
     </Layout>,
   );
 });
@@ -1620,10 +1730,30 @@ app.get("/admin/shipping", async (c) => {
 app.get("/admin/tax", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
-  // Tax zones are not yet implemented in a use case — render empty for now
+  const { ManageTaxZonesUseCase } = await import("./application/tax/manage-tax-zones.usecase");
+  const useCase = new ManageTaxZonesUseCase();
+  const zones = await useCase.listZones({ db, storeId });
+  const zonesWithRates = await Promise.all(
+    zones.map(async (zone) => {
+      const rates = await useCase.listRates({ db, storeId, zoneId: zone.id });
+      return {
+        id: zone.id,
+        name: zone.name,
+        countries: zone.countries,
+        rates: rates.map((rate) => ({
+          id: rate.id,
+          name: rate.name,
+          rate: String(rate.rate),
+          isCompound: rate.compound,
+          priority: 0,
+        })),
+      };
+    }),
+  );
+
   return c.html(
     <Layout url={c.req.url} title="Tax Settings" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <TaxPage zones={[]} />
+      <TaxPage zones={zonesWithRates as any} />
     </Layout>,
   );
 });
@@ -1732,6 +1862,7 @@ app.get("/admin/analytics", async (c) => {
   const parsedTo = requestedTo && datePattern.test(requestedTo) ? requestedTo : defaultTo;
   const dateFrom = parsedFrom <= parsedTo ? parsedFrom : parsedTo;
   const dateTo = parsedFrom <= parsedTo ? parsedTo : parsedFrom;
+  const { previousFrom, previousTo } = getPreviousDateRange(dateFrom, dateTo);
 
   const analyticsRepo = new AnalyticsRepository(db, storeId);
   const { GetDashboardMetricsUseCase: DashMetrics } = await import("./application/analytics/get-dashboard-metrics.usecase");
@@ -1739,12 +1870,48 @@ app.get("/admin/analytics", async (c) => {
   const { GetTopProductsUseCase: TopProdUC } = await import("./application/analytics/get-top-products.usecase");
   const { GetRevenueMetricsUseCase: RevUC } = await import("./application/analytics/get-revenue-metrics.usecase");
 
-  const [dashMetrics, funnel, topProducts, revenue] = await Promise.all([
+  const [dashMetrics, funnel, topProducts, revenue, attribution, previousAttribution] = await Promise.all([
     new DashMetrics(analyticsRepo).execute(dateFrom, dateTo),
     new FunnelUC(db, storeId).execute(dateFrom, dateTo),
     new TopProdUC(db, storeId).execute(dateFrom, dateTo),
     new RevUC(analyticsRepo).execute(dateFrom, dateTo),
+    analyticsRepo.getAttributionBreakdown(dateFrom, dateTo, 10),
+    analyticsRepo.getAttributionBreakdown(previousFrom, previousTo, 100),
   ]);
+
+  const previousSourceEvents = new Map(
+    previousAttribution.topSources.map((row) => [row.source, row.events]),
+  );
+  const previousCampaignEvents = new Map(
+    previousAttribution.topCampaigns.map((row) => [row.campaign, row.events]),
+  );
+  const previousLandingEvents = new Map(
+    previousAttribution.topLandingPaths.map((row) => [row.landingPath, row.events]),
+  );
+
+  const attributionWithTrend = {
+    topSources: attribution.topSources.map((row) => ({
+      ...row,
+      trendPercent: calculateTrendPercent(
+        row.events,
+        previousSourceEvents.get(row.source) ?? 0,
+      ),
+    })),
+    topCampaigns: attribution.topCampaigns.map((row) => ({
+      ...row,
+      trendPercent: calculateTrendPercent(
+        row.events,
+        previousCampaignEvents.get(row.campaign) ?? 0,
+      ),
+    })),
+    topLandingPaths: attribution.topLandingPaths.map((row) => ({
+      ...row,
+      trendPercent: calculateTrendPercent(
+        row.events,
+        previousLandingEvents.get(row.landingPath) ?? 0,
+      ),
+    })),
+  };
 
   const metrics = [
     { label: "Revenue", value: `$${dashMetrics.totalRevenue.toFixed(2)}` },
@@ -1764,11 +1931,167 @@ app.get("/admin/analytics", async (c) => {
         funnel={funnel as any}
         topProducts={topProducts as any}
         dailyRevenue={revenue.dailyRevenue as any}
+        attribution={attributionWithTrend as any}
         dateFrom={dateFrom}
         dateTo={dateTo}
       />
     </Layout>,
   );
+});
+
+app.get("/admin/analytics/export.csv", async (c) => {
+  const { db, storeId, user } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+
+  const now = new Date();
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  const defaultFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const defaultTo = now.toISOString().slice(0, 10);
+  const requestedFrom = c.req.query("from");
+  const requestedTo = c.req.query("to");
+  const parsedFrom = requestedFrom && datePattern.test(requestedFrom) ? requestedFrom : defaultFrom;
+  const parsedTo = requestedTo && datePattern.test(requestedTo) ? requestedTo : defaultTo;
+  const dateFrom = parsedFrom <= parsedTo ? parsedFrom : parsedTo;
+  const dateTo = parsedFrom <= parsedTo ? parsedTo : parsedFrom;
+  const { previousFrom, previousTo } = getPreviousDateRange(dateFrom, dateTo);
+
+  const analyticsRepo = new AnalyticsRepository(db, storeId);
+  const { GetDashboardMetricsUseCase: DashMetrics } = await import("./application/analytics/get-dashboard-metrics.usecase");
+  const { GetConversionFunnelUseCase: FunnelUC } = await import("./application/analytics/get-conversion-funnel.usecase");
+  const { GetTopProductsUseCase: TopProdUC } = await import("./application/analytics/get-top-products.usecase");
+  const { GetRevenueMetricsUseCase: RevUC } = await import("./application/analytics/get-revenue-metrics.usecase");
+
+  const [dashMetrics, funnel, topProducts, revenue, attribution, previousAttribution] = await Promise.all([
+    new DashMetrics(analyticsRepo).execute(dateFrom, dateTo),
+    new FunnelUC(db, storeId).execute(dateFrom, dateTo),
+    new TopProdUC(db, storeId).execute(dateFrom, dateTo),
+    new RevUC(analyticsRepo).execute(dateFrom, dateTo),
+    analyticsRepo.getAttributionBreakdown(dateFrom, dateTo, 10),
+    analyticsRepo.getAttributionBreakdown(previousFrom, previousTo, 100),
+  ]);
+
+  const previousSourceEvents = new Map(
+    previousAttribution.topSources.map((row) => [row.source, row.events]),
+  );
+  const previousCampaignEvents = new Map(
+    previousAttribution.topCampaigns.map((row) => [row.campaign, row.events]),
+  );
+  const previousLandingEvents = new Map(
+    previousAttribution.topLandingPaths.map((row) => [row.landingPath, row.events]),
+  );
+
+  const lines: string[] = [];
+  lines.push("section,date,metric,label,value,count,trend_percent");
+  lines.push(`summary,,,Revenue,${dashMetrics.totalRevenue.toFixed(2)},,`);
+  lines.push(`summary,,,Orders,${dashMetrics.orderCount},,`);
+  lines.push(`summary,,,Visitors,${dashMetrics.uniqueVisitors},,`);
+  lines.push(`summary,,,Page Views,${dashMetrics.pageViews},,`);
+  lines.push(`summary,,,Add to Cart,${dashMetrics.addToCartCount},,`);
+  lines.push(`summary,,,Checkout Started,${dashMetrics.checkoutStartedCount},,`);
+  lines.push(`summary,,,Conversion Rate,${(dashMetrics.conversionRate * 100).toFixed(2)}%,,`);
+  lines.push(`summary,,,Avg Order Value,${dashMetrics.averageOrderValue.toFixed(2)},,`);
+
+  for (const day of revenue.dailyRevenue) {
+    lines.push([
+      "daily_revenue",
+      escapeCsv(day.date),
+      "",
+      "Daily Revenue",
+      day.revenue.toFixed(2),
+      day.orders,
+      "",
+    ].join(","));
+  }
+
+  for (const step of funnel) {
+    lines.push([
+      "funnel",
+      "",
+      escapeCsv(step.step),
+      "Step Count",
+      step.count,
+      "",
+      "",
+    ].join(","));
+    lines.push([
+      "funnel",
+      "",
+      escapeCsv(step.step),
+      "Drop Off Percent",
+      step.dropOffPercent,
+      "",
+      "",
+    ].join(","));
+  }
+
+  for (const product of topProducts) {
+    lines.push([
+      "top_products",
+      "",
+      escapeCsv(product.productId),
+      escapeCsv(product.productName),
+      product.totalRevenue.toFixed(2),
+      product.totalQuantity,
+      "",
+    ].join(","));
+  }
+
+  for (const source of attribution.topSources) {
+    const trend = calculateTrendPercent(
+      source.events,
+      previousSourceEvents.get(source.source) ?? 0,
+    );
+    lines.push([
+      "attribution_sources",
+      "",
+      "events",
+      escapeCsv(source.source),
+      source.events,
+      source.sessions,
+      trend === null ? "" : trend.toFixed(1),
+    ].join(","));
+  }
+
+  for (const campaign of attribution.topCampaigns) {
+    const trend = calculateTrendPercent(
+      campaign.events,
+      previousCampaignEvents.get(campaign.campaign) ?? 0,
+    );
+    lines.push([
+      "attribution_campaigns",
+      "",
+      "events",
+      escapeCsv(campaign.campaign),
+      campaign.events,
+      campaign.sessions,
+      trend === null ? "" : trend.toFixed(1),
+    ].join(","));
+  }
+
+  for (const landingPath of attribution.topLandingPaths) {
+    const trend = calculateTrendPercent(
+      landingPath.events,
+      previousLandingEvents.get(landingPath.landingPath) ?? 0,
+    );
+    lines.push([
+      "attribution_landing_paths",
+      "",
+      "events",
+      escapeCsv(landingPath.landingPath),
+      landingPath.events,
+      landingPath.sessions,
+      trend === null ? "" : trend.toFixed(1),
+    ].join(","));
+  }
+
+  const csv = lines.join("\n");
+  return new Response(csv, {
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename=\"analytics-${dateFrom}-to-${dateTo}.csv\"`,
+      "Cache-Control": "no-store",
+    },
+  });
 });
 
 // ─── Admin Products Pages ─────────────────────────────────
@@ -2063,7 +2386,7 @@ app.get("/venues/:slug", async (c) => {
 
   return c.html(
     <Layout url={c.req.url} title={venue.name} isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <VenueDetailPage venue={venue as any} />
+      <VenueDetailPage venue={venue as any} events={[]} />
     </Layout>
   );
 });

@@ -3,6 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import type { Env } from "../../env";
 import { createDb } from "../../infrastructure/db/client";
 import { requireAuth } from "../../middleware/auth.middleware";
+import { requireRole } from "../../middleware/role.middleware";
 import { ShippingRepository } from "../../infrastructure/repositories/shipping.repository";
 import { ManageShippingZonesUseCase } from "../../application/fulfillment/manage-shipping-zones.usecase";
 import { CalculateShippingUseCase } from "../../application/fulfillment/calculate-shipping.usecase";
@@ -16,6 +17,9 @@ import {
 import { NotFoundError, ValidationError } from "../../shared/errors";
 
 const shipping = new Hono<{ Bindings: Env }>();
+
+shipping.use("/shipping/zones", requireAuth(), requireRole("admin"));
+shipping.use("/shipping/zones/*", requireAuth(), requireRole("admin"));
 
 // All zone/rate management routes require auth (admin)
 // The calculate endpoint is public-facing (no auth required)

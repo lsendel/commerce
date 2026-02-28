@@ -4,6 +4,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const mapContainer = document.getElementById("venue-map");
   if (!mapContainer || typeof maplibregl === "undefined") return;
 
+  function notify(message, type = "info") {
+    if (!message) return;
+    if (window.showToast) {
+      window.showToast(message, type);
+      return;
+    }
+    if (type === "error") console.error(message);
+    else console.log(message);
+  }
+
   const venuesData = JSON.parse(mapContainer.dataset.venues || "[]");
   const zoom = Number(mapContainer.dataset.zoom || "12");
 
@@ -75,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (nearMeBtn) {
     nearMeBtn.addEventListener("click", () => {
       if (!navigator.geolocation) {
-        alert("Geolocation is not supported by your browser");
+        notify("Geolocation is not supported by your browser", "error");
         return;
       }
 
@@ -112,7 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
           nearMeBtn.disabled = false;
         },
         () => {
-          alert("Unable to get your location");
+          notify("Unable to get your location", "error");
           nearMeBtn.textContent = "Find Near Me";
           nearMeBtn.disabled = false;
         }

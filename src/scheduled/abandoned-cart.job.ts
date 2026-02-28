@@ -1,7 +1,7 @@
 import type { Env } from "../env";
 import { createDb } from "../infrastructure/db/client";
-import { and, count, eq, gte, isNotNull, lt } from "drizzle-orm";
-import { cartItems, carts, users } from "../infrastructure/db/schema";
+import { and, count, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
+import { analyticsEvents, cartItems, carts, users } from "../infrastructure/db/schema";
 
 export async function runAbandonedCartDetection(env: Env) {
   const db = createDb(env.DATABASE_URL);
@@ -16,6 +16,7 @@ export async function runAbandonedCartDetection(env: Env) {
     const candidateCarts = await db
       .select({
         cartId: carts.id,
+        storeId: carts.storeId,
         userId: users.id,
         userEmail: users.email,
         userName: users.name,
@@ -25,6 +26,8 @@ export async function runAbandonedCartDetection(env: Env) {
       .where(
         and(
           isNotNull(carts.userId),
+          eq(users.marketingOptIn, true),
+          isNotNull(users.emailVerifiedAt),
           lt(carts.updatedAt, twoHoursAgo),
           gte(carts.updatedAt, threeHoursAgo),
         ),
@@ -41,6 +44,23 @@ export async function runAbandonedCartDetection(env: Env) {
       const total = countResult[0]?.total;
       if (!total || total <= 0) continue;
 
+      const alreadySent = await db
+        .select({ id: analyticsEvents.id })
+        .from(analyticsEvents)
+        .where(
+          and(
+            eq(analyticsEvents.storeId, cart.storeId),
+            eq(analyticsEvents.eventType, "abandoned_cart_email_sent"),
+            sql`${analyticsEvents.properties}->>'cartId' = ${cart.cartId}`,
+            gte(analyticsEvents.createdAt, threeHoursAgo),
+          ),
+        )
+        .limit(1);
+
+      if (alreadySent.length > 0) {
+        continue;
+      }
+
       await env.NOTIFICATION_QUEUE.send({
         type: "abandoned_cart",
         data: {
@@ -48,6 +68,16 @@ export async function runAbandonedCartDetection(env: Env) {
           userId: cart.userId,
           userEmail: cart.userEmail,
           userName: cart.userName,
+          itemCount: Number(total),
+        },
+      });
+
+      await db.insert(analyticsEvents).values({
+        storeId: cart.storeId,
+        userId: cart.userId,
+        eventType: "abandoned_cart_email_sent",
+        properties: {
+          cartId: cart.cartId,
           itemCount: Number(total),
         },
       });

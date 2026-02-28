@@ -1,6 +1,27 @@
 // Platform store management client-side logic
 
 document.addEventListener("DOMContentLoaded", () => {
+  let flashTimeout;
+  const flashId = "platform-flash-banner";
+  function showFlash(message, type = "error") {
+    let banner = document.getElementById(flashId);
+    if (!banner) {
+      banner = document.createElement("div");
+      banner.id = flashId;
+      banner.className = "fixed top-4 right-4 z-50 max-w-sm rounded-lg px-4 py-3 text-sm font-medium shadow-lg";
+      document.body.appendChild(banner);
+    }
+    banner.textContent = message;
+    banner.classList.remove("bg-red-50", "text-red-700", "border", "border-red-200", "bg-emerald-50", "text-emerald-700", "border-emerald-200", "hidden");
+    if (type === "success") {
+      banner.classList.add("bg-emerald-50", "text-emerald-700", "border", "border-emerald-200");
+    } else {
+      banner.classList.add("bg-red-50", "text-red-700", "border", "border-red-200");
+    }
+    clearTimeout(flashTimeout);
+    flashTimeout = setTimeout(() => banner.classList.add("hidden"), 4000);
+  }
+
   // Create store form
   const createForm = document.getElementById("create-store-form");
   if (createForm) {
@@ -18,13 +39,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const json = await res.json();
         if (res.ok) {
-          window.location.href =
-            "/platform/stores/" + json.id + "/dashboard";
+          window.location.href = "/platform/dashboard";
         } else {
-          alert(json.error || "Failed to create store");
+          showFlash(json.error || "Failed to create store");
         }
       } catch {
-        alert("Network error");
+        showFlash("Network error");
       }
     });
   }
@@ -45,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }),
       });
       if (res.ok) location.reload();
-      else alert("Failed to save");
+      else showFlash("Failed to save");
     });
   }
 
@@ -64,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
       );
       const data = await res.json();
       if (data.url) window.location.href = data.url;
-      else alert("Failed to start Stripe onboarding");
+      else showFlash("Failed to start Stripe onboarding");
     });
   }
 
@@ -74,33 +94,69 @@ document.addEventListener("DOMContentLoaded", () => {
       const userId = btn.dataset.userId;
       const storeId = btn.dataset.storeId;
       if (!confirm("Remove this member?")) return;
-      await fetch(
+      const res = await fetch(
         "/api/platform/stores/" + storeId + "/members/" + userId,
         { method: "DELETE" }
       );
-      location.reload();
+      if (res.ok) {
+        location.reload();
+      } else {
+        showFlash("Failed to remove member");
+      }
     });
   });
 
-  // Add member form
-  const addMemberForm = document.getElementById("add-member-form");
-  if (addMemberForm) {
-    const storeId = addMemberForm.dataset.storeId;
-    addMemberForm.addEventListener("submit", async (e) => {
+  // Logo upload
+  const logoForm = document.getElementById("logo-upload-form");
+  if (logoForm) {
+    const storeId = logoForm.dataset.storeId;
+    const fileInput = logoForm.querySelector('input[name="logo"]');
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append("logo", file);
+      try {
+        const res = await fetch("/api/platform/stores/" + storeId + "/logo", {
+          method: "POST",
+          body: formData,
+        });
+        if (res.ok) {
+          showFlash("Logo updated", "success");
+          setTimeout(() => location.reload(), 500);
+        } else {
+          const data = await res.json().catch(() => ({}));
+          showFlash(data.error || "Failed to upload logo");
+        }
+      } catch {
+        showFlash("Network error");
+      }
+    });
+  }
+
+  // Invite member form
+  const inviteMemberForm = document.getElementById("invite-member-form");
+  if (inviteMemberForm) {
+    const storeId = inviteMemberForm.dataset.storeId;
+    inviteMemberForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const res = await fetch(
-        "/api/platform/stores/" + storeId + "/members",
+        "/api/platform/stores/" + storeId + "/invite",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userId: addMemberForm.querySelector('[name="email"]').value,
-            role: addMemberForm.querySelector('[name="role"]').value,
+            email: inviteMemberForm.querySelector('[name="email"]').value,
+            role: inviteMemberForm.querySelector('[name="role"]').value,
           }),
         }
       );
-      if (res.ok) location.reload();
-      else alert("Failed to add member");
+      if (res.ok) {
+        location.reload();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showFlash(data.error || "Failed to send invitation");
+      }
     });
   }
 });

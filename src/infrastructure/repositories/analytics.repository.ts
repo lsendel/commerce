@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, sql, count, countDistinct } from "drizzle-orm";
+import { eq, and, gte, lte, sql, count, countDistinct, inArray, desc } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   analyticsEvents,
@@ -107,7 +107,7 @@ export class AnalyticsRepository {
       countMap.set(row.eventType, row.total);
     }
 
-    // Compute revenue from purchase events
+    // Compute revenue from purchase/order_completed events
     const purchaseEvents = await this.db
       .select({
         properties: analyticsEvents.properties,
@@ -116,7 +116,7 @@ export class AnalyticsRepository {
       .where(
         and(
           ...conditions,
-          eq(analyticsEvents.eventType, "purchase"),
+          inArray(analyticsEvents.eventType, ["purchase", "order_completed"]),
         ),
       );
 
@@ -128,9 +128,23 @@ export class AnalyticsRepository {
       }
     }
 
-    const purchaseCount = countMap.get("purchase") ?? 0;
+    const purchaseCount =
+      (countMap.get("purchase") ?? 0) +
+      (countMap.get("order_completed") ?? 0);
     const aov = purchaseCount > 0 ? totalRevenue / purchaseCount : 0;
-    const checkoutStarted = countMap.get("checkout_started") ?? 0;
+    const checkoutStarted =
+      (countMap.get("checkout_started") ?? 0) +
+      (countMap.get("begin_checkout") ?? 0);
+
+    // Make rollups idempotent when jobs retry for the same day.
+    await this.db
+      .delete(analyticsDailyRollups)
+      .where(
+        and(
+          eq(analyticsDailyRollups.storeId, this.storeId),
+          eq(analyticsDailyRollups.date, date),
+        ),
+      );
 
     // Define rollup metrics to upsert
     const metrics: Array<{
@@ -207,5 +221,75 @@ export class AnalyticsRepository {
       .limit(limit);
 
     return rows;
+  }
+
+  /**
+   * Aggregate attribution fields from analytics event properties.
+   */
+  async getAttributionBreakdown(dateFrom: string, dateTo: string, limit = 10) {
+    const conditions = [
+      eq(analyticsEvents.storeId, this.storeId),
+      gte(analyticsEvents.createdAt, new Date(`${dateFrom}T00:00:00Z`)),
+      lte(analyticsEvents.createdAt, new Date(`${dateTo}T23:59:59Z`)),
+    ];
+
+    const sourceExpr = sql<string>`coalesce(nullif(${analyticsEvents.properties}->'attribution'->>'utmSource', ''), 'direct')`;
+    const campaignExpr = sql<string>`coalesce(nullif(${analyticsEvents.properties}->'attribution'->>'utmCampaign', ''), '(none)')`;
+    const landingExpr = sql<string>`coalesce(nullif(${analyticsEvents.properties}->'attribution'->>'landingPath', ''), '/')`;
+    const eventsExpr = sql<number>`count(*)`;
+
+    const [topSources, topCampaigns, topLandingPaths] = await Promise.all([
+      this.db
+        .select({
+          key: sourceExpr,
+          events: eventsExpr,
+          sessions: countDistinct(analyticsEvents.sessionId),
+        })
+        .from(analyticsEvents)
+        .where(and(...conditions))
+        .groupBy(sourceExpr)
+        .orderBy(desc(eventsExpr))
+        .limit(limit),
+      this.db
+        .select({
+          key: campaignExpr,
+          events: eventsExpr,
+          sessions: countDistinct(analyticsEvents.sessionId),
+        })
+        .from(analyticsEvents)
+        .where(and(...conditions))
+        .groupBy(campaignExpr)
+        .orderBy(desc(eventsExpr))
+        .limit(limit),
+      this.db
+        .select({
+          key: landingExpr,
+          events: eventsExpr,
+          sessions: countDistinct(analyticsEvents.sessionId),
+        })
+        .from(analyticsEvents)
+        .where(and(...conditions))
+        .groupBy(landingExpr)
+        .orderBy(desc(eventsExpr))
+        .limit(limit),
+    ]);
+
+    return {
+      topSources: topSources.map((row) => ({
+        source: row.key,
+        events: Number(row.events ?? 0),
+        sessions: Number(row.sessions ?? 0),
+      })),
+      topCampaigns: topCampaigns.map((row) => ({
+        campaign: row.key,
+        events: Number(row.events ?? 0),
+        sessions: Number(row.sessions ?? 0),
+      })),
+      topLandingPaths: topLandingPaths.map((row) => ({
+        landingPath: row.key,
+        events: Number(row.events ?? 0),
+        sessions: Number(row.sessions ?? 0),
+      })),
+    };
   }
 }

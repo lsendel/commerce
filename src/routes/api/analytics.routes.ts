@@ -6,6 +6,9 @@ import { createDb } from "../../infrastructure/db/client";
 import { AnalyticsRepository } from "../../infrastructure/repositories/analytics.repository";
 import { TrackEventUseCase } from "../../application/analytics/track-event.usecase";
 import { GetDashboardMetricsUseCase } from "../../application/analytics/get-dashboard-metrics.usecase";
+import { GetConversionFunnelUseCase } from "../../application/analytics/get-conversion-funnel.usecase";
+import { GetTopProductsUseCase } from "../../application/analytics/get-top-products.usecase";
+import { GetRevenueMetricsUseCase } from "../../application/analytics/get-revenue-metrics.usecase";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { requireRole } from "../../middleware/role.middleware";
 
@@ -14,12 +17,29 @@ const analytics = new Hono<{ Bindings: Env }>();
 // ── POST /analytics/events — track event (public for client-side tracking) ──
 
 const trackEventBodySchema = z.object({
-  eventType: z.string().min(1).max(100),
+  eventType: z.string().min(1).max(100).optional(),
+  eventName: z.string().min(1).max(100).optional(),
   sessionId: z.string().max(200).optional(),
   properties: z.record(z.string(), z.unknown()).optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
   pageUrl: z.string().max(2000).optional(),
   referrer: z.string().max(2000).optional(),
+}).refine((body) => Boolean(body.eventType || body.eventName), {
+  message: "eventType is required",
+  path: ["eventType"],
 });
+
+const EVENT_TYPE_ALIASES: Record<string, string> = {
+  begin_checkout: "checkout_started",
+  checkout_begin: "checkout_started",
+  order_completed: "purchase",
+  purchase_completed: "purchase",
+};
+
+function normalizeEventType(eventType: string): string {
+  const key = eventType.trim().toLowerCase();
+  return EVENT_TYPE_ALIASES[key] ?? key;
+}
 
 analytics.post(
   "/analytics/events",
@@ -31,6 +51,14 @@ analytics.post(
     const useCase = new TrackEventUseCase(analyticsRepo);
 
     const body = c.req.valid("json");
+    const normalizedEventType = normalizeEventType(
+      body.eventType ?? body.eventName ?? "",
+    );
+    const properties = body.properties ?? body.payload ?? {};
+    const sessionId =
+      body.sessionId ??
+      c.req.header("x-session-id") ??
+      null;
 
     // Extract IP and User-Agent from request headers
     const ip =
@@ -40,9 +68,9 @@ analytics.post(
     const userAgent = c.req.header("user-agent") ?? undefined;
 
     const event = await useCase.execute({
-      eventType: body.eventType,
-      sessionId: body.sessionId ?? null,
-      properties: body.properties ?? {},
+      eventType: normalizedEventType,
+      sessionId,
+      properties,
       pageUrl: body.pageUrl ?? null,
       referrer: body.referrer ?? null,
       userAgent: userAgent ?? null,
@@ -50,7 +78,7 @@ analytics.post(
     });
 
     return c.json(
-      { id: event?.id ?? "", eventType: body.eventType },
+      { id: event?.id ?? "", eventType: normalizedEventType },
       201,
     );
   },
@@ -66,7 +94,7 @@ const dashboardQuerySchema = z.object({
 analytics.get(
   "/analytics/dashboard",
   requireAuth(),
-  requireRole("super_admin"),
+  requireRole("admin"),
   zValidator("query", dashboardQuerySchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
@@ -78,6 +106,55 @@ analytics.get(
     const metrics = await useCase.execute(from, to);
 
     return c.json(metrics, 200);
+  },
+);
+
+// ── GET /analytics/funnel — conversion funnel (admin) ─────────────────────
+analytics.get(
+  "/analytics/funnel",
+  requireAuth(),
+  requireRole("admin"),
+  zValidator("query", dashboardQuerySchema),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const storeId = c.get("storeId") as string;
+    const { from, to } = c.req.valid("query");
+    const useCase = new GetConversionFunnelUseCase(db, storeId);
+    const funnel = await useCase.execute(from, to);
+    return c.json({ funnel }, 200);
+  },
+);
+
+// ── GET /analytics/top-products — top products (admin) ────────────────────
+analytics.get(
+  "/analytics/top-products",
+  requireAuth(),
+  requireRole("admin"),
+  zValidator("query", dashboardQuerySchema),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const storeId = c.get("storeId") as string;
+    const { from, to } = c.req.valid("query");
+    const useCase = new GetTopProductsUseCase(db, storeId);
+    const topProducts = await useCase.execute(from, to);
+    return c.json({ topProducts }, 200);
+  },
+);
+
+// ── GET /analytics/revenue — revenue metrics (admin) ──────────────────────
+analytics.get(
+  "/analytics/revenue",
+  requireAuth(),
+  requireRole("admin"),
+  zValidator("query", dashboardQuerySchema),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const storeId = c.get("storeId") as string;
+    const analyticsRepo = new AnalyticsRepository(db, storeId);
+    const { from, to } = c.req.valid("query");
+    const useCase = new GetRevenueMetricsUseCase(analyticsRepo);
+    const revenue = await useCase.execute(from, to);
+    return c.json({ revenue }, 200);
   },
 );
 

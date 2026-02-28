@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import { html } from "hono/html";
 
 export const CreateStorePage: FC<{ isAuthenticated: boolean }> = ({
   isAuthenticated,
@@ -51,6 +52,7 @@ export const CreateStorePage: FC<{ isAuthenticated: boolean }> = ({
               <input
                 type="text"
                 name="slug"
+                id="slug-input"
                 required
                 minLength={2}
                 maxLength={50}
@@ -60,9 +62,23 @@ export const CreateStorePage: FC<{ isAuthenticated: boolean }> = ({
               />
               <span class="text-gray-500 dark:text-gray-400 ml-1">.petm8.io</span>
             </div>
-            <p class="text-xs text-gray-500 mt-1">
+            <p id="slug-status" class="text-xs text-gray-500 mt-1">
               Lowercase letters, numbers, and hyphens only
             </p>
+          </div>
+
+          {/* Logo Upload */}
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Store Logo (optional)
+            </label>
+            <input
+              type="file"
+              name="logo"
+              accept="image/*"
+              class="text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
+            />
+            <p class="text-xs text-gray-500 mt-1">PNG or JPG, max 2MB</p>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
@@ -70,23 +86,31 @@ export const CreateStorePage: FC<{ isAuthenticated: boolean }> = ({
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Primary Color
               </label>
-              <input
-                type="color"
-                name="primaryColor"
-                value="#4F46E5"
-                class="w-full h-10 rounded border border-gray-300"
-              />
+              <div class="flex items-center gap-3">
+                <input
+                  type="color"
+                  name="primaryColor"
+                  id="primary-color"
+                  value="#4F46E5"
+                  class="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                />
+                <div id="primary-preview" class="w-20 h-10 rounded-lg" style="background-color: #4F46E5" />
+              </div>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Secondary Color
               </label>
-              <input
-                type="color"
-                name="secondaryColor"
-                value="#10B981"
-                class="w-full h-10 rounded border border-gray-300"
-              />
+              <div class="flex items-center gap-3">
+                <input
+                  type="color"
+                  name="secondaryColor"
+                  id="secondary-color"
+                  value="#10B981"
+                  class="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                />
+                <div id="secondary-preview" class="w-20 h-10 rounded-lg" style="background-color: #10B981" />
+              </div>
             </div>
           </div>
 
@@ -99,7 +123,17 @@ export const CreateStorePage: FC<{ isAuthenticated: boolean }> = ({
         </form>
       )}
 
-      <script src="/scripts/platform.js" />
+      {html`<script>
+        document.addEventListener('DOMContentLoaded', function() {
+          var pc = document.getElementById('primary-color');
+          var pp = document.getElementById('primary-preview');
+          var sc = document.getElementById('secondary-color');
+          var sp = document.getElementById('secondary-preview');
+          if (pc && pp) pc.addEventListener('input', function() { pp.style.backgroundColor = pc.value; });
+          if (sc && sp) sc.addEventListener('input', function() { sp.style.backgroundColor = sc.value; });
+        });
+      </script>`}
+      {html`<script src="/scripts/platform.js"></script>`}
     </div>
   );
 };

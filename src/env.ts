@@ -4,6 +4,12 @@ export interface Env {
 
   // Auth
   JWT_SECRET: string;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
+  APPLE_CLIENT_ID?: string;
+  APPLE_CLIENT_SECRET?: string;
+  META_CLIENT_ID?: string;
+  META_CLIENT_SECRET?: string;
 
   // Stripe
   STRIPE_SECRET_KEY: string;

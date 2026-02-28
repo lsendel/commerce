@@ -254,6 +254,14 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
             var defaultSvg = photoPreview ? photoPreview.firstElementChild : null;
             var pendingDeleteId = null;
 
+            function showError(err, fallback) {
+              var message = err && err.message ? err.message : fallback;
+              if (!message) message = 'Something went wrong';
+              formError.textContent = message;
+              formError.classList.remove('hidden');
+              if (window.showToast) window.showToast(message, 'error');
+            }
+
             function resetPreview() {
               while (photoPreview.firstChild) photoPreview.removeChild(photoPreview.firstChild);
               if (defaultSvg) photoPreview.appendChild(defaultSvg.cloneNode(true));
@@ -330,7 +338,7 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
                 if (!res.ok) throw new Error('Failed to remove pet');
                 window.location.reload();
               } catch (err) {
-                alert(err.message);
+                showError(err, 'Failed to remove pet');
               } finally {
                 deleteConfirm.classList.add('hidden');
                 pendingDeleteId = null;
@@ -355,7 +363,7 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
                     if (!res.ok) throw new Error('Upload failed');
                     window.location.reload();
                   } catch (err) {
-                    alert(err.message);
+                    showError(err, 'Upload failed');
                     btn.textContent = 'Photo';
                     btn.disabled = false;
                   }

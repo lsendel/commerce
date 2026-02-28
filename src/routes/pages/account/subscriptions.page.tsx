@@ -261,6 +261,31 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
       {/* Client-side handlers */}
       {html`<script>
             (function() {
+              function getErrorMessage(err, fallback) {
+                if (err && err.message) return err.message;
+                return fallback;
+              }
+
+              function showError(err, fallback) {
+                var message = (typeof err === 'string') ? err : getErrorMessage(err, fallback);
+                if (window.showToast) window.showToast(message, 'error');
+                else console.error(message);
+              }
+
+              function requireSecondClick(btn, confirmText, idleText, timeoutMs) {
+                if (btn.dataset.confirming === 'true') return true;
+                btn.dataset.confirming = 'true';
+                btn.dataset.idleText = btn.textContent || idleText;
+                btn.textContent = confirmText;
+                if (window.showToast) window.showToast('Click again to confirm', 'warning');
+                if (btn._confirmTimer) clearTimeout(btn._confirmTimer);
+                btn._confirmTimer = setTimeout(function() {
+                  btn.dataset.confirming = 'false';
+                  btn.textContent = btn.dataset.idleText || idleText;
+                }, timeoutMs);
+                return false;
+              }
+
               var manageBtn = document.getElementById('manage-subscription-btn');
               var cancelBtn = document.getElementById('cancel-subscription-btn');
               var cancelConfirm = document.getElementById('cancel-confirm');
@@ -278,7 +303,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                     var data = await res.json();
                     window.location.href = data.url;
                   } catch (err) {
-                    alert(err.message);
+                    showError(err, 'Failed to open billing portal');
                     manageBtn.disabled = false;
                     manageBtn.textContent = 'Manage Subscription';
                   }
@@ -299,7 +324,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                 var btn = this;
                 var subscriptionId = cancelBtn ? cancelBtn.getAttribute('data-subscription-id') : null;
                 if (!subscriptionId) {
-                  alert('Subscription not found');
+                  showError('Subscription not found');
                   cancelConfirm.classList.add('hidden');
                   return;
                 }
@@ -312,7 +337,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                   if (!res.ok) throw new Error('Failed to cancel subscription');
                   window.location.reload();
                 } catch (err) {
-                  alert(err.message);
+                  showError(err, 'Failed to cancel subscription');
                   btn.disabled = false;
                   btn.textContent = 'Yes, Cancel';
                   cancelConfirm.classList.add('hidden');
@@ -337,7 +362,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                     }
                     window.location.reload();
                   } catch (err) {
-                    alert(err.message);
+                    showError(err, 'Failed to resume subscription');
                     this.disabled = false;
                     this.textContent = 'Resume Subscription';
                   }
@@ -349,11 +374,13 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                 btn.addEventListener('click', async function() {
                   var planId = this.getAttribute('data-plan-id');
                   var planName = this.getAttribute('data-plan-name');
-                  if (!confirm('Switch to ' + planName + '? Your billing will be prorated.')) return;
+                  if (!requireSecondClick(this, 'Confirm Switch', 'Switch to ' + planName, 5000)) return;
+                  this.dataset.confirming = 'false';
+                  if (this._confirmTimer) clearTimeout(this._confirmTimer);
                   var subscriptionId = (cancelBtn || resumeBtn)
                     ? (cancelBtn || resumeBtn).getAttribute('data-subscription-id')
                     : null;
-                  if (!subscriptionId) { alert('No active subscription found'); return; }
+                  if (!subscriptionId) { showError('No active subscription found'); return; }
                   this.disabled = true;
                   this.textContent = 'Switching...';
                   try {
@@ -368,7 +395,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                     }
                     window.location.reload();
                   } catch (err) {
-                    alert(err.message);
+                    showError(err, 'Failed to change plan');
                     this.disabled = false;
                     this.textContent = 'Switch to ' + planName;
                   }

@@ -375,6 +375,16 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
       </div>
 
       {html`<script>
+        function notify(message, type) {
+          if (!message) return;
+          if (window.showToast) {
+            window.showToast(message, type || 'info');
+            return;
+          }
+          if (type === 'error') console.error(message);
+          else console.log(message);
+        }
+
         document.addEventListener('click', async (e) => {
           const btn = e.target.closest('[data-action="join-waitlist"]');
           if (!btn) return;
@@ -390,11 +400,12 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
               btn.classList.replace('hover:bg-amber-600', 'hover:bg-green-600');
             } else {
               const data = await res.json().catch(() => ({}));
-              alert(data.error || 'Could not join waitlist');
+              notify(data.error || 'Could not join waitlist', 'error');
               btn.disabled = false;
               btn.textContent = 'Join Waitlist';
             }
           } catch {
+            notify('Could not join waitlist', 'error');
             btn.disabled = false;
             btn.textContent = 'Join Waitlist';
           }

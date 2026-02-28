@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import type { Env } from "../../env";
 import { requireAuth } from "../../middleware/auth.middleware";
+import { requireRole } from "../../middleware/role.middleware";
 import { createDb } from "../../infrastructure/db/client";
 import { PromotionRepository } from "../../infrastructure/repositories/promotion.repository";
 import { CreatePromotionUseCase } from "../../application/promotions/create-promotion.usecase";
@@ -19,6 +20,8 @@ import {
 } from "../../contracts/promotions.contract";
 
 const promotionRoutes = new Hono<{ Bindings: Env }>();
+
+promotionRoutes.use("/*", requireAuth(), requireRole("admin"));
 
 // POST /api/promotions — create promotion (admin)
 promotionRoutes.post(

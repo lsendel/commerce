@@ -487,6 +487,23 @@ export const FulfillmentDetailPage: FC<FulfillmentDetailPageProps> = ({
       {html`
         <script>
           (function() {
+            function showFulfillmentDetailError(message) {
+              if (window.showToast) {
+                window.showToast(message, 'error');
+                return;
+              }
+              var banner = document.getElementById('admin-fulfillment-detail-flash');
+              if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'admin-fulfillment-detail-flash';
+                banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-lg';
+                document.body.appendChild(banner);
+              }
+              banner.textContent = message;
+              banner.classList.remove('hidden');
+              setTimeout(function() { banner.classList.add('hidden'); }, 4000);
+            }
+
             var retryBtn = document.getElementById('retry-btn');
             if (retryBtn) {
               retryBtn.addEventListener('click', async function() {
@@ -508,7 +525,7 @@ export const FulfillmentDetailPage: FC<FulfillmentDetailPageProps> = ({
                   if (window.showToast) window.showToast('Retry queued successfully', 'success');
                   window.location.reload();
                 } catch (err) {
-                  alert(err.message);
+                  showFulfillmentDetailError(err.message || 'Retry failed');
                   this.disabled = false;
                   this.textContent = 'Retry Fulfillment';
                 }
@@ -536,7 +553,7 @@ export const FulfillmentDetailPage: FC<FulfillmentDetailPageProps> = ({
                   if (window.showToast) window.showToast('Fulfillment cancelled', 'success');
                   window.location.reload();
                 } catch (err) {
-                  alert(err.message);
+                  showFulfillmentDetailError(err.message || 'Cancellation failed');
                   this.disabled = false;
                   this.textContent = 'Cancel Fulfillment';
                 }

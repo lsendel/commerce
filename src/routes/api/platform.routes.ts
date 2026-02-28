@@ -1,10 +1,16 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 import type { Env } from "../../env";
 import { requireAuth } from "../../middleware/auth.middleware";
+import { requireRole } from "../../middleware/role.middleware";
 import { createDb } from "../../infrastructure/db/client";
 import { StoreRepository } from "../../infrastructure/repositories/store.repository";
 import { StripeConnectAdapter } from "../../infrastructure/stripe/connect.adapter";
+import { InviteMemberUseCase } from "../../application/platform/invite-member.usecase";
+import { AcceptInvitationUseCase } from "../../application/platform/accept-invitation.usecase";
+import { ChangeMemberRoleUseCase } from "../../application/platform/change-member-role.usecase";
+import { UploadStoreLogoUseCase } from "../../application/platform/upload-store-logo.usecase";
 import {
   createStoreSchema,
   updateStoreSchema,
@@ -48,7 +54,7 @@ platform.post(
 );
 
 // List stores (super_admin only)
-platform.get("/stores", requireAuth(), async (c) => {
+platform.get("/stores", requireAuth(), requireRole("super_admin"), async (c) => {
   const db = createDb(c.env.DATABASE_URL);
   const repo = new StoreRepository(db);
   const page = Number(c.req.query("page") ?? "1");
@@ -219,10 +225,96 @@ platform.post(
 
     const link = await connect.createAccountLink(
       accountId,
-      `${c.env.APP_URL}/platform/stores/${store.id}/settings`,
-      `${c.env.APP_URL}/platform/stores/${store.id}/connect/refresh`,
+      `${c.env.APP_URL}/platform/settings`,
+      `${c.env.APP_URL}/platform/settings`,
     );
     return c.json({ url: link.url });
+  },
+);
+
+// ── Logo Upload ─────────────────────────────────────────────────────────────
+
+platform.post("/stores/:id/logo", requireAuth(), async (c) => {
+  const body = await c.req.parseBody();
+  const file = body["logo"];
+  if (!(file instanceof File)) {
+    return c.json({ error: "No logo file provided" }, 400);
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    return c.json({ error: "File must be under 2MB" }, 400);
+  }
+  if (!file.type.startsWith("image/")) {
+    return c.json({ error: "File must be an image" }, 400);
+  }
+
+  const db = createDb(c.env.DATABASE_URL);
+  const repo = new StoreRepository(db);
+  const useCase = new UploadStoreLogoUseCase(repo, c.env.IMAGES);
+  const result = await useCase.execute(c.req.param("id"), file);
+  return c.json(result);
+});
+
+// ── Invitations ─────────────────────────────────────────────────────────────
+
+const inviteSchema = z.object({
+  email: z.string().email(),
+  role: z.enum(["admin", "staff"]),
+});
+
+platform.post(
+  "/stores/:id/invite",
+  requireAuth(),
+  zValidator("json", inviteSchema),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const repo = new StoreRepository(db);
+    const useCase = new InviteMemberUseCase(repo);
+    const { email, role } = c.req.valid("json");
+    const invitation = await useCase.execute({
+      storeId: c.req.param("id"),
+      email,
+      role,
+      invitedBy: c.get("userId"),
+    });
+    return c.json({ invitation }, 201);
+  },
+);
+
+platform.post(
+  "/invitations/:token/accept",
+  requireAuth(),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const repo = new StoreRepository(db);
+    const useCase = new AcceptInvitationUseCase(repo);
+    const result = await useCase.execute(
+      c.req.param("token"),
+      c.get("userId"),
+    );
+    return c.json(result, 200);
+  },
+);
+
+const changeRoleSchema = z.object({
+  role: z.enum(["admin", "staff"]),
+});
+
+platform.patch(
+  "/stores/:id/members/:userId/role",
+  requireAuth(),
+  zValidator("json", changeRoleSchema),
+  async (c) => {
+    const db = createDb(c.env.DATABASE_URL);
+    const repo = new StoreRepository(db);
+    const useCase = new ChangeMemberRoleUseCase(repo);
+    const { role } = c.req.valid("json");
+    const member = await useCase.execute({
+      storeId: c.req.param("id"),
+      targetUserId: c.req.param("userId"),
+      newRole: role,
+      requesterId: c.get("userId"),
+    });
+    return c.json({ member }, 200);
   },
 );
 

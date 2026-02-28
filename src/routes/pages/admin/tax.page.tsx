@@ -401,7 +401,7 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
               btn.addEventListener('click', function() {
                 var card = btn.closest('[data-zone-card]');
                 if (!confirm('Delete tax zone "' + card.dataset.zoneName + '" and all its rates?')) return;
-                fetch('/api/admin/tax/zones/' + card.dataset.zoneId, { method: 'DELETE' })
+                fetch('/api/tax/zones/' + card.dataset.zoneId, { method: 'DELETE' })
                   .then(function(r) {
                     if (!r.ok) throw new Error('Delete failed');
                     card.remove();
@@ -426,8 +426,8 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
                 name: zoneForm.querySelector('[name=zoneName]').value,
                 countries: selectedCountries,
               };
-              var url = id ? '/api/admin/tax/zones/' + id : '/api/admin/tax/zones';
-              var method = id ? 'PATCH' : 'POST';
+              var url = id ? '/api/tax/zones/' + id : '/api/tax/zones';
+              var method = id ? 'PUT' : 'POST';
 
               fetch(url, {
                 method: method,
@@ -496,7 +496,7 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
                 if (!confirm('Delete rate "' + row.dataset.rateName + '"?')) return;
                 var zoneId = row.dataset.rateZoneId;
                 var rateId = row.dataset.rateId;
-                fetch('/api/admin/tax/zones/' + zoneId + '/rates/' + rateId, { method: 'DELETE' })
+                fetch('/api/tax/zones/' + zoneId + '/rates/' + rateId, { method: 'DELETE' })
                   .then(function(r) {
                     if (!r.ok) throw new Error('Delete failed');
                     row.remove();
@@ -512,13 +512,13 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
               var zoneId = rateForm.querySelector('[name=rateZoneId]').value;
               var body = {
                 name: rateForm.querySelector('[name=rateName]').value,
-                rate: rateForm.querySelector('[name=ratePercent]').value,
-                isCompound: rateForm.querySelector('[name=rateCompound]').checked,
+                rate: Number(rateForm.querySelector('[name=ratePercent]').value),
+                compound: rateForm.querySelector('[name=rateCompound]').checked,
                 priority: Number(rateForm.querySelector('[name=ratePriority]').value) || 0,
               };
               var url = rateId
-                ? '/api/admin/tax/zones/' + zoneId + '/rates/' + rateId
-                : '/api/admin/tax/zones/' + zoneId + '/rates';
+                ? '/api/tax/zones/' + zoneId + '/rates/' + rateId
+                : '/api/tax/zones/' + zoneId + '/rates';
               var method = rateId ? 'PATCH' : 'POST';
 
               fetch(url, {
@@ -543,7 +543,7 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
             var calcResults = document.getElementById('tax-calc-results');
             var calcBody = document.getElementById('tax-calc-body');
 
-            function renderCalcResults(data) {
+            function renderCalcResults(data, subtotalAmount) {
               while (calcBody.firstChild) calcBody.removeChild(calcBody.firstChild);
 
               if (data.lines && data.lines.length > 0) {
@@ -553,9 +553,9 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
                   var line = data.lines[i];
                   var tr = createEl('tr', { class: 'border-b border-gray-200 dark:border-gray-700' });
                   var tdName = createEl('td', { class: 'py-1.5 text-gray-700 dark:text-gray-300' },
-                    line.name + ' (' + line.rate + '%)');
+                    (line.taxType || 'tax') + ' (' + (line.rate || 0) + '%)');
                   var tdAmount = createEl('td', { class: 'py-1.5 text-right font-medium text-gray-900 dark:text-gray-100' },
-                    '$' + Number(line.amount).toFixed(2));
+                    '$' + Number(line.taxAmount || 0).toFixed(2));
                   tr.appendChild(tdName);
                   tr.appendChild(tdAmount);
                   tbody.appendChild(tr);
@@ -573,9 +573,9 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
               calcBody.appendChild(totalDiv);
 
               var grandDiv = createEl('div', { class: 'flex justify-between mt-1' });
-              grandDiv.appendChild(createEl('span', { class: 'text-gray-600 dark:text-gray-400' }, 'Grand Total'));
+              grandDiv.appendChild(createEl('span', { class: 'text-gray-600 dark:text-gray-400' }, 'Estimated Total'));
               grandDiv.appendChild(createEl('span', { class: 'font-semibold text-gray-900 dark:text-gray-100' },
-                '$' + Number(data.grandTotal || 0).toFixed(2)));
+                '$' + (Number(subtotalAmount || 0) + Number(data.totalTax || 0)).toFixed(2)));
               calcBody.appendChild(grandDiv);
             }
 
@@ -583,6 +583,7 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
               e.preventDefault();
               var country = calcForm.querySelector('[name=calcCountry]').value;
               var subtotal = calcForm.querySelector('[name=calcSubtotal]').value;
+              var subtotalAmount = Number(subtotal);
 
               if (!country) {
                 flash(errorEl, 'Please select a country.');
@@ -592,10 +593,21 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
               var btn = document.getElementById('tax-calc-btn');
               btn.disabled = true;
 
-              fetch('/api/admin/tax/calculate', {
+              fetch('/api/tax/calculate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ country: country, subtotal: Number(subtotal) }),
+                body: JSON.stringify({
+                  lineItems: [{
+                    id: 'preview',
+                    amount: subtotalAmount,
+                    productType: 'physical',
+                  }],
+                  shippingAmount: 0,
+                  address: {
+                    country: country,
+                    zip: '00000',
+                  },
+                }),
               })
                 .then(function(r) {
                   if (!r.ok) throw new Error('Calculation failed');
@@ -603,7 +615,7 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
                 })
                 .then(function(data) {
                   calcResults.classList.remove('hidden');
-                  renderCalcResults(data);
+                  renderCalcResults(data, subtotalAmount);
                 })
                 .catch(function() {
                   calcResults.classList.remove('hidden');

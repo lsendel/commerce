@@ -7,6 +7,8 @@ import {
   storeSettings,
   storeBilling,
   platformPlans,
+  storeInvitations,
+  users,
 } from "../db/schema";
 
 export class StoreRepository {
@@ -122,6 +124,22 @@ export class StoreRepository {
           eq(storeMembers.userId, userId),
         ),
       );
+  }
+
+  async findMembersWithUsers(storeId: string) {
+    return this.db
+      .select({
+        id: storeMembers.id,
+        userId: storeMembers.userId,
+        role: storeMembers.role,
+        createdAt: storeMembers.createdAt,
+        userName: users.name,
+        userEmail: users.email,
+        avatarUrl: users.avatarUrl,
+      })
+      .from(storeMembers)
+      .innerJoin(users, eq(storeMembers.userId, users.id))
+      .where(eq(storeMembers.storeId, storeId));
   }
 
   async findMembership(storeId: string, userId: string) {
@@ -259,5 +277,51 @@ export class StoreRepository {
 
   async findAllPlans() {
     return this.db.select().from(platformPlans);
+  }
+
+  // Invitations
+  async createInvitation(data: {
+    storeId: string;
+    email: string;
+    role: "owner" | "admin" | "staff";
+    token: string;
+    invitedBy: string;
+    expiresAt: Date;
+  }) {
+    const [invitation] = await this.db
+      .insert(storeInvitations)
+      .values(data)
+      .returning();
+    return invitation;
+  }
+
+  async findInvitationByToken(token: string) {
+    const [invitation] = await this.db
+      .select()
+      .from(storeInvitations)
+      .where(eq(storeInvitations.token, token))
+      .limit(1);
+    return invitation ?? null;
+  }
+
+  async findPendingInvitations(storeId: string) {
+    return this.db
+      .select()
+      .from(storeInvitations)
+      .where(
+        and(
+          eq(storeInvitations.storeId, storeId),
+          eq(storeInvitations.status, "pending"),
+        ),
+      );
+  }
+
+  async updateInvitationStatus(id: string, status: "accepted" | "expired") {
+    const [invitation] = await this.db
+      .update(storeInvitations)
+      .set({ status })
+      .where(eq(storeInvitations.id, id))
+      .returning();
+    return invitation;
   }
 }

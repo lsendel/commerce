@@ -14,7 +14,8 @@
     "css:watch": "tailwindcss -i src/styles/input.css -o public/styles/output.css --watch",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "smoke:printful:newman": "node scripts/run-printful-smoke.mjs"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.1",

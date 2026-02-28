@@ -147,19 +147,45 @@ export const ArtworkPage: FC<ArtworkPageProps> = ({
       )}
 
       {html`<script>
+        function notify(message, type) {
+          if (!message) return;
+          if (window.showToast) {
+            window.showToast(message, type || 'info');
+            return;
+          }
+          if (type === 'error') console.error(message);
+          else console.log(message);
+        }
+
+        function requireSecondClick(btn, confirmText, idleText, timeoutMs) {
+          if (btn.dataset.confirming === 'true') return true;
+          btn.dataset.confirming = 'true';
+          btn.dataset.idleText = btn.textContent || idleText;
+          btn.textContent = confirmText;
+          notify('Click again to confirm', 'warning');
+          if (btn._confirmTimer) clearTimeout(btn._confirmTimer);
+          btn._confirmTimer = setTimeout(() => {
+            btn.dataset.confirming = 'false';
+            btn.textContent = btn.dataset.idleText || idleText;
+          }, timeoutMs);
+          return false;
+        }
+
         document.addEventListener('click', async (e) => {
           var btn = e.target.closest('[data-delete-artwork]');
           if (!btn) return;
-          if (!confirm('Delete this artwork permanently?')) return;
+          if (!requireSecondClick(btn, 'Confirm Delete', 'Delete', 5000)) return;
+          btn.dataset.confirming = 'false';
+          if (btn._confirmTimer) clearTimeout(btn._confirmTimer);
           var id = btn.dataset.deleteArtwork;
           btn.disabled = true;
           btn.textContent = 'Deleting...';
           try {
             var res = await fetch('/api/studio/jobs/' + id, { method: 'DELETE' });
             if (res.ok) location.reload();
-            else alert('Failed to delete artwork');
+            else notify('Failed to delete artwork', 'error');
           } catch {
-            alert('Failed to delete artwork');
+            notify('Failed to delete artwork', 'error');
           }
           btn.disabled = false;
           btn.textContent = 'Delete';

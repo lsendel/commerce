@@ -263,6 +263,23 @@ export const AdminOrderDetailPage: FC<AdminOrderDetailPageProps> = ({
       {html`
         <script>
           (function() {
+            function showOrderDetailError(message) {
+              if (window.showToast) {
+                window.showToast(message, 'error');
+                return;
+              }
+              var banner = document.getElementById('admin-order-detail-flash');
+              if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'admin-order-detail-flash';
+                banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-lg';
+                document.body.appendChild(banner);
+              }
+              banner.textContent = message;
+              banner.classList.remove('hidden');
+              setTimeout(function() { banner.classList.add('hidden'); }, 4000);
+            }
+
             var noteForm = document.getElementById('note-form');
             if (noteForm) {
               noteForm.addEventListener('submit', async function(e) {
@@ -281,7 +298,7 @@ export const AdminOrderDetailPage: FC<AdminOrderDetailPageProps> = ({
                   if (!res.ok) throw new Error('Failed to add note');
                   window.location.reload();
                 } catch (err) {
-                  alert(err.message);
+                  showOrderDetailError(err.message || 'Failed to add note');
                   btn.disabled = false;
                 }
               });
@@ -308,7 +325,7 @@ export const AdminOrderDetailPage: FC<AdminOrderDetailPageProps> = ({
                   if (window.showToast) window.showToast('Refund issued successfully', 'success');
                   window.location.reload();
                 } catch (err) {
-                  alert(err.message);
+                  showOrderDetailError(err.message || 'Refund failed');
                   this.disabled = false;
                   this.textContent = 'Issue Refund';
                 }

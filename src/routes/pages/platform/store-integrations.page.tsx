@@ -86,7 +86,7 @@ export const StoreIntegrationsPage: FC<StoreIntegrationsProps> = ({
         </p>
       </div>
       <a
-        href={`/platform/stores/${store.id}/dashboard`}
+        href="/platform/dashboard"
         class="text-sm text-brand-600 dark:text-brand-400 hover:underline"
       >
         Back to Dashboard

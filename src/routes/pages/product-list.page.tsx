@@ -96,7 +96,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
   };
 
   return (
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div id="product-list-root" data-total={String(total)} class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Pagination rel links for SEO */}
       {page > 1 && (
         <link rel="prev" href={buildUrl({ page: page - 1 })} />

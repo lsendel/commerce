@@ -4,7 +4,7 @@ import { createDb } from "../infrastructure/db/client";
 import { eq, and } from "drizzle-orm";
 import { users, storeMembers } from "../infrastructure/db/schema";
 
-export function requireRole(role: string) {
+export function requireRole(role: string | string[]) {
   return async (c: Context<{ Bindings: Env }>, next: Next) => {
     const userId = c.get("userId");
     if (!userId) {
@@ -19,7 +19,12 @@ export function requireRole(role: string) {
       .limit(1);
 
     const user = userRows[0];
-    if (!user || user.platformRole !== role) {
+    const requestedRoles = Array.isArray(role) ? role : [role];
+    const normalizedRoles = requestedRoles.flatMap((r) =>
+      r === "admin" ? ["super_admin", "group_admin"] : [r],
+    );
+
+    if (!user || !normalizedRoles.includes(user.platformRole ?? "")) {
       return c.json({ error: "Insufficient permissions" }, 403);
     }
 

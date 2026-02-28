@@ -15,13 +15,44 @@ export class UserRepository {
     return result[0] ?? null;
   }
 
-  async create(data: { email: string; passwordHash: string; name: string }) {
+  async findByGoogleSub(googleSub: string) {
+    const result = await this.db.select().from(users).where(eq(users.googleSub, googleSub)).limit(1);
+    return result[0] ?? null;
+  }
+
+  async findByAppleSub(appleSub: string) {
+    const result = await this.db.select().from(users).where(eq(users.appleSub, appleSub)).limit(1);
+    return result[0] ?? null;
+  }
+
+  async findByMetaSub(metaSub: string) {
+    const result = await this.db.select().from(users).where(eq(users.metaSub, metaSub)).limit(1);
+    return result[0] ?? null;
+  }
+
+  async create(data: {
+    email: string;
+    passwordHash: string;
+    name: string;
+    googleSub?: string;
+    appleSub?: string;
+    metaSub?: string;
+    emailVerifiedAt?: Date;
+  }) {
     const result = await this.db.insert(users).values({
       email: data.email,
       passwordHash: data.passwordHash,
       name: data.name,
+      googleSub: data.googleSub,
+      appleSub: data.appleSub,
+      metaSub: data.metaSub,
+      emailVerifiedAt: data.emailVerifiedAt,
     }).returning();
-    return result[0];
+    const created = result[0];
+    if (!created) {
+      throw new Error("Failed to create user");
+    }
+    return created;
   }
 
   async findByStripeCustomerId(stripeCustomerId: string) {
@@ -49,6 +80,18 @@ export class UserRepository {
 
   async setEmailVerified(userId: string) {
     await this.db.update(users).set({ emailVerifiedAt: new Date(), updatedAt: new Date() }).where(eq(users.id, userId));
+  }
+
+  async linkGoogleSub(userId: string, googleSub: string) {
+    await this.db.update(users).set({ googleSub, updatedAt: new Date() }).where(eq(users.id, userId));
+  }
+
+  async linkAppleSub(userId: string, appleSub: string) {
+    await this.db.update(users).set({ appleSub, updatedAt: new Date() }).where(eq(users.id, userId));
+  }
+
+  async linkMetaSub(userId: string, metaSub: string) {
+    await this.db.update(users).set({ metaSub, updatedAt: new Date() }).where(eq(users.id, userId));
   }
 
   async updateLastLogin(userId: string) {
