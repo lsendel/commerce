@@ -2,6 +2,9 @@ import { controlTowerContract } from "../src/contracts/control-tower.contract";
 import { policiesContract } from "../src/contracts/policies.contract";
 import { pricingExperimentContract } from "../src/contracts/pricing-experiment.contract";
 import { workflowsContract } from "../src/contracts/workflows.contract";
+import { integrationMarketplaceContract } from "../src/contracts/integration-marketplace.contract";
+import { headlessApiPacksContract } from "../src/contracts/headless-api-packs.contract";
+import { storeTemplatesContract } from "../src/contracts/store-templates.contract";
 
 type ContractRoute = {
   method: string;
@@ -194,6 +197,9 @@ async function main() {
   const pricingList = pricingExperimentContract.listExperiments as unknown as ContractRoute;
   const pricingPerformance = pricingExperimentContract.performance as unknown as ContractRoute;
   const workflowsList = workflowsContract.list as unknown as ContractRoute;
+  const integrationAppsList = integrationMarketplaceContract.listApps as unknown as ContractRoute;
+  const headlessPacksList = headlessApiPacksContract.listAdminPacks as unknown as ContractRoute;
+  const storeTemplatesList = storeTemplatesContract.listTemplates as unknown as ContractRoute;
 
   invariant(policyGet.method === "GET", "Contract mismatch: getPolicy must use GET");
   invariant(policyGet.path === "/api/admin/policies", "Contract mismatch: getPolicy path changed");
@@ -223,6 +229,21 @@ async function main() {
   invariant(
     workflowsList.path === "/api/admin/workflows",
     "Contract mismatch: workflow list path changed",
+  );
+  invariant(integrationAppsList.method === "GET", "Contract mismatch: integration apps list must use GET");
+  invariant(
+    integrationAppsList.path === "/api/admin/integration-marketplace/apps",
+    "Contract mismatch: integration apps list path changed",
+  );
+  invariant(headlessPacksList.method === "GET", "Contract mismatch: headless packs list must use GET");
+  invariant(
+    headlessPacksList.path === "/api/admin/headless/packs",
+    "Contract mismatch: headless packs list path changed",
+  );
+  invariant(storeTemplatesList.method === "GET", "Contract mismatch: store templates list must use GET");
+  invariant(
+    storeTemplatesList.path === "/api/admin/store-templates",
+    "Contract mismatch: store templates list path changed",
   );
 
   const baseUrlRaw = process.env.SMOKE_BASE_URL;
@@ -364,6 +385,48 @@ async function main() {
       "listWorkflows",
     );
     console.log(`GET /api/admin/workflows -> ${workflowsListResponse.status}`);
+
+    const integrationAppsListResponse = await requestJson({
+      baseUrl,
+      method: "GET",
+      path: "/api/admin/integration-marketplace/apps",
+      headers,
+    });
+    validateContractResponse(
+      integrationAppsList,
+      integrationAppsListResponse.status,
+      integrationAppsListResponse.payload,
+      "listIntegrationMarketplaceApps",
+    );
+    console.log(`GET /api/admin/integration-marketplace/apps -> ${integrationAppsListResponse.status}`);
+
+    const headlessPacksListResponse = await requestJson({
+      baseUrl,
+      method: "GET",
+      path: "/api/admin/headless/packs?limit=20",
+      headers,
+    });
+    validateContractResponse(
+      headlessPacksList,
+      headlessPacksListResponse.status,
+      headlessPacksListResponse.payload,
+      "listHeadlessPacks",
+    );
+    console.log(`GET /api/admin/headless/packs -> ${headlessPacksListResponse.status}`);
+
+    const storeTemplatesListResponse = await requestJson({
+      baseUrl,
+      method: "GET",
+      path: "/api/admin/store-templates?limit=20",
+      headers,
+    });
+    validateContractResponse(
+      storeTemplatesList,
+      storeTemplatesListResponse.status,
+      storeTemplatesListResponse.payload,
+      "listStoreTemplates",
+    );
+    console.log(`GET /api/admin/store-templates -> ${storeTemplatesListResponse.status}`);
 
     console.log("Admin parity smoke passed.");
   } finally {
