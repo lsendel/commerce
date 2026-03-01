@@ -25,8 +25,10 @@
   - `GET /api/admin/store-templates`
 - Optional reversible mutation checks (when enabled):
   - `POST /api/admin/integration-marketplace/apps/:provider/install` + uninstall rollback
+  - `POST /api/admin/integration-marketplace/apps/:provider/verify` (non-destructive verification pass)
   - `POST /api/admin/headless/packs` + revoke rollback
   - `POST /api/admin/store-templates` + delete rollback
+  - `POST /api/admin/store-templates/:id/clone` conflict-path validation (forced slug collision, expects `400`, no store created)
 
 ## Modes
 
@@ -38,6 +40,7 @@
    - `SMOKE_BASE_URL=https://<env-host> SMOKE_AUTHORIZATION='Bearer <token>' pnpm smoke:admin-parity`
 3. Live API + mutation mode:
    - `SMOKE_BASE_URL=https://<env-host> SMOKE_COOKIE='<cookie>' SMOKE_ENABLE_MUTATIONS=true pnpm smoke:admin-parity`
+   - Clone safety strategy: the script intentionally clones with an existing slug to assert `400` and avoid persistent clone-store artifacts.
 
 ## CI Automation
 

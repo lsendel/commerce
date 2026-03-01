@@ -317,11 +317,13 @@ async function main() {
   const integrationAppsList = integrationMarketplaceContract.listApps as unknown as ContractRoute;
   const integrationInstall = integrationMarketplaceContract.installApp as unknown as ContractRoute;
   const integrationUninstall = integrationMarketplaceContract.uninstallApp as unknown as ContractRoute;
+  const integrationVerify = integrationMarketplaceContract.verifyApp as unknown as ContractRoute;
   const headlessPacksList = headlessApiPacksContract.listAdminPacks as unknown as ContractRoute;
   const headlessPackCreate = headlessApiPacksContract.createAdminPack as unknown as ContractRoute;
   const headlessPackRevoke = headlessApiPacksContract.revokeAdminPack as unknown as ContractRoute;
   const storeTemplatesList = storeTemplatesContract.listTemplates as unknown as ContractRoute;
   const storeTemplateCreate = storeTemplatesContract.createTemplate as unknown as ContractRoute;
+  const storeTemplateClone = storeTemplatesContract.cloneTemplate as unknown as ContractRoute;
   const storeTemplateDelete = storeTemplatesContract.deleteTemplate as unknown as ContractRoute;
 
   assertContractRoute(policyGet, "getPolicy", "GET", "/api/admin/policies");
@@ -359,6 +361,12 @@ async function main() {
     "POST",
     "/api/admin/integration-marketplace/apps/:provider/uninstall",
   );
+  assertContractRoute(
+    integrationVerify,
+    "verifyIntegrationApp",
+    "POST",
+    "/api/admin/integration-marketplace/apps/:provider/verify",
+  );
   assertContractRoute(headlessPacksList, "listHeadlessPacks", "GET", "/api/admin/headless/packs");
   assertContractRoute(headlessPackCreate, "createHeadlessPack", "POST", "/api/admin/headless/packs");
   assertContractRoute(
@@ -369,6 +377,12 @@ async function main() {
   );
   assertContractRoute(storeTemplatesList, "listStoreTemplates", "GET", "/api/admin/store-templates");
   assertContractRoute(storeTemplateCreate, "createStoreTemplate", "POST", "/api/admin/store-templates");
+  assertContractRoute(
+    storeTemplateClone,
+    "cloneStoreTemplate",
+    "POST",
+    "/api/admin/store-templates/:id/clone",
+  );
   assertContractRoute(
     storeTemplateDelete,
     "deleteStoreTemplate",
@@ -646,6 +660,32 @@ async function main() {
         const payload = integrationAppsListResponse.payload as {
           apps: Array<{ provider: Provider; installed: boolean; source: "store_override" | "platform" | "none" }>;
         };
+        const verifyCandidate = payload.apps[0];
+        if (verifyCandidate) {
+          const verifyResponse = await requestJson({
+            baseUrl,
+            method: "POST",
+            path: `/api/admin/integration-marketplace/apps/${verifyCandidate.provider}/verify`,
+            headers,
+          });
+          validateContractResponse(
+            integrationVerify,
+            verifyResponse.status,
+            verifyResponse.payload,
+            "verifyIntegrationApp",
+          );
+          console.log(
+            `POST /api/admin/integration-marketplace/apps/:provider/verify -> ${verifyResponse.status}`,
+          );
+          recordCheck({
+            name: "verifyIntegrationApp",
+            method: "POST",
+            path: "/api/admin/integration-marketplace/apps/:provider/verify",
+            status: verifyResponse.status,
+            ok: true,
+          });
+        }
+
         const installCandidate = payload.apps.find(
           (app) => !app.installed && app.source === "none",
         );
@@ -804,8 +844,64 @@ async function main() {
       });
 
       if (createStoreTemplateResponse.status === 201) {
-        const payload = createStoreTemplateResponse.payload as { template: { id: string } };
+        const payload = createStoreTemplateResponse.payload as {
+          template: { id: string; sourceStoreId: string };
+        };
         createdStoreTemplateId = payload.template.id;
+
+        const sourceStoreResponse = await requestJson({
+          baseUrl,
+          method: "GET",
+          path: `/api/platform/stores/${payload.template.sourceStoreId}`,
+          headers,
+        });
+        const sourceStorePayload =
+          sourceStoreResponse.payload &&
+          typeof sourceStoreResponse.payload === "object"
+            ? (sourceStoreResponse.payload as {
+                store?: { slug?: string };
+                error?: string;
+              })
+            : null;
+        const sourceStoreSlug = sourceStorePayload?.store?.slug;
+
+        if (sourceStoreResponse.status === 200 && sourceStoreSlug) {
+          const cloneResponse = await requestJson({
+            baseUrl,
+            method: "POST",
+            path: `/api/admin/store-templates/${createdStoreTemplateId}/clone`,
+            headers,
+            body: {
+              name: `Smoke Clone ${randomSuffix()}`,
+              slug: sourceStoreSlug,
+            },
+          });
+          validateContractResponse(
+            storeTemplateClone,
+            cloneResponse.status,
+            cloneResponse.payload,
+            "cloneStoreTemplate",
+          );
+          console.log(`POST /api/admin/store-templates/:id/clone -> ${cloneResponse.status}`);
+          recordCheck({
+            name: "cloneStoreTemplate",
+            method: "POST",
+            path: "/api/admin/store-templates/:id/clone",
+            status: cloneResponse.status,
+            ok: true,
+          });
+
+          if (cloneResponse.status !== 400) {
+            throw new Error(
+              `Expected clone template with conflicting slug to return 400, received ${cloneResponse.status}`,
+            );
+          }
+        } else {
+          console.log(
+            "Skipping clone-template conflict check: source store slug was not retrievable.",
+          );
+        }
+
         const deleteStoreTemplateResponse = await requestJson({
           baseUrl,
           method: "DELETE",
