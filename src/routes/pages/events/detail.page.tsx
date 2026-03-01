@@ -400,7 +400,7 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
               btn.classList.replace('hover:bg-amber-600', 'hover:bg-green-600');
             } else {
               const data = await res.json().catch(() => ({}));
-              notify(data.error || 'Could not join waitlist', 'error');
+              notify(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Could not join waitlist') : (data.error || data.message || 'Could not join waitlist'), 'error');
               btn.disabled = false;
               btn.textContent = 'Join Waitlist';
             }

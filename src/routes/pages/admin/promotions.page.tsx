@@ -23,6 +23,7 @@ interface PromotionsPageProps {
     status?: string;
     type?: string;
   };
+  isPromotionCopilotEnabled?: boolean;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -47,7 +48,11 @@ const STRATEGY_LABELS: Record<string, string> = {
   bundle: "Bundle",
 };
 
-export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters }) => {
+export const PromotionsPage: FC<PromotionsPageProps> = ({
+  promotions,
+  filters,
+  isPromotionCopilotEnabled = false,
+}) => {
   return (
     <div class="max-w-6xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between mb-8">
@@ -89,6 +94,65 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
         <Button type="submit" variant="primary" size="sm">Filter</Button>
         <a href="/admin/promotions" class="text-sm text-gray-500 hover:text-gray-700 py-2">Clear</a>
       </form>
+
+      {/* Promotion Copilot */}
+      {isPromotionCopilotEnabled && (
+        <section class="mb-6 bg-white dark:bg-gray-800 rounded-2xl border border-brand-100 dark:border-brand-900/50 shadow-sm p-6">
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">AI Promotion Copilot</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Draft campaign strategy, copy, and rule scaffolding from a short brief.
+              </p>
+            </div>
+            <span class="inline-flex items-center rounded-full bg-brand-50 text-brand-700 text-xs font-semibold px-2 py-1">
+              MVP
+            </span>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+              <label class="text-sm font-medium text-gray-700 block mb-1">Campaign Brief</label>
+              <textarea id="promo-copilot-brief" rows={3} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="e.g. Recover abandoned carts with a weekend offer for first-time buyers." />
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-700 block mb-1">Objective</label>
+              <select id="promo-copilot-objective" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white">
+                <option value="conversion">Conversion</option>
+                <option value="aov">AOV</option>
+                <option value="acquisition">Acquisition</option>
+                <option value="retention">Retention</option>
+                <option value="clearance">Clearance</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-700 block mb-1">Audience</label>
+              <input id="promo-copilot-audience" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="e.g. new customers in US" />
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 mt-4">
+            <Button type="button" variant="secondary" id="promo-copilot-generate-btn" size="sm">
+              Generate Campaign Suggestion
+            </Button>
+            <Button type="button" variant="primary" id="promo-copilot-apply-btn" size="sm" class="hidden">
+              Apply to Form
+            </Button>
+            <Button type="button" variant="primary" id="promo-copilot-create-btn" size="sm" class="hidden">
+              Create With Copilot
+            </Button>
+            <p id="promo-copilot-status" class="text-sm text-gray-500 dark:text-gray-400" />
+          </div>
+
+          <div id="promo-copilot-output" class="hidden mt-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-4">
+            <p class="text-sm"><strong>Name:</strong> <span id="promo-copilot-name"></span></p>
+            <p class="text-sm mt-1"><strong>Strategy:</strong> <span id="promo-copilot-strategy"></span></p>
+            <p class="text-sm mt-1"><strong>Description:</strong> <span id="promo-copilot-description"></span></p>
+            <p class="text-sm mt-1"><strong>Coupon Code Suggestion:</strong> <span id="promo-copilot-coupon"></span></p>
+            <div id="promo-copilot-warnings" class="hidden mt-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 text-sm px-3 py-2" />
+          </div>
+        </section>
+      )}
 
       {/* Add Promotion Form */}
       <div id="promo-form-section" class="hidden mb-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
@@ -224,6 +288,8 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
       {html`
         <script>
           (function() {
+            var isPromotionCopilotEnabled = ${isPromotionCopilotEnabled ? "true" : "false"};
+            var latestPromotionCopilotPatch = null;
             var flashTimer = null;
             function showFlash(message, type) {
               var banner = document.getElementById('admin-promotions-flash');
@@ -250,6 +316,180 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
               }, 4000);
             }
 
+            function setCopilotStatus(message, isError) {
+              var statusEl = document.getElementById('promo-copilot-status');
+              if (!statusEl) return;
+              statusEl.textContent = message || '';
+              statusEl.className = isError ? 'text-sm text-red-600' : 'text-sm text-gray-500 dark:text-gray-400';
+            }
+
+            async function runPromotionCopilot() {
+              if (!isPromotionCopilotEnabled) return;
+
+              var briefEl = document.getElementById('promo-copilot-brief');
+              var objectiveEl = document.getElementById('promo-copilot-objective');
+              var audienceEl = document.getElementById('promo-copilot-audience');
+              var formTypeEl = document.querySelector('#promo-form [name="type"]');
+              var generateBtn = document.getElementById('promo-copilot-generate-btn');
+              var applyBtn = document.getElementById('promo-copilot-apply-btn');
+              var createBtn = document.getElementById('promo-copilot-create-btn');
+              if (!briefEl || !objectiveEl || !audienceEl || !formTypeEl || !generateBtn || !applyBtn || !createBtn) return;
+
+              var brief = String(briefEl.value || '').trim();
+              if (brief.length < 10) {
+                setCopilotStatus('Add a campaign brief with at least 10 characters.', true);
+                return;
+              }
+
+              setCopilotStatus('Generating campaign suggestion...', false);
+              generateBtn.disabled = true;
+              applyBtn.classList.add('hidden');
+              createBtn.classList.add('hidden');
+
+              try {
+                var res = await fetch('/api/promotions/copilot/draft', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    brief: brief,
+                    promotionType: String(formTypeEl.value || 'coupon'),
+                    objective: String(objectiveEl.value || 'conversion'),
+                    audience: String(audienceEl.value || '').trim() || undefined,
+                  }),
+                });
+
+                var data = await res.json().catch(function() { return {}; });
+                if (!res.ok) {
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to generate promotion suggestion') : (data.error || data.message || 'Failed to generate promotion suggestion'));
+                }
+                if (!data || !data.copilot || !data.applyPatch) {
+                  throw new Error('Invalid copilot response payload');
+                }
+
+                latestPromotionCopilotPatch = data.applyPatch;
+                var output = document.getElementById('promo-copilot-output');
+                if (output) output.classList.remove('hidden');
+                var nameEl = document.getElementById('promo-copilot-name');
+                var strategyEl = document.getElementById('promo-copilot-strategy');
+                var descriptionEl = document.getElementById('promo-copilot-description');
+                var couponEl = document.getElementById('promo-copilot-coupon');
+                if (nameEl) nameEl.textContent = data.copilot.name || '';
+                if (strategyEl) strategyEl.textContent = data.copilot.strategyType || '';
+                if (descriptionEl) descriptionEl.textContent = data.copilot.description || '';
+                if (couponEl) couponEl.textContent = data.copilot.couponCodeSuggestion || '—';
+
+                var warningsEl = document.getElementById('promo-copilot-warnings');
+                var warnings = Array.isArray(data.copilot.warnings) ? data.copilot.warnings : [];
+                if (warningsEl) {
+                  if (warnings.length > 0) {
+                    warningsEl.textContent = warnings.join(' ');
+                    warningsEl.classList.remove('hidden');
+                  } else {
+                    warningsEl.textContent = '';
+                    warningsEl.classList.add('hidden');
+                  }
+                }
+
+                applyBtn.classList.remove('hidden');
+                createBtn.classList.remove('hidden');
+                setCopilotStatus('Suggestion ready. Review and apply to the form.', false);
+              } catch (err) {
+                setCopilotStatus(err && err.message ? err.message : 'Failed to generate suggestion.', true);
+              } finally {
+                generateBtn.disabled = false;
+              }
+            }
+
+            function applyPromotionCopilotPatch() {
+              if (!latestPromotionCopilotPatch) return;
+
+              var form = document.getElementById('promo-form');
+              if (!form) return;
+              var setField = function(name, value) {
+                var field = form.querySelector('[name="' + name + '"]');
+                if (!field) return;
+                if (field.type === 'checkbox') {
+                  field.checked = !!value;
+                } else {
+                  field.value = value == null ? '' : String(value);
+                }
+              };
+
+              setField('name', latestPromotionCopilotPatch.name);
+              setField('description', latestPromotionCopilotPatch.description);
+              setField('type', latestPromotionCopilotPatch.type);
+              setField('strategyType', latestPromotionCopilotPatch.strategyType);
+              setField('priority', latestPromotionCopilotPatch.priority);
+              setField('stackable', !!latestPromotionCopilotPatch.stackable);
+              setField('usageLimit', latestPromotionCopilotPatch.usageLimit);
+              setCopilotStatus('Suggestion applied to form fields.', false);
+            }
+
+            async function createPromotionFromCopilot() {
+              if (!latestPromotionCopilotPatch) return;
+              var form = document.getElementById('promo-form');
+              if (!form) return;
+              var createBtn = document.getElementById('promo-copilot-create-btn');
+              if (createBtn) createBtn.disabled = true;
+              setCopilotStatus('Creating promotion...', false);
+
+              try {
+                var startsAtField = form.querySelector('[name="startsAt"]');
+                var endsAtField = form.querySelector('[name="endsAt"]');
+                var schedule = {};
+                var startsAtValue = startsAtField ? String(startsAtField.value || '').trim() : '';
+                var endsAtValue = endsAtField ? String(endsAtField.value || '').trim() : '';
+                if (startsAtValue) {
+                  var startsDate = new Date(startsAtValue);
+                  if (!Number.isNaN(startsDate.getTime())) schedule.startsAt = startsDate.toISOString();
+                }
+                if (endsAtValue) {
+                  var endsDate = new Date(endsAtValue);
+                  if (!Number.isNaN(endsDate.getTime())) schedule.endsAt = endsDate.toISOString();
+                }
+
+                var res = await fetch('/api/promotions/copilot/apply', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    applyPatch: latestPromotionCopilotPatch,
+                    schedule: Object.keys(schedule).length > 0 ? schedule : undefined,
+                  }),
+                });
+                var data = await res.json().catch(function() { return {}; });
+                if (!res.ok) {
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to create promotion from copilot') : (data.error || data.message || 'Failed to create promotion from copilot'));
+                }
+                setCopilotStatus('Promotion created from copilot suggestion.', false);
+                window.location.reload();
+              } catch (err) {
+                setCopilotStatus(err && err.message ? err.message : 'Failed to create promotion from copilot.', true);
+              } finally {
+                if (createBtn) createBtn.disabled = false;
+              }
+            }
+
+            var promoCopilotGenerateBtn = document.getElementById('promo-copilot-generate-btn');
+            if (promoCopilotGenerateBtn) {
+              promoCopilotGenerateBtn.addEventListener('click', function() {
+                runPromotionCopilot();
+              });
+            }
+
+            var promoCopilotApplyBtn = document.getElementById('promo-copilot-apply-btn');
+            if (promoCopilotApplyBtn) {
+              promoCopilotApplyBtn.addEventListener('click', function() {
+                applyPromotionCopilotPatch();
+              });
+            }
+
+            var promoCopilotCreateBtn = document.getElementById('promo-copilot-create-btn');
+            if (promoCopilotCreateBtn) {
+              promoCopilotCreateBtn.addEventListener('click', function() {
+                createPromotionFromCopilot();
+              });
+            }
+
             var formSection = document.getElementById('promo-form-section');
             var form = document.getElementById('promo-form');
             document.getElementById('btn-add-promo').addEventListener('click', function() {
@@ -267,8 +507,10 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
                 description: fd.get('description') || undefined,
                 type: fd.get('type'),
                 strategyType: fd.get('strategyType'),
-                strategyParams: {},
-                conditions: {},
+                strategyParams: latestPromotionCopilotPatch && latestPromotionCopilotPatch.strategyType === fd.get('strategyType')
+                  ? (latestPromotionCopilotPatch.strategyParams || {})
+                  : {},
+                conditions: latestPromotionCopilotPatch ? (latestPromotionCopilotPatch.conditions || {}) : {},
                 priority: parseInt(fd.get('priority') || '0', 10),
                 stackable: !!fd.get('stackable'),
                 startsAt: fd.get('startsAt') || undefined,
@@ -281,7 +523,10 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(body),
                 });
-                if (!res.ok) throw new Error('Failed to create promotion');
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to create promotion') : (data.error || data.message || 'Failed to create promotion'));
+                }
                 window.location.reload();
               } catch (err) { showFlash(err.message || 'Failed to create promotion'); }
             });
@@ -291,7 +536,10 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
                 var id = this.getAttribute('data-promo-id');
                 try {
                   var res = await fetch('/api/promotions/' + id, { method: 'DELETE' });
-                  if (!res.ok) throw new Error('Failed to disable');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to disable') : (data.error || data.message || 'Failed to disable'));
+                  }
                   window.location.reload();
                 } catch (err) { showFlash(err.message || 'Failed to disable promotion'); }
               });
@@ -305,7 +553,10 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({ promotions, filters })
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: 'active' }),
                   });
-                  if (!res.ok) throw new Error('Failed to enable');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to enable') : (data.error || data.message || 'Failed to enable'));
+                  }
                   window.location.reload();
                 } catch (err) { showFlash(err.message || 'Failed to enable promotion'); }
               });

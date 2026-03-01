@@ -7,7 +7,7 @@ interface Order {
   orderNumber: string;
   date: string;
   total: string;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled" | "refunded";
   itemCount: number;
 }
 
@@ -21,6 +21,8 @@ interface DashboardPageProps {
   userName: string;
   recentOrders: Order[];
   subscription?: Subscription | null;
+  isLoyaltyEnabled?: boolean;
+  isSupportDeflectionEnabled?: boolean;
 }
 
 const orderStatusVariant: Record<string, "success" | "warning" | "error" | "info" | "neutral"> = {
@@ -29,12 +31,15 @@ const orderStatusVariant: Record<string, "success" | "warning" | "error" | "info
   shipped: "info",
   delivered: "success",
   cancelled: "error",
+  refunded: "neutral",
 };
 
 export const DashboardPage: FC<DashboardPageProps> = ({
   userName,
   recentOrders,
   subscription,
+  isLoyaltyEnabled = false,
+  isSupportDeflectionEnabled = false,
 }) => {
   return (
     <div class="max-w-5xl mx-auto px-4 py-8">
@@ -139,6 +144,21 @@ export const DashboardPage: FC<DashboardPageProps> = ({
           <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Settings</h3>
           <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Profile & preferences</p>
         </a>
+
+        {isLoyaltyEnabled && (
+          <a
+            href="/account/loyalty"
+            class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-700 transition-all duration-200"
+          >
+            <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center mb-3 group-hover:bg-brand-100 transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3-1.79-3-4s1.343-4 3-4 3 1.79 3 4-1.343 4-3 4zm0 0v6m-6 2h12M4 20h16" />
+              </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Loyalty</h3>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Points and rewards</p>
+          </a>
+        )}
       </div>
 
       <div class="grid md:grid-cols-3 gap-6">
@@ -189,61 +209,109 @@ export const DashboardPage: FC<DashboardPageProps> = ({
           )}
         </div>
 
-        {/* Subscription Status */}
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscription</h2>
+        <div class="space-y-6">
+          {/* Subscription Status */}
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscription</h2>
 
-          {subscription ? (
-            <div class="space-y-4">
-              <div class="p-4 rounded-xl bg-brand-50 border border-brand-100">
-                <p class="font-semibold text-brand-700 text-sm">{subscription.planName}</p>
-                <Badge
-                  variant={
-                    subscription.status === "active"
-                      ? "success"
+            {subscription ? (
+              <div class="space-y-4">
+                <div class="p-4 rounded-xl bg-brand-50 border border-brand-100">
+                  <p class="font-semibold text-brand-700 text-sm">{subscription.planName}</p>
+                  <Badge
+                    variant={
+                      subscription.status === "active"
+                        ? "success"
+                        : subscription.status === "past_due"
+                        ? "warning"
+                        : "error"
+                    }
+                    class="mt-2"
+                  >
+                    {subscription.status === "active"
+                      ? "Active"
                       : subscription.status === "past_due"
-                      ? "warning"
-                      : "error"
-                  }
-                  class="mt-2"
+                      ? "Past Due"
+                      : "Cancelled"}
+                  </Badge>
+                </div>
+                <div class="text-xs text-gray-500">
+                  <span class="font-medium text-gray-700">Next billing:</span>{" "}
+                  {subscription.nextBillingDate}
+                </div>
+                <a
+                  href="/account/subscriptions"
+                  class="block text-center text-sm text-brand-600 hover:text-brand-700 font-medium"
                 >
-                  {subscription.status === "active"
-                    ? "Active"
-                    : subscription.status === "past_due"
-                    ? "Past Due"
-                    : "Cancelled"}
-                </Badge>
+                  Manage subscription
+                </a>
               </div>
-              <div class="text-xs text-gray-500">
-                <span class="font-medium text-gray-700">Next billing:</span>{" "}
-                {subscription.nextBillingDate}
+            ) : (
+              <div class="text-center py-6">
+                <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <p class="text-sm text-gray-400 mb-3">No active subscription</p>
+                <a
+                  href="/products?type=subscription"
+                  class="text-sm font-semibold text-brand-600 hover:text-brand-700"
+                >
+                  Browse Plans
+                </a>
               </div>
-              <a
-                href="/account/subscriptions"
-                class="block text-center text-sm text-brand-600 hover:text-brand-700 font-medium"
-              >
-                Manage subscription
-              </a>
-            </div>
-          ) : (
-            <div class="text-center py-6">
-              <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+            )}
+          </div>
+
+          {isSupportDeflectionEnabled && (
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Support Assistant</h2>
+              <p class="text-xs text-gray-500 mb-3">
+                Ask about orders, returns, billing, and account access. Tier-1 questions are answered instantly.
+              </p>
+              <textarea
+                id="support-deflect-input"
+                rows={3}
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                placeholder="e.g. Where is my order?"
+              />
+              <div class="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  id="support-deflect-submit"
+                  class="inline-flex items-center rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-3 py-2"
+                >
+                  Get Help
+                </button>
+                <span id="support-deflect-status" class="text-xs text-gray-500" />
               </div>
-              <p class="text-sm text-gray-400 mb-3">No active subscription</p>
-              <a
-                href="/products?type=subscription"
-                class="text-sm font-semibold text-brand-600 hover:text-brand-700"
-              >
-                Browse Plans
-              </a>
+              <div id="support-deflect-output" class="hidden mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p id="support-deflect-response" class="text-sm text-gray-700" />
+                <div id="support-deflect-actions" class="mt-2 flex flex-wrap gap-2" />
+                <p id="support-deflect-escalation" class="hidden mt-2 text-xs text-amber-700" />
+                <div id="support-deflect-feedback" class="hidden mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    id="support-feedback-helpful"
+                    class="inline-flex items-center rounded-md border border-emerald-200 bg-white px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
+                  >
+                    This helped
+                  </button>
+                  <button
+                    type="button"
+                    id="support-feedback-unhelpful"
+                    class="inline-flex items-center rounded-md border border-amber-200 bg-white px-2.5 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50"
+                  >
+                    Need human help
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -273,6 +341,117 @@ export const DashboardPage: FC<DashboardPageProps> = ({
                 if (details) details.open = true;
                 target.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }
+            }
+
+            var supportSubmitBtn = document.getElementById('support-deflect-submit');
+            var latestSupportResult = null;
+
+            async function sendSupportFeedback(resolved, reason) {
+              if (!latestSupportResult) return;
+              try {
+                await fetch('/api/support/deflect/feedback', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    resolved: resolved,
+                    intent: latestSupportResult.intent || undefined,
+                    confidence: typeof latestSupportResult.confidence === 'number' ? latestSupportResult.confidence : undefined,
+                    deflected: !!latestSupportResult.deflected,
+                    reason: reason || undefined,
+                  }),
+                });
+              } catch {
+                // Best-effort feedback signal only.
+              }
+            }
+
+            if (supportSubmitBtn) {
+              supportSubmitBtn.addEventListener('click', async function() {
+                var inputEl = document.getElementById('support-deflect-input');
+                var statusEl = document.getElementById('support-deflect-status');
+                var outputEl = document.getElementById('support-deflect-output');
+                var responseEl = document.getElementById('support-deflect-response');
+                var actionsEl = document.getElementById('support-deflect-actions');
+                var escalationEl = document.getElementById('support-deflect-escalation');
+                var feedbackEl = document.getElementById('support-deflect-feedback');
+                if (!inputEl || !statusEl || !outputEl || !responseEl || !actionsEl || !escalationEl || !feedbackEl) return;
+
+                var message = String(inputEl.value || '').trim();
+                if (message.length < 5) {
+                  statusEl.textContent = 'Please provide more detail.';
+                  statusEl.className = 'text-xs text-red-600';
+                  return;
+                }
+
+                statusEl.textContent = 'Thinking...';
+                statusEl.className = 'text-xs text-gray-500';
+                supportSubmitBtn.setAttribute('disabled', 'disabled');
+                try {
+                  var res = await fetch('/api/support/deflect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message }),
+                  });
+                  var data = await res.json().catch(function() { return {}; });
+                  if (!res.ok) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Could not process support request') : (data.error || data.message || 'Could not process support request'));
+                  }
+                  latestSupportResult = data;
+
+                  responseEl.textContent = data.response || '';
+                  actionsEl.innerHTML = '';
+                  var actions = Array.isArray(data.suggestedActions) ? data.suggestedActions : [];
+                  actions.forEach(function(action) {
+                    var link = document.createElement('a');
+                    link.href = action.url;
+                    link.className = 'inline-flex items-center rounded-md border border-brand-200 bg-white px-2.5 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50';
+                    link.textContent = action.label;
+                    actionsEl.appendChild(link);
+                  });
+
+                  if (data.escalation && data.escalation.recommended) {
+                    escalationEl.textContent = 'Need more help? Email support@petm8.io with your order number.';
+                    escalationEl.classList.remove('hidden');
+                  } else {
+                    escalationEl.textContent = '';
+                    escalationEl.classList.add('hidden');
+                  }
+
+                  outputEl.classList.remove('hidden');
+                  feedbackEl.classList.remove('hidden');
+                  statusEl.textContent = data.deflected ? 'Resolved with self-service guidance.' : 'Escalation guidance provided.';
+                  statusEl.className = data.deflected ? 'text-xs text-emerald-600' : 'text-xs text-amber-700';
+                } catch (err) {
+                  statusEl.textContent = err && err.message ? err.message : 'Failed to process support request.';
+                  statusEl.className = 'text-xs text-red-600';
+                } finally {
+                  supportSubmitBtn.removeAttribute('disabled');
+                }
+              });
+            }
+
+            var helpfulBtn = document.getElementById('support-feedback-helpful');
+            if (helpfulBtn) {
+              helpfulBtn.addEventListener('click', async function() {
+                await sendSupportFeedback(true, 'self_service_helpful');
+                var statusEl = document.getElementById('support-deflect-status');
+                if (statusEl) {
+                  statusEl.textContent = 'Thanks for the feedback.';
+                  statusEl.className = 'text-xs text-emerald-600';
+                }
+              });
+            }
+
+            var unhelpfulBtn = document.getElementById('support-feedback-unhelpful');
+            if (unhelpfulBtn) {
+              unhelpfulBtn.addEventListener('click', async function() {
+                await sendSupportFeedback(false, 'needs_human');
+                var statusEl = document.getElementById('support-deflect-status');
+                if (statusEl) {
+                  statusEl.textContent = 'Support escalation noted. Email support@petm8.io with your order number.';
+                  statusEl.className = 'text-xs text-amber-700';
+                }
+              });
             }
           })();
         </script>

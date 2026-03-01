@@ -10,6 +10,7 @@ import { createCheckoutSchema } from "../../shared/validators";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { cartSession } from "../../middleware/cart-session.middleware";
 import { rateLimit } from "../../middleware/rate-limit.middleware";
+import { resolveFeatureFlags } from "../../shared/feature-flags";
 
 const checkout = new Hono<{ Bindings: Env }>();
 
@@ -35,17 +36,32 @@ checkout.post(
     const user = c.get("user");
 
     const appUrl = c.env.APP_URL;
+    const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
 
-    const result = await useCase.execute({
-      sessionId,
-      userId,
-      userEmail: user.email,
-      successUrl: body.successUrl ?? `${appUrl}/checkout/success`,
-      cancelUrl: body.cancelUrl ?? `${appUrl}/cart`,
-      storeId: c.get("storeId") as string,
-    });
+    try {
+      const result = await useCase.execute({
+        sessionId,
+        userId,
+        userEmail: user.email,
+        successUrl: body.successUrl ?? `${appUrl}/checkout/success`,
+        cancelUrl: body.cancelUrl ?? `${appUrl}/cart`,
+        storeId: c.get("storeId") as string,
+        carrierFallbackRouting: featureFlags.carrier_fallback_routing,
+      });
 
-    return c.json({ url: result.url }, 200);
+      return c.json(result, 200);
+    } catch (error: any) {
+      if (error.code === "NOT_FOUND") {
+        return c.json({ error: error.message }, 404);
+      }
+      if (error.code === "VALIDATION_ERROR") {
+        return c.json({ error: error.message }, 400);
+      }
+      if (error.code === "AUTH_ERROR") {
+        return c.json({ error: error.message }, 401);
+      }
+      throw error;
+    }
   },
 );
 

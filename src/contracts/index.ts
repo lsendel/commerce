@@ -17,6 +17,12 @@ import { taxContract } from "./tax.contract";
 import { reviewsContract } from "./reviews.contract";
 import { analyticsContract } from "./analytics.contract";
 import { currencyContract } from "./currency.contract";
+import { loyaltyContract } from "./loyalty.contract";
+import { supportContract } from "./support.contract";
+import { incidentResponderContract } from "./incident-responder.contract";
+import { fulfillmentExceptionContract } from "./fulfillment-exception.contract";
+import { pricingExperimentContract } from "./pricing-experiment.contract";
+import { workflowsContract } from "./workflows.contract";
 
 const c = initContract();
 
@@ -39,6 +45,12 @@ export const contract = c.router({
   reviews: reviewsContract,
   analytics: analyticsContract,
   currency: currencyContract,
+  loyalty: loyaltyContract,
+  support: supportContract,
+  incidentResponder: incidentResponderContract,
+  fulfillmentException: fulfillmentExceptionContract,
+  pricingExperiment: pricingExperimentContract,
+  workflows: workflowsContract,
 });
 
 export {
@@ -60,4 +72,10 @@ export {
   reviewsContract,
   analyticsContract,
   currencyContract,
+  loyaltyContract,
+  supportContract,
+  incidentResponderContract,
+  fulfillmentExceptionContract,
+  pricingExperimentContract,
+  workflowsContract,
 };

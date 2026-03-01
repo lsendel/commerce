@@ -335,7 +335,10 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
               if (!pendingDeleteId) return;
               try {
                 var res = await fetch('/api/studio/pets/' + pendingDeleteId, { method: 'DELETE' });
-                if (!res.ok) throw new Error('Failed to remove pet');
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to remove pet') : (data.error || data.message || 'Failed to remove pet'));
+                }
                 window.location.reload();
               } catch (err) {
                 showError(err, 'Failed to remove pet');
@@ -360,7 +363,10 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
                   fd.append('photo', input.files[0]);
                   try {
                     var res = await fetch('/api/studio/pets/' + id + '/photo', { method: 'POST', body: fd });
-                    if (!res.ok) throw new Error('Upload failed');
+                    if (!res.ok) {
+                      var data = await res.json().catch(function() { return {}; });
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Upload failed') : (data.error || data.message || 'Upload failed'));
+                    }
                     window.location.reload();
                   } catch (err) {
                     showError(err, 'Upload failed');
@@ -397,7 +403,7 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
 
                 if (!res.ok) {
                   var data = await res.json().catch(function() { return {}; });
-                  throw new Error(data.error || data.message || 'Failed to save pet');
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to save pet') : (data.error || data.message || 'Failed to save pet'));
                 }
 
                 var savedPet = await res.json();

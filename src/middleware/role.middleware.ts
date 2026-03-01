@@ -8,7 +8,7 @@ export function requireRole(role: string | string[]) {
   return async (c: Context<{ Bindings: Env }>, next: Next) => {
     const userId = c.get("userId");
     if (!userId) {
-      return c.json({ error: "Authentication required" }, 401);
+      return c.json({ error: "Authentication required", message: "Authentication required" }, 401);
     }
 
     const db = createDb(c.env.DATABASE_URL);
@@ -25,7 +25,7 @@ export function requireRole(role: string | string[]) {
     );
 
     if (!user || !normalizedRoles.includes(user.platformRole ?? "")) {
-      return c.json({ error: "Insufficient permissions" }, 403);
+      return c.json({ error: "Insufficient permissions", message: "Insufficient permissions" }, 403);
     }
 
     await next();
@@ -38,7 +38,7 @@ export function requireStoreMember(roles: string[] = ["owner", "admin"]) {
     const storeId = c.req.param("storeId");
 
     if (!userId || !storeId) {
-      return c.json({ error: "Authentication required" }, 401);
+      return c.json({ error: "Authentication required", message: "Authentication required" }, 401);
     }
 
     const db = createDb(c.env.DATABASE_URL);
@@ -55,7 +55,7 @@ export function requireStoreMember(roles: string[] = ["owner", "admin"]) {
 
     const member = memberRows[0];
     if (!member || !roles.includes(member.role ?? "")) {
-      return c.json({ error: "Insufficient store permissions" }, 403);
+      return c.json({ error: "Insufficient store permissions", message: "Insufficient store permissions" }, 403);
     }
 
     await next();

@@ -171,7 +171,7 @@ export const LoginPage: FC<LoginPageProps> = ({ error }) => {
 
                 if (!res.ok) {
                   var data = await res.json().catch(function() { return {}; });
-                  throw new Error(data.message || 'Invalid email or password');
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Invalid email or password') : (data.error || data.message || 'Invalid email or password'));
                 }
 
                 window.location.href = '/account';

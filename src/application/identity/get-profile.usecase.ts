@@ -7,6 +7,12 @@ export class GetProfileUseCase {
   async execute(userId: string) {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new NotFoundError("User", userId);
-    return { id: user.id, email: user.email, name: user.name, stripeCustomerId: user.stripeCustomerId ?? null };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      phone: user.phone ?? null,
+      stripeCustomerId: user.stripeCustomerId ?? null,
+    };
   }
 }

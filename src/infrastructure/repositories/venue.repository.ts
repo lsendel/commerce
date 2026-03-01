@@ -103,23 +103,60 @@ export class VenueRepository {
    */
   async findNearby(lat: number, lng: number, radiusKm: number, limit = 20) {
     const radiusMeters = radiusKm * 1000;
-    const rows = await this.db.execute(sql`
-      SELECT *,
-        ST_Distance(
-          location,
-          ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
-        ) AS distance_meters
-      FROM venues
-      WHERE store_id = ${this.storeId}
-        AND is_active = true
-        AND ST_DWithin(
-          location,
-          ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
-          ${radiusMeters}
-        )
-      ORDER BY distance_meters ASC
-      LIMIT ${limit}
-    `);
-    return rows.rows;
+    try {
+      const rows = await this.db.execute(sql`
+        SELECT *,
+          ST_Distance(
+            location,
+            ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
+          ) AS distance_meters
+        FROM venues
+        WHERE store_id = ${this.storeId}
+          AND is_active = true
+          AND ST_DWithin(
+            location,
+            ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
+            ${radiusMeters}
+          )
+        ORDER BY distance_meters ASC
+        LIMIT ${limit}
+      `);
+      return rows.rows;
+    } catch (error: any) {
+      // Fallback when PostGIS or location column is unavailable in a target environment.
+      if (error?.code !== "42703" && error?.code !== "42883" && error?.code !== "42P01") {
+        throw error;
+      }
+
+      const rows = await this.db.execute(sql`
+        SELECT *,
+          (
+            6371000 * acos(
+              cos(radians(${lat}::double precision))
+              * cos(radians(latitude::double precision))
+              * cos(radians(longitude::double precision) - radians(${lng}::double precision))
+              + sin(radians(${lat}::double precision))
+              * sin(radians(latitude::double precision))
+            )
+          ) AS distance_meters
+        FROM venues
+        WHERE store_id = ${this.storeId}
+          AND is_active = true
+          AND latitude IS NOT NULL
+          AND longitude IS NOT NULL
+          AND (
+            6371000 * acos(
+              cos(radians(${lat}::double precision))
+              * cos(radians(latitude::double precision))
+              * cos(radians(longitude::double precision) - radians(${lng}::double precision))
+              + sin(radians(${lat}::double precision))
+              * sin(radians(latitude::double precision))
+            )
+          ) <= ${radiusMeters}
+        ORDER BY distance_meters ASC
+        LIMIT ${limit}
+      `);
+      return rows.rows;
+    }
   }
 }

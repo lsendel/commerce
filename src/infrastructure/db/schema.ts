@@ -284,6 +284,26 @@ export const reviewStatusEnum = pgEnum("review_status", [
   "flagged",
 ]);
 
+export const loyaltyTransactionTypeEnum = pgEnum("loyalty_transaction_type", [
+  "earn",
+  "redeem",
+  "refund",
+  "adjustment",
+]);
+
+export const returnRequestTypeEnum = pgEnum("return_request_type", [
+  "refund",
+  "exchange",
+]);
+
+export const returnRequestStatusEnum = pgEnum("return_request_status", [
+  "submitted",
+  "approved",
+  "rejected",
+  "completed",
+  "cancelled",
+]);
+
 // ─── Platform Context ───────────────────────────────────────────────────────
 
 export const platformPlans = pgTable("platform_plans", {
@@ -437,6 +457,7 @@ export const users = pgTable("users", {
   platformRole: platformRoleEnum("platform_role").default("user"),
   stripeCustomerId: text("stripe_customer_id"),
   emailVerifiedAt: timestamp("email_verified_at"),
+  phone: text("phone"),
   avatarUrl: text("avatar_url"),
   locale: text("locale").default("en"),
   timezone: text("timezone").default("UTC"),
@@ -760,6 +781,7 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
   fulfillmentRequests: many(fulfillmentRequests),
   refunds: many(refunds),
   notes: many(orderNotes),
+  loyaltyTransactions: many(loyaltyTransactions),
 }));
 
 export const orderItems = pgTable(
@@ -843,6 +865,61 @@ export const refundsRelations = relations(refunds, ({ one }) => ({
   }),
 }));
 
+export const orderReturnRequests = pgTable(
+  "order_return_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    type: returnRequestTypeEnum("type").notNull(),
+    status: returnRequestStatusEnum("status").notNull().default("submitted"),
+    reason: text("reason"),
+    requestedItems: jsonb("requested_items").notNull().default([]),
+    exchangeItems: jsonb("exchange_items").default([]),
+    refundAmount: decimal("refund_amount", { precision: 10, scale: 2 })
+      .notNull()
+      .default("0"),
+    creditAmount: decimal("credit_amount", { precision: 10, scale: 2 })
+      .notNull()
+      .default("0"),
+    instantExchange: boolean("instant_exchange").notNull().default(false),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    processedAt: timestamp("processed_at"),
+  },
+  (table) => ({
+    storeIdx: index("order_return_requests_store_idx").on(table.storeId),
+    orderIdx: index("order_return_requests_order_idx").on(table.orderId),
+    userIdx: index("order_return_requests_user_idx").on(table.userId),
+  }),
+);
+
+export const orderReturnRequestsRelations = relations(
+  orderReturnRequests,
+  ({ one }) => ({
+    order: one(orders, {
+      fields: [orderReturnRequests.orderId],
+      references: [orders.id],
+    }),
+    user: one(users, {
+      fields: [orderReturnRequests.userId],
+      references: [users.id],
+    }),
+    store: one(stores, {
+      fields: [orderReturnRequests.storeId],
+      references: [stores.id],
+    }),
+  }),
+);
+
 // ─── Order Notes ─────────────────────────────────────────────────────────────
 
 export const orderNotes = pgTable(
@@ -865,6 +942,110 @@ export const orderNotes = pgTable(
 export const orderNotesRelations = relations(orderNotes, ({ one }) => ({
   order: one(orders, {
     fields: [orderNotes.orderId],
+    references: [orders.id],
+  }),
+}));
+
+export const loyaltyTiers = pgTable("loyalty_tiers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
+  name: text("name").notNull(),
+  minPoints: integer("min_points").notNull().default(0),
+  multiplier: decimal("multiplier", { precision: 5, scale: 2 })
+    .notNull()
+    .default("1.00"),
+  benefits: jsonb("benefits").default([]),
+  color: text("color"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  storeMinPointsIdx: index("loyalty_tiers_store_min_points_idx").on(table.storeId, table.minPoints),
+  storeNameUnique: uniqueIndex("loyalty_tiers_store_name_unique").on(table.storeId, table.name),
+}));
+
+export const loyaltyWallets = pgTable("loyalty_wallets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  availablePoints: integer("available_points").notNull().default(0),
+  lifetimeEarned: integer("lifetime_earned").notNull().default(0),
+  lifetimeRedeemed: integer("lifetime_redeemed").notNull().default(0),
+  currentTierId: uuid("current_tier_id").references(() => loyaltyTiers.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  storeUserUnique: uniqueIndex("loyalty_wallets_store_user_unique").on(table.storeId, table.userId),
+  storeTierIdx: index("loyalty_wallets_store_tier_idx").on(table.storeId, table.currentTierId),
+}));
+
+export const loyaltyTransactions = pgTable("loyalty_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id),
+  walletId: uuid("wallet_id")
+    .notNull()
+    .references(() => loyaltyWallets.id),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  type: loyaltyTransactionTypeEnum("type").notNull(),
+  points: integer("points").notNull(),
+  description: text("description"),
+  sourceOrderId: uuid("source_order_id").references(() => orders.id),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  walletCreatedIdx: index("loyalty_transactions_wallet_created_idx").on(table.walletId, table.createdAt),
+  userCreatedIdx: index("loyalty_transactions_user_created_idx").on(table.userId, table.createdAt),
+  walletOrderTypeUnique: uniqueIndex("loyalty_transactions_wallet_order_type_unique")
+    .on(table.walletId, table.sourceOrderId, table.type),
+}));
+
+export const loyaltyTiersRelations = relations(loyaltyTiers, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [loyaltyTiers.storeId],
+    references: [stores.id],
+  }),
+  wallets: many(loyaltyWallets),
+}));
+
+export const loyaltyWalletsRelations = relations(loyaltyWallets, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [loyaltyWallets.storeId],
+    references: [stores.id],
+  }),
+  user: one(users, {
+    fields: [loyaltyWallets.userId],
+    references: [users.id],
+  }),
+  tier: one(loyaltyTiers, {
+    fields: [loyaltyWallets.currentTierId],
+    references: [loyaltyTiers.id],
+  }),
+  transactions: many(loyaltyTransactions),
+}));
+
+export const loyaltyTransactionsRelations = relations(loyaltyTransactions, ({ one }) => ({
+  store: one(stores, {
+    fields: [loyaltyTransactions.storeId],
+    references: [stores.id],
+  }),
+  wallet: one(loyaltyWallets, {
+    fields: [loyaltyTransactions.walletId],
+    references: [loyaltyWallets.id],
+  }),
+  user: one(users, {
+    fields: [loyaltyTransactions.userId],
+    references: [users.id],
+  }),
+  order: one(orders, {
+    fields: [loyaltyTransactions.sourceOrderId],
     references: [orders.id],
   }),
 }));
@@ -912,6 +1093,7 @@ export const subscriptions = pgTable("subscriptions", {
   currentPeriodStart: timestamp("current_period_start"),
   currentPeriodEnd: timestamp("current_period_end"),
   cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  mixConfiguration: jsonb("mix_configuration"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -2603,6 +2785,43 @@ export const auditLog = pgTable("audit_log", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
   storeEntityIdx: index("audit_log_store_entity_idx").on(table.storeId, table.entityType, table.createdAt),
+}));
+
+// ─── No-code Workflow Builder ───────────────────────────────────────────────
+
+export const storeWorkflows = pgTable("store_workflows", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  triggerType: text("trigger_type").notNull(),
+  triggerConfig: jsonb("trigger_config").notNull().default({}),
+  actionType: text("action_type").notNull(),
+  actionConfig: jsonb("action_config").notNull().default({}),
+  isActive: boolean("is_active").notNull().default(true),
+  lastRunAt: timestamp("last_run_at"),
+  createdBy: uuid("created_by").references(() => users.id),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  storeActiveIdx: index("store_workflows_store_active_idx").on(table.storeId, table.isActive, table.updatedAt),
+  storeUpdatedIdx: index("store_workflows_store_updated_idx").on(table.storeId, table.updatedAt),
+}));
+
+export const storeWorkflowsRelations = relations(storeWorkflows, ({ one }) => ({
+  store: one(stores, {
+    fields: [storeWorkflows.storeId],
+    references: [stores.id],
+  }),
+  creator: one(users, {
+    fields: [storeWorkflows.createdBy],
+    references: [users.id],
+  }),
+  updater: one(users, {
+    fields: [storeWorkflows.updatedBy],
+    references: [users.id],
+  }),
 }));
 
 // ─── Inventory Transactions ─────────────────────────────────────────────────

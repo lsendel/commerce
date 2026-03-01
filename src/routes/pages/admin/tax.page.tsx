@@ -403,11 +403,13 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
                 if (!confirm('Delete tax zone "' + card.dataset.zoneName + '" and all its rates?')) return;
                 fetch('/api/tax/zones/' + card.dataset.zoneId, { method: 'DELETE' })
                   .then(function(r) {
-                    if (!r.ok) throw new Error('Delete failed');
+                    if (!r.ok) return r.json().then(function(d) {
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Delete failed') : (d.error || d.message || 'Delete failed'));
+                    });
                     card.remove();
                     flash(successEl, 'Tax zone deleted.');
                   })
-                  .catch(function() { flash(errorEl, 'Failed to delete tax zone.'); });
+                  .catch(function(err) { flash(errorEl, (err && err.message) || 'Failed to delete tax zone.'); });
               });
             });
 
@@ -435,7 +437,9 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
                 body: JSON.stringify(body),
               })
                 .then(function(r) {
-                  if (!r.ok) throw new Error('Save failed');
+                  if (!r.ok) return r.json().then(function(d) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Save failed') : (d.error || d.message || 'Save failed'));
+                  });
                   return r.json();
                 })
                 .then(function() {
@@ -443,7 +447,7 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
                   flash(successEl, id ? 'Tax zone updated.' : 'Tax zone created.');
                   setTimeout(function() { location.reload(); }, 800);
                 })
-                .catch(function() { flash(errorEl, 'Failed to save tax zone.'); });
+                .catch(function(err) { flash(errorEl, (err && err.message) || 'Failed to save tax zone.'); });
             });
 
             /* --- Rate Form --- */
@@ -498,11 +502,13 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
                 var rateId = row.dataset.rateId;
                 fetch('/api/tax/zones/' + zoneId + '/rates/' + rateId, { method: 'DELETE' })
                   .then(function(r) {
-                    if (!r.ok) throw new Error('Delete failed');
+                    if (!r.ok) return r.json().then(function(d) {
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Delete failed') : (d.error || d.message || 'Delete failed'));
+                    });
                     row.remove();
                     flash(successEl, 'Tax rate deleted.');
                   })
-                  .catch(function() { flash(errorEl, 'Failed to delete tax rate.'); });
+                  .catch(function(err) { flash(errorEl, (err && err.message) || 'Failed to delete tax rate.'); });
               });
             });
 
@@ -527,7 +533,9 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
                 body: JSON.stringify(body),
               })
                 .then(function(r) {
-                  if (!r.ok) throw new Error('Save failed');
+                  if (!r.ok) return r.json().then(function(d) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Save failed') : (d.error || d.message || 'Save failed'));
+                  });
                   return r.json();
                 })
                 .then(function() {
@@ -535,7 +543,7 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
                   flash(successEl, rateId ? 'Tax rate updated.' : 'Tax rate created.');
                   setTimeout(function() { location.reload(); }, 800);
                 })
-                .catch(function() { flash(errorEl, 'Failed to save tax rate.'); });
+                .catch(function(err) { flash(errorEl, (err && err.message) || 'Failed to save tax rate.'); });
             });
 
             /* --- Tax Calculator --- */
@@ -610,17 +618,19 @@ export const TaxPage: FC<TaxPageProps> = ({ zones }) => {
                 }),
               })
                 .then(function(r) {
-                  if (!r.ok) throw new Error('Calculation failed');
+                  if (!r.ok) return r.json().then(function(d) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Calculation failed') : (d.error || d.message || 'Calculation failed'));
+                  });
                   return r.json();
                 })
                 .then(function(data) {
                   calcResults.classList.remove('hidden');
                   renderCalcResults(data, subtotalAmount);
                 })
-                .catch(function() {
+                .catch(function(err) {
                   calcResults.classList.remove('hidden');
                   while (calcBody.firstChild) calcBody.removeChild(calcBody.firstChild);
-                  calcBody.appendChild(createEl('p', { class: 'text-red-600' }, 'Failed to calculate taxes. Check your configuration.'));
+                  calcBody.appendChild(createEl('p', { class: 'text-red-600' }, (err && err.message) || 'Failed to calculate taxes. Check your configuration.'));
                 })
                 .finally(function() {
                   btn.disabled = false;

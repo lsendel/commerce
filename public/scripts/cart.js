@@ -124,6 +124,167 @@
     });
   }
 
+  function getApiErrorMessage(payload, fallback) {
+    var defaultMessage = fallback || "Request failed";
+    if (!payload || typeof payload !== "object") return defaultMessage;
+    if (typeof payload.error === "string" && payload.error.trim()) return payload.error;
+    if (typeof payload.message === "string" && payload.message.trim()) return payload.message;
+    if (payload.error && payload.error.issues && payload.error.issues[0] && payload.error.issues[0].message) {
+      return payload.error.issues[0].message;
+    }
+    if (payload.issues && payload.issues[0] && payload.issues[0].message) {
+      return payload.issues[0].message;
+    }
+    return defaultMessage;
+  }
+
+  function normalizeCheckoutResponse(payload) {
+    if (!payload || typeof payload !== "object") return null;
+    var url =
+      typeof payload.url === "string"
+        ? payload.url
+        : typeof payload.checkoutUrl === "string"
+          ? payload.checkoutUrl
+          : null;
+    var deliveryPromise = null;
+    if (
+      payload.deliveryPromise &&
+      typeof payload.deliveryPromise === "object" &&
+      typeof payload.deliveryPromise.minDays === "number" &&
+      typeof payload.deliveryPromise.maxDays === "number"
+    ) {
+      deliveryPromise = payload.deliveryPromise;
+    }
+    return { url: url, deliveryPromise: deliveryPromise };
+  }
+
+  function getCheckoutStockElements() {
+    return {
+      panel: document.querySelector("[data-checkout-stock-panel]"),
+      headline: document.querySelector("[data-checkout-stock-headline]"),
+      badge: document.querySelector("[data-checkout-stock-badge]"),
+      list: document.querySelector("[data-checkout-stock-list]"),
+    };
+  }
+
+  function renderCheckoutStockPanel(validation) {
+    var els = getCheckoutStockElements();
+    if (!els.panel || !els.headline || !els.badge || !els.list) return;
+
+    var problems = validation && Array.isArray(validation.problems) ? validation.problems : [];
+    var blockers = problems.filter(function (p) {
+      return p.type === "out_of_stock" || p.type === "unavailable" || p.type === "expired_slot";
+    });
+    var advisories = problems.filter(function (p) {
+      return p.type === "low_stock" || p.type === "price_changed";
+    });
+
+    els.panel.classList.remove("hidden");
+    els.list.textContent = "";
+    els.badge.className =
+      "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
+
+    if (blockers.length > 0) {
+      els.panel.className = "rounded-xl border border-red-200 bg-red-50 px-3 py-2";
+      els.headline.textContent = "Checkout blocked: resolve stock issues";
+      els.headline.className = "text-xs font-medium text-red-700";
+      els.badge.classList.add("bg-red-200", "text-red-800");
+      els.badge.textContent = "Blocked";
+      blockers.slice(0, 3).forEach(function (problem) {
+        var li = document.createElement("li");
+        li.className = "text-xs text-red-700";
+        li.textContent = "\u2022 " + (problem.message || "Item unavailable");
+        els.list.appendChild(li);
+      });
+      return;
+    }
+
+    if (advisories.length > 0) {
+      els.panel.className = "rounded-xl border border-amber-200 bg-amber-50 px-3 py-2";
+      els.headline.textContent = "Stock check: review before checkout";
+      els.headline.className = "text-xs font-medium text-amber-800";
+      els.badge.classList.add("bg-amber-200", "text-amber-900");
+      els.badge.textContent = "Warning";
+      advisories.slice(0, 3).forEach(function (problem) {
+        var li = document.createElement("li");
+        li.className = "text-xs text-amber-800";
+        li.textContent = "\u2022 " + (problem.message || "Cart advisory");
+        els.list.appendChild(li);
+      });
+      return;
+    }
+
+    els.panel.className = "rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2";
+    els.headline.textContent = "Stock check passed";
+    els.headline.className = "text-xs font-medium text-emerald-700";
+    els.badge.classList.add("bg-emerald-200", "text-emerald-800");
+    els.badge.textContent = "Ready";
+    var li = document.createElement("li");
+    li.className = "text-xs text-emerald-700";
+    li.textContent = "\u2022 All cart items are currently available.";
+    els.list.appendChild(li);
+  }
+
+  async function runCheckoutPreflight(options) {
+    var config = options || {};
+    var silent = !!config.silent;
+
+    try {
+      var res = await fetch("/api/cart/validate", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+
+      if (!res.ok) {
+        var dataErr = await res.json().catch(function () {
+          return {};
+        });
+        var message = getApiErrorMessage(dataErr, "Could not validate cart for checkout");
+        if (!silent) showToast(message, "error");
+        return { canProceed: false, blockers: [], advisories: [], validation: null };
+      }
+
+      var validation = await res.json();
+      renderCheckoutStockPanel(validation);
+
+      var problems = Array.isArray(validation.problems) ? validation.problems : [];
+      var blockers = problems.filter(function (p) {
+        return p.type === "out_of_stock" || p.type === "unavailable" || p.type === "expired_slot";
+      });
+      var advisories = problems.filter(function (p) {
+        return p.type === "low_stock" || p.type === "price_changed";
+      });
+
+      if (blockers.length > 0) {
+        if (window.petm8Track) {
+          window.petm8Track("checkout_preflight_blocked", {
+            blockerCount: blockers.length,
+          });
+        }
+        if (!silent) {
+          showToast(blockers[0].message || "Checkout blocked due to stock availability", "error");
+        }
+        return { canProceed: false, blockers: blockers, advisories: advisories, validation: validation };
+      }
+
+      if (advisories.length > 0 && !silent) {
+        if (window.petm8Track) {
+          window.petm8Track("checkout_preflight_warning", {
+            advisoryCount: advisories.length,
+          });
+        }
+        showToast(advisories[0].message || "Low-stock warning before checkout", "warning");
+      }
+
+      return { canProceed: true, blockers: blockers, advisories: advisories, validation: validation };
+    } catch (_) {
+      if (!silent) {
+        showToast("Could not validate cart for checkout. Please try again.", "error");
+      }
+      return { canProceed: false, blockers: [], advisories: [], validation: null };
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // B1: Cart Drawer
   // ═══════════════════════════════════════════════════════════════════════════
@@ -657,6 +818,11 @@
       return;
     }
 
+    var preflight = await runCheckoutPreflight({ silent: false });
+    if (!preflight.canProceed) {
+      return;
+    }
+
     btn.disabled = true;
     var originalText = btn.textContent;
     btn.textContent = "";
@@ -680,11 +846,22 @@
       }
 
       var data = await res.json();
+      var checkout = normalizeCheckoutResponse(data);
       if (window.petm8Track) {
-        window.petm8Track("checkout_started", { cartHasUrl: !!data.url });
+        window.petm8Track("checkout_started", {
+          cartHasUrl: !!(checkout && checkout.url),
+          hasDeliveryPromise: !!(checkout && checkout.deliveryPromise),
+        });
+        if (checkout && checkout.deliveryPromise) {
+          window.petm8Track("delivery_promise_checkout_window", {
+            minDays: checkout.deliveryPromise.minDays,
+            maxDays: checkout.deliveryPromise.maxDays,
+            confidence: checkout.deliveryPromise.confidence || undefined,
+          });
+        }
       }
-      if (data.url) {
-        window.location.href = data.url;
+      if (checkout && checkout.url) {
+        window.location.href = checkout.url;
       } else {
         throw new Error("No checkout URL received");
       }
@@ -987,6 +1164,11 @@
         return;
       }
 
+      var preflight = await runCheckoutPreflight({ silent: false });
+      if (!preflight.canProceed) {
+        return;
+      }
+
       // B3: Show spinner
       setButtonLoading(btn, "Redirecting to checkout...");
 
@@ -1006,11 +1188,22 @@
         }
 
         var data = await res.json();
+        var checkout = normalizeCheckoutResponse(data);
         if (window.petm8Track) {
-          window.petm8Track("checkout_started", { cartHasUrl: !!data.url });
+          window.petm8Track("checkout_started", {
+            cartHasUrl: !!(checkout && checkout.url),
+            hasDeliveryPromise: !!(checkout && checkout.deliveryPromise),
+          });
+          if (checkout && checkout.deliveryPromise) {
+            window.petm8Track("delivery_promise_checkout_window", {
+              minDays: checkout.deliveryPromise.minDays,
+              maxDays: checkout.deliveryPromise.maxDays,
+              confidence: checkout.deliveryPromise.confidence || undefined,
+            });
+          }
         }
-        if (data.url) {
-          window.location.href = data.url;
+        if (checkout && checkout.url) {
+          window.location.href = checkout.url;
         } else {
           throw new Error("No checkout URL received");
         }
@@ -1107,6 +1300,8 @@
           }
         });
       }
+
+      runCheckoutPreflight({ silent: true });
     } catch (_) {}
   }
 
@@ -1137,5 +1332,8 @@
     initCartRemoveButtons();
     initCheckoutButton();
     initProductPageControls();
+    if (document.querySelector("[data-checkout-stock-panel]")) {
+      runCheckoutPreflight({ silent: true });
+    }
   });
 })();

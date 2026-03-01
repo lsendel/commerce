@@ -20,13 +20,14 @@ export class ProcessPayoutsUseCase {
     const periodEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
     const payouts = [];
-    for (const [affiliateId, { total }] of byAffiliate) {
+    for (const [affiliateId, { total, conversionIds }] of byAffiliate) {
       const payout = await this.affiliateRepo.createPayout({
         affiliateId,
         amount: total.toFixed(2),
         periodStart,
         periodEnd,
       });
+      await this.affiliateRepo.markConversionsPaid(conversionIds);
       payouts.push(payout);
     }
 

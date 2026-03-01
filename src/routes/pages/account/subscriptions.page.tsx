@@ -6,12 +6,19 @@ import { Badge } from "../../../components/ui/badge";
 interface Subscription {
   id: string;
   planName: string;
-  status: "active" | "past_due" | "cancelled" | "trialing";
+  status: "active" | "past_due" | "cancelled" | "trialing" | "paused";
   currentPeriodEnd: string;
   nextBillingDate: string;
   amount: string;
   interval: "month" | "year";
   cancelAtPeriodEnd: boolean;
+  mixConfiguration?: {
+    items?: Array<{
+      planId: string;
+      planName?: string;
+      quantity: number;
+    }>;
+  } | null;
 }
 
 interface SubscriptionPlan {
@@ -27,12 +34,14 @@ interface SubscriptionPlan {
 interface SubscriptionsPageProps {
   subscription?: Subscription | null;
   availablePlans?: SubscriptionPlan[];
+  isSubscriptionBuilderEnabled?: boolean;
 }
 
 const statusVariant: Record<string, "success" | "warning" | "error" | "info"> = {
   active: "success",
   trialing: "info",
   past_due: "warning",
+  paused: "warning",
   cancelled: "error",
 };
 
@@ -40,10 +49,15 @@ const statusLabel: Record<string, string> = {
   active: "Active",
   trialing: "Trial",
   past_due: "Past Due",
+  paused: "Paused",
   cancelled: "Cancelled",
 };
 
-export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, availablePlans }) => {
+export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
+  subscription,
+  availablePlans,
+  isSubscriptionBuilderEnabled = false,
+}) => {
   return (
     <div class="max-w-3xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between mb-8">
@@ -105,6 +119,21 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                   </p>
                 </div>
               </div>
+
+              {Array.isArray(subscription.mixConfiguration?.items) && subscription.mixConfiguration.items.length > 0 && (
+                <div class="mb-5 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                  <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
+                    Bundle Composition
+                  </p>
+                  <ul class="space-y-1">
+                    {subscription.mixConfiguration.items.map((item) => (
+                      <li class="text-sm text-gray-600 dark:text-gray-300">
+                        {item.planName || "Plan"} x{item.quantity}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Actions */}
               <div class="flex flex-wrap items-center gap-3">
@@ -237,6 +266,69 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
         </div>
       )}
 
+      {isSubscriptionBuilderEnabled && availablePlans && availablePlans.length > 0 && (
+        <div
+          id="subscription-builder"
+          class="mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden"
+        >
+          <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+            <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">Build Your Subscription Mix</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Mix multiple plans in one recurring bundle. All selected plans must share the same billing cadence.
+            </p>
+          </div>
+          <div class="p-6 space-y-4">
+            {availablePlans.map((plan) => (
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                <div>
+                  <p class="font-semibold text-gray-900 dark:text-gray-100">{plan.name}</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    ${plan.price}/{plan.interval}
+                  </p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <label for={`bundle-qty-${plan.id}`} class="text-xs text-gray-400 uppercase tracking-wide">
+                    Quantity
+                  </label>
+                  <input
+                    id={`bundle-qty-${plan.id}`}
+                    type="number"
+                    min="0"
+                    max="12"
+                    value="0"
+                    class="bundle-qty-input w-20 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                    data-plan-id={plan.id}
+                    data-plan-name={plan.name}
+                  />
+                </div>
+              </div>
+            ))}
+
+            <div class="flex flex-wrap items-center gap-3">
+              <Button type="button" variant="secondary" id="bundle-quote-btn">
+                Calculate Bundle
+              </Button>
+              <Button type="button" variant="primary" id="bundle-checkout-btn" disabled>
+                Checkout Bundle
+              </Button>
+            </div>
+
+            <div
+              id="bundle-quote-panel"
+              class="hidden rounded-xl border border-brand-100 dark:border-brand-800 bg-brand-50/50 dark:bg-brand-900/10 p-4"
+            >
+              <p class="text-sm font-semibold text-brand-800 dark:text-brand-200 mb-2">Bundle Quote</p>
+              <div id="bundle-quote-lines" class="space-y-1 text-sm text-brand-700 dark:text-brand-300"></div>
+              <div class="mt-3 pt-3 border-t border-brand-100 dark:border-brand-800 text-sm space-y-1">
+                <p id="bundle-quote-subtotal"></p>
+                <p id="bundle-quote-discount"></p>
+                <p id="bundle-quote-total" class="font-semibold"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Cancel confirmation dialog */}
       <div
         id="cancel-confirm"
@@ -299,7 +391,10 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                     });
-                    if (!res.ok) throw new Error('Failed to open billing portal');
+                    if (!res.ok) {
+                      var data = await res.json().catch(function() { return {}; });
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to open billing portal') : (data.error || data.message || 'Failed to open billing portal'));
+                    }
                     var data = await res.json();
                     window.location.href = data.url;
                   } catch (err) {
@@ -334,7 +429,10 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                   var res = await fetch('/api/subscriptions/' + subscriptionId, {
                     method: 'DELETE',
                   });
-                  if (!res.ok) throw new Error('Failed to cancel subscription');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to cancel subscription') : (data.error || data.message || 'Failed to cancel subscription'));
+                  }
                   window.location.reload();
                 } catch (err) {
                   showError(err, 'Failed to cancel subscription');
@@ -358,7 +456,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                     });
                     if (!res.ok) {
                       var data = await res.json().catch(function() { return {}; });
-                      throw new Error(data.error || 'Failed to resume subscription');
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to resume subscription') : (data.error || data.message || 'Failed to resume subscription'));
                     }
                     window.location.reload();
                   } catch (err) {
@@ -391,7 +489,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                     });
                     if (!res.ok) {
                       var data = await res.json().catch(function() { return {}; });
-                      throw new Error(data.error || 'Failed to change plan');
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to change plan') : (data.error || data.message || 'Failed to change plan'));
                     }
                     window.location.reload();
                   } catch (err) {
@@ -401,6 +499,117 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({ subscription, av
                   }
                 });
               });
+
+              function formatCurrencyFromCents(cents) {
+                var dollars = Number(cents || 0) / 100;
+                return '$' + dollars.toFixed(2);
+              }
+
+              function collectBundleSelections() {
+                var selections = [];
+                document.querySelectorAll('.bundle-qty-input').forEach(function(input) {
+                  var planId = input.getAttribute('data-plan-id');
+                  var quantity = Number(input.value || 0);
+                  if (!planId || !Number.isFinite(quantity) || quantity <= 0) return;
+                  selections.push({ planId: planId, quantity: Math.floor(quantity) });
+                });
+                return selections;
+              }
+
+              function renderBundleQuote(quote) {
+                var linesRoot = document.getElementById('bundle-quote-lines');
+                var subtotalRoot = document.getElementById('bundle-quote-subtotal');
+                var discountRoot = document.getElementById('bundle-quote-discount');
+                var totalRoot = document.getElementById('bundle-quote-total');
+                var panelRoot = document.getElementById('bundle-quote-panel');
+                if (!linesRoot || !subtotalRoot || !discountRoot || !totalRoot || !panelRoot) return;
+
+                linesRoot.innerHTML = '';
+                (quote.lines || []).forEach(function(line) {
+                  var row = document.createElement('p');
+                  row.textContent = line.planName + ' x' + line.quantity + ': ' + formatCurrencyFromCents(line.lineAmountCents);
+                  linesRoot.appendChild(row);
+                });
+                subtotalRoot.textContent = 'Subtotal: ' + formatCurrencyFromCents(quote.subtotalCents);
+                discountRoot.textContent = 'Bundle discount: -' + formatCurrencyFromCents(quote.discountCents);
+                totalRoot.textContent = 'Total: ' + formatCurrencyFromCents(quote.totalCents);
+                panelRoot.classList.remove('hidden');
+              }
+
+              var bundleQuoteBtn = document.getElementById('bundle-quote-btn');
+              var bundleCheckoutBtn = document.getElementById('bundle-checkout-btn');
+
+              if (bundleQuoteBtn) {
+                bundleQuoteBtn.addEventListener('click', async function() {
+                  var selections = collectBundleSelections();
+                  if (!selections.length) {
+                    showError('Select at least one plan and quantity to quote your bundle.');
+                    return;
+                  }
+
+                  bundleQuoteBtn.disabled = true;
+                  bundleQuoteBtn.textContent = 'Calculating...';
+                  try {
+                    var quoteRes = await fetch('/api/subscriptions/builder/quote', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ selections: selections }),
+                    });
+                    if (!quoteRes.ok) {
+                      var quoteErr = await quoteRes.json().catch(function() { return {}; });
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(quoteErr, 'Failed to quote subscription bundle') : (quoteErr.error || quoteErr.message || 'Failed to quote subscription bundle'));
+                    }
+
+                    var quote = await quoteRes.json();
+                    renderBundleQuote(quote);
+                    if (bundleCheckoutBtn) {
+                      bundleCheckoutBtn.disabled = false;
+                    }
+                  } catch (err) {
+                    showError(err, 'Failed to quote subscription bundle');
+                  } finally {
+                    bundleQuoteBtn.disabled = false;
+                    bundleQuoteBtn.textContent = 'Calculate Bundle';
+                  }
+                });
+              }
+
+              if (bundleCheckoutBtn) {
+                bundleCheckoutBtn.addEventListener('click', async function() {
+                  var selections = collectBundleSelections();
+                  if (!selections.length) {
+                    showError('Select at least one plan and quantity before checkout.');
+                    return;
+                  }
+
+                  if (!requireSecondClick(bundleCheckoutBtn, 'Confirm Bundle Checkout', 'Checkout Bundle', 5000)) return;
+                  bundleCheckoutBtn.dataset.confirming = 'false';
+                  if (bundleCheckoutBtn._confirmTimer) clearTimeout(bundleCheckoutBtn._confirmTimer);
+
+                  bundleCheckoutBtn.disabled = true;
+                  bundleCheckoutBtn.textContent = 'Redirecting...';
+                  try {
+                    var checkoutRes = await fetch('/api/subscriptions/builder/checkout', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ selections: selections }),
+                    });
+                    if (!checkoutRes.ok) {
+                      var checkoutErr = await checkoutRes.json().catch(function() { return {}; });
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(checkoutErr, 'Failed to create bundle checkout') : (checkoutErr.error || checkoutErr.message || 'Failed to create bundle checkout'));
+                    }
+                    var checkout = await checkoutRes.json();
+                    if (!checkout.checkoutUrl) {
+                      throw new Error('Checkout URL was not returned');
+                    }
+                    window.location.href = checkout.checkoutUrl;
+                  } catch (err) {
+                    showError(err, 'Failed to create bundle checkout');
+                    bundleCheckoutBtn.disabled = false;
+                    bundleCheckoutBtn.textContent = 'Checkout Bundle';
+                  }
+                });
+              }
             })();
       </script>`}
     </div>

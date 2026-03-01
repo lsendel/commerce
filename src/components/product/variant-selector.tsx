@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { PriceDisplay } from "./price-display";
 import { Button } from "../ui/button";
+import { formatMoney } from "../../shared/money";
 
 interface Variant {
   id: string;
@@ -30,6 +31,7 @@ interface VariantSelectorProps {
   productType: "physical" | "digital" | "subscription" | "bookable";
   variants: Variant[];
   slots?: BookingSlot[];
+  currencyCode?: string;
 }
 
 export const VariantSelector: FC<VariantSelectorProps> = ({
@@ -37,6 +39,7 @@ export const VariantSelector: FC<VariantSelectorProps> = ({
   productType,
   variants,
   slots,
+  currencyCode = "USD",
 }) => {
   const isBookable = productType === "bookable";
   const isSingleVariant = variants.length === 1;
@@ -68,6 +71,7 @@ export const VariantSelector: FC<VariantSelectorProps> = ({
       data-product-id={productId}
       data-product-type={productType}
       data-variants-json={variantsJson}
+      data-currency-code={currencyCode}
     >
       {/* Variant selection */}
       {!isSingleVariant && (
@@ -99,7 +103,7 @@ export const VariantSelector: FC<VariantSelectorProps> = ({
                       : "border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500"
                   }`}>
                     <span>{variant.title}</span>
-                    <span class="ml-2 text-xs text-gray-500">${parseFloat(variant.price).toFixed(2)}</span>
+                    <span class="ml-2 text-xs text-gray-500">{formatMoney(variant.price, currencyCode)}</span>
                   </div>
                 </label>
               ))}
@@ -119,7 +123,7 @@ export const VariantSelector: FC<VariantSelectorProps> = ({
                   data-price={variant.price}
                   data-compare-price={variant.compareAtPrice || ""}
                 >
-                  {variant.title} - ${parseFloat(variant.price).toFixed(2)}
+                  {variant.title} - {formatMoney(variant.price, currencyCode)}
                   {variant.availableForSale === false ? " (Sold out)" : ""}
                 </option>
               ))}
@@ -139,6 +143,7 @@ export const VariantSelector: FC<VariantSelectorProps> = ({
           price={defaultVariant.price}
           compareAtPrice={defaultVariant.compareAtPrice}
           maxPrice={hasRange ? String(maxPrice) : undefined}
+          currencyCode={currencyCode}
           size="lg"
         />
       </div>
@@ -211,7 +216,7 @@ export const VariantSelector: FC<VariantSelectorProps> = ({
                 <div key={p.personType} class="flex items-center justify-between gap-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
                   <div>
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">{p.personType}</span>
-                    <span class="text-xs text-gray-400 ml-2">${parseFloat(p.price).toFixed(2)} each</span>
+                    <span class="text-xs text-gray-400 ml-2">{formatMoney(p.price, currencyCode)} each</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <button

@@ -5,14 +5,68 @@ import {
   fulfillmentProviders,
 } from "../db/schema";
 
+export type FulfillmentProviderType =
+  | "printful"
+  | "gooten"
+  | "prodigi"
+  | "shapeways";
+
 export interface RoutingResult {
   providerId: string;
-  providerType: string;
+  providerType: FulfillmentProviderType;
   providerName: string;
   mappingId: string;
   externalProductId: string | null;
   externalVariantId: string | null;
   costPrice: string | null;
+}
+
+const providerPriority: FulfillmentProviderType[] = [
+  "printful",
+  "gooten",
+  "prodigi",
+  "shapeways",
+];
+
+function normalizeProviderType(
+  value: string | null | undefined,
+): FulfillmentProviderType | null {
+  if (!value) return null;
+  if (value === "printful") return value;
+  if (value === "gooten") return value;
+  if (value === "prodigi") return value;
+  if (value === "shapeways") return value;
+  return null;
+}
+
+function toNumericCost(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return numeric;
+}
+
+function shouldPreferCandidate(
+  existing: RoutingResult,
+  candidate: RoutingResult,
+  optimizeByCost: boolean,
+): boolean {
+  if (!optimizeByCost) return false;
+
+  const existingCost = toNumericCost(existing.costPrice);
+  const candidateCost = toNumericCost(candidate.costPrice);
+
+  if (candidateCost !== null && existingCost === null) return true;
+  if (candidateCost !== null && existingCost !== null && candidateCost < existingCost) {
+    return true;
+  }
+  if (candidateCost !== null && existingCost !== null && candidateCost === existingCost) {
+    const existingPriority = providerPriority.indexOf(existing.providerType);
+    const candidatePriority = providerPriority.indexOf(candidate.providerType);
+    return candidatePriority >= 0
+      && (existingPriority < 0 || candidatePriority < existingPriority);
+  }
+  return false;
 }
 
 export class FulfillmentRouter {
@@ -50,9 +104,12 @@ export class FulfillmentRouter {
 
     const r = rows[0];
     if (!r) return null;
+    const providerType = normalizeProviderType(r.providerType);
+    if (!providerType) return null;
+
     return {
       providerId: r.providerId,
-      providerType: r.providerType,
+      providerType,
       providerName: r.providerName,
       mappingId: r.mappingId,
       externalProductId: r.externalProductId,
@@ -63,6 +120,7 @@ export class FulfillmentRouter {
 
   async selectProvidersForVariants(
     variantIds: string[],
+    options?: { optimizeByCost?: boolean },
   ): Promise<Map<string, RoutingResult>> {
     if (variantIds.length === 0) return new Map();
 
@@ -90,19 +148,33 @@ export class FulfillmentRouter {
         ),
       );
 
-    // Default strategy: first active mapping per variant
+    // Default strategy: first active mapping per variant.
+    // With split shipment optimization enabled, prefer lower cost mappings.
     const result = new Map<string, RoutingResult>();
+    const optimizeByCost = options?.optimizeByCost ?? false;
+
     for (const r of rows) {
-      if (!result.has(r.variantId)) {
-        result.set(r.variantId, {
-          providerId: r.providerId,
-          providerType: r.providerType,
-          providerName: r.providerName,
-          mappingId: r.mappingId,
-          externalProductId: r.externalProductId,
-          externalVariantId: r.externalVariantId,
-          costPrice: r.costPrice,
-        });
+      const providerType = normalizeProviderType(r.providerType);
+      if (!providerType) continue;
+
+      const candidate: RoutingResult = {
+        providerId: r.providerId,
+        providerType,
+        providerName: r.providerName,
+        mappingId: r.mappingId,
+        externalProductId: r.externalProductId,
+        externalVariantId: r.externalVariantId,
+        costPrice: r.costPrice,
+      };
+
+      const existing = result.get(r.variantId);
+      if (!existing) {
+        result.set(r.variantId, candidate);
+        continue;
+      }
+
+      if (shouldPreferCandidate(existing, candidate, optimizeByCost)) {
+        result.set(r.variantId, candidate);
       }
     }
 

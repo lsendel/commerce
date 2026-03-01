@@ -16,14 +16,20 @@ interface Order {
   subtotal: string;
   tax: string;
   shipping: string;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled" | "refunded";
   itemCount: number;
   items: OrderItem[];
   trackingUrl?: string;
+  canReorder?: boolean;
+  reorderHint?: string;
+  canReturnOrExchange?: boolean;
+  returnExchangeHint?: string;
 }
 
 interface OrdersPageProps {
   orders: Order[];
+  isIntelligentReorderEnabled?: boolean;
+  isReturnsExchangeEnabled?: boolean;
 }
 
 const statusVariant: Record<string, "success" | "warning" | "error" | "info" | "neutral"> = {
@@ -32,6 +38,7 @@ const statusVariant: Record<string, "success" | "warning" | "error" | "info" | "
   shipped: "info",
   delivered: "success",
   cancelled: "error",
+  refunded: "neutral",
 };
 
 const statusLabel: Record<string, string> = {
@@ -40,9 +47,14 @@ const statusLabel: Record<string, string> = {
   shipped: "Shipped",
   delivered: "Delivered",
   cancelled: "Cancelled",
+  refunded: "Refunded",
 };
 
-export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
+export const OrdersPage: FC<OrdersPageProps> = ({
+  orders,
+  isIntelligentReorderEnabled = true,
+  isReturnsExchangeEnabled = false,
+}) => {
   return (
     <div class="max-w-4xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between mb-8">
@@ -166,13 +178,25 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
 
                 {/* Actions row */}
                 <div class="mt-4 flex items-center gap-4">
-                  <button
-                    type="button"
-                    class="reorder-btn inline-flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg px-3 py-1.5 font-medium transition-colors"
-                    data-order-id={order.id}
-                  >
-                    Order Again
-                  </button>
+                  {isIntelligentReorderEnabled !== false ? (
+                    <button
+                      type="button"
+                      class={`reorder-btn inline-flex items-center gap-1.5 text-sm rounded-lg px-3 py-1.5 font-medium transition-colors ${
+                        order.canReorder === false
+                          ? "text-gray-400 bg-gray-50 cursor-not-allowed"
+                          : "text-brand-600 hover:text-brand-700 hover:bg-brand-50"
+                      }`}
+                      data-order-id={order.id}
+                      disabled={order.canReorder === false}
+                      title={order.canReorder === false ? (order.reorderHint || "This order is not eligible for reorder.") : undefined}
+                    >
+                      Order Again
+                    </button>
+                  ) : (
+                    <span class="inline-flex items-center gap-1.5 text-sm text-gray-400 px-3 py-1.5">
+                      Reorder disabled
+                    </span>
+                  )}
 
                   {/* Tracking link */}
                   {order.trackingUrl && (
@@ -194,6 +218,22 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
                     </a>
                   )}
 
+                  {isReturnsExchangeEnabled && (
+                    <button
+                      type="button"
+                      class={`return-exchange-btn inline-flex items-center gap-1.5 text-sm rounded-lg px-3 py-1.5 font-medium transition-colors ${
+                        order.canReturnOrExchange === false
+                          ? "text-gray-400 bg-gray-50 cursor-not-allowed"
+                          : "text-brand-600 hover:text-brand-700 hover:bg-brand-50"
+                      }`}
+                      data-order-id={order.id}
+                      disabled={order.canReturnOrExchange === false}
+                      title={order.canReturnOrExchange === false ? (order.returnExchangeHint || "This order is not eligible for returns/exchanges.") : undefined}
+                    >
+                      Return/Exchange
+                    </button>
+                  )}
+
                   {/* Cancel button for pending/processing orders */}
                   {(order.status === "pending" || order.status === "processing") && (
                     <button
@@ -212,6 +252,7 @@ export const OrdersPage: FC<OrdersPageProps> = ({ orders }) => {
       )}
       <script src="/scripts/order-cancel.js" defer></script>
       <script src="/scripts/order-reorder.js" defer></script>
+      <script src="/scripts/order-returns.js" defer></script>
     </div>
   );
 };

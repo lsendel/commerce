@@ -8,6 +8,7 @@ export class UpdateProfileUseCase {
     userId: string,
     input: Partial<{
       name: string;
+      phone: string | null;
       avatarUrl: string | null;
       locale: string;
       timezone: string;
@@ -21,6 +22,10 @@ export class UpdateProfileUseCase {
 
     const updates: Record<string, unknown> = {};
     if (input.name !== undefined) updates.name = input.name.trim();
+    if (input.phone !== undefined) {
+      const trimmedPhone = input.phone?.trim();
+      updates.phone = trimmedPhone ? trimmedPhone : null;
+    }
     if (input.avatarUrl !== undefined) updates.avatarUrl = input.avatarUrl;
     if (input.locale !== undefined) updates.locale = input.locale;
     if (input.timezone !== undefined) updates.timezone = input.timezone;

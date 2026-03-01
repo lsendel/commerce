@@ -1,5 +1,6 @@
 import type { Env } from "../env";
 import { EmailAdapter } from "../infrastructure/notifications/email.adapter";
+import { MessageAdapter } from "../infrastructure/notifications/message.adapter";
 import { createDb } from "../infrastructure/db/client";
 import { analyticsEvents, users } from "../infrastructure/db/schema";
 import { and, eq, isNotNull } from "drizzle-orm";
@@ -56,11 +57,12 @@ interface CheckoutRecoveryNotification {
   type: "checkout_recovery";
   data: {
     stage: "recovery_1h" | "recovery_24h" | "recovery_72h";
-    channel: "email";
+    channel: "email" | "sms" | "whatsapp";
     cartId: string;
     storeId: string;
     userId: string;
     userEmail: string;
+    userPhone?: string | null;
     userName: string;
     itemCount: number;
     idleHours: number;
@@ -80,13 +82,21 @@ interface BirthdayOfferNotification {
   };
 }
 
+interface EmailVerificationNotification {
+  type: "email_verification";
+  userId: string;
+  email: string;
+  token: string;
+}
+
 type NotificationMessage =
   | BookingReminderNotification
   | OrderConfirmationNotification
   | ShipmentUpdateNotification
   | AbandonedCartNotification
   | CheckoutRecoveryNotification
-  | BirthdayOfferNotification;
+  | BirthdayOfferNotification
+  | EmailVerificationNotification;
 
 async function canSendMarketingMessage(env: Env, userId: string): Promise<boolean> {
   if (!userId) return false;
@@ -111,6 +121,7 @@ export async function handleNotificationMessage(
 ): Promise<void> {
   const payload = message.body as NotificationMessage;
   const emailAdapter = new EmailAdapter(env);
+  const messageAdapter = new MessageAdapter(env);
 
   switch (payload.type) {
     case "booking_reminder": {
@@ -203,6 +214,7 @@ export async function handleNotificationMessage(
         storeId,
         userId,
         userEmail,
+        userPhone,
         userName,
         itemCount,
         idleHours,
@@ -217,21 +229,49 @@ export async function handleNotificationMessage(
         break;
       }
 
-      await emailAdapter.sendCheckoutRecovery(userEmail, {
-        stage,
-        userName,
-        cartId,
-        itemCount,
-        idleHours,
-        recoveryUrl,
-        incentiveCode: incentiveCode ?? null,
-      });
-
       const db = createDb(env.DATABASE_URL);
+      let sent = false;
+      let skipReason: string | null = null;
+
+      if (channel === "email") {
+        await emailAdapter.sendCheckoutRecovery(userEmail, {
+          stage,
+          userName,
+          cartId,
+          itemCount,
+          idleHours,
+          recoveryUrl,
+          incentiveCode: incentiveCode ?? null,
+        });
+        sent = true;
+      } else if (!userPhone) {
+        skipReason = "missing_phone";
+      } else if (channel === "sms") {
+        sent = await messageAdapter.sendCheckoutRecoverySms(userPhone, {
+          stage,
+          userName,
+          itemCount,
+          idleHours,
+          recoveryUrl,
+          incentiveCode: incentiveCode ?? null,
+        });
+        if (!sent) skipReason = "sms_not_configured_or_failed";
+      } else if (channel === "whatsapp") {
+        sent = await messageAdapter.sendCheckoutRecoveryWhatsApp(userPhone, {
+          stage,
+          userName,
+          itemCount,
+          idleHours,
+          recoveryUrl,
+          incentiveCode: incentiveCode ?? null,
+        });
+        if (!sent) skipReason = "whatsapp_not_configured_or_failed";
+      }
+
       await db.insert(analyticsEvents).values({
         storeId,
         userId,
-        eventType: "checkout_recovery_sent",
+        eventType: sent ? "checkout_recovery_sent" : "checkout_recovery_skipped",
         properties: {
           stage,
           channel,
@@ -239,12 +279,20 @@ export async function handleNotificationMessage(
           itemCount,
           idleHours,
           incentiveCode: incentiveCode ?? null,
+          recoveryUrl,
+          reason: skipReason,
         },
       });
 
-      console.log(
-        `[notifications] Checkout recovery (${stage}) sent to ${userEmail} for cart ${cartId}`,
-      );
+      if (sent) {
+        console.log(
+          `[notifications] Checkout recovery (${stage}/${channel}) sent to ${userEmail} for cart ${cartId}`,
+        );
+      } else {
+        console.log(
+          `[notifications] Checkout recovery (${stage}/${channel}) skipped for ${userEmail} (reason=${skipReason ?? "unknown"})`,
+        );
+      }
       break;
     }
 
@@ -266,6 +314,20 @@ export async function handleNotificationMessage(
 
       console.log(
         `[notifications] Birthday offer sent to ${userEmail} for pet ${petName}`,
+      );
+      break;
+    }
+
+    case "email_verification": {
+      const verificationUrl = `${(env.APP_URL ?? "https://petm8.io").replace(/\/$/, "")}/auth/verify-email?token=${encodeURIComponent(payload.token)}`;
+      const userName = payload.email.split("@")[0] || "there";
+      await emailAdapter.sendEmailVerification(payload.email, {
+        userName,
+        verificationUrl,
+      });
+
+      console.log(
+        `[notifications] Email verification sent to ${payload.email}`,
       );
       break;
     }

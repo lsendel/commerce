@@ -4,6 +4,7 @@ import {
   subscriptionPlans,
   subscriptions,
   products,
+  productVariants,
 } from "../db/schema";
 
 export interface CreateSubscriptionData {
@@ -15,6 +16,7 @@ export interface CreateSubscriptionData {
   currentPeriodStart?: Date;
   currentPeriodEnd?: Date;
   cancelAtPeriodEnd?: boolean;
+  mixConfiguration?: Record<string, unknown> | null;
 }
 
 export interface UpdateFromStripeData {
@@ -22,6 +24,30 @@ export interface UpdateFromStripeData {
   currentPeriodStart?: Date;
   currentPeriodEnd?: Date;
   cancelAtPeriodEnd?: boolean;
+  mixConfiguration?: Record<string, unknown> | null;
+}
+
+export interface SubscriptionBuilderPlanOption {
+  id: string;
+  productId: string;
+  planName: string;
+  productSlug: string;
+  productDescription: string | null;
+  billingPeriod: string;
+  billingInterval: number;
+  trialDays: number;
+  stripePriceId: string | null;
+  amount: string;
+  unitAmountCents: number;
+  interval: "month" | "year";
+  features: string[];
+}
+
+function toCents(amount: string | null | undefined): number {
+  if (!amount) return 0;
+  const parsed = Number.parseFloat(amount);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.round(parsed * 100));
 }
 
 export class SubscriptionRepository {
@@ -132,6 +158,74 @@ export class SubscriptionRepository {
   }
 
   /**
+   * List plans with normalized pricing and feature strings for bundle builder UX.
+   */
+  async findBuilderPlanOptions(): Promise<SubscriptionBuilderPlanOption[]> {
+    const rows = await this.db
+      .select({
+        id: subscriptionPlans.id,
+        productId: subscriptionPlans.productId,
+        billingPeriod: subscriptionPlans.billingPeriod,
+        billingInterval: subscriptionPlans.billingInterval,
+        trialDays: subscriptionPlans.trialDays,
+        stripePriceId: subscriptionPlans.stripePriceId,
+        productName: products.name,
+        productSlug: products.slug,
+        productDescription: products.description,
+        variantPrice: productVariants.price,
+      })
+      .from(subscriptionPlans)
+      .innerJoin(products, eq(subscriptionPlans.productId, products.id))
+      .leftJoin(productVariants, eq(productVariants.productId, products.id))
+      .where(eq(products.storeId, this.storeId));
+
+    const planMap = new Map<string, SubscriptionBuilderPlanOption>();
+
+    for (const row of rows) {
+      const existing = planMap.get(row.id);
+      const nextCents = toCents(row.variantPrice);
+      const billingPeriod = row.billingPeriod ?? "month";
+      const billingInterval = row.billingInterval ?? 1;
+      const interval = billingPeriod.toLowerCase().includes("year")
+        ? "year"
+        : "month";
+
+      if (!existing) {
+        const description = row.productDescription ?? "";
+        const features = description
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .slice(0, 4);
+
+        planMap.set(row.id, {
+          id: row.id,
+          productId: row.productId,
+          planName: row.productName,
+          productSlug: row.productSlug,
+          productDescription: row.productDescription ?? null,
+          billingPeriod,
+          billingInterval,
+          trialDays: row.trialDays ?? 0,
+          stripePriceId: row.stripePriceId ?? null,
+          amount: (nextCents / 100).toFixed(2),
+          unitAmountCents: nextCents,
+          interval,
+          features,
+        });
+        continue;
+      }
+
+      if (nextCents > 0 && (existing.unitAmountCents === 0 || nextCents < existing.unitAmountCents)) {
+        existing.unitAmountCents = nextCents;
+        existing.amount = (nextCents / 100).toFixed(2);
+      }
+    }
+
+    return Array.from(planMap.values());
+  }
+
+  /**
    * Insert a new subscription record.
    */
   async createSubscription(data: CreateSubscriptionData) {
@@ -147,6 +241,7 @@ export class SubscriptionRepository {
         currentPeriodStart: data.currentPeriodStart ?? null,
         currentPeriodEnd: data.currentPeriodEnd ?? null,
         cancelAtPeriodEnd: data.cancelAtPeriodEnd ?? false,
+        mixConfiguration: data.mixConfiguration ?? null,
       })
       .returning();
 
@@ -168,6 +263,7 @@ export class SubscriptionRepository {
         currentPeriodStart: subscriptions.currentPeriodStart,
         currentPeriodEnd: subscriptions.currentPeriodEnd,
         cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+        mixConfiguration: subscriptions.mixConfiguration,
         createdAt: subscriptions.createdAt,
         updatedAt: subscriptions.updatedAt,
         planName: products.name,
@@ -202,6 +298,7 @@ export class SubscriptionRepository {
         currentPeriodStart: subscriptions.currentPeriodStart,
         currentPeriodEnd: subscriptions.currentPeriodEnd,
         cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+        mixConfiguration: subscriptions.mixConfiguration,
         createdAt: subscriptions.createdAt,
         updatedAt: subscriptions.updatedAt,
         planName: products.name,
@@ -234,6 +331,7 @@ export class SubscriptionRepository {
         currentPeriodStart: subscriptions.currentPeriodStart,
         currentPeriodEnd: subscriptions.currentPeriodEnd,
         cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+        mixConfiguration: subscriptions.mixConfiguration,
         createdAt: subscriptions.createdAt,
         updatedAt: subscriptions.updatedAt,
       })
@@ -267,6 +365,9 @@ export class SubscriptionRepository {
     }
     if (data.cancelAtPeriodEnd !== undefined) {
       updateValues.cancelAtPeriodEnd = data.cancelAtPeriodEnd;
+    }
+    if (data.mixConfiguration !== undefined) {
+      updateValues.mixConfiguration = data.mixConfiguration;
     }
 
     const rows = await this.db

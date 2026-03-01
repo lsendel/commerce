@@ -41,6 +41,7 @@ interface ProductEditPageProps {
   variants: VariantRow[];
   images: ImageRow[];
   isNew?: boolean;
+  isMerchCopilotEnabled?: boolean;
 }
 
 const PRODUCT_TYPE_OPTIONS = [
@@ -69,6 +70,7 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
   variants,
   images,
   isNew,
+  isMerchCopilotEnabled = false,
 }) => {
   return (
     <div class="max-w-4xl mx-auto px-4 py-8">
@@ -190,6 +192,87 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
           </Button>
         </form>
       </section>
+
+      {/* Merchandising Copilot */}
+      {isMerchCopilotEnabled && (
+        <section class="bg-white dark:bg-gray-800 rounded-2xl border border-brand-100 dark:border-brand-900/50 shadow-sm p-6 mb-6">
+          <div class="flex items-start justify-between gap-4 mb-5">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">AI Merchandising Copilot</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Draft or enrich product copy and SEO fields with built-in copy guardrails.
+              </p>
+            </div>
+            <Badge variant="info">Phase 1</Badge>
+          </div>
+
+          <div class="space-y-4">
+            <Textarea
+              label="Brief"
+              name="copilotBrief"
+              value=""
+              rows={3}
+              helperText="Describe product intent, outcomes, and differentiators."
+              required
+            />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Audience"
+                name="copilotAudience"
+                value=""
+                placeholder="e.g. first-time dog owners"
+              />
+              <Select
+                label="Tone"
+                name="copilotTone"
+                options={[
+                  { value: "warm", label: "Warm" },
+                  { value: "playful", label: "Playful" },
+                  { value: "premium", label: "Premium" },
+                  { value: "minimal", label: "Minimal" },
+                  { value: "clinical", label: "Clinical" },
+                ]}
+                value="warm"
+              />
+            </div>
+
+            <Input
+              label="Key features (comma separated)"
+              name="copilotFeatures"
+              value=""
+              placeholder="e.g. scratch-resistant, machine washable, odor-resistant"
+            />
+
+            <div class="flex flex-wrap items-center gap-3">
+              <Button type="button" variant="secondary" id="copilot-generate-btn" size="sm">
+                Generate Suggestions
+              </Button>
+              <Button type="button" variant="primary" id="copilot-apply-btn" size="sm" class="hidden">
+                Apply to Forms
+              </Button>
+              <p id="copilot-status" class="text-sm text-gray-500 dark:text-gray-400" />
+            </div>
+          </div>
+
+          <div id="copilot-output" class="hidden mt-5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-4">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Suggestions</h3>
+            <div class="space-y-2 text-sm">
+              <p><strong>Name:</strong> <span id="copilot-name" /></p>
+              <p><strong>SEO Title:</strong> <span id="copilot-seo-title" /></p>
+              <p><strong>SEO Description:</strong> <span id="copilot-seo-description" /></p>
+              <p><strong>Slug:</strong> <span id="copilot-slug" /></p>
+              <p><strong>Description:</strong></p>
+              <p id="copilot-description" class="whitespace-pre-wrap text-gray-700 dark:text-gray-300" />
+              <div>
+                <p><strong>Highlights:</strong></p>
+                <ul id="copilot-highlights" class="list-disc pl-5 text-gray-700 dark:text-gray-300" />
+              </div>
+              <div id="copilot-warnings" class="hidden rounded-lg border border-amber-200 bg-amber-50 text-amber-700 px-3 py-2" />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Variants Section */}
       {!isNew && (
@@ -322,6 +405,170 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
       {html`
         <script>
           (function() {
+            var isMerchCopilotEnabled = ${isMerchCopilotEnabled ? "true" : "false"};
+            var latestCopilotPatch = null;
+
+            function parseFeatures(raw) {
+              if (!raw) return [];
+              return String(raw)
+                .split(',')
+                .map(function(part) { return part.trim(); })
+                .filter(Boolean)
+                .slice(0, 10);
+            }
+
+            function setCopilotStatus(message, isError) {
+              var statusEl = document.getElementById('copilot-status');
+              if (!statusEl) return;
+              statusEl.textContent = message || '';
+              statusEl.className = isError
+                ? 'text-sm text-red-600'
+                : 'text-sm text-gray-500 dark:text-gray-400';
+            }
+
+            async function runCopilot() {
+              if (!isMerchCopilotEnabled) return;
+
+              var productForm = document.getElementById('product-form');
+              var seoForm = document.getElementById('seo-form');
+              var generateBtn = document.getElementById('copilot-generate-btn');
+              var applyBtn = document.getElementById('copilot-apply-btn');
+              if (!productForm || !seoForm || !generateBtn || !applyBtn) return;
+
+              var briefInput = document.querySelector('[name="copilotBrief"]');
+              var audienceInput = document.querySelector('[name="copilotAudience"]');
+              var toneInput = document.querySelector('[name="copilotTone"]');
+              var featuresInput = document.querySelector('[name="copilotFeatures"]');
+              var typeInput = productForm.querySelector('[name="type"]');
+
+              var brief = briefInput ? String(briefInput.value || '').trim() : '';
+              if (brief.length < 10) {
+                setCopilotStatus('Add a brief (at least 10 characters) before generating.', true);
+                return;
+              }
+
+              var productId = productForm.dataset.productId;
+              var endpoint = productId === 'new'
+                ? '/api/admin/products/copilot/draft'
+                : '/api/admin/products/' + productId + '/copilot/enrich';
+
+              var payload = {
+                brief: brief,
+                productType: typeInput ? String(typeInput.value || 'physical') : 'physical',
+                audience: audienceInput ? String(audienceInput.value || '').trim() || undefined : undefined,
+                tone: toneInput ? String(toneInput.value || '').trim() || undefined : undefined,
+                keyFeatures: featuresInput ? parseFeatures(featuresInput.value) : [],
+              };
+
+              generateBtn.disabled = true;
+              applyBtn.classList.add('hidden');
+              setCopilotStatus('Generating suggestions...', false);
+
+              try {
+                var res = await fetch(endpoint, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload),
+                });
+
+                var data = await res.json().catch(function() { return {}; });
+                if (!res.ok) {
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to generate suggestions') : (data.error || data.message || 'Failed to generate suggestions'));
+                }
+
+                var copilot = data && data.copilot ? data.copilot : null;
+                if (!copilot || !copilot.applyPatch) {
+                  throw new Error('Copilot returned an invalid response.');
+                }
+
+                latestCopilotPatch = copilot.applyPatch;
+
+                var outputEl = document.getElementById('copilot-output');
+                if (outputEl) outputEl.classList.remove('hidden');
+                var nameEl = document.getElementById('copilot-name');
+                var seoTitleEl = document.getElementById('copilot-seo-title');
+                var seoDescEl = document.getElementById('copilot-seo-description');
+                var slugEl = document.getElementById('copilot-slug');
+                var descriptionEl = document.getElementById('copilot-description');
+                if (nameEl) nameEl.textContent = copilot.name || '';
+                if (seoTitleEl) seoTitleEl.textContent = copilot.seoTitle || '';
+                if (seoDescEl) seoDescEl.textContent = copilot.seoDescription || '';
+                if (slugEl) slugEl.textContent = copilot.slugSuggestion || '';
+                if (descriptionEl) descriptionEl.textContent = copilot.description || '';
+
+                var highlightsEl = document.getElementById('copilot-highlights');
+                if (highlightsEl) {
+                  highlightsEl.innerHTML = '';
+                  (copilot.highlights || []).forEach(function(highlight) {
+                    var li = document.createElement('li');
+                    li.textContent = String(highlight);
+                    highlightsEl.appendChild(li);
+                  });
+                }
+
+                var warningsEl = document.getElementById('copilot-warnings');
+                if (warningsEl) {
+                  var warnings = Array.isArray(copilot.warnings) ? copilot.warnings : [];
+                  if (warnings.length > 0) {
+                    warningsEl.textContent = warnings.join(' ');
+                    warningsEl.classList.remove('hidden');
+                  } else {
+                    warningsEl.textContent = '';
+                    warningsEl.classList.add('hidden');
+                  }
+                }
+
+                applyBtn.classList.remove('hidden');
+                setCopilotStatus('Suggestions ready. Review and apply.', false);
+              } catch (err) {
+                setCopilotStatus(err && err.message ? err.message : 'Failed to generate suggestions.', true);
+              } finally {
+                generateBtn.disabled = false;
+              }
+            }
+
+            function applyCopilotPatch() {
+              if (!latestCopilotPatch) return;
+              var productForm = document.getElementById('product-form');
+              var seoForm = document.getElementById('seo-form');
+              if (!productForm || !seoForm) return;
+
+              var nameInput = productForm.querySelector('[name="name"]');
+              var descriptionInput = productForm.querySelector('[name="description"]');
+              var seoTitleInput = seoForm.querySelector('[name="seoTitle"]');
+              var seoDescriptionInput = seoForm.querySelector('[name="seoDescription"]');
+              var slugInput = seoForm.querySelector('[name="slug"]');
+
+              if (nameInput) nameInput.value = latestCopilotPatch.name || '';
+              if (descriptionInput) descriptionInput.value = latestCopilotPatch.description || '';
+              if (seoTitleInput) seoTitleInput.value = latestCopilotPatch.seoTitle || '';
+              if (seoDescriptionInput) seoDescriptionInput.value = latestCopilotPatch.seoDescription || '';
+              if (slugInput) slugInput.value = latestCopilotPatch.slug || '';
+
+              var serpTitle = document.getElementById('serp-title');
+              var serpDesc = document.getElementById('serp-desc');
+              var serpUrl = document.getElementById('serp-url');
+              if (serpTitle && seoTitleInput) serpTitle.textContent = seoTitleInput.value || 'Untitled';
+              if (serpDesc && seoDescriptionInput) serpDesc.textContent = seoDescriptionInput.value || 'No description set.';
+              if (serpUrl && slugInput) serpUrl.textContent = 'example.com/products/' + (slugInput.value || '');
+
+              setCopilotStatus('Suggestions applied to form fields.', false);
+            }
+
+            var generateCopilotBtn = document.getElementById('copilot-generate-btn');
+            if (generateCopilotBtn) {
+              generateCopilotBtn.addEventListener('click', function() {
+                runCopilot();
+              });
+            }
+
+            var applyCopilotBtn = document.getElementById('copilot-apply-btn');
+            if (applyCopilotBtn) {
+              applyCopilotBtn.addEventListener('click', function() {
+                applyCopilotPatch();
+              });
+            }
+
             /* Product form */
             var productForm = document.getElementById('product-form');
             if (productForm) {
@@ -351,7 +598,7 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
                   });
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.message || 'Failed to save product');
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to save product') : (data.error || data.message || 'Failed to save product'));
                   }
                   successEl.textContent = 'Product saved.';
                   successEl.classList.remove('hidden');
@@ -391,7 +638,7 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
                   });
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.message || 'Failed to save SEO');
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to save SEO') : (data.error || data.message || 'Failed to save SEO'));
                   }
                   successEl.textContent = 'SEO updated.';
                   successEl.classList.remove('hidden');
@@ -493,7 +740,7 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
                   });
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.message || 'Failed to save variant');
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to save variant') : (data.error || data.message || 'Failed to save variant'));
                   }
                   window.location.reload();
                 } catch (err) {

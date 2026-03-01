@@ -397,6 +397,14 @@ auth.get("/me", requireAuth(), async (c) => {
   return c.json(profile);
 });
 
+// Backward-compatible alias used by account settings.
+auth.get("/profile", requireAuth(), async (c) => {
+  const db = createDb(c.env.DATABASE_URL);
+  const useCase = new GetProfileUseCase(new UserRepository(db));
+  const profile = await useCase.execute(c.get("userId"));
+  return c.json(profile);
+});
+
 // Password reset
 auth.post("/forgot-password", zValidator("json", forgotPasswordSchema), async (c) => {
   const db = createDb(c.env.DATABASE_URL);
@@ -426,6 +434,50 @@ auth.patch("/profile", requireAuth(), zValidator("json", updateProfileSchema), a
   const useCase = new UpdateProfileUseCase(new UserRepository(db));
   const result = await useCase.execute(c.get("userId"), c.req.valid("json"));
   return c.json(result);
+});
+
+auth.delete("/profile", requireAuth(), async (c) => {
+  const db = createDb(c.env.DATABASE_URL);
+  const userRepo = new UserRepository(db);
+  const userId = c.get("userId");
+  const user = await userRepo.findById(userId);
+
+  if (!user) {
+    return c.json({ error: "User not found" }, 404);
+  }
+
+  const replacementEmail = `deleted+${userId}@users.petm8.local`;
+  const replacementPasswordHash = await hashPassword(`${crypto.randomUUID()}${crypto.randomUUID()}`);
+  await userRepo.anonymizeAccount(userId, replacementEmail, replacementPasswordHash);
+  deleteCookie(c, AUTH_COOKIE_NAME, { path: "/" });
+
+  return c.json({ success: true });
+});
+
+auth.post("/request-verification", requireAuth(), async (c) => {
+  const db = createDb(c.env.DATABASE_URL);
+  const userRepo = new UserRepository(db);
+  const user = await userRepo.findById(c.get("userId"));
+
+  if (!user) {
+    return c.json({ error: "User not found" }, 404);
+  }
+
+  if (user.emailVerifiedAt) {
+    return c.json({ success: true, message: "Email already verified" });
+  }
+
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await userRepo.createEmailVerificationToken(user.id, token, expiresAt);
+  await c.env.NOTIFICATION_QUEUE.send({
+    type: "email_verification",
+    userId: user.id,
+    email: user.email,
+    token,
+  });
+
+  return c.json({ success: true });
 });
 
 auth.post("/change-password", requireAuth(), zValidator("json", changePasswordSchema), async (c) => {

@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import { formatMoney } from "../../shared/money";
 
 interface ProductCardVariant {
   id: string;
@@ -15,6 +16,7 @@ interface ProductCardProps {
     featuredImageUrl?: string | null;
     variants: ProductCardVariant[];
   };
+  currencyCode?: string;
 }
 
 const typeBadgeConfig: Record<string, { label: string; classes: string }> = {
@@ -24,7 +26,7 @@ const typeBadgeConfig: Record<string, { label: string; classes: string }> = {
   physical: { label: "", classes: "" },
 };
 
-export const ProductCard: FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: FC<ProductCardProps> = ({ product, currencyCode = "USD" }) => {
   const { name, slug, type, featuredImageUrl, variants } = product;
 
   const prices = variants.map((v) => parseFloat(v.price));
@@ -45,7 +47,7 @@ export const ProductCard: FC<ProductCardProps> = ({ product }) => {
     <a
       href={`/products/${slug}`}
       class="group block rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100 dark:border-gray-700"
-      aria-label={`${name} - $${minPrice.toFixed(2)}`}
+      aria-label={`${name} - ${formatMoney(minPrice, currencyCode)}`}
     >
       {/* Image */}
       <div class="relative aspect-square overflow-hidden bg-gray-50 dark:bg-gray-700">
@@ -87,16 +89,16 @@ export const ProductCard: FC<ProductCardProps> = ({ product }) => {
         <div class="flex items-center gap-2 flex-wrap">
           {isMultiVariant ? (
             <span class="text-sm font-bold text-gray-900 dark:text-gray-100">
-              From ${minPrice.toFixed(2)}
+              From {formatMoney(minPrice, currencyCode)}
             </span>
           ) : (
             <span class={`text-sm font-bold ${isOnSale ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-gray-100"}`}>
-              ${minPrice.toFixed(2)}
+              {formatMoney(minPrice, currencyCode)}
             </span>
           )}
           {isOnSale && !isMultiVariant && compareNum !== null && (
             <span class="text-xs text-gray-400 dark:text-gray-500 line-through">
-              ${compareNum.toFixed(2)}
+              {formatMoney(compareNum, currencyCode)}
             </span>
           )}
         </div>

@@ -18,9 +18,10 @@ interface ProductGridItem {
 
 interface ProductGridProps {
   products: ProductGridItem[];
+  currencyCode?: string;
 }
 
-export const ProductGrid: FC<ProductGridProps> = ({ products }) => {
+export const ProductGrid: FC<ProductGridProps> = ({ products, currencyCode = "USD" }) => {
   if (products.length === 0) {
     return (
       <div class="py-16 text-center" role="status">
@@ -37,7 +38,7 @@ export const ProductGrid: FC<ProductGridProps> = ({ products }) => {
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" role="list" aria-label="Product list">
       {products.map((product) => (
         <div role="listitem" key={product.id}>
-          <ProductCard product={product} />
+          <ProductCard product={product} currencyCode={currencyCode} />
         </div>
       ))}
     </div>

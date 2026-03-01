@@ -237,6 +237,15 @@ export class PromotionRepository {
       .where(eq(customerSegments.storeId, this.storeId));
   }
 
+  async findSegmentById(id: string) {
+    const rows = await this.db
+      .select()
+      .from(customerSegments)
+      .where(and(eq(customerSegments.id, id), eq(customerSegments.storeId, this.storeId)))
+      .limit(1);
+    return rows[0] ?? null;
+  }
+
   async updateSegment(id: string, data: Partial<{
     name: string;
     description: string | null;
@@ -249,6 +258,32 @@ export class PromotionRepository {
       .set(data)
       .where(and(eq(customerSegments.id, id), eq(customerSegments.storeId, this.storeId)))
       .returning();
+    return updated[0] ?? null;
+  }
+
+  async refreshSegmentMemberships(segmentId: string, customerIds: string[]) {
+    await this.db
+      .delete(customerSegmentMemberships)
+      .where(eq(customerSegmentMemberships.segmentId, segmentId));
+
+    if (customerIds.length > 0) {
+      await this.db.insert(customerSegmentMemberships).values(
+        customerIds.map((customerId) => ({
+          segmentId,
+          customerId,
+        })),
+      );
+    }
+
+    const updated = await this.db
+      .update(customerSegments)
+      .set({
+        memberCount: customerIds.length,
+        lastRefreshedAt: new Date(),
+      })
+      .where(and(eq(customerSegments.id, segmentId), eq(customerSegments.storeId, this.storeId)))
+      .returning();
+
     return updated[0] ?? null;
   }
 

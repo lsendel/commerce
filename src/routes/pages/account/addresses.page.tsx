@@ -323,7 +323,10 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
               if (!pendingDeleteId) return;
               try {
                 var res = await fetch('/api/auth/addresses/' + pendingDeleteId, { method: 'DELETE' });
-                if (!res.ok) throw new Error('Failed to delete');
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to delete') : (data.error || data.message || 'Failed to delete'));
+                }
                 window.location.reload();
               } catch (err) {
                 showError(err, 'Failed to delete address');
@@ -342,7 +345,10 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ isDefault: true }),
                   });
-                  if (!res.ok) throw new Error('Failed to update');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to update') : (data.error || data.message || 'Failed to update'));
+                  }
                   window.location.reload();
                 } catch (err) {
                   showError(err, 'Failed to update default address');
@@ -383,7 +389,7 @@ export const AddressesPage: FC<AddressesPageProps> = ({ addresses }) => {
 
                 if (!res.ok) {
                   var data = await res.json().catch(function() { return {}; });
-                  throw new Error(data.error || data.message || 'Failed to save address');
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to save address') : (data.error || data.message || 'Failed to save address'));
                 }
 
                 window.location.reload();

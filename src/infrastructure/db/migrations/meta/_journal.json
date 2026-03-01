@@ -78,6 +78,27 @@
       "when": 1772180742422,
       "tag": "0010_remaining_schema_reconcile",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1772202400000,
+      "tag": "0011_runtime_schema_hotfix",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1772206800000,
+      "tag": "0012_exchange_rates_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1772242800000,
+      "tag": "0013_user_phone_for_recovery_channels",
+      "breakpoints": true
     }
   ]
 }

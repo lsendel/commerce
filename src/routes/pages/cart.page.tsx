@@ -66,7 +66,10 @@ interface CartPageProps {
     minDays: number;
     maxDays: number;
     label: string;
+    confidence?: "high" | "medium" | "low";
+    source?: "production+shipping" | "production-only";
   };
+  isStockConfidenceEnabled?: boolean;
 }
 
 export const CartPage: FC<CartPageProps> = ({
@@ -77,6 +80,7 @@ export const CartPage: FC<CartPageProps> = ({
   bundleSuggestions = [],
   goalProgress,
   deliveryPromise,
+  isStockConfidenceEnabled = false,
 }) => {
   const subtotal = totals?.subtotal ?? items.reduce((sum, item) => {
     const isBookable = item.variant.product.type === "bookable";
@@ -294,6 +298,7 @@ export const CartPage: FC<CartPageProps> = ({
               total={totals?.total}
               goalProgress={goalProgress}
               deliveryPromise={deliveryPromise}
+              isStockConfidenceEnabled={isStockConfidenceEnabled}
             />
           </div>
         </div>
@@ -302,6 +307,40 @@ export const CartPage: FC<CartPageProps> = ({
       {html`
         <script>
           (function() {
+            var hasAppliedCoupon = ${couponCode ? "true" : "false"};
+            var searchParams = new URLSearchParams(window.location.search);
+            var recoveryStage = searchParams.get('recovery_stage');
+            var recoveryChannel = searchParams.get('recovery_channel');
+            var recoveryCartId = searchParams.get('cart_id');
+            var recoveryCoupon = searchParams.get('coupon');
+
+            if (searchParams.get('utm_source') === 'checkout_recovery' && window.petm8Track) {
+              var trackingKey = 'petm8-recovery-landing:' + (recoveryStage || '') + ':' + (recoveryChannel || '') + ':' + (recoveryCartId || '');
+              if (!sessionStorage.getItem(trackingKey)) {
+                sessionStorage.setItem(trackingKey, '1');
+                window.petm8Track('checkout_recovery_landing', {
+                  stage: recoveryStage || undefined,
+                  channel: recoveryChannel || undefined,
+                  cartId: recoveryCartId || undefined,
+                  coupon: recoveryCoupon || undefined,
+                });
+              }
+            }
+
+            function applyCouponCode(code) {
+              return fetch('/api/cart/apply-coupon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code }),
+              })
+                .then(function(r) {
+                  if (!r.ok) return r.json().then(function(d) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Invalid coupon') : (d.error || d.message || 'Invalid coupon'));
+                  });
+                  return r.json();
+                });
+            }
+
             /* Apply coupon */
             var couponForm = document.getElementById('coupon-form');
             if (couponForm) {
@@ -311,15 +350,7 @@ export const CartPage: FC<CartPageProps> = ({
                 if (!code) return;
                 document.getElementById('coupon-error').classList.add('hidden');
 
-                fetch('/api/cart/apply-coupon', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ code: code }),
-                })
-                  .then(function(r) {
-                    if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Invalid coupon'); });
-                    return r.json();
-                  })
+                applyCouponCode(code)
                   .then(function() {
                     location.reload();
                   })
@@ -329,6 +360,22 @@ export const CartPage: FC<CartPageProps> = ({
                     el.classList.remove('hidden');
                   });
               });
+            }
+
+            if (recoveryCoupon && !hasAppliedCoupon) {
+              var autoApplyKey = 'petm8-recovery-coupon-attempt:' + recoveryCoupon;
+              if (!sessionStorage.getItem(autoApplyKey)) {
+                sessionStorage.setItem(autoApplyKey, '1');
+                applyCouponCode(recoveryCoupon)
+                  .then(function() { location.reload(); })
+                  .catch(function(err) {
+                    var el = document.getElementById('coupon-error');
+                    if (el) {
+                      el.textContent = err.message || 'Could not apply recovery offer';
+                      el.classList.remove('hidden');
+                    }
+                  });
+              }
             }
 
             /* Remove coupon */
@@ -354,7 +401,9 @@ export const CartPage: FC<CartPageProps> = ({
                   body: JSON.stringify({ variantId: variantId, quantity: 1 }),
                 })
                   .then(function(r) {
-                    if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Unable to add item'); });
+                    if (!r.ok) return r.json().then(function(d) {
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Unable to add item') : (d.error || d.message || 'Unable to add item'));
+                    });
                     return r.json();
                   })
                   .then(function() {

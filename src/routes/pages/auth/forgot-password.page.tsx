@@ -81,7 +81,7 @@ export const ForgotPasswordPage: FC = () => {
 
                 if (!res.ok) {
                   var data = await res.json().catch(function() { return {}; });
-                  throw new Error(data.message || 'Something went wrong');
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Something went wrong') : (data.error || data.message || 'Something went wrong'));
                 }
 
                 successEl.classList.remove('hidden');

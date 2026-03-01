@@ -1,4 +1,4 @@
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, gte, inArray } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   affiliates,
@@ -7,6 +7,7 @@ import {
   affiliateClicks,
   affiliateConversions,
   affiliatePayouts,
+  users,
 } from "../db/schema";
 
 export class AffiliateRepository {
@@ -60,6 +61,36 @@ export class AffiliateRepository {
       .from(affiliates)
       .where(eq(affiliates.referralCode, code))
       .limit(1);
+    return affiliate ?? null;
+  }
+
+  async findApprovedByCustomSlug(customSlug: string) {
+    const [affiliate] = await this.db
+      .select({
+        id: affiliates.id,
+        userId: affiliates.userId,
+        storeId: affiliates.storeId,
+        status: affiliates.status,
+        referralCode: affiliates.referralCode,
+        customSlug: affiliates.customSlug,
+        commissionRate: affiliates.commissionRate,
+        totalEarnings: affiliates.totalEarnings,
+        totalClicks: affiliates.totalClicks,
+        totalConversions: affiliates.totalConversions,
+        createdAt: affiliates.createdAt,
+        creatorName: users.name,
+      })
+      .from(affiliates)
+      .innerJoin(users, eq(affiliates.userId, users.id))
+      .where(
+        and(
+          eq(affiliates.storeId, this.storeId),
+          eq(affiliates.customSlug, customSlug),
+          eq(affiliates.status, "approved"),
+        ),
+      )
+      .limit(1);
+
     return affiliate ?? null;
   }
 
@@ -135,6 +166,15 @@ export class AffiliateRepository {
       .orderBy(desc(affiliateLinks.createdAt));
   }
 
+  async findTopLinksByClicks(affiliateId: string, limit = 8) {
+    return this.db
+      .select()
+      .from(affiliateLinks)
+      .where(eq(affiliateLinks.affiliateId, affiliateId))
+      .orderBy(desc(affiliateLinks.clickCount), desc(affiliateLinks.createdAt))
+      .limit(limit);
+  }
+
   async findLinkByShortCode(shortCode: string) {
     const [link] = await this.db
       .select()
@@ -194,6 +234,42 @@ export class AffiliateRepository {
       .offset(offset);
   }
 
+  async getMissionWindowSnapshot(affiliateId: string, since: Date) {
+    const [clickRow] = await this.db
+      .select({
+        total: sql<number>`count(*)`,
+      })
+      .from(affiliateClicks)
+      .innerJoin(affiliateLinks, eq(affiliateClicks.linkId, affiliateLinks.id))
+      .where(
+        and(
+          eq(affiliateLinks.affiliateId, affiliateId),
+          gte(affiliateClicks.createdAt, since),
+        ),
+      );
+
+    const [conversionRow] = await this.db
+      .select({
+        conversions: sql<number>`count(*)`,
+        revenue: sql<string>`coalesce(sum(${affiliateConversions.orderTotal}), 0)`,
+        commission: sql<string>`coalesce(sum(${affiliateConversions.commissionAmount}), 0)`,
+      })
+      .from(affiliateConversions)
+      .where(
+        and(
+          eq(affiliateConversions.affiliateId, affiliateId),
+          gte(affiliateConversions.createdAt, since),
+        ),
+      );
+
+    return {
+      clicks: Number(clickRow?.total ?? 0),
+      conversions: Number(conversionRow?.conversions ?? 0),
+      revenue: Number(conversionRow?.revenue ?? 0),
+      commission: Number(conversionRow?.commission ?? 0),
+    };
+  }
+
   async approveConversion(id: string) {
     const [conversion] = await this.db
       .update(affiliateConversions)
@@ -208,6 +284,20 @@ export class AffiliateRepository {
       .select()
       .from(affiliateConversions)
       .where(eq(affiliateConversions.status, "approved"));
+  }
+
+  async markConversionsPaid(conversionIds: string[]) {
+    if (conversionIds.length === 0) {
+      return 0;
+    }
+
+    const updated = await this.db
+      .update(affiliateConversions)
+      .set({ status: "paid" })
+      .where(inArray(affiliateConversions.id, conversionIds))
+      .returning({ id: affiliateConversions.id });
+
+    return updated.length;
   }
 
   // Payouts

@@ -139,7 +139,10 @@ export const AdminAffiliatesPage: FC<AdminAffiliatesPageProps> = ({ affiliates }
                 var id = this.getAttribute('data-aff-id');
                 try {
                   var res = await fetch('/api/affiliates/admin/' + id + '/approve', { method: 'PATCH' });
-                  if (!res.ok) throw new Error('Failed to approve');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to approve') : (data.error || data.message || 'Failed to approve'));
+                  }
                   window.location.reload();
                 } catch (err) { showAffiliatesError(err.message || 'Failed to approve affiliate'); }
               });
@@ -152,7 +155,10 @@ export const AdminAffiliatesPage: FC<AdminAffiliatesPageProps> = ({ affiliates }
                   var res = await fetch('/api/affiliates/admin/' + id + '/suspend', {
                     method: 'PATCH',
                   });
-                  if (!res.ok) throw new Error('Failed to suspend');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to suspend') : (data.error || data.message || 'Failed to suspend'));
+                  }
                   window.location.reload();
                 } catch (err) { showAffiliatesError(err.message || 'Failed to suspend affiliate'); }
               });

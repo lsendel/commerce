@@ -208,7 +208,10 @@ export const AdminReviewsPage: FC<AdminReviewsPageProps> = ({
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'approve' }),
                   });
-                  if (!res.ok) throw new Error('Failed to approve');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to approve') : (data.error || data.message || 'Failed to approve'));
+                  }
                   window.location.reload();
                 } catch (err) { showReviewsError(err.message || 'Failed to approve review'); }
               });
@@ -223,7 +226,10 @@ export const AdminReviewsPage: FC<AdminReviewsPageProps> = ({
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'reject' }),
                   });
-                  if (!res.ok) throw new Error('Failed to reject');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to reject') : (data.error || data.message || 'Failed to reject'));
+                  }
                   window.location.reload();
                 } catch (err) { showReviewsError(err.message || 'Failed to reject review'); }
               });
@@ -248,7 +254,10 @@ export const AdminReviewsPage: FC<AdminReviewsPageProps> = ({
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ responseText: text }),
                   });
-                  if (!res.ok) throw new Error('Failed to send response');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to send response') : (data.error || data.message || 'Failed to send response'));
+                  }
                   window.location.reload();
                 } catch (err) { showReviewsError(err.message || 'Failed to send response'); }
               });

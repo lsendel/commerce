@@ -8,6 +8,7 @@ import { OrderRepository } from "../../infrastructure/repositories/order.reposit
 import { SubscriptionRepository } from "../../infrastructure/repositories/subscription.repository";
 import { UserRepository } from "../../infrastructure/repositories/user.repository";
 import { FulfillOrderUseCase } from "../../application/checkout/fulfill-order.usecase";
+import { resolveFeatureFlags } from "../../shared/feature-flags";
 import type Stripe from "stripe";
 
 const webhooks = new Hono<{ Bindings: Env }>();
@@ -51,11 +52,13 @@ webhooks.post("/webhooks/stripe", async (c) => {
         const db = createDb(c.env.DATABASE_URL);
         const orderRepo = new OrderRepository(db, c.get("storeId") as string);
         const cartRepo = new CartRepository(db, c.get("storeId") as string);
+        const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
 
         const useCase = new FulfillOrderUseCase(orderRepo, cartRepo, db, c.get("storeId") as string);
         await useCase.execute({
           session,
           fulfillmentQueue: c.env.FULFILLMENT_QUEUE,
+          splitShipmentOptimizer: featureFlags.split_shipment_optimizer,
         });
 
         console.log(
@@ -94,12 +97,18 @@ webhooks.post("/webhooks/stripe", async (c) => {
             ? stripeSubscription.customer
             : stripeSubscription.customer.id;
 
-        // Find the plan by Stripe price ID
+        const metadataPlanId = stripeSubscription.metadata?.planId ?? null;
+        const planFromMetadata = metadataPlanId
+          ? await subscriptionRepo.findPlanById(metadataPlanId)
+          : null;
+
+        // Fallback: Find the plan by Stripe price ID
         const priceId =
           stripeSubscription.items.data[0]?.price?.id ?? null;
-        const plan = priceId
-          ? await subscriptionRepo.findPlanByStripePriceId(priceId)
-          : null;
+        const plan = planFromMetadata
+          ?? (priceId
+            ? await subscriptionRepo.findPlanByStripePriceId(priceId)
+            : null);
 
         if (!plan) {
           console.error(
@@ -157,6 +166,8 @@ webhooks.post("/webhooks/stripe", async (c) => {
           ),
           cancelAtPeriodEnd:
             stripeSubscription.cancel_at_period_end,
+          mixConfiguration:
+            parseMixConfiguration(stripeSubscription.metadata?.mixConfiguration) ?? null,
         });
 
         console.log(
@@ -201,6 +212,9 @@ webhooks.post("/webhooks/stripe", async (c) => {
             ),
             cancelAtPeriodEnd:
               stripeSubscription.cancel_at_period_end,
+            mixConfiguration: parseMixConfiguration(
+              stripeSubscription.metadata?.mixConfiguration,
+            ),
           },
         );
 
@@ -294,6 +308,21 @@ function mapStripeSubscriptionStatus(
     default:
       return "past_due";
   }
+}
+
+function parseMixConfiguration(raw: string | null | undefined): Record<string, unknown> | undefined {
+  if (!raw) return undefined;
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed && typeof parsed === "object") {
+      return parsed as Record<string, unknown>;
+    }
+  } catch (error) {
+    console.warn("Invalid mixConfiguration metadata payload", error);
+  }
+
+  return undefined;
 }
 
 export { webhooks as webhookRoutes };

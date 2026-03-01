@@ -46,6 +46,11 @@ export interface CheckoutRecoveryData {
   incentiveCode?: string | null;
 }
 
+export interface EmailVerificationData {
+  userName: string;
+  verificationUrl: string;
+}
+
 export class EmailAdapter {
   private appName: string;
   private appUrl: string;
@@ -160,6 +165,17 @@ export class EmailAdapter {
        <p>It has been about ${data.idleHours} hour(s) since your last visit.</p>
        ${incentive}
        <p><a href="${data.recoveryUrl}">Return to your cart</a></p>`,
+    );
+  }
+
+  async sendEmailVerification(to: string, data: EmailVerificationData): Promise<void> {
+    await this.send(
+      to,
+      `Verify your ${this.appName} email`,
+      `<h2>Hi ${data.userName},</h2>
+       <p>Please verify your email address to secure your account and unlock full access.</p>
+       <p><a href="${data.verificationUrl}">Verify my email</a></p>
+       <p>If you didn't request this, you can safely ignore this message.</p>`,
     );
   }
 }

@@ -161,6 +161,17 @@ export class ShippingRepository {
       .orderBy(shippingRates.createdAt);
   }
 
+  async listStoreRateWindows() {
+    return this.db
+      .select({
+        estimatedDaysMin: shippingRates.estimatedDaysMin,
+        estimatedDaysMax: shippingRates.estimatedDaysMax,
+      })
+      .from(shippingRates)
+      .innerJoin(shippingZones, eq(shippingRates.zoneId, shippingZones.id))
+      .where(eq(shippingZones.storeId, this.storeId));
+  }
+
   async findRateById(id: string) {
     const rows = await this.db
       .select()

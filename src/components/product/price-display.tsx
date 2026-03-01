@@ -1,10 +1,12 @@
 import type { FC } from "hono/jsx";
+import { formatMoney } from "../../shared/money";
 
 interface PriceDisplayProps {
   price: string;
   compareAtPrice?: string | null;
   /** When provided, shows "From $X" if minPrice < maxPrice */
   maxPrice?: string | null;
+  currencyCode?: string;
   size?: "sm" | "md" | "lg";
 }
 
@@ -18,6 +20,7 @@ export const PriceDisplay: FC<PriceDisplayProps> = ({
   price,
   compareAtPrice,
   maxPrice,
+  currencyCode = "USD",
   size = "md",
 }) => {
   const priceNum = parseFloat(price);
@@ -34,17 +37,20 @@ export const PriceDisplay: FC<PriceDisplayProps> = ({
       : 0;
 
   return (
-    <div class="flex items-center gap-2 flex-wrap" aria-label={`Price: ${isRange ? "from " : ""}$${priceNum.toFixed(2)}${isOnSale ? `, was $${compareNum!.toFixed(2)}` : ""}`}>
+    <div
+      class="flex items-center gap-2 flex-wrap"
+      aria-label={`Price: ${isRange ? "from " : ""}${formatMoney(priceNum, currencyCode)}${isOnSale ? `, was ${formatMoney(compareNum!, currencyCode)}` : ""}`}
+    >
       {isRange && (
         <span class={`${classes.from} text-gray-500 dark:text-gray-400`}>From</span>
       )}
       <span class={`${classes.current} ${isOnSale ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-gray-100"}`}>
-        ${priceNum.toFixed(2)}
+        {formatMoney(priceNum, currencyCode)}
       </span>
       {isOnSale && compareNum !== null && (
         <>
           <span class={`${classes.compare} text-gray-400 dark:text-gray-500 line-through`}>
-            ${compareNum.toFixed(2)}
+            {formatMoney(compareNum, currencyCode)}
           </span>
           <span class={`${classes.badge} bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-semibold rounded-full`}>
             {savingsPercent > 0 ? `Save ${savingsPercent}%` : "Sale"}

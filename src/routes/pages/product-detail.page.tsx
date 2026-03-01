@@ -6,6 +6,7 @@ import { ProductCard } from "../../components/product/product-card";
 import { ImageGallery } from "../../components/product/image-gallery";
 import { Button } from "../../components/ui/button";
 import { getStockConfidence } from "../../shared/stock-confidence";
+import { formatMoney } from "../../shared/money";
 
 interface ProductImage {
   id: string;
@@ -66,6 +67,15 @@ interface RelatedProduct {
   }>;
 }
 
+interface BundleSuggestion {
+  productId: string;
+  name: string;
+  slug: string;
+  imageUrl?: string | null;
+  variantId: string;
+  price: number;
+}
+
 interface Review {
   id: string;
   rating: number;
@@ -74,6 +84,7 @@ interface Review {
   authorName: string;
   verified: boolean;
   helpfulCount?: number;
+  isTopHelpful?: boolean;
   storeResponse?: string | null;
   createdAt: string;
 }
@@ -101,22 +112,26 @@ interface ProductDetailPageProps {
   };
   slots?: BookingSlot[];
   relatedProducts?: RelatedProduct[];
+  bundleSuggestions?: BundleSuggestion[];
   reviews?: Review[];
   reviewSummary?: ReviewSummary | null;
   isAuthenticated?: boolean;
   isReviewIntelligenceEnabled?: boolean;
   siteUrl?: string;
+  currencyCode?: string;
 }
 
 export const ProductDetailPage: FC<ProductDetailPageProps> = ({
   product,
   slots = [],
   relatedProducts = [],
+  bundleSuggestions = [],
   reviews = [],
   reviewSummary,
   isAuthenticated = false,
   isReviewIntelligenceEnabled = false,
   siteUrl = "",
+  currencyCode = "USD",
 }) => {
   const {
     name,
@@ -182,7 +197,7 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
     offers: {
       "@type": "Offer",
       price: lowestPrice.toFixed(2),
-      priceCurrency: "USD",
+      priceCurrency: currencyCode,
       availability: product.availableForSale !== false
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
@@ -279,6 +294,7 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
               productType={type}
               variants={variants}
               slots={isBookable ? slots : undefined}
+              currencyCode={currencyCode}
             />
           </div>
 
@@ -430,6 +446,58 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
         </div>
       </div>
 
+      {bundleSuggestions.length > 0 && (
+        <section class="mt-12">
+          <div class="rounded-2xl border border-brand-100 dark:border-brand-900/50 bg-brand-50/40 dark:bg-brand-900/20 p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Complete The Bundle
+              </h2>
+              <span class="text-xs text-gray-500 dark:text-gray-400">One-click add-ons</span>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {bundleSuggestions.map((bundle) => (
+                <div
+                  key={bundle.productId}
+                  class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3"
+                >
+                  <div class="flex gap-3">
+                    {bundle.imageUrl ? (
+                      <img
+                        src={bundle.imageUrl}
+                        alt={bundle.name}
+                        class="w-16 h-16 rounded-lg object-cover bg-gray-100 dark:bg-gray-700"
+                      />
+                    ) : (
+                      <div class="w-16 h-16 rounded-lg bg-gray-100 dark:bg-gray-700" />
+                    )}
+                    <div class="min-w-0 flex-1">
+                      <a
+                        href={`/products/${bundle.slug}`}
+                        class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-brand-600 line-clamp-2"
+                      >
+                        {bundle.name}
+                      </a>
+                          <p class="mt-1 text-xs text-gray-500">{formatMoney(bundle.price, currencyCode)}</p>
+                      <button
+                        type="button"
+                        data-pdp-bundle-add
+                        data-variant-id={bundle.variantId}
+                        data-product-name={bundle.name}
+                        class="mt-2 inline-flex items-center rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-medium px-3 py-1.5"
+                      >
+                        Add to cart
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div id="pdp-bundle-error" class="hidden mt-3 text-sm text-red-600" role="alert" />
+          </div>
+        </section>
+      )}
+
       {/* Reviews section */}
       {(reviews.length > 0 || isAuthenticated) && (
         <section class="mt-16 pt-12 border-t border-gray-100 dark:border-gray-700" id="reviews">
@@ -505,6 +573,11 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           Verified
+                        </span>
+                      )}
+                      {isReviewIntelligenceEnabled && review.isTopHelpful && (
+                        <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700">
+                          Most Helpful
                         </span>
                       )}
                     </div>
@@ -606,7 +679,7 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
           <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">You May Also Like</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {relatedProducts.map((rp) => (
-              <ProductCard key={rp.id} product={rp} />
+              <ProductCard key={rp.id} product={rp} currencyCode={currencyCode} />
             ))}
           </div>
         </section>
@@ -642,6 +715,57 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
                 }
               });
             }
+
+            /* Dynamic bundle quick-add */
+            var bundleButtons = Array.prototype.slice.call(document.querySelectorAll('[data-pdp-bundle-add]'));
+            bundleButtons.forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var variantId = btn.getAttribute('data-variant-id');
+                var productName = btn.getAttribute('data-product-name') || 'bundle_item';
+                if (!variantId) return;
+
+                btn.setAttribute('disabled', 'true');
+                var previousText = btn.textContent;
+                btn.textContent = 'Adding...';
+                var errorEl = document.getElementById('pdp-bundle-error');
+                if (errorEl) errorEl.classList.add('hidden');
+
+                fetch('/api/cart/items', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ variantId: variantId, quantity: 1 }),
+                })
+                  .then(function(r) {
+                    if (!r.ok) return r.json().then(function(d) {
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Unable to add bundle item') : (d.error || d.message || 'Unable to add bundle item'));
+                    });
+                    return r.json();
+                  })
+                  .then(function() {
+                    if (window.petm8Track) {
+                      window.petm8Track('bundle_add_to_cart', {
+                        source: 'pdp',
+                        baseProductId: '${product.id}',
+                        productName: productName,
+                        variantId: variantId,
+                      });
+                    }
+                    btn.textContent = 'Added';
+                    setTimeout(function() {
+                      btn.textContent = previousText || 'Add to cart';
+                      btn.removeAttribute('disabled');
+                    }, 1200);
+                  })
+                  .catch(function(err) {
+                    if (errorEl) {
+                      errorEl.textContent = err.message || 'Unable to add bundle item';
+                      errorEl.classList.remove('hidden');
+                    }
+                    btn.textContent = previousText || 'Add to cart';
+                    btn.removeAttribute('disabled');
+                  });
+              });
+            });
 
             /* Star rating selector */
             var starButtons = document.querySelectorAll('.star-btn');
@@ -684,7 +808,9 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
                   body: JSON.stringify(body),
                 })
                   .then(function(r) {
-                    if (!r.ok) return r.json().then(function(d) { throw new Error(d.message || 'Failed'); });
+                    if (!r.ok) return r.json().then(function(d) {
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Failed') : (d.error || d.message || 'Failed'));
+                    });
                     document.getElementById('review-success').textContent = 'Review submitted!';
                     document.getElementById('review-success').classList.remove('hidden');
                     reviewForm.reset();
@@ -702,20 +828,47 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
             }
 
             /* Review intelligence actions */
+            function markReviewActionDone(action, reviewId) {
+              if (!action || !reviewId) return;
+              try {
+                sessionStorage.setItem('petm8-review-action:' + action + ':' + reviewId, '1');
+              } catch (_) {}
+            }
+
+            function hasReviewActionDone(action, reviewId) {
+              if (!action || !reviewId) return false;
+              try {
+                return sessionStorage.getItem('petm8-review-action:' + action + ':' + reviewId) === '1';
+              } catch (_) {
+                return false;
+              }
+            }
+
             var helpfulButtons = Array.prototype.slice.call(document.querySelectorAll('[data-review-helpful]'));
             helpfulButtons.forEach(function(btn) {
+              var reviewId = btn.getAttribute('data-review-id');
+              if (hasReviewActionDone('helpful', reviewId)) {
+                btn.setAttribute('disabled', 'true');
+              }
               btn.addEventListener('click', function() {
                 var reviewId = btn.getAttribute('data-review-id');
                 if (!reviewId) return;
+                if (hasReviewActionDone('helpful', reviewId)) return;
                 fetch('/api/reviews/' + reviewId + '/helpful', { method: 'POST' })
                   .then(function(r) {
-                    if (!r.ok) throw new Error('Failed to mark helpful');
+                    if (!r.ok) return r.json().then(function(d) {
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Failed to mark helpful') : (d.error || d.message || 'Failed to mark helpful'));
+                    });
                     return r.json();
                   })
                   .then(function(data) {
+                    if (!data || data.id !== reviewId || typeof data.helpfulCount !== 'number') {
+                      throw new Error('Unexpected helpful response');
+                    }
                     var countEl = document.querySelector('[data-helpful-count][data-review-id="' + reviewId + '"]');
-                    if (countEl) countEl.textContent = '(' + String(data.helpfulCount || 0) + ')';
+                    if (countEl) countEl.textContent = '(' + String(data.helpfulCount) + ')';
                     btn.setAttribute('disabled', 'true');
+                    markReviewActionDone('helpful', reviewId);
                   })
                   .catch(function() {});
               });
@@ -723,14 +876,29 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
 
             var reportButtons = Array.prototype.slice.call(document.querySelectorAll('[data-review-report]'));
             reportButtons.forEach(function(btn) {
+              var reviewId = btn.getAttribute('data-review-id');
+              if (hasReviewActionDone('report', reviewId)) {
+                btn.textContent = 'Reported';
+                btn.setAttribute('disabled', 'true');
+              }
               btn.addEventListener('click', function() {
                 var reviewId = btn.getAttribute('data-review-id');
                 if (!reviewId) return;
+                if (hasReviewActionDone('report', reviewId)) return;
                 fetch('/api/reviews/' + reviewId + '/report', { method: 'POST' })
                   .then(function(r) {
-                    if (!r.ok) throw new Error('Failed to report review');
+                    if (!r.ok) return r.json().then(function(d) {
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Failed to report review') : (d.error || d.message || 'Failed to report review'));
+                    });
+                    return r.json();
+                  })
+                  .then(function(data) {
+                    if (!data || data.id !== reviewId || typeof data.reportedCount !== 'number') {
+                      throw new Error('Unexpected report response');
+                    }
                     btn.textContent = 'Reported';
                     btn.setAttribute('disabled', 'true');
+                    markReviewActionDone('report', reviewId);
                   })
                   .catch(function() {});
               });

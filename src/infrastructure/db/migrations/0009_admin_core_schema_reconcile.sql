@@ -57,7 +57,7 @@ $$;--> statement-breakpoint
 
 CREATE TABLE IF NOT EXISTS "integration_secrets" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-  "integration_id" uuid NOT NULL REFERENCES "public"."platform_integrations"("id") ON DELETE cascade,
+  "integration_id" uuid NOT NULL,
   "key" text NOT NULL,
   "encrypted_value" text NOT NULL,
   "iv" text NOT NULL,
@@ -86,6 +86,18 @@ CREATE TABLE IF NOT EXISTS "promotions" (
   "updated_at" timestamp DEFAULT now()
 );--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "promotions_store_status_idx" ON "promotions" ("store_id", "status");--> statement-breakpoint
+
+CREATE TABLE IF NOT EXISTS "coupon_codes" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  "promotion_id" uuid NOT NULL REFERENCES "public"."promotions"("id"),
+  "code" text NOT NULL,
+  "max_redemptions" integer,
+  "redemption_count" integer DEFAULT 0,
+  "single_use_per_customer" boolean DEFAULT false,
+  "created_at" timestamp DEFAULT now()
+);--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "coupon_codes_promotion_code_idx" ON "coupon_codes" ("promotion_id", "code");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "coupon_codes_code_idx" ON "coupon_codes" ("code");--> statement-breakpoint
 
 CREATE TABLE IF NOT EXISTS "promotion_redemptions" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,

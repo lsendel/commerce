@@ -28,12 +28,27 @@ interface AffiliateDashboardProps {
   affiliate: AffiliateInfo;
   recentConversions: ConversionRow[];
   links: LinkRow[];
+  missions?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    target: number;
+    current: number;
+    progressPercent: number;
+    completed: boolean;
+    rewardLabel: string;
+  }>;
+  missionWindowStart?: string | null;
+  storefrontUrl?: string | null;
 }
 
 export const AffiliateDashboardPage: FC<AffiliateDashboardProps> = ({
   affiliate,
   recentConversions,
   links,
+  missions = [],
+  missionWindowStart = null,
+  storefrontUrl = null,
 }) => {
   return (
     <div class="max-w-6xl mx-auto py-8 px-4">
@@ -64,6 +79,50 @@ export const AffiliateDashboardPage: FC<AffiliateDashboardProps> = ({
           <p class="text-2xl font-bold mt-1 text-gray-900 dark:text-gray-100">{affiliate.commissionRate}%</p>
         </div>
       </div>
+
+      {missions.length > 0 && (
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-8">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Mission Dashboard</h2>
+              {missionWindowStart && (
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Weekly window since {new Date(missionWindowStart).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+            {storefrontUrl && (
+              <a href={storefrontUrl} class="text-sm text-brand-600 dark:text-brand-300 hover:underline">
+                Open Creator Storefront
+              </a>
+            )}
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {missions.map((mission) => (
+              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900">
+                <div class="flex items-start justify-between gap-3">
+                  <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{mission.title}</h3>
+                  <span class={`text-xs px-2 py-0.5 rounded ${
+                    mission.completed
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-200 text-gray-700"
+                  }`}>
+                    {mission.completed ? "Done" : "In Progress"}
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">{mission.description}</p>
+                <div class="mt-3 h-2 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  <div class="h-full bg-brand-500" style={`width: ${mission.progressPercent}%`}></div>
+                </div>
+                <p class="text-xs text-gray-600 dark:text-gray-300 mt-2">
+                  {mission.current}/{mission.target} • {mission.progressPercent}%
+                </p>
+                <p class="text-xs text-brand-700 dark:text-brand-300 mt-1">{mission.rewardLabel}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Links */}
       <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-8">

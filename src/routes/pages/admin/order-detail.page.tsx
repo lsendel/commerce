@@ -295,7 +295,10 @@ export const AdminOrderDetailPage: FC<AdminOrderDetailPageProps> = ({
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: input.value }),
                   });
-                  if (!res.ok) throw new Error('Failed to add note');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to add note') : (data.error || data.message || 'Failed to add note'));
+                  }
                   window.location.reload();
                 } catch (err) {
                   showOrderDetailError(err.message || 'Failed to add note');
@@ -320,7 +323,7 @@ export const AdminOrderDetailPage: FC<AdminOrderDetailPageProps> = ({
                   });
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.error || 'Refund failed');
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Refund failed') : (data.error || data.message || 'Refund failed'));
                   }
                   if (window.showToast) window.showToast('Refund issued successfully', 'success');
                   window.location.reload();

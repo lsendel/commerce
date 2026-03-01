@@ -139,9 +139,35 @@ export const SegmentsPage: FC<SegmentsPageProps> = ({ segments }) => {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(body),
                 });
-                if (!res.ok) throw new Error('Failed to create segment');
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to create segment') : (data.error || data.message || 'Failed to create segment'));
+                }
                 window.location.reload();
               } catch (err) { showSegmentsError(err.message || 'Failed to create segment'); }
+            });
+
+            document.querySelectorAll('.refresh-btn').forEach(function(btn) {
+              btn.addEventListener('click', async function() {
+                var segmentId = this.getAttribute('data-segment-id');
+                if (!segmentId) return;
+                this.setAttribute('disabled', 'true');
+                try {
+                  var res = await fetch('/api/promotions/segments/' + segmentId + '/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({}),
+                  });
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to refresh segment') : (data.error || data.message || 'Failed to refresh segment'));
+                  }
+                  window.location.reload();
+                } catch (err) {
+                  showSegmentsError(err.message || 'Failed to refresh segment');
+                  this.removeAttribute('disabled');
+                }
+              });
             });
           })();
         </script>

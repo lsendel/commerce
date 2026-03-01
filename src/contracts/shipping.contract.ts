@@ -49,7 +49,15 @@ const shippingOptionSchema = z.object({
   price: z.number().nullable(),
   estimatedDaysMin: z.number().nullable(),
   estimatedDaysMax: z.number().nullable(),
-  type: z.string(),
+  type: z.enum([
+    "flat",
+    "weight_based",
+    "price_based",
+    "carrier_calculated",
+    "carrier_fallback",
+  ]),
+  fallbackRateId: z.string().optional(),
+  fallbackReason: z.string().optional(),
 });
 
 const createZoneSchema = z.object({

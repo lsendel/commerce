@@ -113,7 +113,7 @@ export const ResetPasswordPage: FC<ResetPasswordPageProps> = ({ token, error }) 
 
                 if (!res.ok) {
                   var data = await res.json().catch(function() { return {}; });
-                  throw new Error(data.message || 'Failed to reset password');
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to reset password') : (data.error || data.message || 'Failed to reset password'));
                 }
 
                 successEl.classList.remove('hidden');

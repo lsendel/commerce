@@ -35,6 +35,7 @@ interface FulfillmentDashboardProps {
   requests: FulfillmentRequestRow[];
   stats: DashboardStats;
   health?: ProviderHealth[];
+  isExceptionHandlerEnabled?: boolean;
   page: number;
   totalPages: number;
   filters: {
@@ -59,6 +60,7 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
   requests,
   stats,
   health,
+  isExceptionHandlerEnabled = false,
   page,
   totalPages,
   filters,
@@ -103,6 +105,38 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
         <StatCard label="Failed" value={stats.failed} color="red" />
         <StatCard label="Cancelled" value={stats.cancelled} color="gray" />
       </div>
+
+      {isExceptionHandlerEnabled && (
+        <section class="mb-6 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-sky-50 to-cyan-50 p-4">
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h2 class="text-sm font-semibold text-indigo-900">Fulfillment Exception Handler</h2>
+              <p class="text-xs text-indigo-700 mt-0.5">
+                Detects stuck requests and auto-requeues safe retries.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                id="exception-scan-btn"
+                class="rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50"
+              >
+                Scan Exceptions
+              </button>
+              <button
+                type="button"
+                id="exception-resolve-btn"
+                class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+              >
+                Auto-resolve
+              </button>
+            </div>
+          </div>
+          <div id="exception-results" class="mt-3 text-xs text-indigo-800">
+            Exception scan not run yet.
+          </div>
+        </section>
+      )}
 
       {/* Filter Bar */}
       <form method="get" class="flex flex-wrap items-end gap-3 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
@@ -276,7 +310,10 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
               if (!pendingRetryId) return;
               try {
                 var res = await fetch('/api/admin/fulfillment/' + pendingRetryId + '/retry', { method: 'POST' });
-                if (!res.ok) throw new Error('Failed to retry');
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to retry') : (data.error || data.message || 'Failed to retry'));
+                }
                 window.location.reload();
               } catch (err) {
                 showFulfillmentDashboardError(err.message || 'Failed to retry fulfillment');
@@ -285,6 +322,76 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
                 pendingRetryId = null;
               }
             });
+
+            var scanBtn = document.getElementById('exception-scan-btn');
+            var resolveBtn = document.getElementById('exception-resolve-btn');
+            var resultEl = document.getElementById('exception-results');
+
+            function renderExceptionResult(payload, mode) {
+              if (!resultEl || !payload) return;
+              var summary = payload.summary
+                ? payload.summary
+                : {
+                    scannedCount: payload.scannedCount || 0,
+                    autoResolvableCount: payload.eligibleCount || 0,
+                  };
+              var exceptions = Array.isArray(payload.exceptions) ? payload.exceptions : [];
+              var top = exceptions.slice(0, 4).map(function(ex) {
+                return '<li><span class=\"font-medium\">' + ex.requestId.slice(0, 8) + '...</span> · ' + ex.status + ' · ' + ex.suggestedAction + ' · ' + ex.reason + '</li>';
+              }).join('');
+
+              resultEl.innerHTML =
+                '<p><span class=\"font-semibold\">' + mode + ':</span> scanned ' + summary.scannedCount + ', auto-resolvable ' + summary.autoResolvableCount + (payload.resolvedCount !== undefined ? ', resolved ' + payload.resolvedCount : '') + '.</p>' +
+                (top ? '<ul class=\"mt-2 list-disc pl-4 space-y-1\">' + top + '</ul>' : '<p class=\"mt-2\">No exceptions found.</p>');
+            }
+
+            async function runExceptionScan() {
+              if (!scanBtn) return;
+              scanBtn.setAttribute('disabled', 'true');
+              try {
+                var res = await fetch('/api/admin/ops/fulfillment-exceptions?limit=30', { credentials: 'same-origin' });
+                var data = await res.json().catch(function() { return {}; });
+                if (!res.ok) {
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to scan fulfillment exceptions') : (data.error || data.message || 'Failed to scan fulfillment exceptions'));
+                }
+                renderExceptionResult(data, 'Scan');
+              } catch (err) {
+                showFulfillmentDashboardError(err.message || 'Failed to scan fulfillment exceptions');
+              } finally {
+                scanBtn.removeAttribute('disabled');
+              }
+            }
+
+            async function runExceptionResolve() {
+              if (!resolveBtn) return;
+              resolveBtn.setAttribute('disabled', 'true');
+              try {
+                var res = await fetch('/api/admin/ops/fulfillment-exceptions/auto-resolve', {
+                  method: 'POST',
+                  credentials: 'same-origin',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ dryRun: false, limit: 30 }),
+                });
+                var data = await res.json().catch(function() { return {}; });
+                if (!res.ok) {
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to auto-resolve fulfillment exceptions') : (data.error || data.message || 'Failed to auto-resolve fulfillment exceptions'));
+                }
+                renderExceptionResult(data, 'Auto-resolve');
+                setTimeout(function() { window.location.reload(); }, 800);
+              } catch (err) {
+                showFulfillmentDashboardError(err.message || 'Failed to auto-resolve fulfillment exceptions');
+              } finally {
+                resolveBtn.removeAttribute('disabled');
+              }
+            }
+
+            if (scanBtn) {
+              scanBtn.addEventListener('click', runExceptionScan);
+              runExceptionScan();
+            }
+            if (resolveBtn) {
+              resolveBtn.addEventListener('click', runExceptionResolve);
+            }
           })();
         </script>
       `}

@@ -9,6 +9,7 @@
   function initVariantSelector() {
     var selector = document.querySelector("[data-variant-selector]");
     if (!selector) return;
+    var currencyCode = (selector.getAttribute("data-currency-code") || "USD").toUpperCase();
 
     var raw = selector.getAttribute("data-variants-json");
     if (!raw) return;
@@ -62,18 +63,31 @@
 
       var isOnSale = compareNum !== null && compareNum > priceNum;
 
+      function formatCurrency(value) {
+        try {
+          return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: currencyCode,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(value);
+        } catch (_) {
+          return currencyCode + " " + value.toFixed(2);
+        }
+      }
+
       // Current price
       var priceSpan = document.createElement("span");
       priceSpan.className =
         "text-2xl font-bold " + (isOnSale ? "text-red-600" : "text-gray-900");
-      priceSpan.textContent = "$" + priceNum.toFixed(2);
+      priceSpan.textContent = formatCurrency(priceNum);
       wrapper.appendChild(priceSpan);
 
       if (isOnSale) {
         // Strikethrough compare price
         var compareSpan = document.createElement("span");
         compareSpan.className = "text-base text-gray-400 line-through";
-        compareSpan.textContent = "$" + compareNum.toFixed(2);
+        compareSpan.textContent = formatCurrency(compareNum);
         wrapper.appendChild(compareSpan);
 
         // Savings badge

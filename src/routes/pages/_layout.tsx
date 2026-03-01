@@ -222,6 +222,23 @@ export const Layout: FC<LayoutProps> = ({
             (function () {
               var SESSION_KEY = "petm8-analytics-session";
               var ATTRIBUTION_KEY = "petm8-analytics-attribution";
+              window.petm8GetApiErrorMessage = function (payload, fallbackMessage) {
+                var fallback = fallbackMessage || "Request failed";
+                if (!payload || typeof payload !== "object") return fallback;
+                if (typeof payload.error === "string" && payload.error.trim()) return payload.error;
+                if (typeof payload.message === "string" && payload.message.trim()) return payload.message;
+                var issues = null;
+                if (payload.error && typeof payload.error === "object" && Array.isArray(payload.error.issues)) {
+                  issues = payload.error.issues;
+                } else if (Array.isArray(payload.issues)) {
+                  issues = payload.issues;
+                }
+                if (issues && issues[0] && typeof issues[0].message === "string" && issues[0].message.trim()) {
+                  return issues[0].message;
+                }
+                if (typeof payload.code === "string" && payload.code.trim()) return payload.code;
+                return fallback;
+              };
               function ensureSessionId() {
                 try {
                   var existing = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);

@@ -10,6 +10,7 @@ interface SettingsPageProps {
   user: {
     name: string;
     email: string;
+    phone?: string | null;
     avatarUrl?: string | null;
     emailVerifiedAt?: string | null;
     locale?: string;
@@ -91,6 +92,15 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
             value={user.name}
             required
             autocomplete="name"
+          />
+
+          <Input
+            label="Phone (for SMS/WhatsApp updates)"
+            name="phone"
+            type="tel"
+            value={user.phone || ""}
+            placeholder="+14155551234"
+            autocomplete="tel"
           />
 
           <div class="flex flex-col gap-1.5">
@@ -259,11 +269,14 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
                   var res = await fetch('/api/auth/profile', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: fd.get('name') }),
+                    body: JSON.stringify({
+                      name: fd.get('name'),
+                      phone: fd.get('phone') || null,
+                    }),
                   });
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.message || 'Failed to update profile');
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to update profile') : (data.error || data.message || 'Failed to update profile'));
                   }
                   successEl.textContent = 'Profile updated successfully.';
                   successEl.classList.remove('hidden');
@@ -301,7 +314,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
                   });
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.message || 'Failed to update preferences');
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to update preferences') : (data.error || data.message || 'Failed to update preferences'));
                   }
                   successEl.textContent = 'Preferences saved.';
                   successEl.classList.remove('hidden');
@@ -348,7 +361,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
                   });
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.message || 'Failed to change password');
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to change password') : (data.error || data.message || 'Failed to change password'));
                   }
                   successEl.textContent = 'Password updated successfully.';
                   successEl.classList.remove('hidden');
@@ -377,7 +390,10 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
                   var res = await fetch('/api/auth/profile', {
                     method: 'DELETE',
                   });
-                  if (!res.ok) throw new Error('Failed to delete account');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to delete account') : (data.error || data.message || 'Failed to delete account'));
+                  }
                   window.location.href = '/';
                 } catch (err) {
                   notifyError(err, 'Failed to delete account');
@@ -395,7 +411,10 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
                 this.disabled = true;
                 try {
                   var res = await fetch('/api/auth/request-verification', { method: 'POST' });
-                  if (!res.ok) throw new Error('Failed to send verification email');
+                  if (!res.ok) {
+                    var data = await res.json().catch(function() { return {}; });
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to send verification email') : (data.error || data.message || 'Failed to send verification email'));
+                  }
                   this.textContent = 'Email sent!';
                 } catch (err) {
                   this.textContent = 'Verify email';

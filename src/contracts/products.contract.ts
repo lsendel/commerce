@@ -7,6 +7,10 @@ import {
 } from "../shared/validators";
 
 const c = initContract();
+const geoPricingQuerySchema = z.object({
+  country: z.string().length(2).optional(),
+  currency: z.string().length(3).optional(),
+});
 
 const variantSchema = z.object({
   id: z.string(),
@@ -26,6 +30,14 @@ const imageSchema = z.object({
   height: z.number().nullable(),
 });
 
+const pricingSchema = z.object({
+  currency: z.string(),
+  baseCurrency: z.string(),
+  exchangeRate: z.number(),
+  country: z.string().nullable(),
+  autoDetected: z.boolean(),
+});
+
 const productSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -43,6 +55,7 @@ const productSchema = z.object({
   }),
   variants: z.array(variantSchema),
   images: z.array(imageSchema),
+  pricing: pricingSchema.optional(),
 });
 
 const collectionSchema = z.object({
@@ -64,6 +77,7 @@ export const productsContract = c.router({
         total: z.number(),
         page: z.number(),
         limit: z.number(),
+        pricingContext: pricingSchema.optional(),
       }),
     },
   },
@@ -71,6 +85,7 @@ export const productsContract = c.router({
     method: "GET",
     path: "/api/products/:slug",
     pathParams: slugParamSchema,
+    query: geoPricingQuerySchema,
     responses: {
       200: productSchema,
       404: z.object({ error: z.string() }),
@@ -93,7 +108,7 @@ export const productsContract = c.router({
     method: "GET",
     path: "/api/collections/:slug",
     pathParams: slugParamSchema,
-    query: paginationSchema,
+    query: paginationSchema.merge(geoPricingQuerySchema),
     responses: {
       200: z.object({
         collection: collectionSchema,
@@ -101,6 +116,7 @@ export const productsContract = c.router({
         total: z.number(),
         page: z.number(),
         limit: z.number(),
+        pricingContext: pricingSchema.optional(),
       }),
       404: z.object({ error: z.string() }),
     },

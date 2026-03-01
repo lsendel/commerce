@@ -42,9 +42,48 @@ END
 $$;--> statement-breakpoint
 DO $$
 BEGIN
+  CREATE TYPE "public"."fulfillment_request_status" AS ENUM ('pending', 'submitted', 'processing', 'shipped', 'delivered', 'cancel_requested', 'cancelled', 'failed');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END
+$$;--> statement-breakpoint
+DO $$
+BEGIN
   CREATE TYPE "public"."waitlist_status" AS ENUM ('waiting', 'notified', 'expired', 'converted');
 EXCEPTION
   WHEN duplicate_object THEN NULL;
+END
+$$;--> statement-breakpoint
+
+CREATE TABLE IF NOT EXISTS "platform_integrations" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  "store_id" uuid REFERENCES "public"."stores"("id"),
+  "provider" "integration_provider" NOT NULL,
+  "enabled" boolean DEFAULT true,
+  "config" jsonb DEFAULT '{}'::jsonb,
+  "status" "integration_status" DEFAULT 'disconnected',
+  "status_message" text,
+  "last_verified_at" timestamp,
+  "last_sync_at" timestamp,
+  "created_at" timestamp DEFAULT now(),
+  "updated_at" timestamp DEFAULT now()
+);--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "integrations_store_provider_idx" ON "platform_integrations" ("store_id", "provider");--> statement-breakpoint
+
+DO $$
+BEGIN
+  IF to_regclass('public.integration_secrets') IS NOT NULL
+     AND to_regclass('public.platform_integrations') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1
+       FROM pg_constraint
+       WHERE conname = 'integration_secrets_integration_id_platform_integrations_id_fk'
+     ) THEN
+    ALTER TABLE "integration_secrets"
+      ADD CONSTRAINT "integration_secrets_integration_id_platform_integrations_id_fk"
+      FOREIGN KEY ("integration_id") REFERENCES "public"."platform_integrations"("id")
+      ON DELETE cascade ON UPDATE no action;
+  END IF;
 END
 $$;--> statement-breakpoint
 
@@ -94,6 +133,32 @@ CREATE TABLE IF NOT EXISTS "design_placements" (
   "provider_meta" jsonb,
   "created_at" timestamp DEFAULT now()
 );--> statement-breakpoint
+
+CREATE TABLE IF NOT EXISTS "fulfillment_requests" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  "store_id" uuid NOT NULL REFERENCES "public"."stores"("id"),
+  "order_id" uuid NOT NULL REFERENCES "public"."orders"("id"),
+  "provider" "fulfillment_provider_type" NOT NULL,
+  "provider_id" uuid REFERENCES "public"."fulfillment_providers"("id"),
+  "external_id" text,
+  "status" "fulfillment_request_status" DEFAULT 'pending',
+  "items_snapshot" jsonb,
+  "cost_estimated_total" numeric(10, 2),
+  "cost_actual_total" numeric(10, 2),
+  "cost_shipping" numeric(10, 2),
+  "cost_tax" numeric(10, 2),
+  "currency" text DEFAULT 'USD',
+  "refund_stripe_id" text,
+  "refund_amount" numeric(10, 2),
+  "refund_status" text,
+  "error_message" text,
+  "submitted_at" timestamp,
+  "completed_at" timestamp,
+  "created_at" timestamp DEFAULT now(),
+  "updated_at" timestamp DEFAULT now()
+);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "fulfillment_requests_order_idx" ON "fulfillment_requests" ("order_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "fulfillment_requests_provider_external_idx" ON "fulfillment_requests" ("provider", "external_id");--> statement-breakpoint
 
 CREATE TABLE IF NOT EXISTS "fulfillment_request_items" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -195,4 +260,4 @@ CREATE TABLE IF NOT EXISTS "inventory_transactions" (
   "note" text,
   "created_at" timestamp DEFAULT now() NOT NULL
 );--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "inventory_transactions_variant_idx" ON "inventory_transactions" ("variant_id", "created_at");
+CREATE INDEX IF NOT EXISTS "inventory_transactions_variant_idx" ON "inventory_transactions" ("variant_id", "created_at");--> statement-breakpoint

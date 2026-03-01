@@ -11,12 +11,14 @@ interface CreateProductPageProps {
   artJobId: string;
   artImageUrl: string | null;
   providers: Provider[];
+  isPipelineEnabled?: boolean;
 }
 
 export const CreateProductPage: FC<CreateProductPageProps> = ({
   artJobId,
   artImageUrl,
   providers,
+  isPipelineEnabled = false,
 }) => {
   return (
     <div class="max-w-3xl mx-auto px-4 py-8 sm:py-12">
@@ -51,7 +53,19 @@ export const CreateProductPage: FC<CreateProductPageProps> = ({
 
         {/* Product Details */}
         <fieldset class="space-y-4">
-          <legend class="text-lg font-semibold text-gray-900">Product Details</legend>
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-lg font-semibold text-gray-900">Product Details</h2>
+            {isPipelineEnabled && (
+              <Button type="button" variant="secondary" size="sm" id="auto-fill-btn">
+                Auto-fill with AI
+              </Button>
+            )}
+          </div>
+          {isPipelineEnabled && (
+            <p id="pipeline-status" class="text-xs text-gray-500">
+              AI can prefill product copy and variant defaults from this artwork.
+            </p>
+          )}
 
           <div>
             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Product Name</label>

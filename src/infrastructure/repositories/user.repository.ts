@@ -34,6 +34,7 @@ export class UserRepository {
     email: string;
     passwordHash: string;
     name: string;
+    phone?: string | null;
     googleSub?: string;
     appleSub?: string;
     metaSub?: string;
@@ -43,6 +44,7 @@ export class UserRepository {
       email: data.email,
       passwordHash: data.passwordHash,
       name: data.name,
+      phone: data.phone ?? null,
       googleSub: data.googleSub,
       appleSub: data.appleSub,
       metaSub: data.metaSub,
@@ -70,6 +72,7 @@ export class UserRepository {
 
   async updateProfile(userId: string, data: Partial<{
     name: string;
+    phone: string | null;
     avatarUrl: string | null;
     locale: string;
     timezone: string;
@@ -162,5 +165,34 @@ export class UserRepository {
   async deleteAddress(id: string, userId: string) {
     const result = await this.db.delete(addresses).where(eq(addresses.id, id)).returning();
     return (result[0] && result[0].userId === userId) ? result[0] : null;
+  }
+
+  async anonymizeAccount(userId: string, replacementEmail: string, replacementPasswordHash: string) {
+    await this.db.delete(addresses).where(eq(addresses.userId, userId));
+    await this.db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+    await this.db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, userId));
+
+    const result = await this.db
+      .update(users)
+      .set({
+        email: replacementEmail,
+        passwordHash: replacementPasswordHash,
+        googleSub: null,
+        appleSub: null,
+        metaSub: null,
+        name: "Deleted User",
+        stripeCustomerId: null,
+        emailVerifiedAt: null,
+        phone: null,
+        avatarUrl: null,
+        locale: "en",
+        timezone: "UTC",
+        marketingOptIn: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return result[0] ?? null;
   }
 }

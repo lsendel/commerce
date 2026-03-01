@@ -18,7 +18,10 @@ interface CartSummaryProps {
     minDays: number;
     maxDays: number;
     label: string;
+    confidence?: "high" | "medium" | "low";
+    source?: "production+shipping" | "production-only";
   };
+  isStockConfidenceEnabled?: boolean;
 }
 
 export const CartSummary: FC<CartSummaryProps> = ({
@@ -30,6 +33,7 @@ export const CartSummary: FC<CartSummaryProps> = ({
   total,
   goalProgress,
   deliveryPromise,
+  isStockConfidenceEnabled,
 }) => {
   const computedTotal = total ?? subtotal - discount;
 
@@ -92,8 +96,18 @@ export const CartSummary: FC<CartSummaryProps> = ({
           <div class="rounded-lg bg-sky-50/70 border border-sky-100 px-3 py-2">
             <p class="text-xs font-medium text-sky-800">{deliveryPromise.label}</p>
             <p class="text-xs text-sky-700 mt-0.5">
-              Estimated delivery in {deliveryPromise.minDays}-{deliveryPromise.maxDays} days.
+              Arrives in {deliveryPromise.minDays}-{deliveryPromise.maxDays} business days.
             </p>
+            {deliveryPromise.source === "production-only" && (
+              <p class="text-[11px] text-sky-600 mt-1">
+                Based on production lead times while shipping lanes are being calibrated.
+              </p>
+            )}
+            {deliveryPromise.confidence && (
+              <p class="text-[11px] text-sky-600 mt-1">
+                Confidence: {deliveryPromise.confidence}
+              </p>
+            )}
           </div>
         )}
 
@@ -111,6 +125,32 @@ export const CartSummary: FC<CartSummaryProps> = ({
       </div>
 
       <div class="mt-6 space-y-3">
+        {isStockConfidenceEnabled && (
+          <div
+            id="checkout-stock-panel"
+            data-checkout-stock-panel
+            class="hidden rounded-xl border border-gray-200 bg-gray-50 px-3 py-2"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span
+                id="checkout-stock-headline"
+                data-checkout-stock-headline
+                class="text-xs font-medium text-gray-700"
+              >
+                Running stock check...
+              </span>
+              <span
+                id="checkout-stock-badge"
+                data-checkout-stock-badge
+                class="inline-flex items-center rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-700"
+              >
+                Checking
+              </span>
+            </div>
+            <ul id="checkout-stock-list" data-checkout-stock-list class="mt-2 space-y-1 text-xs text-gray-600" />
+          </div>
+        )}
+
         <Button
           variant="primary"
           size="lg"

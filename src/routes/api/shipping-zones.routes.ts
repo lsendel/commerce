@@ -15,6 +15,7 @@ import {
   calculateShippingSchema,
 } from "../../contracts/shipping.contract";
 import { NotFoundError, ValidationError } from "../../shared/errors";
+import { resolveFeatureFlags } from "../../shared/feature-flags";
 
 const shipping = new Hono<{ Bindings: Env }>();
 
@@ -221,7 +222,10 @@ shipping.post(
     const db = createDb(c.env.DATABASE_URL);
     const storeId = c.get("storeId") as string;
     const repo = new ShippingRepository(db, storeId);
-    const useCase = new CalculateShippingUseCase(repo);
+    const flags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+    const useCase = new CalculateShippingUseCase(repo, undefined, {
+      carrierFallbackRouting: flags.carrier_fallback_routing,
+    });
 
     try {
       const body = c.req.valid("json");

@@ -3,7 +3,10 @@ import type { Database } from "../../infrastructure/db/client";
 import type { OrderRepository } from "../../infrastructure/repositories/order.repository";
 import type { CartRepository } from "../../infrastructure/repositories/cart.repository";
 import { FulfillmentRequestRepository } from "../../infrastructure/repositories/fulfillment-request.repository";
-import { FulfillmentRouter } from "../../infrastructure/fulfillment/fulfillment-router";
+import {
+  FulfillmentRouter,
+  type FulfillmentProviderType,
+} from "../../infrastructure/fulfillment/fulfillment-router";
 import {
   products,
   productVariants,
@@ -30,6 +33,7 @@ import { AttributeConversionUseCase } from "../affiliates/attribute-conversion.u
 interface FulfillOrderInput {
   session: Stripe.Checkout.Session;
   fulfillmentQueue?: Queue;
+  splitShipmentOptimizer?: boolean;
 }
 
 export class FulfillOrderUseCase {
@@ -41,7 +45,7 @@ export class FulfillOrderUseCase {
   ) {}
 
   async execute(input: FulfillOrderInput) {
-    const { session, fulfillmentQueue } = input;
+    const { session, fulfillmentQueue, splitShipmentOptimizer = false } = input;
     const cartId = session.metadata?.cartId;
     const userId = session.metadata?.userId;
 
@@ -234,14 +238,26 @@ export class FulfillOrderUseCase {
       const requestRepo = new FulfillmentRequestRepository(this.db, this.storeId);
 
       const physicalVariantIds = physicalItems.map((i) => i.variantId);
-      const routingMap = await router.selectProvidersForVariants(physicalVariantIds);
+      const routingMap = await router.selectProvidersForVariants(physicalVariantIds, {
+        optimizeByCost: splitShipmentOptimizer,
+      });
 
       // Group items by provider
-      type FulfillmentProviderKey = "printful" | "gooten" | "prodigi" | "shapeways" | "manual";
-      const byProvider = new Map<FulfillmentProviderKey, Array<{ orderItemId: string; variantId: string; quantity: number }>>();
+      const byProvider = new Map<FulfillmentProviderType, Array<{
+        orderItemId: string;
+        variantId: string;
+        quantity: number;
+      }>>();
+      const unroutedVariantIds: string[] = [];
+
       for (const item of physicalItems) {
         const routing = routingMap.get(item.variantId);
-        const providerKey = (routing?.providerType ?? "manual") as FulfillmentProviderKey;
+        if (!routing?.providerType) {
+          unroutedVariantIds.push(item.variantId);
+          continue;
+        }
+
+        const providerKey = routing.providerType;
         const group = byProvider.get(providerKey) ?? [];
         const orderItem = order.items.find(
           (oi) => oi.variantId === item.variantId && !oi.bookingAvailabilityId,
@@ -259,13 +275,13 @@ export class FulfillOrderUseCase {
       // Create one fulfillment request per provider group
       for (const [providerType, items] of byProvider) {
         const firstItem = items[0];
-      const firstRouting = firstItem
+        const firstRouting = firstItem
           ? routingMap.get(firstItem.variantId)
           : undefined;
 
         const request = await requestRepo.create({
           orderId: order.id,
-          provider: providerType as "printful" | "gooten" | "prodigi" | "shapeways",
+          provider: providerType,
           providerId: firstRouting?.providerId,
           itemsSnapshot: items,
           items: items.map((i) => ({
@@ -280,6 +296,12 @@ export class FulfillOrderUseCase {
           provider: providerType,
           storeId: this.storeId,
         });
+      }
+
+      if (unroutedVariantIds.length > 0) {
+        console.warn(
+          `[fulfillment] Skipped ${unroutedVariantIds.length} physical item(s) with no active provider mapping in store ${this.storeId}: ${unroutedVariantIds.join(", ")}`,
+        );
       }
     }
 

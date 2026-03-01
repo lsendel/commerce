@@ -187,11 +187,13 @@ export const AdminCollectionsPage: FC<AdminCollectionsPageProps> = ({
                 if (!confirm('Delete collection "' + row.dataset.name + '"?')) return;
                 fetch('/api/admin/collections/' + row.dataset.id, { method: 'DELETE' })
                   .then(function(r) {
-                    if (!r.ok) throw new Error('Delete failed');
+                    if (!r.ok) return r.json().then(function(d) {
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Delete failed') : (d.error || d.message || 'Delete failed'));
+                    });
                     row.remove();
                     flash(successEl, 'Collection deleted.');
                   })
-                  .catch(function() { flash(errorEl, 'Failed to delete collection.'); });
+                  .catch(function(err) { flash(errorEl, (err && err.message) || 'Failed to delete collection.'); });
               });
             });
 
@@ -214,7 +216,9 @@ export const AdminCollectionsPage: FC<AdminCollectionsPageProps> = ({
                 body: JSON.stringify(body),
               })
                 .then(function(r) {
-                  if (!r.ok) throw new Error('Save failed');
+                  if (!r.ok) return r.json().then(function(d) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Save failed') : (d.error || d.message || 'Save failed'));
+                  });
                   return r.json();
                 })
                 .then(function() {
@@ -222,7 +226,7 @@ export const AdminCollectionsPage: FC<AdminCollectionsPageProps> = ({
                   flash(successEl, id ? 'Collection updated.' : 'Collection created.');
                   setTimeout(function() { location.reload(); }, 800);
                 })
-                .catch(function() { flash(errorEl, 'Failed to save collection.'); });
+                .catch(function(err) { flash(errorEl, (err && err.message) || 'Failed to save collection.'); });
             });
           })();
         </script>

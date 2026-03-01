@@ -2,6 +2,11 @@ import { initContract } from "@ts-rest/core";
 import { z } from "zod";
 
 const c = initContract();
+const errorSchema = z.object({ error: z.string() });
+const featureDisabledSchema = z.object({
+  error: z.string(),
+  code: z.literal("FEATURE_DISABLED"),
+});
 
 export const createPromotionSchema = z.object({
   name: z.string().min(1).max(200),
@@ -70,6 +75,86 @@ export const updateSegmentSchema = z.object({
   rules: z.record(z.unknown()).optional(),
 });
 
+export const promotionCopilotSchema = z.object({
+  brief: z.string().min(10).max(1400),
+  promotionType: z.enum(["coupon", "automatic", "flash_sale"]),
+  objective: z.enum(["aov", "conversion", "acquisition", "clearance", "retention"]).optional(),
+  audience: z.string().min(2).max(120).optional(),
+});
+export const promotionCopilotApplySchema = z.object({
+  applyPatch: z.object({
+    name: z.string(),
+    description: z.string().optional(),
+    type: z.enum(["coupon", "automatic", "flash_sale"]),
+    strategyType: z.enum([
+      "percentage_off",
+      "fixed_amount",
+      "free_shipping",
+      "bogo",
+      "buy_x_get_y",
+      "tiered",
+      "bundle",
+    ]),
+    strategyParams: z.record(z.unknown()),
+    conditions: z.record(z.unknown()),
+    priority: z.number().optional(),
+    stackable: z.boolean().optional(),
+    usageLimit: z.number().nullable().optional(),
+    couponCodeSuggestion: z.string().nullable().optional(),
+  }),
+  schedule: z.object({
+    startsAt: z.string().datetime().optional(),
+    endsAt: z.string().datetime().optional(),
+  }).optional(),
+});
+
+const promotionCopilotResultSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  type: z.enum(["coupon", "automatic", "flash_sale"]),
+  strategyType: z.enum([
+    "percentage_off",
+    "fixed_amount",
+    "free_shipping",
+    "bogo",
+    "buy_x_get_y",
+    "tiered",
+    "bundle",
+  ]),
+  strategyParams: z.record(z.unknown()),
+  conditions: z.record(z.unknown()),
+  priority: z.number(),
+  stackable: z.boolean(),
+  usageLimit: z.number().nullable(),
+  couponCodeSuggestion: z.string().nullable(),
+  confidence: z.enum(["low", "medium", "high"]),
+  warnings: z.array(z.string()),
+});
+
+const promotionCopilotResponseSchema = z.object({
+  copilot: promotionCopilotResultSchema,
+  applyPatch: z.object({
+    name: z.string(),
+    description: z.string(),
+    type: z.enum(["coupon", "automatic", "flash_sale"]),
+    strategyType: z.enum([
+      "percentage_off",
+      "fixed_amount",
+      "free_shipping",
+      "bogo",
+      "buy_x_get_y",
+      "tiered",
+      "bundle",
+    ]),
+    strategyParams: z.record(z.unknown()),
+    conditions: z.record(z.unknown()),
+    priority: z.number(),
+    stackable: z.boolean(),
+    usageLimit: z.number().nullable(),
+    couponCodeSuggestion: z.string().nullable(),
+  }),
+});
+
 export const promotionsContract = c.router({
   createPromotion: {
     method: "POST",
@@ -81,6 +166,37 @@ export const promotionsContract = c.router({
     method: "GET",
     path: "/api/promotions",
     responses: { 200: c.type<{ promotions: any[] }>() },
+  },
+  draftPromotionCopilot: {
+    method: "POST",
+    path: "/api/promotions/copilot/draft",
+    body: promotionCopilotSchema,
+    responses: {
+      200: promotionCopilotResponseSchema,
+      403: featureDisabledSchema,
+    },
+  },
+  enrichPromotionCopilot: {
+    method: "POST",
+    path: "/api/promotions/:id/copilot/enrich",
+    body: promotionCopilotSchema,
+    responses: {
+      200: promotionCopilotResponseSchema,
+      403: featureDisabledSchema,
+      404: errorSchema,
+    },
+  },
+  applyPromotionCopilot: {
+    method: "POST",
+    path: "/api/promotions/copilot/apply",
+    body: promotionCopilotApplySchema,
+    responses: {
+      201: z.object({
+        promotion: z.unknown(),
+        coupon: z.unknown().nullable(),
+      }),
+      403: featureDisabledSchema,
+    },
   },
   updatePromotion: {
     method: "PATCH",
@@ -129,18 +245,39 @@ export const promotionsContract = c.router({
   listSegments: {
     method: "GET",
     path: "/api/promotions/segments",
-    responses: { 200: c.type<{ segments: any[] }>() },
+    responses: {
+      200: c.type<{ segments: any[] }>(),
+      403: featureDisabledSchema,
+    },
   },
   createSegment: {
     method: "POST",
     path: "/api/promotions/segments",
     body: createSegmentSchema,
-    responses: { 201: c.type<{ segment: any }>() },
+    responses: {
+      201: c.type<{ segment: any }>(),
+      403: featureDisabledSchema,
+    },
   },
   updateSegment: {
     method: "PATCH",
     path: "/api/promotions/segments/:id",
     body: updateSegmentSchema,
-    responses: { 200: c.type<{ segment: any }>() },
+    responses: {
+      200: c.type<{ segment: any }>(),
+      403: featureDisabledSchema,
+      404: errorSchema,
+    },
+  },
+  refreshSegment: {
+    method: "POST",
+    path: "/api/promotions/segments/:id/refresh",
+    body: z.object({}),
+    responses: {
+      200: c.type<{ segment: any; memberCount: number }>(),
+      400: errorSchema,
+      403: featureDisabledSchema,
+      404: errorSchema,
+    },
   },
 });

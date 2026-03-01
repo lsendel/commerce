@@ -2,6 +2,7 @@ import type { FC } from "hono/jsx";
 import { ProductGrid } from "../../components/product/product-grid";
 import { EmptyState } from "../../components/ui/empty-state";
 import { Button } from "../../components/ui/button";
+import { currencySymbol, formatMoney } from "../../shared/money";
 
 interface ProductSummary {
   id: string;
@@ -36,6 +37,12 @@ interface ProductListPageProps {
     maxPrice?: number;
     sort?: string;
   };
+  pricingContext?: {
+    currency: string;
+    baseCurrency: string;
+    exchangeRate: number;
+    country?: string | null;
+  };
 }
 
 const productTypes = [
@@ -61,8 +68,11 @@ export const ProductListPage: FC<ProductListPageProps> = ({
   limit,
   collections = [],
   filters = {},
+  pricingContext,
 }) => {
   const totalPages = Math.ceil(total / limit);
+  const currencyCode = pricingContext?.currency ?? "USD";
+  const moneySymbol = currencySymbol(currencyCode);
 
   const hasFilters = !!(filters.type || filters.collection || filters.search || filters.minPrice !== undefined || filters.maxPrice !== undefined);
 
@@ -78,10 +88,10 @@ export const ProductListPage: FC<ProductListPageProps> = ({
     activeFilters.push({ label: `Search: "${filters.search}"`, key: "search" });
   }
   if (filters.minPrice !== undefined) {
-    activeFilters.push({ label: `Min: $${filters.minPrice}`, key: "minPrice" });
+    activeFilters.push({ label: `Min: ${formatMoney(filters.minPrice, currencyCode)}`, key: "minPrice" });
   }
   if (filters.maxPrice !== undefined) {
-    activeFilters.push({ label: `Max: $${filters.maxPrice}`, key: "maxPrice" });
+    activeFilters.push({ label: `Max: ${formatMoney(filters.maxPrice, currencyCode)}`, key: "maxPrice" });
   }
 
   const buildUrl = (overrides: Record<string, string | number | undefined>) => {
@@ -108,7 +118,12 @@ export const ProductListPage: FC<ProductListPageProps> = ({
       {/* Page header */}
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Products</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400 text-sm">{total} {total === 1 ? "product" : "products"} found</p>
+        <p class="mt-1 text-gray-500 dark:text-gray-400 text-sm">
+          {total} {total === 1 ? "product" : "products"} found
+          {pricingContext && (
+            <span class="ml-2">• Prices shown in {currencyCode}</span>
+          )}
+        </p>
       </div>
 
       <div class="lg:flex lg:gap-8">
@@ -166,10 +181,10 @@ export const ProductListPage: FC<ProductListPageProps> = ({
 
             {/* Price range */}
             <div>
-              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Price Range</label>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Price Range ({currencyCode})</label>
               <div class="flex items-center gap-2">
                 <div class="relative w-full">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{moneySymbol}</span>
                   <input
                     type="number"
                     name="minPrice"
@@ -182,7 +197,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                 </div>
                 <span class="text-gray-400 text-sm">–</span>
                 <div class="relative w-full">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{moneySymbol}</span>
                   <input
                     type="number"
                     name="maxPrice"
@@ -287,7 +302,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                     type="number"
                     name="minPrice"
                     value={filters.minPrice !== undefined ? String(filters.minPrice) : ""}
-                    placeholder="Min $"
+                    placeholder={`Min ${moneySymbol}`}
                     min="0"
                     step="0.01"
                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
@@ -297,7 +312,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
                     type="number"
                     name="maxPrice"
                     value={filters.maxPrice !== undefined ? String(filters.maxPrice) : ""}
-                    placeholder="Max $"
+                    placeholder={`Max ${moneySymbol}`}
                     min="0"
                     step="0.01"
                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
@@ -350,7 +365,7 @@ export const ProductListPage: FC<ProductListPageProps> = ({
               actionHref="/products"
             />
           ) : (
-            <ProductGrid products={products} />
+            <ProductGrid products={products} currencyCode={currencyCode} />
           )}
 
           {/* Pagination */}

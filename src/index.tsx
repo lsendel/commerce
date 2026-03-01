@@ -48,6 +48,12 @@ import { analyticsRoutes } from "./routes/api/analytics.routes";
 import { currencyRoutes } from "./routes/api/currency.routes";
 import { eventRoutes } from "./routes/api/events.routes";
 import { accountRoutes } from "./routes/api/account.routes";
+import { loyaltyRoutes } from "./routes/api/loyalty.routes";
+import { supportRoutes } from "./routes/api/support.routes";
+import { incidentResponderRoutes } from "./routes/api/incident-responder.routes";
+import { fulfillmentExceptionRoutes } from "./routes/api/fulfillment-exceptions.routes";
+import { pricingExperimentRoutes } from "./routes/api/pricing-experiments.routes";
+import { workflowRoutes } from "./routes/api/workflows.routes";
 
 // GraphQL
 import { schema } from "./graphql/schema";
@@ -73,6 +79,7 @@ import { SubscriptionsPage as _SubscriptionsPage } from "./routes/pages/account/
 import { PetsPage as _PetsPage } from "./routes/pages/account/pets.page";
 import { ArtworkPage as _ArtworkPage } from "./routes/pages/account/artwork.page";
 import { SettingsPage as _SettingsPage } from "./routes/pages/account/settings.page";
+import { LoyaltyPage as _LoyaltyPage } from "./routes/pages/account/loyalty.page";
 import { StudioCreatePage as _StudioCreatePage } from "./routes/pages/studio/create.page";
 import { StudioPreviewPage as _StudioPreviewPage } from "./routes/pages/studio/preview.page";
 import { StudioGalleryPage as _StudioGalleryPage } from "./routes/pages/studio/gallery.page";
@@ -87,6 +94,7 @@ import { AffiliateDashboardPage as _AffiliateDashboardPage } from "./routes/page
 import { AffiliateLinksPage as _AffiliateLinksPage } from "./routes/pages/affiliates/links.page";
 import { AffiliatePayoutsPage as _AffiliatePayoutsPage } from "./routes/pages/affiliates/payouts.page";
 import { AffiliateRegisterPage as _AffiliateRegisterPage } from "./routes/pages/affiliates/register.page";
+import { CreatorStorefrontPage as _CreatorStorefrontPage } from "./routes/pages/affiliates/storefront.page";
 import { VenueListPage as _VenueListPage } from "./routes/pages/venues/list.page";
 import { VenueDetailPage as _VenueDetailPage } from "./routes/pages/venues/detail.page";
 import { AdminIntegrationsPage as _AdminIntegrationsPage } from "./routes/pages/admin/integrations.page";
@@ -107,6 +115,9 @@ import { SegmentsPage as _SegmentsPage } from "./routes/pages/admin/segments.pag
 import { AdminReviewsPage as _AdminReviewsPage } from "./routes/pages/admin/reviews.page";
 import { AdminAffiliatesPage as _AdminAffiliatesPage } from "./routes/pages/admin/affiliates.page";
 import { AdminAnalyticsPage as _AdminAnalyticsPage } from "./routes/pages/admin/analytics.page";
+import { IncidentResponderPage as _IncidentResponderPage } from "./routes/pages/admin/incident-responder.page";
+import { PricingExperimentsPage as _PricingExperimentsPage } from "./routes/pages/admin/pricing-experiments.page";
+import { WorkflowBuilderPage as _WorkflowBuilderPage } from "./routes/pages/admin/workflows.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 import { NotFoundPage } from "./routes/pages/404.page";
 import { ErrorPage } from "./components/ui/error-page";
@@ -125,6 +136,7 @@ const SubscriptionsPage = _SubscriptionsPage as any;
 const PetsPage = _PetsPage as any;
 const ArtworkPage = _ArtworkPage as any;
 const SettingsPage = _SettingsPage as any;
+const LoyaltyPage = _LoyaltyPage as any;
 const StudioCreatePage = _StudioCreatePage as any;
 const StudioPreviewPage = _StudioPreviewPage as any;
 const StudioGalleryPage = _StudioGalleryPage as any;
@@ -139,6 +151,7 @@ const AffiliateDashboardPage = _AffiliateDashboardPage as any;
 const AffiliateLinksPage = _AffiliateLinksPage as any;
 const AffiliatePayoutsPage = _AffiliatePayoutsPage as any;
 const AffiliateRegisterPage = _AffiliateRegisterPage as any;
+const CreatorStorefrontPage = _CreatorStorefrontPage as any;
 const VenueListPage = _VenueListPage as any;
 const VenueDetailPage = _VenueDetailPage as any;
 const AdminIntegrationsPage = _AdminIntegrationsPage as any;
@@ -160,6 +173,9 @@ const SegmentsPage = _SegmentsPage as any;
 const AdminReviewsPage = _AdminReviewsPage as any;
 const AdminAffiliatesPage = _AdminAffiliatesPage as any;
 const AdminAnalyticsPage = _AdminAnalyticsPage as any;
+const IncidentResponderPage = _IncidentResponderPage as any;
+const PricingExperimentsPage = _PricingExperimentsPage as any;
+const WorkflowBuilderPage = _WorkflowBuilderPage as any;
 const ResetPasswordPage = _ResetPasswordPage as any;
 const VerifyEmailPage = _VerifyEmailPage as any;
 
@@ -180,12 +196,25 @@ import { IntegrationRepository as IntegrationRepoImpl, IntegrationSecretReposito
 import { ReviewRepository } from "./infrastructure/repositories/review.repository";
 import { PromotionRepository } from "./infrastructure/repositories/promotion.repository";
 import { AnalyticsRepository } from "./infrastructure/repositories/analytics.repository";
+import { ShippingRepository } from "./infrastructure/repositories/shipping.repository";
+import { LoyaltyRepository } from "./infrastructure/repositories/loyalty.repository";
+import { CurrencyRepository } from "./infrastructure/repositories/currency.repository";
 import { ListIntegrationsUseCase } from "./application/platform/list-integrations.usecase";
 import { CheckInfrastructureUseCase } from "./application/platform/check-infrastructure.usecase";
+import {
+  applyGeoPricingToProduct,
+  applyGeoPricingToProducts,
+  convertDisplayPriceToBase,
+  resolveCountryFromRequest,
+  resolveGeoPricingContext,
+} from "./application/catalog/geo-pricing.service";
 import { verifyJwt } from "./infrastructure/security/jwt";
 import { getCookie } from "hono/cookie";
 import { AUTH_COOKIE_NAME, CART_COOKIE_NAME } from "./shared/constants";
 import { resolveFeatureFlags } from "./shared/feature-flags";
+import { buildDeliveryPromise } from "./shared/delivery-promise";
+import { ManageLoyaltyWalletUseCase } from "./application/loyalty/manage-loyalty-wallet.usecase";
+import { GetAffiliateMissionsUseCase } from "./application/affiliates/get-affiliate-missions.usecase";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -267,6 +296,12 @@ app.route("/api", analyticsRoutes);
 app.route("/api", currencyRoutes);
 app.route("/api/events", eventRoutes);
 app.route("/api/account", accountRoutes);
+app.route("/api", loyaltyRoutes);
+app.route("/api", supportRoutes);
+app.route("/api/admin", incidentResponderRoutes);
+app.route("/api/admin", fulfillmentExceptionRoutes);
+app.route("/api/admin", pricingExperimentRoutes);
+app.route("/api/admin", workflowRoutes);
 
 // ─── GraphQL ───────────────────────────────────────────────
 const yoga = createYoga({ schema, graphqlEndpoint: "/graphql" });
@@ -644,19 +679,32 @@ app.get("/sitemap.xml", async (c) => {
 // Products
 app.get("/products", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
   const productRepo = new ProductRepository(db, storeId);
+  const currencyRepo = new CurrencyRepository(db, storeId);
   const query = c.req.query();
+  const geoPricingContext = await resolveGeoPricingContext(currencyRepo, {
+    enabled: featureFlags.geo_aware_catalog_pricing,
+    queryCurrency: query.currency,
+    queryCountry: query.country,
+    requestCountry: resolveCountryFromRequest(c, query.country),
+  });
   const result = await productRepo.findAll({
     page: Number(query.page) || 1,
     limit: Number(query.limit) || 20,
     type: query.type,
     collection: query.collection,
     search: query.search,
-    minPrice: query.minPrice ? Number(query.minPrice) : undefined,
-    maxPrice: query.maxPrice ? Number(query.maxPrice) : undefined,
+    minPrice: query.minPrice
+      ? convertDisplayPriceToBase(Number(query.minPrice), geoPricingContext)
+      : undefined,
+    maxPrice: query.maxPrice
+      ? convertDisplayPriceToBase(Number(query.maxPrice), geoPricingContext)
+      : undefined,
     sort: query.sort,
     available: query.available === "false" ? false : undefined,
   });
+  const localizedProducts = applyGeoPricingToProducts(result.products, geoPricingContext);
   const allCollections = await productRepo.findCollections();
 
   const siteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
@@ -679,12 +727,18 @@ app.get("/products", async (c) => {
       secondaryColor={secondaryColor}
     >
       <ProductListPage
-        products={result.products as any}
+        products={localizedProducts as any}
         total={result.total}
         page={result.page}
         limit={result.limit}
         collections={allCollections as any}
         filters={query as any}
+        pricingContext={{
+          currency: geoPricingContext.currency,
+          baseCurrency: geoPricingContext.baseCurrency,
+          exchangeRate: geoPricingContext.exchangeRate,
+          country: geoPricingContext.country,
+        }}
       />
     </Layout>
   );
@@ -695,8 +749,15 @@ app.get("/products/:slug", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
   const productRepo = new ProductRepository(db, storeId);
-  const product = await productRepo.findBySlug(c.req.param("slug"));
-  if (!product) {
+  const currencyRepo = new CurrencyRepository(db, storeId);
+  const geoPricingContext = await resolveGeoPricingContext(currencyRepo, {
+    enabled: featureFlags.geo_aware_catalog_pricing,
+    queryCurrency: c.req.query("currency"),
+    queryCountry: c.req.query("country"),
+    requestCountry: resolveCountryFromRequest(c, c.req.query("country")),
+  });
+  const productBase = await productRepo.findBySlug(c.req.param("slug"));
+  if (!productBase) {
     return c.html(
       <Layout url={c.req.url} title="Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
         <NotFoundPage />
@@ -704,6 +765,7 @@ app.get("/products/:slug", async (c) => {
       404
     );
   }
+  const product = applyGeoPricingToProduct(productBase, geoPricingContext);
 
   let bookingSettings = null;
   let bookingConfig = null;
@@ -717,16 +779,73 @@ app.get("/products/:slug", async (c) => {
   }
 
   // Fetch related products (same collections, or recently added fallback)
-  const relatedProducts = await productRepo.findRelatedProducts(product.id, 4);
+  const relatedProductsBase = await productRepo.findRelatedProducts(product.id, 4);
+  const relatedProducts = applyGeoPricingToProducts(relatedProductsBase, geoPricingContext);
+
+  let bundleSuggestions: Array<{
+    productId: string;
+    name: string;
+    slug: string;
+    imageUrl?: string | null;
+    variantId: string;
+    price: number;
+  }> = [];
+  if (featureFlags.dynamic_bundles) {
+    const relatedSuggestions = relatedProducts
+      .map((rp: any) => {
+        const primaryVariant = rp.variants?.[0];
+        return {
+          productId: rp.id,
+          name: rp.name,
+          slug: rp.slug,
+          imageUrl: rp.featuredImageUrl ?? null,
+          variantId: primaryVariant?.id ?? "",
+          price: Number(primaryVariant?.price ?? 0),
+        };
+      })
+      .filter((item: any) => Boolean(item.variantId))
+      .slice(0, 4);
+
+    if (relatedSuggestions.length > 0) {
+      bundleSuggestions = relatedSuggestions;
+    } else {
+      const catalog = await productRepo.findAll({
+        page: 1,
+        limit: 12,
+        status: "active",
+        available: true,
+        sort: "newest",
+      });
+      const localizedCatalog = applyGeoPricingToProducts(catalog.products, geoPricingContext);
+      bundleSuggestions = localizedCatalog
+        .filter((catalogProduct: any) => catalogProduct.id !== product.id)
+        .map((catalogProduct: any) => {
+          const primaryVariant = catalogProduct.variants?.[0];
+          return {
+            productId: catalogProduct.id,
+            name: catalogProduct.name,
+            slug: catalogProduct.slug,
+            imageUrl: catalogProduct.featuredImageUrl ?? catalogProduct.images?.[0]?.url ?? null,
+            variantId: primaryVariant?.id ?? "",
+            price: Number(primaryVariant?.price ?? catalogProduct.priceRange?.min ?? 0),
+          };
+        })
+        .filter((item: any) => Boolean(item.variantId))
+        .slice(0, 4);
+    }
+  }
 
   // Fetch reviews and summary
   const reviewRepo = new ReviewRepository(db, storeId);
-  const [reviewResult, ratingResult] = await Promise.all([
-    reviewRepo.findByProduct(product.id, 1, 10),
+  const [reviewResult, ratingResult, distribution] = await Promise.all([
+    reviewRepo.findByProduct(product.id, 1, 10, {
+      rankMode: featureFlags.review_intelligence ? "intelligent" : "recent",
+    }),
     reviewRepo.getAverageRating(product.id),
+    reviewRepo.getStarDistribution(product.id),
   ]);
 
-  const formattedReviews = reviewResult.reviews.map((r: any) => ({
+  const formattedReviews = reviewResult.reviews.map((r: any, index: number) => ({
     id: r.id,
     rating: r.rating,
     title: r.title ?? null,
@@ -734,16 +853,10 @@ app.get("/products/:slug", async (c) => {
     authorName: r.authorName ?? "Anonymous",
     verified: r.isVerifiedPurchase ?? false,
     helpfulCount: r.helpfulCount ?? 0,
+    isTopHelpful: featureFlags.review_intelligence && index === 0 && (r.helpfulCount ?? 0) > 0,
     storeResponse: r.responseText ?? null,
     createdAt: r.createdAt ? formatDateUs(r.createdAt) : "",
   }));
-
-  // Compute rating distribution from reviews
-  const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  for (const r of reviewResult.reviews) {
-    const rating = (r as any).rating;
-    if (rating >= 1 && rating <= 5) distribution[rating]!++;
-  }
 
   const reviewSummary = ratingResult.count > 0
     ? { averageRating: ratingResult.average, totalCount: ratingResult.count, distribution }
@@ -766,7 +879,7 @@ app.get("/products/:slug", async (c) => {
     offers: {
       "@type": "Offer",
       url: productUrl,
-      priceCurrency: "USD",
+      priceCurrency: geoPricingContext.currency,
       price: product.variants?.[0]?.price || "0.00",
       availability: product.availableForSale ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       seller: {
@@ -788,7 +901,7 @@ app.get("/products/:slug", async (c) => {
       url={productUrl}
       jsonLd={productJsonLd}
       ogPriceAmount={String(product.variants?.[0]?.price || "0.00")}
-      ogPriceCurrency="USD"
+      ogPriceCurrency={geoPricingContext.currency}
       storeName={storeName}
       storeLogo={storeLogo}
       primaryColor={primaryColor}
@@ -802,11 +915,13 @@ app.get("/products/:slug", async (c) => {
         }}
         slots={availability as any}
         relatedProducts={relatedProducts as any}
+        bundleSuggestions={bundleSuggestions}
         reviews={formattedReviews}
         reviewSummary={reviewSummary}
         isAuthenticated={isAuthenticated}
         isReviewIntelligenceEnabled={featureFlags.review_intelligence}
         siteUrl={siteUrl}
+        currencyCode={geoPricingContext.currency}
       />
     </Layout>
   );
@@ -842,7 +957,32 @@ app.get("/cart", async (c) => {
     } catch { /* empty cart */ }
   }
 
-  if (featureFlags.dynamic_bundles) {
+  if (featureFlags.intelligent_upsell_rules && cartSessionId) {
+    try {
+      const cartRepo = new CartRepository(db, storeId);
+      const productRepo = new ProductRepository(db, storeId);
+      const { GetUpsellRecommendationsUseCase } = await import("./application/cart/get-upsell-recommendations.usecase");
+      const useCase = new GetUpsellRecommendationsUseCase(cartRepo, productRepo, db);
+      const recommendations = await useCase.execute({
+        sessionId: cartSessionId,
+        userId: user?.sub,
+        limit: 4,
+      });
+
+      bundleSuggestions = recommendations.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        slug: item.slug,
+        imageUrl: item.imageUrl,
+        variantId: item.variantId,
+        price: item.price,
+      }));
+    } catch {
+      bundleSuggestions = [];
+    }
+  }
+
+  if (bundleSuggestions.length === 0 && featureFlags.dynamic_bundles) {
     const productRepo = new ProductRepository(db, storeId);
     const excludedSlugs = new Set(
       items
@@ -891,13 +1031,18 @@ app.get("/cart", async (c) => {
     .filter((item: any) => item?.variant?.product?.type === "physical")
     .map((item: any) => Number(item?.variant?.estimatedProductionDays ?? 0))
     .filter((days: number) => Number.isFinite(days) && days > 0);
-  const deliveryPromise = featureFlags.delivery_promise_engine && physicalProductionDays.length > 0
-    ? {
-      minDays: Math.max(2, Math.min(...physicalProductionDays)),
-      maxDays: Math.max(...physicalProductionDays) + 3,
-      label: "Delivery promise",
-    }
-    : undefined;
+  let deliveryPromise: Exclude<ReturnType<typeof buildDeliveryPromise>, null> | undefined;
+  if (featureFlags.delivery_promise_engine && physicalProductionDays.length > 0) {
+    const shippingRepo = new ShippingRepository(db, storeId);
+    const shippingWindows = await shippingRepo.listStoreRateWindows();
+    deliveryPromise = buildDeliveryPromise({
+      productionDays: physicalProductionDays,
+      shippingWindows: shippingWindows.map((rate) => ({
+        minDays: rate.estimatedDaysMin,
+        maxDays: rate.estimatedDaysMax,
+      })),
+    }) ?? undefined;
+  }
 
   return c.html(
     <Layout url={c.req.url} title="Cart" activePath="/cart" isAuthenticated={isAuthenticated} cartCount={cartCount} stripePublishableKey={c.env.STRIPE_PUBLISHABLE_KEY} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
@@ -909,6 +1054,7 @@ app.get("/cart", async (c) => {
         bundleSuggestions={bundleSuggestions}
         goalProgress={goalProgress}
         deliveryPromise={deliveryPromise}
+        isStockConfidenceEnabled={featureFlags.stock_confidence}
       />
     </Layout>
   );
@@ -980,6 +1126,7 @@ accountPages.use("*", async (c, next) => {
 
 accountPages.get("/", async (c) => {
   const { db, storeId, cartCount, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
   const orderRepo = new OrderRepository(db, storeId);
   const subRepo = new SubscriptionRepository(db, storeId);
   const recentOrdersResult = await orderRepo.findByUserId(user!.sub, { page: 1, limit: 3 });
@@ -1008,6 +1155,8 @@ accountPages.get("/", async (c) => {
         userName={user!.name || "there"}
         recentOrders={recentOrders as any}
         subscription={subscription as any}
+        isLoyaltyEnabled={featureFlags.loyalty_wallet}
+        isSupportDeflectionEnabled={featureFlags.ai_support_deflection}
       />
     </Layout>
   );
@@ -1015,9 +1164,12 @@ accountPages.get("/", async (c) => {
 
 accountPages.get("/orders", async (c) => {
   const { db, storeId, cartCount, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
   const orderRepo = new OrderRepository(db, storeId);
   const result = await orderRepo.findByUserId(user!.sub, { page: Number(c.req.query("page")) || 1, limit: 10 });
+  const returnWindowDays = 30;
   const orders = result.orders.map((order: any) => ({
+    status: (order.status ?? "pending") as any,
     id: order.id,
     orderNumber: order.id.slice(0, 8).toUpperCase(),
     date: formatDateUs(order.createdAt),
@@ -1025,7 +1177,6 @@ accountPages.get("/orders", async (c) => {
     subtotal: Number(order.subtotal ?? 0).toFixed(2),
     tax: Number(order.tax ?? 0).toFixed(2),
     shipping: Number(order.shippingCost ?? 0).toFixed(2),
-    status: (order.status ?? "pending") as any,
     itemCount: Array.isArray(order.items)
       ? order.items.reduce((sum: number, item: any) => sum + (item.quantity ?? 0), 0)
       : 0,
@@ -1037,11 +1188,41 @@ accountPages.get("/orders", async (c) => {
         imageUrl: item.variant?.product?.featuredImageUrl ?? undefined,
       }))
       : [],
+    canReorder: ["processing", "shipped", "delivered", "refunded"].includes(order.status ?? "pending"),
+    reorderHint: ["processing", "shipped", "delivered", "refunded"].includes(order.status ?? "pending")
+      ? undefined
+      : "Only fulfilled or refunded orders are eligible for one-click reorder.",
+    canReturnOrExchange: (() => {
+      if (!["delivered", "refunded"].includes(order.status ?? "pending")) return false;
+      const createdAt = order.createdAt ? new Date(order.createdAt) : null;
+      if (!createdAt || Number.isNaN(createdAt.getTime())) return false;
+      const expiresAt = new Date(createdAt);
+      expiresAt.setUTCDate(expiresAt.getUTCDate() + returnWindowDays);
+      return expiresAt.getTime() >= Date.now();
+    })(),
+    returnExchangeHint: (() => {
+      if (!["delivered", "refunded"].includes(order.status ?? "pending")) {
+        return "Returns and exchanges are available after delivery.";
+      }
+      const createdAt = order.createdAt ? new Date(order.createdAt) : null;
+      if (!createdAt || Number.isNaN(createdAt.getTime())) {
+        return "Return window is unavailable for this order.";
+      }
+      const expiresAt = new Date(createdAt);
+      expiresAt.setUTCDate(expiresAt.getUTCDate() + returnWindowDays);
+      return expiresAt.getTime() >= Date.now()
+        ? undefined
+        : `Return window closed after ${returnWindowDays} days.`;
+    })(),
   }));
 
   return c.html(
     <Layout url={c.req.url} title="Orders" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <OrdersPage orders={orders as any} />
+      <OrdersPage
+        orders={orders as any}
+        isIntelligentReorderEnabled={featureFlags.intelligent_reorder}
+        isReturnsExchangeEnabled={featureFlags.self_serve_returns_exchange}
+      />
     </Layout>
   );
 });
@@ -1071,8 +1252,51 @@ accountPages.get("/addresses", async (c) => {
 
 accountPages.get("/subscriptions", async (c) => {
   const { db, storeId, cartCount, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
   const subRepo = new SubscriptionRepository(db, storeId);
-  const subscriptions = await subRepo.findByUserId(user!.sub);
+  const [subscriptions, planOptions] = await Promise.all([
+    subRepo.findByUserId(user!.sub),
+    subRepo.findBuilderPlanOptions(),
+  ]);
+
+  const availablePlans = planOptions.map((plan) => ({
+    id: plan.id,
+    name: plan.planName,
+    description: plan.productDescription ?? "",
+    price: plan.amount,
+    interval: plan.interval,
+    features: plan.features,
+    stripePriceId: plan.stripePriceId,
+  }));
+  const planNameById = new Map(availablePlans.map((plan) => [plan.id, plan.name]));
+
+  const mixConfigurationRaw = subscriptions[0]?.mixConfiguration as
+    | {
+      i?: unknown;
+      [key: string]: unknown;
+    }
+    | null
+    | undefined;
+  const mixItemsRaw = Array.isArray(mixConfigurationRaw?.i) ? mixConfigurationRaw.i : [];
+  const mixConfiguration = mixItemsRaw.length > 0
+    ? {
+      ...mixConfigurationRaw,
+      items: mixItemsRaw
+        .map((item) => {
+          if (!Array.isArray(item) || item.length < 2) return null;
+          const planId = typeof item[0] === "string" ? item[0] : null;
+          const quantity = Number(item[1]);
+          if (!planId || !Number.isFinite(quantity) || quantity <= 0) return null;
+          return {
+            planId,
+            quantity,
+            planName: planNameById.get(planId) ?? "Plan",
+          };
+        })
+        .filter(Boolean),
+    }
+    : null;
+
   const subscription = subscriptions[0]
     ? {
       id: subscriptions[0].id,
@@ -1085,12 +1309,35 @@ accountPages.get("/subscriptions", async (c) => {
         ? "year"
         : "month",
       cancelAtPeriodEnd: !!subscriptions[0].cancelAtPeriodEnd,
+      mixConfiguration,
     }
     : null;
 
   return c.html(
     <Layout url={c.req.url} title="Subscriptions" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <SubscriptionsPage subscription={subscription as any} />
+      <SubscriptionsPage
+        subscription={subscription as any}
+        availablePlans={availablePlans as any}
+        isSubscriptionBuilderEnabled={featureFlags.subscription_builder}
+      />
+    </Layout>
+  );
+});
+
+accountPages.get("/loyalty", async (c) => {
+  const { db, storeId, cartCount, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  if (!featureFlags.loyalty_wallet) {
+    return c.redirect("/account");
+  }
+
+  const repo = new LoyaltyRepository(db, storeId);
+  const useCase = new ManageLoyaltyWalletUseCase(repo);
+  const wallet = await useCase.getWallet(user!.sub);
+
+  return c.html(
+    <Layout url={c.req.url} title="Loyalty Wallet" activePath="/account" isAuthenticated={true} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <LoyaltyPage wallet={wallet as any} />
     </Layout>
   );
 });
@@ -1132,6 +1379,7 @@ accountPages.get("/settings", async (c) => {
         user={{
           name: profile?.name || "",
           email: profile?.email || "",
+          phone: profile?.phone ?? null,
           avatarUrl: profile?.avatarUrl ?? null,
           emailVerifiedAt: profile?.emailVerifiedAt ?? null,
           locale: profile?.locale ?? "en",
@@ -1182,6 +1430,7 @@ app.get("/studio/create", async (c) => {
 app.get("/studio/preview/:id", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
   const aiRepo = new AiJobRepository(db, storeId);
   const job = await aiRepo.findById(c.req.param("id"));
   if (!job || job.userId !== user.sub) {
@@ -1192,12 +1441,17 @@ app.get("/studio/preview/:id", async (c) => {
       404,
     );
   }
+  const userRepo = new UserRepository(db);
+  const dbUser = await userRepo.findById(user.sub);
+  const isAdmin = isAdminPlatformRole(dbUser?.platformRole);
 
   return c.html(
     <Layout url={c.req.url} title="Art Preview" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <StudioPreviewPage
         jobId={job.id}
         imageUrl={job.outputRasterUrl ?? job.outputSvgUrl ?? undefined}
+        isAdmin={isAdmin}
+        isPipelineEnabled={featureFlags.ai_studio_product_pipeline}
       />
     </Layout>
   );
@@ -1213,6 +1467,22 @@ app.get("/studio/preview", async (c) => {
 app.get("/products/create/:artJobId", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  const userRepo = new UserRepository(db);
+  const dbUser = await userRepo.findById(user.sub);
+  const isAdmin = isAdminPlatformRole(dbUser?.platformRole);
+  if (!isAdmin) {
+    return c.html(
+      <Layout url={c.req.url} title="Access Denied" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+        <ErrorPage
+          status={403}
+          title="Admin Access Required"
+          message="Creating products from AI studio output is restricted to admin users."
+        />
+      </Layout>,
+      403,
+    );
+  }
   const aiRepo = new AiJobRepository(db, storeId);
   const job = await aiRepo.findById(c.req.param("artJobId"));
   if (!job || job.userId !== user.sub) {
@@ -1221,6 +1491,18 @@ app.get("/products/create/:artJobId", async (c) => {
         <NotFoundPage />
       </Layout>,
       404,
+    );
+  }
+  if (!featureFlags.ai_studio_product_pipeline) {
+    return c.html(
+      <Layout url={c.req.url} title="Feature Disabled" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+        <ErrorPage
+          status={403}
+          title="Studio Pipeline Disabled"
+          message="The studio-to-product pipeline is currently disabled for this store."
+        />
+      </Layout>,
+      403,
     );
   }
 
@@ -1235,6 +1517,7 @@ app.get("/products/create/:artJobId", async (c) => {
         artJobId={job.id}
         artImageUrl={job.outputRasterUrl ?? job.outputSvgUrl ?? null}
         providers={providers.map((p: any) => ({ id: p.id, name: p.name, type: p.type }))}
+        isPipelineEnabled={true}
       />
     </Layout>
   );
@@ -1632,6 +1915,7 @@ app.get("/admin/integrations", async (c) => {
 app.get("/admin/fulfillment", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
 
   const { eq, desc, sql, and, like } = await import("drizzle-orm");
   const { fulfillmentRequests: frTable } = await import("./infrastructure/db/schema");
@@ -1704,7 +1988,73 @@ app.get("/admin/fulfillment", async (c) => {
         page={pageNum}
         totalPages={totalPages}
         filters={{ status: statusFilter || undefined, provider: providerFilter || undefined, search: searchFilter || undefined }}
+        isExceptionHandlerEnabled={featureFlags.ai_fulfillment_exception_handler}
       />
+    </Layout>,
+  );
+});
+
+app.get("/admin/operations/incidents", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  if (!featureFlags.ai_incident_responder) {
+    return c.redirect("/admin/analytics", 302);
+  }
+
+  const analyticsRepo = new AnalyticsRepository(db, storeId);
+  const { GetBaselineReadinessUseCase } = await import("./application/analytics/get-baseline-readiness.usecase");
+  const readiness = await new GetBaselineReadinessUseCase(analyticsRepo).execute(7);
+
+  return c.html(
+    <Layout url={c.req.url} title="Incident Responder" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <IncidentResponderPage
+        readiness={{
+          conversionDropPercent: readiness.safetyRails.conversionDropPercent,
+          fulfillmentFailureRatePercent: readiness.safetyRails.fulfillmentFailureRatePercent,
+          p1Over60IncidentCount: readiness.safetyRails.p1Over60IncidentCount,
+        }}
+      />
+    </Layout>,
+  );
+});
+
+app.get("/admin/pricing-experiments", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  if (!featureFlags.ai_pricing_experiments) {
+    return c.redirect("/admin/analytics", 302);
+  }
+
+  const analyticsRepo = new AnalyticsRepository(db, storeId);
+  const { AgenticPricingExperimentsUseCase } = await import("./application/pricing/agentic-pricing-experiments.usecase");
+  const experiments = await new AgenticPricingExperimentsUseCase(db, storeId, analyticsRepo).listExperiments(20);
+
+  return c.html(
+    <Layout url={c.req.url} title="Pricing Experiments" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <PricingExperimentsPage experiments={experiments as any} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/workflows", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  if (!featureFlags.no_code_workflow_builder) {
+    return c.redirect("/admin/analytics", 302);
+  }
+
+  const { WorkflowRepository } = await import("./infrastructure/repositories/workflow.repository");
+  const { NoCodeWorkflowBuilderUseCase } = await import("./application/ops/no-code-workflow-builder.usecase");
+  const workflowRepo = new WorkflowRepository(db, storeId);
+  const useCase = new NoCodeWorkflowBuilderUseCase(db, storeId, workflowRepo);
+  const workflows = await useCase.listWorkflows(100);
+
+  return c.html(
+    <Layout url={c.req.url} title="Workflow Builder" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <WorkflowBuilderPage workflows={workflows as any} />
     </Layout>,
   );
 });
@@ -1844,6 +2194,7 @@ app.get("/admin/tax", async (c) => {
 app.get("/admin/promotions", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
   const promoRepo = new PromotionRepository(db, storeId);
   const allPromos = await promoRepo.listAll();
   const statusFilter = c.req.query("status") || undefined;
@@ -1855,7 +2206,11 @@ app.get("/admin/promotions", async (c) => {
   });
   return c.html(
     <Layout url={c.req.url} title="Promotions" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <PromotionsPage promotions={filtered as any} filters={{ status: statusFilter, type: typeFilter }} />
+      <PromotionsPage
+        promotions={filtered as any}
+        filters={{ status: statusFilter, type: typeFilter }}
+        isPromotionCopilotEnabled={featureFlags.ai_promotion_copilot}
+      />
     </Layout>,
   );
 });
@@ -1891,6 +2246,10 @@ app.get("/admin/promotions/codes", async (c) => {
 app.get("/admin/segments", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  if (!featureFlags.segment_orchestration) {
+    return c.redirect("/admin/promotions", 302);
+  }
   const promoRepo = new PromotionRepository(db, storeId);
   const segments = await promoRepo.listSegments();
   return c.html(
@@ -2219,6 +2578,7 @@ app.get("/admin/products", async (c) => {
 app.get("/admin/products/new", async (c) => {
   const { cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
 
   const emptyProduct = {
     id: "new",
@@ -2236,7 +2596,13 @@ app.get("/admin/products/new", async (c) => {
 
   return c.html(
     <Layout url={c.req.url} title="New Product – Admin" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <ProductEditPage product={emptyProduct} variants={[]} images={[]} isNew />
+      <ProductEditPage
+        product={emptyProduct}
+        variants={[]}
+        images={[]}
+        isNew
+        isMerchCopilotEnabled={featureFlags.ai_merchandising_copilot}
+      />
     </Layout>,
   );
 });
@@ -2244,6 +2610,7 @@ app.get("/admin/products/new", async (c) => {
 app.get("/admin/products/:id", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
 
   const productRepo = new ProductRepository(db, storeId);
   const product = await productRepo.findById(c.req.param("id"));
@@ -2255,6 +2622,7 @@ app.get("/admin/products/:id", async (c) => {
         product={product as any}
         variants={product.variants as any}
         images={product.images as any}
+        isMerchCopilotEnabled={featureFlags.ai_merchandising_copilot}
       />
     </Layout>,
   );
@@ -2383,18 +2751,42 @@ app.get("/platform/integrations", async (c) => {
 app.get("/affiliates", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
   const affiliateRepo = new AffiliateRepository(db, storeId);
   const affiliate = await affiliateRepo.findByUserId(user.sub);
   if (!affiliate) return c.redirect("/affiliates/register");
-  const links = await affiliateRepo.findLinks(affiliate.id);
-  const conversions = await affiliateRepo.findConversions(affiliate.id);
+  const [links, recentConversions] = await Promise.all([
+    affiliateRepo.findLinks(affiliate.id),
+    affiliateRepo.findConversions(affiliate.id, 1, 10),
+  ]);
+
+  let missions: any[] = [];
+  let missionWindowStart: string | null = null;
+  if (featureFlags.affiliate_missions_dashboard) {
+    const missionsUseCase = new GetAffiliateMissionsUseCase(affiliateRepo);
+    try {
+      const missionResult = await missionsUseCase.execute(user.sub);
+      missions = missionResult.missions;
+      missionWindowStart = missionResult.windowStart;
+    } catch {
+      missions = [];
+      missionWindowStart = null;
+    }
+  }
 
   return c.html(
     <Layout url={c.req.url} title="Affiliate Dashboard" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <AffiliateDashboardPage
         affiliate={affiliate as any}
         links={links as any}
-        conversions={conversions as any}
+        recentConversions={recentConversions as any}
+        missions={missions as any}
+        missionWindowStart={missionWindowStart}
+        storefrontUrl={
+          featureFlags.creator_storefront_pages && affiliate.customSlug
+            ? `/creators/${affiliate.customSlug}`
+            : null
+        }
       />
     </Layout>
   );
@@ -2410,7 +2802,11 @@ app.get("/affiliates/links", async (c) => {
 
   return c.html(
     <Layout url={c.req.url} title="Affiliate Links" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <AffiliateLinksPage affiliate={affiliate as any} links={links as any} />
+      <AffiliateLinksPage
+        links={links as any}
+        referralCode={affiliate.referralCode}
+        baseUrl={c.env.APP_URL}
+      />
     </Layout>
   );
 });
@@ -2425,7 +2821,10 @@ app.get("/affiliates/payouts", async (c) => {
 
   return c.html(
     <Layout url={c.req.url} title="Affiliate Payouts" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <AffiliatePayoutsPage payouts={payouts as any} />
+      <AffiliatePayoutsPage
+        payouts={payouts as any}
+        totalEarnings={String(affiliate.totalEarnings ?? "0.00")}
+      />
     </Layout>
   );
 });
@@ -2435,7 +2834,76 @@ app.get("/affiliates/register", async (c) => {
 
   return c.html(
     <Layout url={c.req.url} title="Become an Affiliate" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
-      <AffiliateRegisterPage />
+      <AffiliateRegisterPage
+        isAuthenticated={isAuthenticated}
+        storeName={storeName}
+      />
+    </Layout>
+  );
+});
+
+app.get("/creators/:slug", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  if (!featureFlags.creator_storefront_pages) {
+    return c.redirect("/products", 302);
+  }
+
+  const affiliateRepo = new AffiliateRepository(db, storeId);
+  const productRepo = new ProductRepository(db, storeId);
+  const creator = await affiliateRepo.findApprovedByCustomSlug(c.req.param("slug"));
+  if (!creator) {
+    return c.html(
+      <Layout url={c.req.url} title="Creator Not Found" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+        <NotFoundPage />
+      </Layout>,
+      404,
+    );
+  }
+
+  const [links, catalog] = await Promise.all([
+    affiliateRepo.findTopLinksByClicks(creator.id, 8),
+    productRepo.findAll({
+      page: 1,
+      limit: 12,
+      available: true,
+      status: "active",
+      sort: "newest",
+    }),
+  ]);
+
+  const featuredLinks = links.map((link) => ({
+    id: link.id,
+    shortCode: link.shortCode,
+    clickCount: link.clickCount,
+    targetUrl: link.targetUrl,
+    referralUrl: `${link.targetUrl}${link.targetUrl.includes("?") ? "&" : "?"}ref=${encodeURIComponent(creator.referralCode)}`,
+  }));
+
+  const featuredProducts = catalog.products.map((product: any) => ({
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    featuredImageUrl: product.featuredImageUrl ?? product.images?.[0]?.url ?? null,
+    price: Number(product.variants?.[0]?.price ?? product.priceRange?.min ?? 0).toFixed(2),
+    referralUrl: `/products/${product.slug}?ref=${encodeURIComponent(creator.referralCode)}`,
+  }));
+
+  return c.html(
+    <Layout url={c.req.url} title={`${creator.creatorName ?? creator.customSlug} Storefront`} isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <CreatorStorefrontPage
+        creator={{
+          id: creator.id,
+          name: creator.creatorName ?? `Creator ${creator.customSlug}`,
+          customSlug: creator.customSlug,
+          referralCode: creator.referralCode,
+          commissionRate: String(creator.commissionRate ?? "0"),
+          totalClicks: Number(creator.totalClicks ?? 0),
+          totalConversions: Number(creator.totalConversions ?? 0),
+        }}
+        featuredLinks={featuredLinks as any}
+        featuredProducts={featuredProducts as any}
+      />
     </Layout>
   );
 });
@@ -2555,7 +3023,44 @@ app.notFound(async (c) => {
 app.onError(async (err, c) => {
   console.error("Unhandled error:", err);
   if (c.req.path.startsWith("/api/")) {
-    return c.json({ error: "Internal server error" }, 500);
+    const errCode = String((err as any)?.code ?? "");
+    const errName = String((err as any)?.name ?? "");
+    const errMessage = err instanceof Error ? err.message : "Internal server error";
+
+    const codeToStatus: Record<string, number> = {
+      NOT_FOUND: 404,
+      VALIDATION_ERROR: 400,
+      AUTH_ERROR: 401,
+      FORBIDDEN: 403,
+      CONFLICT: 409,
+      EXPIRED: 410,
+    };
+
+    if (codeToStatus[errCode]) {
+      return c.json({ error: errMessage, message: errMessage, code: errCode }, codeToStatus[errCode] as any);
+    }
+    if (errName === "NotFoundError") {
+      return c.json({ error: errMessage, message: errMessage, code: errCode || "NOT_FOUND" }, 404);
+    }
+    if (errName === "ValidationError") {
+      return c.json({ error: errMessage, message: errMessage, code: errCode || "VALIDATION_ERROR" }, 400);
+    }
+    if (errName === "AuthError") {
+      return c.json({ error: errMessage, message: errMessage, code: errCode || "AUTH_ERROR" }, 401);
+    }
+    if (errName === "ForbiddenError") {
+      return c.json({ error: errMessage, message: errMessage, code: errCode || "FORBIDDEN" }, 403);
+    }
+    if (errName === "ConflictError") {
+      return c.json({ error: errMessage, message: errMessage, code: errCode || "CONFLICT" }, 409);
+    }
+
+    const hintedStatus = Number((err as any)?.status ?? 0);
+    if (Number.isFinite(hintedStatus) && hintedStatus >= 400 && hintedStatus < 500) {
+      return c.json({ error: errMessage, message: errMessage }, hintedStatus as any);
+    }
+
+    return c.json({ error: "Internal server error", message: "Internal server error" }, 500);
   }
   try {
     const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);

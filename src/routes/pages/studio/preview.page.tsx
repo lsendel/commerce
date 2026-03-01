@@ -12,6 +12,8 @@ interface StudioPreviewPageProps {
   printProductSlug?: string;
   /** Whether the current user is an admin */
   isAdmin?: boolean;
+  /** Feature flag for studio-to-product pipeline */
+  isPipelineEnabled?: boolean;
 }
 
 export const StudioPreviewPage: FC<StudioPreviewPageProps> = ({
@@ -22,6 +24,7 @@ export const StudioPreviewPage: FC<StudioPreviewPageProps> = ({
   generationTime,
   printProductSlug,
   isAdmin,
+  isPipelineEnabled,
 }) => {
   return (
     <div class="max-w-4xl mx-auto px-4 py-8 sm:py-12">
@@ -69,8 +72,8 @@ export const StudioPreviewPage: FC<StudioPreviewPageProps> = ({
             </Button>
           )}
 
-          {/* Create product — admin only */}
-          {isAdmin && (
+          {/* Create product — admin only and feature-flagged */}
+          {isAdmin && isPipelineEnabled && (
             <Button
               variant="outline"
               size="lg"

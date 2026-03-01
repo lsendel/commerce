@@ -22,6 +22,7 @@ import { CalculateShippingUseCase } from "../fulfillment/calculate-shipping.usec
 import { CalculateTaxUseCase } from "../tax/calculate-tax.usecase";
 import { TrackEventUseCase } from "../analytics/track-event.usecase";
 import { ValidateCartUseCase } from "../cart/validate-cart.usecase";
+import { buildDeliveryPromise, type DeliveryPromise } from "../../shared/delivery-promise";
 
 interface CreateCheckoutInput {
   sessionId: string;
@@ -36,6 +37,7 @@ interface CreateCheckoutInput {
   };
   storeId: string;
   couponCode?: string;
+  carrierFallbackRouting?: boolean;
 }
 
 interface CheckoutBreakdown {
@@ -45,6 +47,7 @@ interface CheckoutBreakdown {
   shipping: number;
   tax: number;
   total: number;
+  deliveryPromise: DeliveryPromise | null;
 }
 
 export class CreateCheckoutUseCase {
@@ -57,7 +60,17 @@ export class CreateCheckoutUseCase {
   ) {}
 
   async execute(input: CreateCheckoutInput): Promise<CheckoutBreakdown> {
-    const { sessionId, userId, userEmail, successUrl, cancelUrl, shippingAddress, storeId, couponCode } = input;
+    const {
+      sessionId,
+      userId,
+      userEmail,
+      successUrl,
+      cancelUrl,
+      shippingAddress,
+      storeId,
+      couponCode,
+      carrierFallbackRouting = false,
+    } = input;
 
     // 1. Get the user's cart with items
     const cart = await this.cartRepo.findOrCreateCart(sessionId, userId);
@@ -133,6 +146,7 @@ export class CreateCheckoutUseCase {
 
     // 5. Calculate shipping (if address provided and physical items exist)
     let shippingCost = 0;
+    let selectedShippingWindow: { minDays: number | null; maxDays: number | null } | null = null;
     if (shippingAddress) {
       const hasPhysical = cartWithItems.items.some((item) => {
         const variant = variantRows.find((v) => v.id === item.variantId);
@@ -143,7 +157,11 @@ export class CreateCheckoutUseCase {
       if (hasPhysical) {
         try {
           const shippingRepo = new ShippingRepository(this.db, storeId);
-          const shippingUseCase = new CalculateShippingUseCase(shippingRepo);
+          const shippingUseCase = new CalculateShippingUseCase(
+            shippingRepo,
+            undefined,
+            { carrierFallbackRouting },
+          );
           const shippingResult = await shippingUseCase.execute({
             items: cartWithItems.items.map((item) => {
               const variant = variantRows.find((v) => v.id === item.variantId);
@@ -163,11 +181,31 @@ export class CreateCheckoutUseCase {
             .filter((o) => o.price !== null)
             .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))[0];
           shippingCost = cheapest?.price ?? 0;
+          selectedShippingWindow = cheapest
+            ? {
+              minDays: cheapest.estimatedDaysMin,
+              maxDays: cheapest.estimatedDaysMax,
+            }
+            : null;
         } catch {
           // No shipping zone found — proceed without shipping cost
         }
       }
     }
+
+    const physicalProductionDays = cartWithItems.items
+      .map((item) => {
+        const variant = variantRows.find((v) => v.id === item.variantId);
+        const product = variant ? productMap.get(variant.productId) : null;
+        if (product?.type !== "physical") return null;
+        return Number(variant?.estimatedProductionDays ?? 0);
+      })
+      .filter((days): days is number => typeof days === "number" && Number.isFinite(days) && days > 0);
+
+    const deliveryPromise = buildDeliveryPromise({
+      productionDays: physicalProductionDays,
+      shippingWindows: selectedShippingWindow ? [selectedShippingWindow] : [],
+    });
 
     // 6. Calculate tax
     let taxAmount = 0;
@@ -225,6 +263,13 @@ export class CreateCheckoutUseCase {
         shipping: shippingCost.toFixed(2),
         tax: taxAmount.toFixed(2),
         total: grandTotal.toFixed(2),
+        ...(deliveryPromise
+          ? {
+            deliveryMinDays: String(deliveryPromise.minDays),
+            deliveryMaxDays: String(deliveryPromise.maxDays),
+            deliveryConfidence: deliveryPromise.confidence,
+          }
+          : {}),
         ...(couponCode ? { couponCode } : {}),
       },
     });
@@ -245,6 +290,9 @@ export class CreateCheckoutUseCase {
           tax: taxAmount,
           total: grandTotal,
           itemCount: cartWithItems.items.length,
+          deliveryPromiseMinDays: deliveryPromise?.minDays,
+          deliveryPromiseMaxDays: deliveryPromise?.maxDays,
+          deliveryPromiseConfidence: deliveryPromise?.confidence,
         },
       });
     } catch {
@@ -258,6 +306,7 @@ export class CreateCheckoutUseCase {
       shipping: shippingCost,
       tax: taxAmount,
       total: grandTotal,
+      deliveryPromise,
     };
   }
 

@@ -1,6 +1,6 @@
 import { eq, and, or, desc, sql, count } from "drizzle-orm";
 import type { Database } from "../db/client";
-import { productReviews } from "../db/schema";
+import { productReviews, users } from "../db/schema";
 import type { ReviewStatus } from "../../domain/catalog/review.entity";
 
 export interface CreateReviewData {
@@ -39,8 +39,14 @@ export class ReviewRepository {
     return rows[0]!;
   }
 
-  async findByProduct(productId: string, page = 1, limit = 20) {
+  async findByProduct(
+    productId: string,
+    page = 1,
+    limit = 20,
+    options?: { rankMode?: "recent" | "intelligent" },
+  ) {
     const offset = (page - 1) * limit;
+    const rankMode = options?.rankMode ?? "recent";
 
     const countResult = await this.db
       .select({ total: count() })
@@ -56,8 +62,23 @@ export class ReviewRepository {
     const total = countResult[0]?.total ?? 0;
 
     const rows = await this.db
-      .select()
+      .select({
+        id: productReviews.id,
+        productId: productReviews.productId,
+        userId: productReviews.userId,
+        rating: productReviews.rating,
+        title: productReviews.title,
+        content: productReviews.content,
+        isVerifiedPurchase: productReviews.isVerifiedPurchase,
+        status: productReviews.status,
+        helpfulCount: productReviews.helpfulCount,
+        reportedCount: productReviews.reportedCount,
+        responseText: productReviews.responseText,
+        createdAt: productReviews.createdAt,
+        authorName: users.name,
+      })
       .from(productReviews)
+      .leftJoin(users, eq(productReviews.userId, users.id))
       .where(
         and(
           eq(productReviews.productId, productId),
@@ -65,7 +86,15 @@ export class ReviewRepository {
           eq(productReviews.status, "approved"),
         ),
       )
-      .orderBy(desc(productReviews.createdAt))
+      .orderBy(
+        ...(rankMode === "intelligent"
+          ? [
+            desc(productReviews.helpfulCount),
+            desc(productReviews.isVerifiedPurchase),
+            desc(productReviews.createdAt),
+          ]
+          : [desc(productReviews.createdAt)]),
+      )
       .limit(limit)
       .offset(offset);
 
@@ -82,6 +111,7 @@ export class ReviewRepository {
         helpfulCount: r.helpfulCount,
         reportedCount: r.reportedCount,
         responseText: r.responseText,
+        authorName: r.authorName,
         createdAt: r.createdAt,
       })),
       total,

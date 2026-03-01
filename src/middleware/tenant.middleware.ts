@@ -77,7 +77,10 @@ export function tenantMiddleware() {
       c.set("isPlatformDomain", true);
       const defaultStore = await resolveDefaultStore();
       if (!defaultStore) {
-        return c.json({ error: "No store configured for this tenant" }, 503);
+        return c.json(
+          { error: "No store configured for this tenant", message: "No store configured for this tenant" },
+          503,
+        );
       }
       setStoreContext(defaultStore);
       await next();
@@ -130,7 +133,10 @@ export function tenantMiddleware() {
     // Fallback to default store (dev/local)
     const defaultStore = await resolveDefaultStore();
     if (!defaultStore) {
-      return c.json({ error: "No store configured for this tenant" }, 503);
+      return c.json(
+        { error: "No store configured for this tenant", message: "No store configured for this tenant" },
+        503,
+      );
     }
     setStoreContext(defaultStore);
     await next();

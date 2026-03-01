@@ -23,12 +23,19 @@ export interface ShippingOption {
   estimatedDaysMin: number | null;
   estimatedDaysMax: number | null;
   type: string;
+  fallbackRateId?: string;
+  fallbackReason?: string;
+}
+
+interface CalculateShippingOptions {
+  carrierFallbackRouting?: boolean;
 }
 
 export class CalculateShippingUseCase {
   constructor(
     private shippingRepo: ShippingRepository,
     private carrierAdapter?: CarrierAdapter,
+    private options: CalculateShippingOptions = {},
   ) {}
 
   async execute(params: {
@@ -78,9 +85,15 @@ export class CalculateShippingUseCase {
 
     // 4. Filter & compute each rate
     const options: ShippingOption[] = [];
+    const carrierRates: typeof rates = [];
 
     for (const rate of rates) {
       const rateType = rate.type;
+
+      if (rateType === "carrier_calculated") {
+        carrierRates.push(rate);
+        continue;
+      }
 
       if (rateType === "flat") {
         options.push({
@@ -125,23 +138,47 @@ export class CalculateShippingUseCase {
         }
         continue;
       }
+    }
 
-      if (rateType === "carrier_calculated") {
-        // Delegate to carrier adapter if available; otherwise skip
-        if (!this.carrierAdapter) {
-          // Return null price to indicate carrier rates are not available
-          options.push({
-            rateId: rate.id,
-            name: rate.name,
-            price: null,
-            estimatedDaysMin: rate.estimatedDaysMin,
-            estimatedDaysMax: rate.estimatedDaysMax,
-            type: "carrier_calculated",
-          });
-        }
-        // If carrier adapter is available, we would call it here.
-        // For now, carrier_calculated rates with no adapter return null price.
+    for (const rate of carrierRates) {
+      if (this.carrierAdapter) {
+        // Carrier adapter integration remains provider-specific. Until wired,
+        // preserve the existing contract with null-price carrier options.
+        options.push({
+          rateId: rate.id,
+          name: rate.name,
+          price: null,
+          estimatedDaysMin: rate.estimatedDaysMin,
+          estimatedDaysMax: rate.estimatedDaysMax,
+          type: "carrier_calculated",
+        });
         continue;
+      }
+
+      const fallbackCandidate = this.pickCarrierFallbackOption(options);
+      const fallbackEnabled = this.options.carrierFallbackRouting ?? false;
+      if (fallbackEnabled && fallbackCandidate) {
+        options.push({
+          rateId: rate.id,
+          name: `${rate.name} (fallback)`,
+          price: fallbackCandidate.price,
+          estimatedDaysMin:
+            fallbackCandidate.estimatedDaysMin ?? rate.estimatedDaysMin,
+          estimatedDaysMax:
+            fallbackCandidate.estimatedDaysMax ?? rate.estimatedDaysMax,
+          type: "carrier_fallback",
+          fallbackRateId: fallbackCandidate.rateId,
+          fallbackReason: "carrier_unavailable",
+        });
+      } else {
+        options.push({
+          rateId: rate.id,
+          name: rate.name,
+          price: null,
+          estimatedDaysMin: rate.estimatedDaysMin,
+          estimatedDaysMax: rate.estimatedDaysMax,
+          type: "carrier_calculated",
+        });
       }
     }
 
@@ -150,5 +187,22 @@ export class CalculateShippingUseCase {
       zoneName: zone.name,
       options,
     };
+  }
+
+  private pickCarrierFallbackOption(
+    options: ShippingOption[],
+  ): ShippingOption | null {
+    const eligible = options
+      .filter((option) =>
+        option.price !== null
+        && option.type !== "carrier_calculated"
+        && option.type !== "carrier_fallback")
+      .sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+
+    if (eligible.length === 0) {
+      return null;
+    }
+
+    return eligible[0] ?? null;
   }
 }

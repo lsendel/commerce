@@ -27,6 +27,7 @@ export class GetCartUseCase {
           price: productVariants.price,
           inventoryQuantity: productVariants.inventoryQuantity,
           availableForSale: productVariants.availableForSale,
+          estimatedProductionDays: productVariants.estimatedProductionDays,
         })
         .from(productVariants)
         .where(inArray(productVariants.id, variantIds));
@@ -56,11 +57,11 @@ export class GetCartUseCase {
         if ((item as any).variant?.product?.type === "physical") {
           const confidence = getStockConfidence(
             fresh.inventoryQuantity,
-            null,
+            fresh.estimatedProductionDays,
           );
           if (confidence.level === "low" || confidence.level === "out") {
             warnings.push(
-              `"${(item as any).variant?.product?.name ?? "item"}": ${confidence.message}`,
+              `"${(item as any).variant?.product?.name ?? "item"}": ${confidence.message}${confidence.etaMessage ? ` ${confidence.etaMessage}` : ""}`,
             );
           }
         }

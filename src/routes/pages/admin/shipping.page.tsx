@@ -490,11 +490,13 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
 
                 fetch('/api/shipping/zones/' + card.dataset.zoneId, { method: 'DELETE' })
                   .then(function(r) {
-                    if (!r.ok) throw new Error('Delete failed');
+                    if (!r.ok) return r.json().then(function(d) {
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Delete failed') : (d.error || d.message || 'Delete failed'));
+                    });
                     card.remove();
                     flash(successEl, 'Shipping zone deleted.');
                   })
-                  .catch(function() { flash(errorEl, 'Failed to delete shipping zone.'); });
+                  .catch(function(err) { flash(errorEl, (err && err.message) || 'Failed to delete shipping zone.'); });
               });
             });
 
@@ -526,7 +528,9 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
                 body: JSON.stringify(body),
               })
                 .then(function(r) {
-                  if (!r.ok) throw new Error('Save failed');
+                  if (!r.ok) return r.json().then(function(d) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Save failed') : (d.error || d.message || 'Save failed'));
+                  });
                   return r.json();
                 })
                 .then(function() {
@@ -534,7 +538,7 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
                   flash(successEl, id ? 'Shipping zone updated.' : 'Shipping zone created.');
                   setTimeout(function() { location.reload(); }, 800);
                 })
-                .catch(function() { flash(errorEl, 'Failed to save shipping zone.'); });
+                .catch(function(err) { flash(errorEl, (err && err.message) || 'Failed to save shipping zone.'); });
             });
 
             /* Add Rate */
@@ -579,11 +583,13 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
 
                 fetch('/api/shipping/zones/' + card.dataset.zoneId + '/rates/' + row.dataset.rateId, { method: 'DELETE' })
                   .then(function(r) {
-                    if (!r.ok) throw new Error('Delete failed');
+                    if (!r.ok) return r.json().then(function(d) {
+                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Delete failed') : (d.error || d.message || 'Delete failed'));
+                    });
                     row.remove();
                     flash(successEl, 'Shipping rate deleted.');
                   })
-                  .catch(function() { flash(errorEl, 'Failed to delete shipping rate.'); });
+                  .catch(function(err) { flash(errorEl, (err && err.message) || 'Failed to delete shipping rate.'); });
               });
             });
 
@@ -617,7 +623,9 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
                 body: JSON.stringify(body),
               })
                 .then(function(r) {
-                  if (!r.ok) throw new Error('Save failed');
+                  if (!r.ok) return r.json().then(function(d) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Save failed') : (d.error || d.message || 'Save failed'));
+                  });
                   return r.json();
                 })
                 .then(function() {
@@ -625,7 +633,7 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
                   flash(successEl, rateId ? 'Shipping rate updated.' : 'Shipping rate created.');
                   setTimeout(function() { location.reload(); }, 800);
                 })
-                .catch(function() { flash(errorEl, 'Failed to save shipping rate.'); });
+                .catch(function(err) { flash(errorEl, (err && err.message) || 'Failed to save shipping rate.'); });
             });
 
             /* Shipping Calculator */
@@ -660,7 +668,9 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
                 }),
               })
                 .then(function(r) {
-                  if (!r.ok) throw new Error('Calculation failed');
+                  if (!r.ok) return r.json().then(function(d) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Calculation failed') : (d.error || d.message || 'Calculation failed'));
+                  });
                   return r.json();
                 })
                 .then(function(data) {
@@ -699,8 +709,8 @@ export const ShippingPage: FC<ShippingPageProps> = ({ zones }) => {
 
                   calcResults.classList.remove('hidden');
                 })
-                .catch(function() {
-                  flash(errorEl, 'Failed to calculate shipping rates.');
+                .catch(function(err) {
+                  flash(errorEl, (err && err.message) || 'Failed to calculate shipping rates.');
                 });
             });
           })();

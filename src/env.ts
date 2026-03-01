@@ -30,6 +30,7 @@ export interface Env {
   APP_URL: string;
   APP_NAME: string;
   FEATURE_FLAGS?: string; // comma-separated feature flag keys
+  CHECKOUT_RECOVERY_CHANNELS?: string; // comma-separated: email,sms,whatsapp
 
   // Platform
   PLATFORM_DOMAINS: string; // comma-separated: "petm8.io,premiumstores.net,premiums.shop"
@@ -37,6 +38,11 @@ export interface Env {
 
   // Email
   RESEND_API_KEY?: string;
+  TWILIO_ACCOUNT_SID?: string;
+  TWILIO_AUTH_TOKEN?: string;
+  TWILIO_MESSAGING_SERVICE_SID?: string;
+  TWILIO_SMS_FROM?: string;
+  TWILIO_WHATSAPP_FROM?: string;
 
   // Encryption
   ENCRYPTION_KEY?: string;

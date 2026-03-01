@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({ customSlug: slug || undefined }),
       });
       if (res.ok) {
-        window.location.href = "/affiliates/dashboard";
+        window.location.href = "/affiliates";
       } else {
         const data = await res.json();
         showFlash(data.error || "Registration failed");

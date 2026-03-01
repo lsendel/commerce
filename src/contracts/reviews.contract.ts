@@ -54,6 +54,7 @@ export const reviewsContract = c.router({
         limit: z.number(),
         averageRating: z.number(),
         totalReviews: z.number(),
+        starDistribution: z.record(z.number()),
       }),
       404: z.object({ error: z.string() }),
     },
@@ -86,7 +87,7 @@ export const reviewsContract = c.router({
     method: "POST",
     path: "/api/reviews/:id/helpful",
     pathParams: idParamSchema,
-    body: z.object({}),
+    body: z.object({}).optional(),
     responses: {
       200: z.object({
         id: z.string(),
@@ -99,7 +100,7 @@ export const reviewsContract = c.router({
     method: "POST",
     path: "/api/reviews/:id/report",
     pathParams: idParamSchema,
-    body: z.object({}),
+    body: z.object({}).optional(),
     responses: {
       200: z.object({
         id: z.string(),

@@ -42,6 +42,12 @@ export const verifyEmailSchema = z.object({
 
 export const updateProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+?[0-9()\-\s]{7,20}$/, "Invalid phone number format")
+    .nullable()
+    .optional(),
   avatarUrl: z.string().url().nullable().optional(),
   locale: z.string().min(2).max(10).optional(),
   timezone: z.string().min(1).max(50).optional(),
@@ -79,6 +85,8 @@ export const productFilterSchema = z.object({
   maxPrice: z.coerce.number().optional(),
   available: z.coerce.boolean().optional(),
   sort: z.enum(["price_asc", "price_desc", "newest", "name"]).optional(),
+  country: z.string().length(2).optional(),
+  currency: z.string().length(3).optional(),
 });
 
 // Cart
@@ -185,6 +193,21 @@ export const createPetProfileSchema = z.object({
 // Subscription
 export const createSubscriptionSchema = z.object({
   planId: z.string().uuid(),
+});
+
+export const createReturnExchangeRequestSchema = z.object({
+  mode: z.enum(["refund", "exchange"]),
+  reason: z.string().max(500).optional(),
+  instantExchange: z.boolean().optional(),
+  items: z
+    .array(
+      z.object({
+        orderItemId: z.string().uuid(),
+        quantity: z.number().int().min(1),
+        exchangeVariantId: z.string().uuid().optional(),
+      }),
+    )
+    .min(1),
 });
 
 // Fulfillment

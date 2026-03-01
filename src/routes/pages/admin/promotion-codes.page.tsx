@@ -155,7 +155,10 @@ export const PromotionCodesPage: FC<PromotionCodesPageProps> = ({ codes, promoti
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(body),
                 });
-                if (!res.ok) throw new Error('Failed to create code');
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to create code') : (data.error || data.message || 'Failed to create code'));
+                }
                 window.location.reload();
               } catch (err) { showPromotionCodesError(err.message || 'Failed to create code'); }
             });

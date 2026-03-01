@@ -19,7 +19,7 @@ export function rateLimit(options: RateLimitOptions = { windowMs: 60_000, max: 1
     const entry = requests.get(key);
     if (entry && entry.resetAt > now) {
       if (entry.count >= options.max) {
-        return c.json({ error: "Too many requests" }, 429);
+        return c.json({ error: "Too many requests", message: "Too many requests" }, 429);
       }
       entry.count++;
     } else {

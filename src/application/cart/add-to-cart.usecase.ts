@@ -88,8 +88,30 @@ export class AddToCartUseCase {
       }
     }
 
-    // 4. Find or create the cart, then add the item
+    // 4. Find or create the cart and inspect any matching existing line first
     const cart = await this.repo.findOrCreateCart(sessionId, userId);
+    const currentCart = await this.repo.findCartWithItems(cart.id);
+    const existingLine = (currentCart?.items ?? []).find((line: any) => {
+      const sameVariant = line.variantId === data.variantId;
+      const sameBooking = (line.bookingAvailabilityId ?? null) === (data.bookingAvailabilityId ?? null);
+      return sameVariant && sameBooking;
+    });
+    const previousQuantity = existingLine?.quantity ?? 0;
+    const desiredQuantity = previousQuantity + data.quantity;
+
+    if (product.type === "physical") {
+      const stock = variant.inventoryQuantity ?? 0;
+      if (stock <= 0) {
+        throw new ValidationError("This item is currently out of stock");
+      }
+      if (desiredQuantity > stock) {
+        throw new ValidationError(
+          stock === 1
+            ? "Only 1 left in stock — please reduce your quantity"
+            : `Only ${stock} left in stock — please reduce your quantity`,
+        );
+      }
+    }
 
     const addedItem = await this.repo.addItem(cart.id, {
       variantId: data.variantId,
@@ -100,31 +122,19 @@ export class AddToCartUseCase {
 
     // 5. Reserve inventory for physical products
     if (product.type === "physical" && addedItem) {
-      // Check available stock and give a user-friendly message
-      const stock = variant.inventoryQuantity ?? 0;
-      if (stock <= 0) {
-        await this.repo.removeItem(addedItem.id, cart.id);
-        throw new ValidationError("This item is currently out of stock");
-      }
-      if (data.quantity > stock) {
-        await this.repo.removeItem(addedItem.id, cart.id);
-        throw new ValidationError(
-          stock === 1
-            ? "Only 1 left in stock — please reduce your quantity"
-            : `Only ${stock} left in stock — please reduce your quantity`,
-        );
-      }
-
       const reservation = await this.inventoryRepo.reserve(
         data.variantId,
         addedItem.id,
         data.quantity,
       );
       if (!reservation) {
-        await this.repo.removeItem(addedItem.id, cart.id);
-        throw new ValidationError(
-          `Not enough stock available. Only ${stock} left.`,
-        );
+        // Rollback safely: restore prior quantity if this line existed, otherwise remove.
+        if (previousQuantity > 0) {
+          await this.repo.updateItemQuantity(addedItem.id, cart.id, previousQuantity);
+        } else {
+          await this.repo.removeItem(addedItem.id, cart.id);
+        }
+        throw new ValidationError("Not enough stock available.");
       }
     }
 

@@ -520,7 +520,7 @@ export const FulfillmentDetailPage: FC<FulfillmentDetailPageProps> = ({
                   });
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.error || 'Retry failed');
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Retry failed') : (data.error || data.message || 'Retry failed'));
                   }
                   if (window.showToast) window.showToast('Retry queued successfully', 'success');
                   window.location.reload();
@@ -548,7 +548,7 @@ export const FulfillmentDetailPage: FC<FulfillmentDetailPageProps> = ({
                   });
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.error || 'Cancellation failed');
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Cancellation failed') : (data.error || data.message || 'Cancellation failed'));
                   }
                   if (window.showToast) window.showToast('Fulfillment cancelled', 'success');
                   window.location.reload();

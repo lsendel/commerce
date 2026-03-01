@@ -53,10 +53,68 @@ export class StripePortalAdapter {
       success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl,
       metadata: metadata ?? {},
+      subscription_data: {
+        metadata: metadata ?? {},
+      },
     };
 
     if (trialDays && trialDays > 0) {
       sessionParams.subscription_data = {
+        ...(sessionParams.subscription_data ?? {}),
+        trial_period_days: trialDays,
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    if (!session.url) {
+      throw new Error("Stripe did not return a checkout session URL");
+    }
+
+    return { url: session.url, sessionId: session.id };
+  }
+
+  /**
+   * Creates a Stripe Checkout session for a mixed subscription bundle.
+   * All line items are recurring prices with aligned billing cadence.
+   */
+  async createSubscriptionBuilderCheckout(params: {
+    stripe: Stripe;
+    customerId: string;
+    lineItems: Array<{ priceId: string; quantity: number }>;
+    successUrl: string;
+    cancelUrl: string;
+    trialDays?: number;
+    metadata?: Record<string, string>;
+  }): Promise<{ url: string; sessionId: string }> {
+    const {
+      stripe,
+      customerId,
+      lineItems,
+      successUrl,
+      cancelUrl,
+      trialDays,
+      metadata,
+    } = params;
+
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
+      mode: "subscription",
+      customer: customerId,
+      line_items: lineItems.map((item) => ({
+        price: item.priceId,
+        quantity: item.quantity,
+      })),
+      success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancelUrl,
+      metadata: metadata ?? {},
+      subscription_data: {
+        metadata: metadata ?? {},
+      },
+    };
+
+    if (trialDays && trialDays > 0) {
+      sessionParams.subscription_data = {
+        ...(sessionParams.subscription_data ?? {}),
         trial_period_days: trialDays,
       };
     }

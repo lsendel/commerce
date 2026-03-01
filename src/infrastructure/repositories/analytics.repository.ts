@@ -224,6 +224,28 @@ export class AnalyticsRepository {
   }
 
   /**
+   * Fetch recent events filtered by event types.
+   * Results are ordered from newest to oldest.
+   */
+  async listRecentEventsByTypes(eventTypes: string[], limit = 50) {
+    if (eventTypes.length === 0) return [];
+
+    const rows = await this.db
+      .select()
+      .from(analyticsEvents)
+      .where(
+        and(
+          eq(analyticsEvents.storeId, this.storeId),
+          inArray(analyticsEvents.eventType, eventTypes),
+        ),
+      )
+      .orderBy(desc(analyticsEvents.createdAt))
+      .limit(limit);
+
+    return rows;
+  }
+
+  /**
    * Count events grouped by event type for a date range.
    */
   async countEventsByType(

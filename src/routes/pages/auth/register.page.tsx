@@ -260,7 +260,7 @@ export const RegisterPage: FC<RegisterPageProps> = ({ error }) => {
 
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
-                    throw new Error(data.message || 'Registration failed. Please try again.');
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Registration failed. Please try again.') : (data.error || data.message || 'Registration failed. Please try again.'));
                   }
 
                   window.location.href = '/account';
