@@ -9,6 +9,8 @@ import { AgenticPricingExperimentsUseCase } from "../../application/pricing/agen
 import { requireAuth } from "../../middleware/auth.middleware";
 import { rateLimit } from "../../middleware/rate-limit.middleware";
 import { resolveFeatureFlags } from "../../shared/feature-flags";
+import { PolicyRepository } from "../../infrastructure/repositories/policy.repository";
+import { PolicyEngineUseCase } from "../../application/platform/policy-engine.usecase";
 
 const pricingExperimentRoutes = new Hono<{ Bindings: Env }>();
 
@@ -98,6 +100,16 @@ pricingExperimentRoutes.post(
     const storeId = c.get("storeId") as string;
     const userId = c.get("userId") as string;
     const body = c.req.valid("json");
+    const flags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+
+    if (flags.policy_engine_guardrails) {
+      const policyUseCase = new PolicyEngineUseCase(new PolicyRepository(db, storeId));
+      await policyUseCase.enforcePricingExperimentGuardrails("propose", {
+        maxVariants: body.maxVariants,
+        minDeltaPercent: body.minDeltaPercent,
+        maxDeltaPercent: body.maxDeltaPercent,
+      }, userId);
+    }
 
     const analyticsRepo = new AnalyticsRepository(db, storeId);
     const useCase = new AgenticPricingExperimentsUseCase(db, storeId, analyticsRepo);
@@ -131,6 +143,17 @@ pricingExperimentRoutes.post(
     const storeId = c.get("storeId") as string;
     const userId = c.get("userId") as string;
     const body = c.req.valid("json");
+    const flags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+
+    if (flags.policy_engine_guardrails) {
+      const policyUseCase = new PolicyEngineUseCase(new PolicyRepository(db, storeId));
+      await policyUseCase.enforcePricingExperimentGuardrails("start", {
+        maxVariants: body.maxVariants,
+        minDeltaPercent: body.minDeltaPercent,
+        maxDeltaPercent: body.maxDeltaPercent,
+        autoApply: body.autoApply,
+      }, userId);
+    }
 
     const analyticsRepo = new AnalyticsRepository(db, storeId);
     const useCase = new AgenticPricingExperimentsUseCase(db, storeId, analyticsRepo);

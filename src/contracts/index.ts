@@ -24,6 +24,10 @@ import { fulfillmentExceptionContract } from "./fulfillment-exception.contract";
 import { pricingExperimentContract } from "./pricing-experiment.contract";
 import { workflowsContract } from "./workflows.contract";
 import { integrationMarketplaceContract } from "./integration-marketplace.contract";
+import { headlessApiPacksContract } from "./headless-api-packs.contract";
+import { storeTemplatesContract } from "./store-templates.contract";
+import { policiesContract } from "./policies.contract";
+import { controlTowerContract } from "./control-tower.contract";
 
 const c = initContract();
 
@@ -53,6 +57,10 @@ export const contract = c.router({
   pricingExperiment: pricingExperimentContract,
   workflows: workflowsContract,
   integrationMarketplace: integrationMarketplaceContract,
+  headlessApiPacks: headlessApiPacksContract,
+  storeTemplates: storeTemplatesContract,
+  policies: policiesContract,
+  controlTower: controlTowerContract,
 });
 
 export {
@@ -81,4 +89,8 @@ export {
   pricingExperimentContract,
   workflowsContract,
   integrationMarketplaceContract,
+  headlessApiPacksContract,
+  storeTemplatesContract,
+  policiesContract,
+  controlTowerContract,
 };

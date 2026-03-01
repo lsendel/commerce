@@ -155,6 +155,30 @@ export const YOLO_WEEKLY_FLAG_MATRIX = [
     week: 21,
     description: "Integration marketplace with install/uninstall flows for first-party and partner apps.",
   },
+  {
+    key: "headless_api_packs",
+    featureId: 27,
+    week: 22,
+    description: "Headless API packs for authenticated catalog channel access with scoped API keys.",
+  },
+  {
+    key: "store_clone_templates",
+    featureId: 28,
+    week: 22,
+    description: "Store clone and template system for rapid store bootstrap workflows.",
+  },
+  {
+    key: "policy_engine_guardrails",
+    featureId: 29,
+    week: 23,
+    description: "Policy engine guardrails for pricing, shipping, and promotion safety constraints.",
+  },
+  {
+    key: "executive_control_tower",
+    featureId: 30,
+    week: 24,
+    description: "Unified executive control tower for KPI, rollout, and risk posture visibility.",
+  },
 ] as const;
 
 export type FeatureFlagKey = (typeof YOLO_WEEKLY_FLAG_MATRIX)[number]["key"];

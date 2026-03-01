@@ -1,0 +1,63 @@
+name: Admin API Smoke
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 13 * * *"
+
+env:
+  NODE_VERSION: 22
+  PNPM_VERSION: 10
+
+jobs:
+  contract-smoke:
+    name: Contract Parity Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run admin parity smoke (contract-only)
+        run: pnpm smoke:admin-parity
+
+  live-smoke:
+    name: Live Admin API Smoke
+    runs-on: ubuntu-latest
+    needs: contract-smoke
+    if: ${{ github.event_name != 'pull_request' && secrets.SMOKE_BASE_URL != '' && (secrets.SMOKE_COOKIE != '' || secrets.SMOKE_AUTHORIZATION != '') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run admin parity smoke (live)
+        env:
+          SMOKE_BASE_URL: ${{ secrets.SMOKE_BASE_URL }}
+          SMOKE_COOKIE: ${{ secrets.SMOKE_COOKIE }}
+          SMOKE_AUTHORIZATION: ${{ secrets.SMOKE_AUTHORIZATION }}
+        run: pnpm smoke:admin-parity

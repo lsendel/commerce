@@ -15,7 +15,9 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "smoke:printful:newman": "node scripts/run-printful-smoke.mjs"
+    "smoke:printful:newman": "node scripts/run-printful-smoke.mjs",
+    "smoke:policy-control-tower": "tsx scripts/smoke-policy-control-tower.ts",
+    "smoke:admin-parity": "tsx scripts/smoke-policy-control-tower.ts"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.1",

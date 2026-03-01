@@ -2824,6 +2824,137 @@ export const storeWorkflowsRelations = relations(storeWorkflows, ({ one }) => ({
   }),
 }));
 
+// ─── Headless API Packs ─────────────────────────────────────────────────────
+
+export const headlessApiPacks = pgTable("headless_api_packs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  keyHash: text("key_hash").notNull(),
+  keyPrefix: text("key_prefix").notNull(),
+  scopes: jsonb("scopes").notNull().default([]),
+  status: text("status").notNull().default("active"),
+  rateLimitPerMinute: integer("rate_limit_per_minute").notNull().default(120),
+  lastUsedAt: timestamp("last_used_at"),
+  createdBy: uuid("created_by").references(() => users.id),
+  revokedBy: uuid("revoked_by").references(() => users.id),
+  revokedAt: timestamp("revoked_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  storeStatusIdx: index("headless_api_packs_store_status_idx").on(table.storeId, table.status, table.updatedAt),
+  storeCreatedIdx: index("headless_api_packs_store_created_idx").on(table.storeId, table.createdAt),
+  keyHashUnique: uniqueIndex("headless_api_packs_key_hash_unique").on(table.keyHash),
+}));
+
+export const headlessApiPacksRelations = relations(headlessApiPacks, ({ one }) => ({
+  store: one(stores, {
+    fields: [headlessApiPacks.storeId],
+    references: [stores.id],
+  }),
+  creator: one(users, {
+    fields: [headlessApiPacks.createdBy],
+    references: [users.id],
+  }),
+  revoker: one(users, {
+    fields: [headlessApiPacks.revokedBy],
+    references: [users.id],
+  }),
+}));
+
+// ─── Store Templates and Clone Snapshots ────────────────────────────────────
+
+export const storeTemplates = pgTable("store_templates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  sourceStoreId: uuid("source_store_id").notNull().references(() => stores.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  snapshot: jsonb("snapshot").notNull().default({}),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdBy: uuid("created_by").references(() => users.id),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  storeUpdatedIdx: index("store_templates_store_updated_idx").on(table.storeId, table.updatedAt),
+  sourceStoreUpdatedIdx: index("store_templates_source_store_updated_idx").on(table.sourceStoreId, table.updatedAt),
+  storeNameIdx: index("store_templates_store_name_idx").on(table.storeId, table.name),
+}));
+
+export const storeTemplatesRelations = relations(storeTemplates, ({ one }) => ({
+  store: one(stores, {
+    fields: [storeTemplates.storeId],
+    references: [stores.id],
+  }),
+  sourceStore: one(stores, {
+    fields: [storeTemplates.sourceStoreId],
+    references: [stores.id],
+  }),
+  creator: one(users, {
+    fields: [storeTemplates.createdBy],
+    references: [users.id],
+  }),
+  updater: one(users, {
+    fields: [storeTemplates.updatedBy],
+    references: [users.id],
+  }),
+}));
+
+// ─── Policy Engine ──────────────────────────────────────────────────────────
+
+export const storePolicyConfigs = pgTable("store_policy_configs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  version: integer("version").notNull().default(1),
+  isActive: boolean("is_active").notNull().default(true),
+  policies: jsonb("policies").notNull().default({}),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  storeUnique: uniqueIndex("store_policy_configs_store_unique").on(table.storeId),
+  storeActiveIdx: index("store_policy_configs_store_active_idx").on(table.storeId, table.isActive),
+}));
+
+export const storePolicyConfigsRelations = relations(storePolicyConfigs, ({ one }) => ({
+  store: one(stores, {
+    fields: [storePolicyConfigs.storeId],
+    references: [stores.id],
+  }),
+  updater: one(users, {
+    fields: [storePolicyConfigs.updatedBy],
+    references: [users.id],
+  }),
+}));
+
+export const policyViolations = pgTable("policy_violations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id),
+  domain: text("domain").notNull(),
+  action: text("action").notNull(),
+  severity: text("severity").notNull().default("error"),
+  message: text("message").notNull(),
+  details: jsonb("details").notNull().default({}),
+  actorUserId: uuid("actor_user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  storeCreatedIdx: index("policy_violations_store_created_idx").on(table.storeId, table.createdAt),
+  storeDomainCreatedIdx: index("policy_violations_store_domain_created_idx").on(table.storeId, table.domain, table.createdAt),
+}));
+
+export const policyViolationsRelations = relations(policyViolations, ({ one }) => ({
+  store: one(stores, {
+    fields: [policyViolations.storeId],
+    references: [stores.id],
+  }),
+  actor: one(users, {
+    fields: [policyViolations.actorUserId],
+    references: [users.id],
+  }),
+}));
+
 // ─── Inventory Transactions ─────────────────────────────────────────────────
 
 export const inventoryTransactions = pgTable("inventory_transactions", {

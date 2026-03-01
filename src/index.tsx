@@ -55,6 +55,11 @@ import { fulfillmentExceptionRoutes } from "./routes/api/fulfillment-exceptions.
 import { pricingExperimentRoutes } from "./routes/api/pricing-experiments.routes";
 import { workflowRoutes } from "./routes/api/workflows.routes";
 import { integrationMarketplaceRoutes } from "./routes/api/integration-marketplace.routes";
+import { headlessApiPackRoutes } from "./routes/api/headless-api-packs.routes";
+import { headlessChannelRoutes } from "./routes/api/headless-channel.routes";
+import { storeTemplateRoutes } from "./routes/api/store-templates.routes";
+import { policyRoutes } from "./routes/api/policies.routes";
+import { controlTowerRoutes } from "./routes/api/control-tower.routes";
 
 // GraphQL
 import { schema } from "./graphql/schema";
@@ -120,6 +125,10 @@ import { IncidentResponderPage as _IncidentResponderPage } from "./routes/pages/
 import { PricingExperimentsPage as _PricingExperimentsPage } from "./routes/pages/admin/pricing-experiments.page";
 import { WorkflowBuilderPage as _WorkflowBuilderPage } from "./routes/pages/admin/workflows.page";
 import { IntegrationMarketplacePage as _IntegrationMarketplacePage } from "./routes/pages/admin/integration-marketplace.page";
+import { HeadlessApiPacksPage as _HeadlessApiPacksPage } from "./routes/pages/admin/headless-api-packs.page";
+import { StoreTemplatesPage as _StoreTemplatesPage } from "./routes/pages/admin/store-templates.page";
+import { PoliciesPage as _PoliciesPage } from "./routes/pages/admin/policies.page";
+import { ControlTowerPage as _ControlTowerPage } from "./routes/pages/admin/control-tower.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 import { NotFoundPage } from "./routes/pages/404.page";
 import { ErrorPage } from "./components/ui/error-page";
@@ -179,6 +188,10 @@ const IncidentResponderPage = _IncidentResponderPage as any;
 const PricingExperimentsPage = _PricingExperimentsPage as any;
 const WorkflowBuilderPage = _WorkflowBuilderPage as any;
 const IntegrationMarketplacePage = _IntegrationMarketplacePage as any;
+const HeadlessApiPacksPage = _HeadlessApiPacksPage as any;
+const StoreTemplatesPage = _StoreTemplatesPage as any;
+const PoliciesPage = _PoliciesPage as any;
+const ControlTowerPage = _ControlTowerPage as any;
 const ResetPasswordPage = _ResetPasswordPage as any;
 const VerifyEmailPage = _VerifyEmailPage as any;
 
@@ -306,6 +319,11 @@ app.route("/api/admin", fulfillmentExceptionRoutes);
 app.route("/api/admin", pricingExperimentRoutes);
 app.route("/api/admin", workflowRoutes);
 app.route("/api/admin", integrationMarketplaceRoutes);
+app.route("/api/admin", headlessApiPackRoutes);
+app.route("/api/admin", storeTemplateRoutes);
+app.route("/api/admin", policyRoutes);
+app.route("/api/admin", controlTowerRoutes);
+app.route("/api/headless", headlessChannelRoutes);
 
 // ─── GraphQL ───────────────────────────────────────────────
 const yoga = createYoga({ schema, graphqlEndpoint: "/graphql" });
@@ -2085,6 +2103,108 @@ app.get("/admin/workflows", async (c) => {
   return c.html(
     <Layout url={c.req.url} title="Workflow Builder" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <WorkflowBuilderPage workflows={workflows as any} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/headless", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  if (!featureFlags.headless_api_packs) {
+    return c.redirect("/admin/analytics", 302);
+  }
+
+  const { HeadlessApiPackRepository } = await import("./infrastructure/repositories/headless-api-pack.repository");
+  const { HeadlessApiPackUseCase } = await import("./application/platform/headless-api-pack.usecase");
+
+  const repository = new HeadlessApiPackRepository(db, storeId);
+  const useCase = new HeadlessApiPackUseCase(repository);
+  const packs = await useCase.listPacks(100);
+
+  return c.html(
+    <Layout url={c.req.url} title="Headless API Packs" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <HeadlessApiPacksPage packs={packs as any} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/store-templates", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  if (!featureFlags.store_clone_templates) {
+    return c.redirect("/admin/analytics", 302);
+  }
+
+  const { StoreTemplateRepository } = await import("./infrastructure/repositories/store-template.repository");
+  const { StoreCloneTemplateUseCase } = await import("./application/platform/store-clone-template.usecase");
+
+  const repository = new StoreTemplateRepository(db, storeId);
+  const useCase = new StoreCloneTemplateUseCase(db, storeId, repository);
+  const templates = await useCase.listTemplates(100);
+
+  return c.html(
+    <Layout url={c.req.url} title="Store Templates" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <StoreTemplatesPage templates={templates as any} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/policies", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  if (!featureFlags.policy_engine_guardrails) {
+    return c.redirect("/admin/analytics", 302);
+  }
+
+  const { PolicyRepository } = await import("./infrastructure/repositories/policy.repository");
+  const { PolicyEngineUseCase } = await import("./application/platform/policy-engine.usecase");
+
+  const useCase = new PolicyEngineUseCase(new PolicyRepository(db, storeId));
+  const [policy, violations] = await Promise.all([
+    useCase.getEffectivePolicy(),
+    useCase.listViolations(100),
+  ]);
+
+  return c.html(
+    <Layout url={c.req.url} title="Policy Engine" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <PoliciesPage policy={policy as any} violations={violations as any} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/control-tower", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  if (!featureFlags.executive_control_tower) {
+    return c.redirect("/admin/analytics", 302);
+  }
+
+  const now = new Date();
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  const defaultFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const defaultTo = now.toISOString().slice(0, 10);
+  const requestedFrom = c.req.query("from");
+  const requestedTo = c.req.query("to");
+  const parsedFrom = requestedFrom && datePattern.test(requestedFrom) ? requestedFrom : defaultFrom;
+  const parsedTo = requestedTo && datePattern.test(requestedTo) ? requestedTo : defaultTo;
+  const dateFrom = parsedFrom <= parsedTo ? parsedFrom : parsedTo;
+  const dateTo = parsedFrom <= parsedTo ? parsedTo : parsedFrom;
+
+  const analyticsRepo = new AnalyticsRepository(db, storeId);
+  const { ExecutiveControlTowerUseCase } = await import("./application/analytics/executive-control-tower.usecase");
+  const summary = await new ExecutiveControlTowerUseCase(db, storeId, analyticsRepo).execute({
+    dateFrom,
+    dateTo,
+    featureFlags,
+  });
+
+  return c.html(
+    <Layout url={c.req.url} title="Executive Control Tower" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <ControlTowerPage summary={summary as any} />
     </Layout>,
   );
 });

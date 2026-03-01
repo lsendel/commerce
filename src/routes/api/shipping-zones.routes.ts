@@ -16,6 +16,8 @@ import {
 } from "../../contracts/shipping.contract";
 import { NotFoundError, ValidationError } from "../../shared/errors";
 import { resolveFeatureFlags } from "../../shared/feature-flags";
+import { PolicyRepository } from "../../infrastructure/repositories/policy.repository";
+import { PolicyEngineUseCase } from "../../application/platform/policy-engine.usecase";
 
 const shipping = new Hono<{ Bindings: Env }>();
 
@@ -24,6 +26,17 @@ shipping.use("/shipping/zones/*", requireAuth(), requireRole("admin"));
 
 // All zone/rate management routes require auth (admin)
 // The calculate endpoint is public-facing (no auth required)
+
+function createPolicyUseCase(c: any) {
+  const db = createDb(c.env.DATABASE_URL);
+  const storeId = c.get("storeId") as string;
+  return new PolicyEngineUseCase(new PolicyRepository(db, storeId));
+}
+
+function isPolicyEngineEnabled(c: any): boolean {
+  const flags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  return flags.policy_engine_guardrails;
+}
 
 // ─── GET /shipping/zones — List all shipping zones ───────────────────────────
 
@@ -140,12 +153,22 @@ shipping.post(
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const storeId = c.get("storeId") as string;
+    const userId = c.get("userId") as string;
     const repo = new ShippingRepository(db, storeId);
     const useCase = new ManageShippingZonesUseCase(repo);
 
     try {
       const zoneId = c.req.param("zoneId");
       const body = c.req.valid("json");
+      if (isPolicyEngineEnabled(c)) {
+        const policyUseCase = createPolicyUseCase(c);
+        await policyUseCase.enforceShippingRateGuardrails("create_rate", {
+          type: body.type,
+          price: body.price,
+          estimatedDaysMin: body.estimatedDaysMin,
+          estimatedDaysMax: body.estimatedDaysMax,
+        }, userId);
+      }
       const rate = await useCase.createRate({ ...body, zoneId });
       return c.json(rate, 201);
     } catch (err) {
@@ -169,12 +192,22 @@ shipping.patch(
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const storeId = c.get("storeId") as string;
+    const userId = c.get("userId") as string;
     const repo = new ShippingRepository(db, storeId);
     const useCase = new ManageShippingZonesUseCase(repo);
 
     try {
       const rateId = c.req.param("id");
       const body = c.req.valid("json");
+      if (isPolicyEngineEnabled(c)) {
+        const policyUseCase = createPolicyUseCase(c);
+        await policyUseCase.enforceShippingRateGuardrails("update_rate", {
+          type: body.type,
+          price: body.price,
+          estimatedDaysMin: body.estimatedDaysMin,
+          estimatedDaysMax: body.estimatedDaysMax,
+        }, userId);
+      }
       const rate = await useCase.updateRate(rateId, body);
       return c.json(rate, 200);
     } catch (err) {

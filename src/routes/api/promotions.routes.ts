@@ -15,6 +15,8 @@ import { AiPromotionCopilotUseCase } from "../../application/promotions/ai-promo
 import { evaluateSegmentRule } from "../../application/promotions/segment-rule-evaluator";
 import type { SegmentRule } from "../../domain/promotions/customer-segment.entity";
 import { resolveFeatureFlags } from "../../shared/feature-flags";
+import { PolicyRepository } from "../../infrastructure/repositories/policy.repository";
+import { PolicyEngineUseCase } from "../../application/platform/policy-engine.usecase";
 import {
   createPromotionSchema,
   updatePromotionSchema,
@@ -76,6 +78,17 @@ function checkPromotionCopilotFeature(c: any) {
   return null;
 }
 
+function createPolicyUseCase(c: any) {
+  const db = createDb(c.env.DATABASE_URL);
+  const storeId = c.get("storeId");
+  return new PolicyEngineUseCase(new PolicyRepository(db, storeId));
+}
+
+function isPolicyEngineEnabled(c: any): boolean {
+  const flags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  return flags.policy_engine_guardrails;
+}
+
 // POST /api/promotions — create promotion (admin)
 promotionRoutes.post(
   "/",
@@ -84,9 +97,21 @@ promotionRoutes.post(
   async (c) => {
     const data = c.req.valid("json");
     const storeId = c.get("storeId");
+    const userId = c.get("userId") as string;
     const db = createDb(c.env.DATABASE_URL);
     const repo = new PromotionRepository(db, storeId);
     const useCase = new CreatePromotionUseCase(repo);
+
+    if (isPolicyEngineEnabled(c)) {
+      const policyUseCase = createPolicyUseCase(c);
+      await policyUseCase.enforcePromotionGuardrails("create", {
+        strategyType: data.strategyType,
+        strategyParams: data.strategyParams,
+        stackable: data.stackable,
+        startsAt: data.startsAt,
+        endsAt: data.endsAt,
+      }, userId);
+    }
 
     const promotion = await useCase.execute(data);
     return c.json({ promotion }, 201);
@@ -206,10 +231,22 @@ promotionRoutes.post(
     const body = c.req.valid("json");
     const patch = body.applyPatch;
     const storeId = c.get("storeId");
+    const userId = c.get("userId") as string;
     const db = createDb(c.env.DATABASE_URL);
     const repo = new PromotionRepository(db, storeId);
     const createUseCase = new CreatePromotionUseCase(repo);
     const couponUseCase = new ManageCouponCodesUseCase(repo);
+
+    if (isPolicyEngineEnabled(c)) {
+      const policyUseCase = createPolicyUseCase(c);
+      await policyUseCase.enforcePromotionGuardrails("copilot_apply", {
+        strategyType: patch.strategyType,
+        strategyParams: patch.strategyParams,
+        stackable: patch.stackable,
+        startsAt: body.schedule?.startsAt,
+        endsAt: body.schedule?.endsAt,
+      }, userId);
+    }
 
     const promotion = await createUseCase.execute({
       name: patch.name,
@@ -364,8 +401,20 @@ promotionRoutes.patch(
     const id = c.req.param("id");
     const data = c.req.valid("json");
     const storeId = c.get("storeId");
+    const userId = c.get("userId") as string;
     const db = createDb(c.env.DATABASE_URL);
     const repo = new PromotionRepository(db, storeId);
+
+    if (isPolicyEngineEnabled(c)) {
+      const policyUseCase = createPolicyUseCase(c);
+      await policyUseCase.enforcePromotionGuardrails("update", {
+        strategyType: data.strategyType,
+        strategyParams: data.strategyParams,
+        stackable: data.stackable,
+        startsAt: data.startsAt,
+        endsAt: data.endsAt,
+      }, userId);
+    }
 
     const promotion = await repo.update(id, {
       ...data,
