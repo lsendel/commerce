@@ -2,8 +2,10 @@ import { Hono } from "hono";
 import { secureHeaders } from "hono/secure-headers";
 import { logger } from "hono/logger";
 import { cors } from "hono/cors";
+import { csrf } from "hono/csrf";
 import { createYoga } from "graphql-yoga";
 import type { Env } from "./env";
+import { validateEnv } from "./env";
 import { handleScheduled } from "./scheduled/handler";
 import { handleQueue } from "./queues/handler";
 import { requireAuth } from "./middleware/auth.middleware";
@@ -11,8 +13,10 @@ import { requireRole } from "./middleware/role.middleware";
 
 // Middleware
 import { errorHandler } from "./middleware/error-handler.middleware";
+import { auditTrailMiddleware } from "./middleware/audit-trail.middleware";
 import { tenantMiddleware } from "./middleware/tenant.middleware";
 import { affiliateMiddleware } from "./middleware/affiliate.middleware";
+import { rateLimit } from "./middleware/rate-limit.middleware";
 
 // Repositories
 import { RedirectRepository } from "./infrastructure/repositories/redirect.repository";
@@ -60,6 +64,15 @@ import { headlessChannelRoutes } from "./routes/api/headless-channel.routes";
 import { storeTemplateRoutes } from "./routes/api/store-templates.routes";
 import { policyRoutes } from "./routes/api/policies.routes";
 import { controlTowerRoutes } from "./routes/api/control-tower.routes";
+import { buildAiPluginManifest, buildLlmsTxt } from "./infrastructure/seo/llm-surface";
+import {
+  buildCollectionPage,
+  buildItemList,
+  buildOrganization,
+  buildPlace,
+  buildWebPage,
+  buildWebSite,
+} from "./infrastructure/seo/json-ld";
 
 // GraphQL
 import { schema } from "./graphql/schema";
@@ -235,9 +248,38 @@ import { GetAffiliateMissionsUseCase } from "./application/affiliates/get-affili
 const app = new Hono<{ Bindings: Env }>();
 
 // ─── Global Middleware ─────────────────────────────────────
+app.use("*", async (c, next) => { validateEnv(c.env); await next(); });
 app.use("*", logger());
-app.use("*", secureHeaders());
+app.use("*", secureHeaders({
+  contentSecurityPolicy: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com", "https://unpkg.com"],
+    styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://unpkg.com"],
+    imgSrc: ["'self'", "data:", "https:"],
+    connectSrc: [
+      "'self'",
+      "https://api.stripe.com",
+      "https://r.stripe.com",
+      "https://m.stripe.network",
+      "https://tiles.openfreemap.org",
+    ],
+    fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+    frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
+    workerSrc: ["'self'", "blob:"],
+  },
+}));
+app.use("/api/*", auditTrailMiddleware());
 app.use("*", errorHandler());
+
+// CSRF protection — verify Origin header on state-changing requests from browser pages
+app.use("*", csrf({
+  origin: (origin, c) => {
+    const appUrl = (c.env.APP_URL || "").replace(/\/$/, "");
+    const platformDomains = (c.env.PLATFORM_DOMAINS || "").split(",").filter(Boolean).map((d: string) => `https://${d.trim()}`);
+    const allowed = [appUrl, ...platformDomains].filter(Boolean);
+    return allowed.includes(origin);
+  },
+}));
 
 function isAdminPlatformRole(role: string | null | undefined) {
   return role === "super_admin" || role === "group_admin";
@@ -265,7 +307,25 @@ app.use("/admin/*", async (c, next) => {
 app.use("/api/admin/*", requireAuth(), requireRole("admin"));
 app.use("*", tenantMiddleware());
 app.use("*", affiliateMiddleware());
-app.use("/api/*", cors());
+app.use("/api/*", cors({
+  origin: (origin, c) => {
+    const appUrl = (c.env.APP_URL || "").replace(/\/$/, "");
+    const platformDomains = (c.env.PLATFORM_DOMAINS || "").split(",").filter(Boolean).map((d: string) => `https://${d.trim()}`);
+    const allowed = [appUrl, ...platformDomains].filter(Boolean);
+    if (!origin || allowed.includes(origin)) return origin;
+    return null;
+  },
+  credentials: true,
+}));
+
+// ─── Rate Limits for Unprotected Mutation Endpoints ─────────
+app.use("/api/cart/*", rateLimit({ windowMs: 60_000, max: 60 }));
+app.use("/api/orders/*", rateLimit({ windowMs: 60_000, max: 20 }));
+app.use("/api/bookings/*", rateLimit({ windowMs: 60_000, max: 30 }));
+app.use("/api/account/*", rateLimit({ windowMs: 60_000, max: 30 }));
+app.use("/api/analytics/events", rateLimit({ windowMs: 60_000, max: 120 }));
+app.on(["GET", "POST"], "/graphql", rateLimit({ windowMs: 60_000, max: 60 }));
+
 app.use("*", browserCaching());
 
 // ─── Page-level Response Cache (product detail pages, 10min) ──
@@ -282,6 +342,29 @@ app.use(
 
 // ─── Health Check ──────────────────────────────────────────
 app.get("/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }));
+
+app.get("/health/ready", async (c) => {
+  let dbStatus = "unknown";
+  try {
+    const db = createDb(c.env.DATABASE_URL);
+    const { sql } = await import("drizzle-orm");
+    await db.execute(sql`SELECT 1`);
+    dbStatus = "connected";
+  } catch (err) {
+    dbStatus = "error";
+    return c.json({
+      status: "degraded",
+      db: dbStatus,
+      timestamp: new Date().toISOString(),
+    }, 503);
+  }
+  return c.json({
+    status: "ok",
+    db: dbStatus,
+    timestamp: new Date().toISOString(),
+    version: "0.1.0",
+  });
+});
 
 // ─── API Routes ────────────────────────────────────────────
 app.route("/api/auth", authRoutes);
@@ -326,7 +409,39 @@ app.route("/api/admin", controlTowerRoutes);
 app.route("/api/headless", headlessChannelRoutes);
 
 // ─── GraphQL ───────────────────────────────────────────────
-const yoga = createYoga({ schema, graphqlEndpoint: "/graphql" });
+const yoga = createYoga({
+  schema,
+  graphqlEndpoint: "/graphql",
+  plugins: [
+    {
+      onParse() {
+        return ({ result }: { result: any }) => {
+          if (result && "definitions" in result) {
+            const maxDepth = 7;
+            function measureDepth(selections: readonly any[], depth: number): number {
+              if (!selections) return depth;
+              let max = depth;
+              for (const sel of selections) {
+                if (sel.selectionSet) {
+                  max = Math.max(max, measureDepth(sel.selectionSet.selections, depth + 1));
+                }
+              }
+              return max;
+            }
+            for (const def of result.definitions) {
+              if ("selectionSet" in def && def.selectionSet) {
+                const depth = measureDepth(def.selectionSet.selections, 1);
+                if (depth > maxDepth) {
+                  throw new Error(`Query depth ${depth} exceeds maximum allowed depth of ${maxDepth}`);
+                }
+              }
+            }
+          }
+        };
+      },
+    },
+  ],
+});
 
 app.on(["GET", "POST"], "/graphql", async (c) => {
   const context = await createGraphQLContext(c);
@@ -356,7 +471,7 @@ async function getPageContext(c: any) {
       const cart = await cartRepo.findOrCreateCart(cartSessionId, user?.sub);
       const cartData = await cartRepo.findCartWithItems(cart.id);
       cartCount = (cartData as any)?.items?.length ?? 0;
-    } catch { /* cart not critical for page render */ }
+    } catch (e) { console.warn("[getPageContext] cart load failed:", e instanceof Error ? e.message : e); }
   }
 
   const storeName = store?.name ?? "petm8";
@@ -444,24 +559,41 @@ app.get("/", async (c) => {
   }
 
   const siteUrl = c.env.APP_URL || "https://petm8.io";
-  const organizationJsonLd = {
+  const homeDescription = `${storeName} offers premium pet products, AI pet portraits, local events, and personalized commerce experiences.`;
+  const homeJsonLd = {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    name: storeName,
-    url: siteUrl,
-    logo: storeLogo || `${siteUrl}/logo.png`,
-    description: "Everything for your furry friend. Premium supplies, custom AI pet portraits, and subscriptions.",
+    "@graph": [
+      buildOrganization({
+        name: storeName,
+        url: siteUrl,
+        logoUrl: storeLogo || `${siteUrl}/logo.png`,
+        description: homeDescription,
+        email: "support@petm8.io",
+      }),
+      buildWebSite({
+        name: storeName,
+        url: siteUrl,
+        description: homeDescription,
+      }),
+      buildWebPage({
+        type: "WebPage",
+        name: `${storeName} Home`,
+        url: `${siteUrl.replace(/\/$/, "")}/`,
+        description: homeDescription,
+      }),
+    ],
   };
 
   return c.html(
     <Layout
       title="Home"
+      description={homeDescription}
       activePath="/"
       isAuthenticated={isAuthenticated}
       cartCount={cartCount}
       stripePublishableKey={c.env.STRIPE_PUBLISHABLE_KEY}
       url={siteUrl}
-      jsonLd={organizationJsonLd}
+      jsonLd={homeJsonLd}
       storeName={storeName}
       storeLogo={storeLogo}
       primaryColor={primaryColor}
@@ -539,8 +671,27 @@ app.get("/auth/verify-email", async (c) => {
 
 app.get("/about", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const siteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const aboutDescription = `${storeName} helps pet families discover trusted products, local events, and personalized experiences.`;
+  const aboutJsonLd = buildWebPage({
+    type: "AboutPage",
+    name: `About ${storeName}`,
+    url: `${siteUrl}/about`,
+    description: aboutDescription,
+  });
   return c.html(
-    <Layout url={c.req.url} title="About" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout
+      url={c.req.url}
+      title="About"
+      description={aboutDescription}
+      jsonLd={aboutJsonLd}
+      isAuthenticated={isAuthenticated}
+      cartCount={cartCount}
+      storeName={storeName}
+      storeLogo={storeLogo}
+      primaryColor={primaryColor}
+      secondaryColor={secondaryColor}
+    >
       <div class="max-w-3xl mx-auto px-4 py-12">
         <h1 class="text-3xl font-bold text-gray-900 mb-4">About {storeName}</h1>
         <p class="text-gray-600 leading-relaxed">
@@ -553,8 +704,27 @@ app.get("/about", async (c) => {
 
 app.get("/contact", async (c) => {
   const { cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const siteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const contactDescription = `Contact ${storeName} support for orders, bookings, and platform assistance.`;
+  const contactJsonLd = buildWebPage({
+    type: "ContactPage",
+    name: `Contact ${storeName}`,
+    url: `${siteUrl}/contact`,
+    description: contactDescription,
+  });
   return c.html(
-    <Layout url={c.req.url} title="Contact" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout
+      url={c.req.url}
+      title="Contact"
+      description={contactDescription}
+      jsonLd={contactJsonLd}
+      isAuthenticated={isAuthenticated}
+      cartCount={cartCount}
+      storeName={storeName}
+      storeLogo={storeLogo}
+      primaryColor={primaryColor}
+      secondaryColor={secondaryColor}
+    >
       <div class="max-w-3xl mx-auto px-4 py-12">
         <h1 class="text-3xl font-bold text-gray-900 mb-4">Contact</h1>
         <p class="text-gray-600 leading-relaxed">
@@ -574,6 +744,7 @@ app.get("/robots.txt", (c) => {
     "Disallow: /admin/",
     "Disallow: /platform/",
     "Disallow: /account/",
+    "Disallow: /auth/",
     "",
     `Sitemap: ${appUrl}/sitemap.xml`,
     "",
@@ -586,35 +757,7 @@ app.get("/llms.txt", (c) => {
   const store = c.get("store");
   const storeName = store?.name || "petm8";
   const appUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
-  const text = [
-    `# ${storeName}`,
-    "",
-    `> ${storeName} is a pet commerce platform offering personalized pet products,`,
-    "> AI-generated artwork, local pet events and bookings, and community features.",
-    "",
-    "## Key Capabilities",
-    "- Product catalog with search, filtering, and collections",
-    "- AI-powered pet artwork generation from photos",
-    "- Local pet events calendar with online booking",
-    "- Venue directory for pet-friendly locations",
-    "- Customer reviews and ratings",
-    "- Affiliate program for pet influencers",
-    "",
-    "## Structured Data",
-    "This site provides JSON-LD structured data on all pages:",
-    "- Product pages: Product schema with offers and aggregate ratings",
-    "- Event pages: Event schema with location and availability",
-    "- Venue pages: Place schema with geo coordinates",
-    "- Collection pages: CollectionPage schema with ItemList",
-    "- All pages: BreadcrumbList and Organization schemas",
-    "",
-    "## API",
-    `- GraphQL: ${appUrl}/graphql`,
-    `- Sitemap: ${appUrl}/sitemap.xml`,
-    "",
-    "## Contact",
-    `- Website: ${appUrl}`,
-  ].join("\n");
+  const text = buildLlmsTxt({ storeName, appUrl });
   return c.text(text, 200, { "Content-Type": "text/plain; charset=utf-8" });
 });
 
@@ -623,20 +766,7 @@ app.get("/.well-known/ai-plugin.json", (c) => {
   const store = c.get("store");
   const storeName = store?.name || "petm8";
   const appUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
-  return c.json({
-    schema_version: "v1",
-    name_for_human: storeName,
-    name_for_model: storeName.toLowerCase().replace(/\s+/g, "_"),
-    description_for_human: `${storeName} — personalized pet products, AI artwork, events, and bookings.`,
-    description_for_model: `${storeName} is a pet commerce platform. Use the GraphQL API at ${appUrl}/graphql for product search, event listings, and venue information. Structured data (JSON-LD) is available on all public pages.`,
-    api: {
-      type: "graphql",
-      url: `${appUrl}/graphql`,
-    },
-    logo_url: `${appUrl}/favicon-192.png`,
-    contact_email: "support@petm8.io",
-    legal_info_url: `${appUrl}/about`,
-  });
+  return c.json(buildAiPluginManifest({ storeName, appUrl }));
 });
 
 app.get("/sitemap.xml", async (c) => {
@@ -668,8 +798,6 @@ app.get("/sitemap.xml", async (c) => {
     urlEntry(`${appUrl}/studio`, now, "weekly", "0.6"),
     urlEntry(`${appUrl}/about`, now, "monthly", "0.4"),
     urlEntry(`${appUrl}/contact`, now, "monthly", "0.4"),
-    urlEntry(`${appUrl}/auth/login`, now, "monthly", "0.3"),
-    urlEntry(`${appUrl}/auth/register`, now, "monthly", "0.3"),
     urlEntry(`${appUrl}/venues`, now, "weekly", "0.6"),
     // Collection pages (redirect to /products?collection=slug)
     ...allCollections.map((col: any) =>
@@ -730,9 +858,34 @@ app.get("/products", async (c) => {
   const allCollections = await productRepo.findCollections();
 
   const siteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const listingUrl = query.collection
+    ? `${siteUrl}/products?collection=${encodeURIComponent(query.collection)}`
+    : `${siteUrl}/products`;
   const listingDescription = query.collection
     ? `Browse ${query.collection} products at ${storeName}`
     : `Shop ${result.total} products at ${storeName}. Premium pet supplies, events, and more.`;
+  const productsJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      buildCollectionPage(
+        {
+          name: query.collection ? `${query.collection} Products` : `${storeName} Product Catalog`,
+          description: listingDescription,
+          url: listingUrl,
+        },
+        result.total,
+      ),
+      buildItemList({
+        name: query.collection ? `${query.collection} Listing` : "Product Listing",
+        url: listingUrl,
+        items: localizedProducts.slice(0, 24).map((product: any, index: number) => ({
+          name: product.name,
+          url: `${siteUrl}/products/${product.slug}`,
+          position: index + 1,
+        })),
+      }),
+    ],
+  };
 
   return c.html(
     <Layout
@@ -742,7 +895,8 @@ app.get("/products", async (c) => {
       isAuthenticated={isAuthenticated}
       cartCount={cartCount}
       ogType="website"
-      url={`${siteUrl}/products`}
+      url={listingUrl}
+      jsonLd={productsJsonLd}
       storeName={storeName}
       storeLogo={storeLogo}
       primaryColor={primaryColor}
@@ -928,6 +1082,7 @@ app.get("/products/:slug", async (c) => {
       storeLogo={storeLogo}
       primaryColor={primaryColor}
       secondaryColor={secondaryColor}
+      scripts={["gallery.js", "variant-selector.js"]}
     >
       <ProductDetailPage
         product={{
@@ -976,6 +1131,7 @@ app.get("/cart", async (c) => {
       items = (cartData as any)?.items ?? [];
       totals = (cartData as any)?.totals ?? null;
       warnings = (cartData as any)?.warnings ?? [];
+      couponCode = (cartData as any)?.coupon?.code ?? null;
     } catch { /* empty cart */ }
   }
 
@@ -1423,7 +1579,7 @@ app.get("/studio", async (c) => {
   const pets = user ? await aiRepo.findPetsByUserId(user.sub) : [];
 
   return c.html(
-    <Layout url={c.req.url} title="AI Studio" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="AI Studio" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor} scripts={["studio.js"]}>
       <StudioCreatePage
         templates={templates as any}
         pets={pets as any}
@@ -1440,7 +1596,7 @@ app.get("/studio/create", async (c) => {
   const pets = await aiRepo.findPetsByUserId(user.sub);
 
   return c.html(
-    <Layout url={c.req.url} title="Create Art" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Create Art" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor} scripts={["studio.js"]}>
       <StudioCreatePage
         templates={templates as any}
         pets={pets as any}
@@ -1468,7 +1624,7 @@ app.get("/studio/preview/:id", async (c) => {
   const isAdmin = isAdminPlatformRole(dbUser?.platformRole);
 
   return c.html(
-    <Layout url={c.req.url} title="Art Preview" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout url={c.req.url} title="Art Preview" activePath="/studio" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor} scripts={["studio.js"]}>
       <StudioPreviewPage
         jobId={job.id}
         imageUrl={job.outputRasterUrl ?? job.outputSvgUrl ?? undefined}
@@ -1610,9 +1766,46 @@ app.get("/events", async (c) => {
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, totalPages) : 1;
   const start = (page - 1) * pageSize;
   const pagedEvents = filteredEvents.slice(start, start + pageSize);
+  const eventsDescription = `Explore pet-friendly workshops and bookable experiences from ${storeName}.`;
+  const siteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const eventsUrl = `${siteUrl}/events`;
+  const eventsJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      buildCollectionPage(
+        {
+          name: `${storeName} Events`,
+          description: eventsDescription,
+          url: eventsUrl,
+        },
+        total,
+      ),
+      buildItemList({
+        name: "Events Listing",
+        url: eventsUrl,
+        items: pagedEvents.map((event: any, index: number) => ({
+          name: event.name,
+          url: `${siteUrl}/events/${event.slug}`,
+          position: start + index + 1,
+        })),
+      }),
+    ],
+  };
 
   return c.html(
-    <Layout url={c.req.url} title="Events" activePath="/events" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout
+      url={c.req.url}
+      title="Events"
+      description={eventsDescription}
+      activePath="/events"
+      jsonLd={eventsJsonLd}
+      isAuthenticated={isAuthenticated}
+      cartCount={cartCount}
+      storeName={storeName}
+      storeLogo={storeLogo}
+      primaryColor={primaryColor}
+      secondaryColor={secondaryColor}
+    >
       <EventsListPage
         events={pagedEvents as any}
         filterDateFrom={dateFrom}
@@ -1673,9 +1866,31 @@ app.get("/events/calendar", async (c) => {
   const eventTypes = [
     { key: "workshop", label: "Workshop", color: "#22c55e", dotClass: "bg-green-500" },
   ];
+  const siteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const calendarDescription = `Monthly calendar view for ${storeName} pet events and workshop availability.`;
+  const calendarJsonLd = buildCollectionPage(
+    {
+      name: `${storeName} Events Calendar`,
+      description: calendarDescription,
+      url: `${siteUrl}/events/calendar`,
+    },
+    Object.keys(eventsByDate).length,
+  );
 
   return c.html(
-    <Layout url={c.req.url} title="Events Calendar" activePath="/events" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout
+      url={c.req.url}
+      title="Events Calendar"
+      description={calendarDescription}
+      activePath="/events"
+      jsonLd={calendarJsonLd}
+      isAuthenticated={isAuthenticated}
+      cartCount={cartCount}
+      storeName={storeName}
+      storeLogo={storeLogo}
+      primaryColor={primaryColor}
+      secondaryColor={secondaryColor}
+    >
       <EventCalendarPage
         eventsByDate={eventsByDate}
         selectedDate={selectedDate}
@@ -1689,6 +1904,7 @@ app.get("/events/calendar", async (c) => {
 
 app.get("/events/:slug", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
   const productRepo = new ProductRepository(db, storeId);
   const bookingRepo = new BookingRepository(db, storeId);
   const product = await productRepo.findBySlug(c.req.param("slug"));
@@ -1751,6 +1967,32 @@ app.get("/events/:slug", async (c) => {
   const duration = settings
     ? `${settings.duration} ${settings.durationUnit || "minutes"}`
     : "Flexible duration";
+
+  const reviewRepo = new ReviewRepository(db, storeId);
+  const [reviewResult, ratingResult, distribution] = await Promise.all([
+    reviewRepo.findByProduct(product.id, 1, 10, {
+      rankMode: featureFlags.review_intelligence ? "intelligent" : "recent",
+    }),
+    reviewRepo.getAverageRating(product.id),
+    reviewRepo.getStarDistribution(product.id),
+  ]);
+
+  const formattedReviews = reviewResult.reviews.map((review: any, index: number) => ({
+    id: review.id,
+    rating: review.rating,
+    title: review.title ?? null,
+    content: review.content ?? null,
+    authorName: review.authorName ?? "Anonymous",
+    verified: review.isVerifiedPurchase ?? false,
+    helpfulCount: review.helpfulCount ?? 0,
+    isTopHelpful: featureFlags.review_intelligence && index === 0 && (review.helpfulCount ?? 0) > 0,
+    storeResponse: review.responseText ?? null,
+    createdAt: review.createdAt ? formatDateUs(review.createdAt) : "",
+  }));
+
+  const reviewSummary = ratingResult.count > 0
+    ? { averageRating: ratingResult.average, totalCount: ratingResult.count, distribution }
+    : null;
 
   const eventSiteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
   const eventUrl = `${eventSiteUrl}/events/${product.slug}`;
@@ -1833,6 +2075,10 @@ app.get("/events/:slug", async (c) => {
         slots={mappedSlots as any}
         selectedSlotId={selectedSlotId}
         personTypes={personTypes as any}
+        reviews={formattedReviews}
+        reviewSummary={reviewSummary}
+        isAuthenticated={isAuthenticated}
+        isReviewIntelligenceEnabled={featureFlags.review_intelligence}
       />
     </Layout>
   );
@@ -3063,9 +3309,46 @@ app.get("/venues", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   const venueRepo = new VenueRepository(db, storeId);
   const venues = await venueRepo.findAll();
+  const venuesDescription = `Discover trusted pet-friendly venues and service locations curated by ${storeName}.`;
+  const siteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const venuesUrl = `${siteUrl}/venues`;
+  const venuesJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      buildCollectionPage(
+        {
+          name: `${storeName} Venues`,
+          description: venuesDescription,
+          url: venuesUrl,
+        },
+        venues.length,
+      ),
+      buildItemList({
+        name: "Venue Listing",
+        url: venuesUrl,
+        items: venues.slice(0, 24).map((venue: any, index: number) => ({
+          name: venue.name,
+          url: `${siteUrl}/venues/${venue.slug}`,
+          position: index + 1,
+        })),
+      }),
+    ],
+  };
 
   return c.html(
-    <Layout url={c.req.url} title="Venues" activePath="/venues" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout
+      url={c.req.url}
+      title="Venues"
+      description={venuesDescription}
+      activePath="/venues"
+      jsonLd={venuesJsonLd}
+      isAuthenticated={isAuthenticated}
+      cartCount={cartCount}
+      storeName={storeName}
+      storeLogo={storeLogo}
+      primaryColor={primaryColor}
+      secondaryColor={secondaryColor}
+    >
       <VenueListPage venues={venues as any} />
     </Layout>
   );
@@ -3083,9 +3366,36 @@ app.get("/venues/:slug", async (c) => {
       404
     );
   }
+  const siteUrl = (c.env.APP_URL || "https://petm8.io").replace(/\/$/, "");
+  const venueDescription = venue.description ?? `${venue.name} venue profile and location details.`;
+  const venueJsonLd = buildPlace({
+    name: venue.name,
+    description: venueDescription,
+    address: venue.address ?? "Address unavailable",
+    city: venue.city ?? undefined,
+    state: venue.state ?? undefined,
+    zipCode: venue.postalCode ?? undefined,
+    country: venue.country ?? undefined,
+    latitude: venue.latitude != null ? Number(venue.latitude) : undefined,
+    longitude: venue.longitude != null ? Number(venue.longitude) : undefined,
+    phone: venue.contactPhone ?? undefined,
+    imageUrl: Array.isArray(venue.photos) ? venue.photos[0] ?? undefined : undefined,
+    url: `${siteUrl}/venues/${venue.slug}`,
+  });
 
   return c.html(
-    <Layout url={c.req.url} title={venue.name} isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+    <Layout
+      url={c.req.url}
+      title={venue.name}
+      description={venueDescription}
+      jsonLd={venueJsonLd}
+      isAuthenticated={isAuthenticated}
+      cartCount={cartCount}
+      storeName={storeName}
+      storeLogo={storeLogo}
+      primaryColor={primaryColor}
+      secondaryColor={secondaryColor}
+    >
       <VenueDetailPage venue={venue as any} events={[]} />
     </Layout>
   );

@@ -1,9 +1,12 @@
+import { z } from "zod";
+
 export interface Env {
   // Database
   DATABASE_URL: string;
 
   // Auth
   JWT_SECRET: string;
+  AUDIT_LOG_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   APPLE_CLIENT_ID?: string;
@@ -56,4 +59,31 @@ export interface Env {
   FULFILLMENT_QUEUE: Queue;
   NOTIFICATION_QUEUE: Queue;
   AI: Ai;
+}
+
+const requiredEnvSchema = z.object({
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  JWT_SECRET: z.string().min(1, "JWT_SECRET is required"),
+  STRIPE_SECRET_KEY: z.string().min(1, "STRIPE_SECRET_KEY is required"),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1, "STRIPE_WEBHOOK_SECRET is required"),
+  STRIPE_PUBLISHABLE_KEY: z.string().min(1, "STRIPE_PUBLISHABLE_KEY is required"),
+  PRINTFUL_API_KEY: z.string().min(1, "PRINTFUL_API_KEY is required"),
+  GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required"),
+  APP_URL: z.string().url("APP_URL must be a valid URL"),
+  APP_NAME: z.string().min(1, "APP_NAME is required"),
+  PLATFORM_DOMAINS: z.string().min(1, "PLATFORM_DOMAINS is required"),
+  DEFAULT_STORE_ID: z.string().uuid("DEFAULT_STORE_ID must be a valid UUID"),
+});
+
+let envValidated = false;
+
+export function validateEnv(env: Env): void {
+  if (envValidated) return;
+  const result = requiredEnvSchema.safeParse(env);
+  if (!result.success) {
+    const missing = result.error.issues.map(i => `  - ${i.path.join(".")}: ${i.message}`).join("\n");
+    console.error(`[STARTUP] Environment validation failed:\n${missing}`);
+    throw new Error(`Missing or invalid environment variables:\n${missing}`);
+  }
+  envValidated = true;
 }

@@ -246,6 +246,14 @@ export const AdminBookingsPage: FC<AdminBookingsPageProps> = ({
                             >
                               No Show
                             </button>
+                            <button
+                              type="button"
+                              data-action="cancel"
+                              data-booking-id={b.id}
+                              class="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                              Cancel
+                            </button>
                           </>
                         )}
                       </div>
@@ -330,6 +338,13 @@ export const AdminBookingsPage: FC<AdminBookingsPageProps> = ({
             const res = await fetch('/api/bookings/' + bookingId + '/no-show', { method: 'POST' });
             if (res.ok) location.reload();
             else showAdminBookingsError('No-show failed: ' + (await res.text()));
+          }
+
+          if (action === 'cancel') {
+            if (!confirm('Cancel this booking?')) return;
+            const res = await fetch('/api/bookings/' + bookingId + '/cancel', { method: 'POST' });
+            if (res.ok) location.reload();
+            else showAdminBookingsError('Cancel failed: ' + (await res.text()));
           }
         });
       </script>`}

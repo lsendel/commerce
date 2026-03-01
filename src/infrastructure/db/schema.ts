@@ -546,6 +546,7 @@ export const products = pgTable("products", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   storeStatusIdx: index("products_store_status_idx").on(table.storeId, table.status),
+  storeSlugIdx: index("products_store_slug_idx").on(table.storeId, table.slug),
 }));
 
 export const productsRelations = relations(products, ({ many, one }) => ({
@@ -764,6 +765,7 @@ export const orders = pgTable(
   },
   (table) => ({
     userIdx: index("orders_user_idx").on(table.userId),
+    storeUserIdx: index("orders_store_user_idx").on(table.storeId, table.userId),
     storeStatusIdx: index("orders_store_status_idx").on(table.storeId, table.status),
     stripeSessionIdx: index("orders_stripe_session_idx").on(table.stripeCheckoutSessionId),
     stripePaymentIdx: index("orders_stripe_payment_idx").on(table.stripePaymentIntentId),
@@ -1294,7 +1296,10 @@ export const bookings = pgTable("bookings", {
   status: bookingStatusEnum("status").default("confirmed"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  availabilityIdx: index("bookings_availability_idx").on(table.bookingAvailabilityId),
+  storeStatusIdx: index("bookings_store_status_idx").on(table.storeId, table.status),
+}));
 
 export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   orderItem: one(orderItems, {
