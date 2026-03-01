@@ -23,6 +23,10 @@
   - `GET /api/admin/integration-marketplace/apps`
   - `GET /api/admin/headless/packs`
   - `GET /api/admin/store-templates`
+- Optional reversible mutation checks (when enabled):
+  - `POST /api/admin/integration-marketplace/apps/:provider/install` + uninstall rollback
+  - `POST /api/admin/headless/packs` + revoke rollback
+  - `POST /api/admin/store-templates` + delete rollback
 
 ## Modes
 
@@ -32,6 +36,8 @@
    - `SMOKE_BASE_URL=https://<env-host> SMOKE_COOKIE='<cookie>' pnpm smoke:admin-parity`
    - or
    - `SMOKE_BASE_URL=https://<env-host> SMOKE_AUTHORIZATION='Bearer <token>' pnpm smoke:admin-parity`
+3. Live API + mutation mode:
+   - `SMOKE_BASE_URL=https://<env-host> SMOKE_COOKIE='<cookie>' SMOKE_ENABLE_MUTATIONS=true pnpm smoke:admin-parity`
 
 ## CI Automation
 
@@ -40,6 +46,15 @@
 - `live-smoke`: runs on non-PR events when:
   - `SMOKE_BASE_URL` is set;
   - one of `SMOKE_COOKIE` or `SMOKE_AUTHORIZATION` is set.
+  - mutation checks are enabled only when `SMOKE_ENABLE_MUTATIONS` is truthy.
+- Report artifacts:
+  - contract: `output/smoke/admin-api-parity-report.contract.json|.md`
+  - live: `output/smoke/admin-api-parity-report.live.json|.md`
+
+## Alerting
+
+- Optional webhook: set `SMOKE_ALERT_WEBHOOK_URL`.
+- On failure, the script posts a JSON payload with error summary and last failed check metadata.
 
 ## Failure Handling
 
