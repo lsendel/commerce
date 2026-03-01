@@ -114,10 +114,20 @@ export const AdminIntegrationsPage: FC<AdminIntegrationsProps> = ({
 
   return (
     <div class="max-w-5xl mx-auto py-8 px-4">
-      <h1 class="text-3xl font-bold mb-2 text-gray-900 dark:text-gray-100">Platform Integrations</h1>
-      <p class="text-gray-500 dark:text-gray-400 mb-8">
-        Manage API keys, verify connections, and monitor service health.
-      </p>
+      <div class="mb-8 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 class="text-3xl font-bold mb-2 text-gray-900 dark:text-gray-100">Platform Integrations</h1>
+          <p class="text-gray-500 dark:text-gray-400">
+            Manage API keys, verify connections, and monitor service health.
+          </p>
+        </div>
+        <a
+          href="/admin/integrations/marketplace"
+          class="rounded-lg border border-fuchsia-300 bg-fuchsia-50 px-3 py-2 text-xs font-semibold text-fuchsia-700 hover:bg-fuchsia-100"
+        >
+          Open Marketplace
+        </a>
+      </div>
 
       <IntegrationTabs tabs={TABS} activeTab="Payments" prefix="admin" />
 

@@ -149,6 +149,12 @@ export const YOLO_WEEKLY_FLAG_MATRIX = [
     week: 20,
     description: "No-code workflow builder for merchant automation rules.",
   },
+  {
+    key: "integration_marketplace",
+    featureId: 26,
+    week: 21,
+    description: "Integration marketplace with install/uninstall flows for first-party and partner apps.",
+  },
 ] as const;
 
 export type FeatureFlagKey = (typeof YOLO_WEEKLY_FLAG_MATRIX)[number]["key"];

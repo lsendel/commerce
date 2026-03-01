@@ -23,6 +23,7 @@ import { incidentResponderContract } from "./incident-responder.contract";
 import { fulfillmentExceptionContract } from "./fulfillment-exception.contract";
 import { pricingExperimentContract } from "./pricing-experiment.contract";
 import { workflowsContract } from "./workflows.contract";
+import { integrationMarketplaceContract } from "./integration-marketplace.contract";
 
 const c = initContract();
 
@@ -51,6 +52,7 @@ export const contract = c.router({
   fulfillmentException: fulfillmentExceptionContract,
   pricingExperiment: pricingExperimentContract,
   workflows: workflowsContract,
+  integrationMarketplace: integrationMarketplaceContract,
 });
 
 export {
@@ -78,4 +80,5 @@ export {
   fulfillmentExceptionContract,
   pricingExperimentContract,
   workflowsContract,
+  integrationMarketplaceContract,
 };

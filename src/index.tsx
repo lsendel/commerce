@@ -54,6 +54,7 @@ import { incidentResponderRoutes } from "./routes/api/incident-responder.routes"
 import { fulfillmentExceptionRoutes } from "./routes/api/fulfillment-exceptions.routes";
 import { pricingExperimentRoutes } from "./routes/api/pricing-experiments.routes";
 import { workflowRoutes } from "./routes/api/workflows.routes";
+import { integrationMarketplaceRoutes } from "./routes/api/integration-marketplace.routes";
 
 // GraphQL
 import { schema } from "./graphql/schema";
@@ -118,6 +119,7 @@ import { AdminAnalyticsPage as _AdminAnalyticsPage } from "./routes/pages/admin/
 import { IncidentResponderPage as _IncidentResponderPage } from "./routes/pages/admin/incident-responder.page";
 import { PricingExperimentsPage as _PricingExperimentsPage } from "./routes/pages/admin/pricing-experiments.page";
 import { WorkflowBuilderPage as _WorkflowBuilderPage } from "./routes/pages/admin/workflows.page";
+import { IntegrationMarketplacePage as _IntegrationMarketplacePage } from "./routes/pages/admin/integration-marketplace.page";
 import { StoreIntegrationsPage as _StoreIntegrationsPage } from "./routes/pages/platform/store-integrations.page";
 import { NotFoundPage } from "./routes/pages/404.page";
 import { ErrorPage } from "./components/ui/error-page";
@@ -176,6 +178,7 @@ const AdminAnalyticsPage = _AdminAnalyticsPage as any;
 const IncidentResponderPage = _IncidentResponderPage as any;
 const PricingExperimentsPage = _PricingExperimentsPage as any;
 const WorkflowBuilderPage = _WorkflowBuilderPage as any;
+const IntegrationMarketplacePage = _IntegrationMarketplacePage as any;
 const ResetPasswordPage = _ResetPasswordPage as any;
 const VerifyEmailPage = _VerifyEmailPage as any;
 
@@ -302,6 +305,7 @@ app.route("/api/admin", incidentResponderRoutes);
 app.route("/api/admin", fulfillmentExceptionRoutes);
 app.route("/api/admin", pricingExperimentRoutes);
 app.route("/api/admin", workflowRoutes);
+app.route("/api/admin", integrationMarketplaceRoutes);
 
 // ─── GraphQL ───────────────────────────────────────────────
 const yoga = createYoga({ schema, graphqlEndpoint: "/graphql" });
@@ -1907,6 +1911,32 @@ app.get("/admin/integrations", async (c) => {
   return c.html(
     <Layout url={c.req.url} title="Platform Integrations" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <AdminIntegrationsPage integrations={integrations as any} infraHealth={infraHealth as any} />
+    </Layout>,
+  );
+});
+
+app.get("/admin/integrations/marketplace", async (c) => {
+  const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
+  if (!user) return c.redirect("/auth/login");
+  const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  if (!featureFlags.integration_marketplace) {
+    return c.redirect("/admin/integrations", 302);
+  }
+
+  const integrationRepo = new IntegrationRepoImpl(db);
+  const secretRepo = new SecretRepoImpl(db);
+  const listUseCase = new ListIntegrationsUseCase(integrationRepo, secretRepo);
+  const { IntegrationMarketplaceUseCase } = await import("./application/platform/integration-marketplace.usecase");
+  const marketplaceUseCase = new IntegrationMarketplaceUseCase(
+    integrationRepo,
+    secretRepo,
+    listUseCase,
+  );
+  const apps = await marketplaceUseCase.listApps(storeId);
+
+  return c.html(
+    <Layout url={c.req.url} title="Integration Marketplace" isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
+      <IntegrationMarketplacePage apps={apps as any} />
     </Layout>,
   );
 });
