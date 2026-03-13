@@ -44,6 +44,20 @@ export function cacheResponse(options: CacheOptions) {
       queryParams[k] = v;
     });
 
+    // Geo-aware variation for product pages so country/currency-specific pricing
+    // never leaks across users via cached HTML.
+    if (url.pathname.startsWith("/products")) {
+      const requestCountry = (
+        queryParams.country
+        || c.req.header("CF-IPCountry")
+        || c.req.header("X-Vercel-IP-Country")
+        || c.req.header("CloudFront-Viewer-Country")
+        || ""
+      ).toUpperCase();
+      queryParams.__geo_country = requestCountry;
+      queryParams.__geo_currency = (queryParams.currency || "").toUpperCase();
+    }
+
     const cacheKey = buildCacheKey(storeId, url.pathname, queryParams);
 
     // ── Try cache hit ──────────────────────────────────────

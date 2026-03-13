@@ -1,0 +1,110 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "petm8" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: 🐾
+        - generic [ref=e6]: petm8
+      - generic [ref=e7]:
+        - navigation [ref=e8]:
+          - link "Shop" [ref=e9] [cursor=pointer]:
+            - /url: /shop
+          - link "Events" [ref=e10] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e11] [cursor=pointer]:
+            - /url: /studio
+        - link "Shopping cart" [ref=e12] [cursor=pointer]:
+          - /url: /cart
+          - img [ref=e13]
+        - link "Sign in" [ref=e15] [cursor=pointer]:
+          - /url: /login
+  - main [ref=e16]:
+    - generic [ref=e17]:
+      - navigation "Breadcrumb" [ref=e18]:
+        - list [ref=e19]:
+          - listitem [ref=e20]:
+            - link "Home" [ref=e21] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=e22]: /
+          - listitem [ref=e23]:
+            - link "Products" [ref=e24] [cursor=pointer]:
+              - /url: /products
+          - listitem [ref=e25]: /
+          - listitem [ref=e26]: Dog Beach Day Experience
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - img "Dogs playing on the beach during a Beach Day Experience" [ref=e30]
+          - generic [ref=e31]:
+            - button "Dogs playing on the beach during a Beach Day Experience" [ref=e32] [cursor=pointer]:
+              - img "Dogs playing on the beach during a Beach Day Experience" [ref=e33]
+            - button "Dog running through agility course on sand" [ref=e34] [cursor=pointer]:
+              - img "Dog running through agility course on sand" [ref=e35]
+            - button "Gourmet puppy picnic setup on the beach" [ref=e36] [cursor=pointer]:
+              - img "Gourmet puppy picnic setup on the beach" [ref=e37]
+            - button "Group of happy dogs and owners at the beach" [ref=e38] [cursor=pointer]:
+              - img "Group of happy dogs and owners at the beach" [ref=e39]
+        - generic [ref=e40]:
+          - generic [ref=e41]: Bookable Event
+          - heading "Dog Beach Day Experience" [level=1] [ref=e42]
+          - generic [ref=e44]:
+            - generic [ref=e47]: $79.00
+            - button "Add to Cart" [ref=e48] [cursor=pointer]:
+              - img [ref=e99]
+              - text: Add to Cart
+          - generic [ref=e51]:
+            - heading "Description" [level=3] [ref=e52]
+            - generic [ref=e53]:
+              - paragraph [ref=e54]: Treat your pup to the ultimate beach day! A guided 3-hour group experience at Bondi Beach with professional dog handlers.
+              - heading "What's Included" [level=3] [ref=e55]
+              - list [ref=e56]:
+                - listitem [ref=e57]: Professional dog handlers (1 per 4 dogs)
+                - listitem [ref=e58]: Water toys & agility equipment
+                - listitem [ref=e59]: Gourmet puppy picnic lunch
+                - listitem [ref=e60]: Fresh water stations
+                - listitem [ref=e61]: Professional photo package (10+ edited photos)
+                - listitem [ref=e62]: Doggy bandana souvenir
+              - heading "What to Bring" [level=3] [ref=e63]
+              - list [ref=e64]:
+                - listitem [ref=e65]: Leash & collar with ID tag
+                - listitem [ref=e66]: Towel for your dog
+                - listitem [ref=e67]: Sunscreen (for you!)
+  - contentinfo [ref=e68]:
+    - generic [ref=e69]:
+      - generic [ref=e70]:
+        - generic [ref=e71]:
+          - link "petm8" [ref=e72] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e73]: 🐾
+            - generic [ref=e74]: petm8
+          - paragraph [ref=e75]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e76]:
+          - heading "Shop" [level=4] [ref=e77]
+          - list [ref=e78]:
+            - listitem [ref=e79]:
+              - link "All Products" [ref=e80] [cursor=pointer]:
+                - /url: /shop
+            - listitem [ref=e81]:
+              - link "Collections" [ref=e82] [cursor=pointer]:
+                - /url: /shop/collections
+        - generic [ref=e83]:
+          - heading "Account" [level=4] [ref=e84]
+          - list [ref=e85]:
+            - listitem [ref=e86]:
+              - link "Orders" [ref=e87] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e88]:
+              - link "My Pets" [ref=e89] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e90]:
+          - heading "Company" [level=4] [ref=e91]
+          - list [ref=e92]:
+            - listitem [ref=e93]:
+              - link "About" [ref=e94] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e95]:
+              - link "Contact" [ref=e96] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e98]: © 2026 petm8. All rights reserved.
+  - generic [ref=e102]:
+    - img [ref=e103]
+    - generic [ref=e105]: "[object Object]"

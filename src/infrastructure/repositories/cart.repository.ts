@@ -5,6 +5,7 @@ import {
   cartItems,
   productVariants,
   products,
+  couponCodes,
 } from "../db/schema";
 
 export class CartRepository {
@@ -22,7 +23,7 @@ export class CartRepository {
     const existing = await this.db
       .select()
       .from(carts)
-      .where(eq(carts.sessionId, sessionId))
+      .where(and(eq(carts.storeId, this.storeId), eq(carts.sessionId, sessionId)))
       .limit(1);
 
     if (existing.length > 0) {
@@ -67,6 +68,19 @@ export class CartRepository {
     const cart = cartRows[0];
     if (!cart) return null;
 
+    let coupon: { id: string; code: string } | null = null;
+    if (cart.couponCodeId) {
+      const couponRows = await this.db
+        .select({
+          id: couponCodes.id,
+          code: couponCodes.code,
+        })
+        .from(couponCodes)
+        .where(eq(couponCodes.id, cart.couponCodeId))
+        .limit(1);
+      coupon = couponRows[0] ?? null;
+    }
+
     // Fetch cart items
     const items = await this.db
       .select()
@@ -78,6 +92,7 @@ export class CartRepository {
         id: cart.id,
         items: [],
         subtotal: 0,
+        coupon,
       };
     }
 
@@ -134,6 +149,7 @@ export class CartRepository {
       id: cart.id,
       items: enrichedItems,
       subtotal: Math.round(subtotal * 100) / 100,
+      coupon,
     };
   }
 
@@ -254,7 +270,7 @@ export class CartRepository {
     const anonCarts = await this.db
       .select()
       .from(carts)
-      .where(eq(carts.sessionId, fromSessionId))
+      .where(and(eq(carts.storeId, this.storeId), eq(carts.sessionId, fromSessionId)))
       .limit(1);
 
     const anonCart = anonCarts[0];
@@ -264,7 +280,7 @@ export class CartRepository {
     const userCarts = await this.db
       .select()
       .from(carts)
-      .where(eq(carts.userId, toUserId))
+      .where(and(eq(carts.storeId, this.storeId), eq(carts.userId, toUserId)))
       .limit(1);
 
     const userCart = userCarts[0];

@@ -1,0 +1,90 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Become an Affiliate | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "Shopping cart" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - link "Sign in" [ref=e21] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - heading "Become an Affiliate" [level=1] [ref=e24]
+      - paragraph [ref=e25]: Earn commissions by promoting petm8 products. Share your unique referral link and earn on every sale.
+      - generic [ref=e26]:
+        - heading "How It Works" [level=2] [ref=e27]
+        - list [ref=e28]:
+          - listitem [ref=e29]:
+            - generic [ref=e30]: "1"
+            - generic [ref=e31]: Sign up and get your unique referral link
+          - listitem [ref=e32]:
+            - generic [ref=e33]: "2"
+            - generic [ref=e34]: Share your link with your audience
+          - listitem [ref=e35]:
+            - generic [ref=e36]: "3"
+            - generic [ref=e37]: Earn commission on every purchase (30-day cookie window)
+          - listitem [ref=e38]:
+            - generic [ref=e39]: "4"
+            - generic [ref=e40]: Get paid monthly via Stripe
+      - paragraph [ref=e42]:
+        - text: Please
+        - link "sign in" [ref=e43] [cursor=pointer]:
+          - /url: /auth/login
+        - text: to register as an affiliate.
+  - contentinfo [ref=e44]:
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - link "petm8 home" [ref=e48] [cursor=pointer]:
+            - /url: /
+            - img [ref=e49]
+            - generic [ref=e51]: petm8
+          - paragraph [ref=e52]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e53]:
+          - heading "Shop" [level=4] [ref=e54]
+          - list [ref=e55]:
+            - listitem [ref=e56]:
+              - link "All Products" [ref=e57] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e58]:
+              - link "Collections" [ref=e59] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e60]:
+          - heading "Account" [level=4] [ref=e61]
+          - list [ref=e62]:
+            - listitem [ref=e63]:
+              - link "Orders" [ref=e64] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e65]:
+              - link "My Pets" [ref=e66] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e67]:
+          - heading "Company" [level=4] [ref=e68]
+          - list [ref=e69]:
+            - listitem [ref=e70]:
+              - link "About" [ref=e71] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e72]:
+              - link "Contact" [ref=e73] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e75]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e76]:
+    - generic [ref=e77]:
+      - heading "Your Cart" [level=2] [ref=e78]
+      - button "Close cart" [ref=e79] [cursor=pointer]:
+        - img [ref=e80]

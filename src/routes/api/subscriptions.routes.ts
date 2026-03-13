@@ -14,6 +14,7 @@ import { createSubscriptionSchema } from "../../shared/validators";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { NotFoundError, ValidationError } from "../../shared/errors";
 import { resolveFeatureFlags } from "../../shared/feature-flags";
+import { resolveRequestIdempotencyKey } from "../../shared/idempotency";
 
 const subscriptionRoutes = new Hono<{ Bindings: Env }>();
 const bundleSelectionSchema = z.object({
@@ -23,6 +24,24 @@ const bundleSelectionSchema = z.object({
 const subscriptionBuilderPayloadSchema = z.object({
   selections: z.array(bundleSelectionSchema).min(1).max(8),
 });
+
+async function resolveMutationIdempotencyKey(params: {
+  c: any;
+  namespace: string;
+  userId: string;
+  resourceId?: string;
+  payload?: unknown;
+}) {
+  const key = await resolveRequestIdempotencyKey({
+    providedKey: params.c.req.header("Idempotency-Key"),
+    namespace: params.namespace,
+    userId: params.userId,
+    resourceId: params.resourceId,
+    payload: params.payload,
+  });
+  params.c.header("Idempotency-Key", key);
+  return key;
+}
 
 function checkBuilderFeature(c: any) {
   const flags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
@@ -59,8 +78,16 @@ subscriptionRoutes.post(
       const { planId } = c.req.valid("json");
       const userId = c.get("userId");
       const appUrl = c.env.APP_URL;
+      const idempotencyKey = await resolveMutationIdempotencyKey({
+        c,
+        namespace: "subscriptions.create",
+        userId,
+        payload: { planId },
+      });
 
-      const result = await useCase.create(userId, planId, appUrl);
+      const result = await useCase.create(userId, planId, appUrl, {
+        idempotencyKey,
+      });
 
       return c.json({ checkoutUrl: result.checkoutUrl }, 201);
     } catch (err) {
@@ -192,7 +219,15 @@ subscriptionRoutes.post(
       const { selections } = c.req.valid("json");
       const userId = c.get("userId");
       const appUrl = c.env.APP_URL;
-      const result = await useCase.checkout(userId, selections, appUrl);
+      const idempotencyKey = await resolveMutationIdempotencyKey({
+        c,
+        namespace: "subscriptions.builder.checkout",
+        userId,
+        payload: { selections },
+      });
+      const result = await useCase.checkout(userId, selections, appUrl, {
+        idempotencyKey,
+      });
       return c.json(result, 201);
     } catch (err) {
       if (err instanceof NotFoundError) {
@@ -217,8 +252,16 @@ subscriptionRoutes.post("/subscriptions/portal", async (c) => {
   try {
     const userId = c.get("userId");
     const appUrl = c.env.APP_URL;
+    const idempotencyKey = await resolveMutationIdempotencyKey({
+      c,
+      namespace: "subscriptions.portal",
+      userId,
+      payload: { returnUrl: `${appUrl}/account/billing` },
+    });
 
-    const result = await useCase.execute(userId, `${appUrl}/account/billing`);
+    const result = await useCase.execute(userId, `${appUrl}/account/billing`, {
+      idempotencyKey,
+    });
 
     return c.json({ url: result.url });
   } catch (err) {
@@ -248,8 +291,17 @@ subscriptionRoutes.delete("/subscriptions/:id", async (c) => {
   try {
     const userId = c.get("userId");
     const subscriptionId = c.req.param("id");
+    const idempotencyKey = await resolveMutationIdempotencyKey({
+      c,
+      namespace: "subscriptions.cancel",
+      userId,
+      resourceId: subscriptionId,
+      payload: {},
+    });
 
-    const updated = await useCase.cancel(userId, subscriptionId);
+    const updated = await useCase.cancel(userId, subscriptionId, {
+      idempotencyKey,
+    });
 
     return c.json({
       subscription: {
@@ -277,7 +329,6 @@ const changePlanSchema = z.object({
 
 subscriptionRoutes.patch(
   "/subscriptions/:id/change-plan",
-  requireAuth(),
   zValidator("json", changePlanSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
@@ -291,8 +342,20 @@ subscriptionRoutes.patch(
       const userId = c.get("userId");
       const subscriptionId = c.req.param("id");
       const { newPlanId } = c.req.valid("json");
+      const idempotencyKey = await resolveMutationIdempotencyKey({
+        c,
+        namespace: "subscriptions.change-plan",
+        userId,
+        resourceId: subscriptionId,
+        payload: { newPlanId },
+      });
 
-      const updated = await useCase.changePlan(userId, subscriptionId, newPlanId);
+      const updated = await useCase.changePlan(
+        userId,
+        subscriptionId,
+        newPlanId,
+        { idempotencyKey },
+      );
       return c.json({ subscription: updated });
     } catch (err) {
       if (err instanceof NotFoundError) return c.json({ error: err.message }, 404);
@@ -305,7 +368,6 @@ subscriptionRoutes.patch(
 // POST /subscriptions/:id/resume — resume a subscription scheduled for cancellation
 subscriptionRoutes.post(
   "/subscriptions/:id/resume",
-  requireAuth(),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const stripe = createStripeClient(c.env.STRIPE_SECRET_KEY);
@@ -316,8 +378,17 @@ subscriptionRoutes.post(
     try {
       const userId = c.get("userId");
       const subscriptionId = c.req.param("id");
+      const idempotencyKey = await resolveMutationIdempotencyKey({
+        c,
+        namespace: "subscriptions.resume",
+        userId,
+        resourceId: subscriptionId,
+        payload: {},
+      });
 
-      const updated = await useCase.execute(userId, subscriptionId);
+      const updated = await useCase.execute(userId, subscriptionId, {
+        idempotencyKey,
+      });
       return c.json({ subscription: updated });
     } catch (err) {
       if (err instanceof NotFoundError) return c.json({ error: err.message }, 404);

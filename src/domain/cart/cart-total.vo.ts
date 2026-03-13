@@ -43,8 +43,8 @@ export function recalculate(
 
   const afterDiscount = subtotal - discount;
 
-  // Shipping: free for orders over $50, flat $5.99 otherwise
-  const shippingEstimate = afterDiscount >= 50 ? 0 : 5.99;
+  // Shipping: empty carts should stay at $0.00; free for orders over $50 otherwise.
+  const shippingEstimate = afterDiscount <= 0 ? 0 : afterDiscount >= 50 ? 0 : 5.99;
 
   // Tax estimate: ~8% placeholder (real tax calculated at checkout)
   const taxEstimate = Math.round(afterDiscount * 0.08 * 100) / 100;

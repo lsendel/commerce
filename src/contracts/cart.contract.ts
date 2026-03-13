@@ -46,6 +46,10 @@ const cartSchema = z.object({
   subtotal: z.number(),
   totals: cartTotalsSchema,
   warnings: z.array(z.string()),
+  coupon: z.object({
+    id: z.string(),
+    code: z.string(),
+  }).nullable().optional(),
 });
 
 const cartValidationSchema = z.object({
@@ -129,6 +133,36 @@ export const cartContract = c.router({
       200: cartSchema,
       401: z.object({ error: z.string() }),
       404: z.object({ error: z.string() }),
+    },
+  },
+  applyCoupon: {
+    method: "POST",
+    path: "/api/cart/apply-coupon",
+    body: z.object({
+      code: z.string().trim().min(1).max(40),
+    }),
+    responses: {
+      200: z.object({
+        promotion: z.unknown(),
+        coupon: z.unknown(),
+        discount: z.unknown(),
+      }),
+      400: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
+    },
+  },
+  removeCoupon: {
+    method: "DELETE",
+    path: "/api/cart/remove-coupon",
+    body: z.object({}).optional(),
+    responses: {
+      200: z.object({
+        id: z.string(),
+        items: z.array(cartItemSchema),
+        subtotal: z.number(),
+        totals: cartTotalsSchema,
+        coupon: z.null(),
+      }),
     },
   },
   validate: {

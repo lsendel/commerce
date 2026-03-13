@@ -1,0 +1,108 @@
+{
+  "version": "v1",
+  "owner": "platform-api",
+  "reviewCadenceDays": 30,
+  "lastReviewedOn": "2026-03-01",
+  "nextReviewBy": "2026-03-31",
+  "latestVersion": "2026-04-26",
+  "defaultVersion": "2026-04-26",
+  "supportedVersions": [
+    "2026-04-26",
+    "2025-12-01"
+  ],
+  "deprecatedVersions": [
+    {
+      "version": "2025-12-01",
+      "deprecatedOn": "2026-04-26",
+      "sunsetOn": "2026-09-30",
+      "migrationGuidePath": "docs/runbooks/api-versioning-migration.md"
+    }
+  ],
+  "requestChannels": {
+    "headers": [
+      "x-api-version",
+      "api-version"
+    ],
+    "queryParams": [
+      "api_version",
+      "api-version"
+    ]
+  },
+  "sourcePaths": [
+    "src/shared/api-versioning.ts",
+    "src/middleware/api-versioning.middleware.ts",
+    "src/routes/api/api-versioning.routes.ts",
+    "src/index.tsx"
+  ],
+  "requiredSnippets": [
+    "X-API-Version",
+    "Unsupported API version requested.",
+    "apiVersioningRoutes.get(\"/versioning\"",
+    "app.use(\"/api/*\", apiVersioningMiddleware());"
+  ],
+  "simulationCases": [
+    {
+      "id": "default-no-version",
+      "requestedVersion": null,
+      "expected": {
+        "supported": true,
+        "effectiveVersion": "2026-04-26",
+        "defaulted": true,
+        "deprecated": false
+      }
+    },
+    {
+      "id": "explicit-latest",
+      "requestedVersion": "2026-04-26",
+      "expected": {
+        "supported": true,
+        "effectiveVersion": "2026-04-26",
+        "defaulted": false,
+        "deprecated": false
+      }
+    },
+    {
+      "id": "explicit-deprecated",
+      "requestedVersion": "2025-12-01",
+      "expected": {
+        "supported": true,
+        "effectiveVersion": "2025-12-01",
+        "defaulted": false,
+        "deprecated": true
+      }
+    },
+    {
+      "id": "unsupported-version",
+      "requestedVersion": "2023-01-01",
+      "expected": {
+        "supported": false,
+        "effectiveVersion": "2026-04-26",
+        "defaulted": true,
+        "deprecated": false
+      }
+    }
+  ],
+  "migrationHooks": [
+    {
+      "id": "adopt-version-header",
+      "fromVersion": "2025-12-01",
+      "toVersion": "2026-04-26",
+      "requiredBy": "2026-06-15",
+      "endpoint": "/api/versioning"
+    },
+    {
+      "id": "verify-deprecation-readiness",
+      "fromVersion": "2025-12-01",
+      "toVersion": "2026-04-26",
+      "requiredBy": "2026-09-30",
+      "endpoint": "/api/versioning/migration-hooks"
+    },
+    {
+      "id": "contract-matrix-gate",
+      "fromVersion": "2025-12-01",
+      "toVersion": "2026-04-26",
+      "requiredBy": "2026-05-01",
+      "endpoint": "/api/versioning"
+    }
+  ]
+}

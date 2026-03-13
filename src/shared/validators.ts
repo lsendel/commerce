@@ -107,6 +107,12 @@ export const updateCartItemSchema = z.object({
 export const createCheckoutSchema = z.object({
   successUrl: z.string().url().optional(),
   cancelUrl: z.string().url().optional(),
+  couponCode: z.string().trim().min(1).max(40).optional(),
+  shippingAddress: z.object({
+    country: z.string().trim().min(2).max(2).transform((value) => value.toUpperCase()),
+    state: z.string().trim().min(1).max(80).optional(),
+    postalCode: z.string().trim().min(1).max(20).optional(),
+  }).optional(),
 });
 
 // Booking availability

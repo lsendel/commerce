@@ -3,11 +3,15 @@ import type { Env } from "../../env";
 import { createDb } from "../../infrastructure/db/client";
 import { ProductRepository } from "../../infrastructure/repositories/product.repository";
 import { BookingRepository } from "../../infrastructure/repositories/booking.repository";
+import { cacheResponse } from "../../middleware/cache.middleware";
 
 const events = new Hono<{ Bindings: Env }>();
 
 // GET /events — list bookable events with availability + location
-events.get("/", async (c) => {
+events.get(
+  "/",
+  cacheResponse({ ttl: 180, tags: ["events:list"] }),
+  async (c) => {
   const db = createDb(c.env.DATABASE_URL);
   const storeId = c.get("storeId") as string;
   const productRepo = new ProductRepository(db, storeId);
@@ -60,10 +64,21 @@ events.get("/", async (c) => {
   const paged = filtered.slice(start, start + limit);
 
   return c.json({ events: paged, total, page, limit, totalPages });
-});
+},
+);
 
 // GET /events/:slug — single event detail with availability
-events.get("/:slug", async (c) => {
+events.get(
+  "/:slug",
+  cacheResponse({
+    ttl: 300,
+    tags: ["events:detail"],
+    dynamicTags: (c) => {
+      const slug = c.req.param("slug");
+      return slug ? [`event:${slug}`] : [];
+    },
+  }),
+  async (c) => {
   const db = createDb(c.env.DATABASE_URL);
   const storeId = c.get("storeId") as string;
   const productRepo = new ProductRepository(db, storeId);
@@ -99,6 +114,7 @@ events.get("/:slug", async (c) => {
       availability: slotArray,
     },
   });
-});
+},
+);
 
 export { events as eventRoutes };

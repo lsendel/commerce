@@ -17,6 +17,7 @@ export class VerifyEmailUseCase {
 
     await this.userRepo.setEmailVerified(tokenRecord.userId);
     await this.userRepo.markEmailVerificationTokenUsed(tokenRecord.id);
+    await this.userRepo.invalidateActiveEmailVerificationTokens(tokenRecord.userId);
 
     return { success: true };
   }

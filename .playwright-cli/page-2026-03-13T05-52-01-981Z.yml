@@ -1,0 +1,342 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Analytics | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+          - link "Account" [ref=e15] [cursor=pointer]:
+            - /url: /account
+        - button "Switch to dark mode" [ref=e16] [cursor=pointer]:
+          - img [ref=e17]
+        - button "Shopping basket, empty" [ref=e19] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e23]:
+            - generic [ref=e24]: Basket
+            - generic [ref=e25]:
+              - generic [ref=e26]: Empty
+              - generic [ref=e27]: $0.00
+        - group [ref=e28]:
+          - generic "User menu" [ref=e29] [cursor=pointer]: "?"
+  - main [ref=e30]:
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - navigation [ref=e35]:
+              - link "Admin" [ref=e36] [cursor=pointer]:
+                - /url: /admin
+              - text: /Analytics
+            - heading "Analytics Dashboard" [level=1] [ref=e37]
+          - generic [ref=e38]:
+            - generic [ref=e39]:
+              - textbox [ref=e40]: 2026-03-01
+              - generic [ref=e41]: to
+              - textbox [ref=e42]: 2026-03-13
+              - button "Apply" [ref=e43] [cursor=pointer]
+              - link "Export CSV" [ref=e44] [cursor=pointer]:
+                - /url: /admin/analytics/export.csv?from=2026-03-01&to=2026-03-13
+            - button "Quick Actions" [ref=e45] [cursor=pointer]
+        - generic [ref=e46]:
+          - link "Last 7 Days" [ref=e47] [cursor=pointer]:
+            - /url: /admin/analytics?from=2026-03-07&to=2026-03-13
+          - link "Last 30 Days" [ref=e48] [cursor=pointer]:
+            - /url: /admin/analytics?from=2026-02-12&to=2026-03-13
+          - link "Month to Date" [ref=e49] [cursor=pointer]:
+            - /url: /admin/analytics?from=2026-03-01&to=2026-03-13
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - heading "Recommended Next Actions" [level=2] [ref=e52]
+          - generic [ref=e53]: Auto-generated from current dashboard data
+        - generic [ref=e54]:
+          - article [ref=e55]:
+            - heading "Fix Checkout drop-off" [level=3] [ref=e56]
+            - paragraph [ref=e57]: 100% drop-off detected. Launch a targeted recovery campaign with one-click incentive and monitor next 7 days.
+            - generic [ref=e58]:
+              - button "Apply Default" [ref=e59] [cursor=pointer]
+              - link "Open Promotions →" [ref=e60] [cursor=pointer]:
+                - /url: /admin/promotions
+          - article [ref=e61]:
+            - heading "Double down on direct" [level=3] [ref=e62]
+            - paragraph [ref=e63]: 37 sessions are coming from this source. Clone best-performing campaign and route to high-intent landing pages.
+            - generic [ref=e64]:
+              - button "Apply Default" [ref=e65] [cursor=pointer]
+              - link "Open Analytics →" [ref=e66] [cursor=pointer]:
+                - /url: /admin/analytics
+          - article [ref=e67]:
+            - heading "Optimize Checkout conversion unit economics" [level=3] [ref=e68]
+            - paragraph [ref=e69]: 0.00x revenue-to-cost ratio and critical status. Apply queued optimization and monitor impact.
+            - generic [ref=e70]:
+              - button "Apply Default" [ref=e71] [cursor=pointer]
+              - link "Open Control Tower →" [ref=e72] [cursor=pointer]:
+                - /url: /admin/control-tower
+      - generic [ref=e73]:
+        - generic [ref=e74]:
+          - heading "Automation Center" [level=2] [ref=e75]
+          - button "Refresh Activity" [disabled] [ref=e76]
+        - paragraph [ref=e77]: Applied defaults are logged here so operators can track what actions were automated from this dashboard.
+        - paragraph [ref=e79]: No automation activity yet. Use "Apply Default" on any recommendation.
+      - generic [ref=e80]:
+        - generic [ref=e81]:
+          - paragraph [ref=e82]: Revenue
+          - paragraph [ref=e83]: $0.00
+        - generic [ref=e84]:
+          - paragraph [ref=e85]: Orders
+          - paragraph [ref=e86]: "0"
+        - generic [ref=e87]:
+          - paragraph [ref=e88]: Visitors
+          - paragraph [ref=e89]: "0"
+        - generic [ref=e90]:
+          - paragraph [ref=e91]: Page Views
+          - paragraph [ref=e92]: "0"
+        - generic [ref=e93]:
+          - paragraph [ref=e94]: Add to Cart
+          - paragraph [ref=e95]: "0"
+        - generic [ref=e96]:
+          - paragraph [ref=e97]: Checkout Started
+          - paragraph [ref=e98]: "0"
+        - generic [ref=e99]:
+          - paragraph [ref=e100]: Conversion Rate
+          - paragraph [ref=e101]: 0.0%
+        - generic [ref=e102]:
+          - paragraph [ref=e103]: Avg Order Value
+          - paragraph [ref=e104]: $0.00
+      - generic [ref=e105]:
+        - generic [ref=e106]:
+          - generic [ref=e107]:
+            - heading "Cost Observability & Unit Economics" [level=2] [ref=e108]
+            - paragraph [ref=e109]: Feature, team, and tenant cost telemetry with optimization candidates.
+          - generic [ref=e110]:
+            - paragraph [ref=e111]: "Orders in window: 0"
+            - paragraph [ref=e112]: "Blended ratio: 0.00x"
+        - generic [ref=e113]:
+          - generic [ref=e114]:
+            - paragraph [ref=e115]: Estimated Cost
+            - paragraph [ref=e116]: $323.98
+          - generic [ref=e117]:
+            - paragraph [ref=e118]: Attributed Revenue
+            - paragraph [ref=e119]: $0.00
+          - generic [ref=e120]:
+            - paragraph [ref=e121]: Contribution Margin
+            - paragraph [ref=e122]: $-323.98
+          - generic [ref=e123]:
+            - paragraph [ref=e124]: Cost Per Order
+            - paragraph [ref=e125]: $323.98
+        - generic [ref=e126]:
+          - generic [ref=e127]:
+            - heading "By Feature" [level=3] [ref=e128]
+            - generic [ref=e129]:
+              - generic [ref=e130]:
+                - generic [ref=e131]:
+                  - generic [ref=e132]: Checkout conversion
+                  - generic [ref=e133]: critical
+                - paragraph [ref=e134]: $109.25 cost • 0.00x ratio
+              - generic [ref=e135]:
+                - generic [ref=e136]:
+                  - generic [ref=e137]: Fulfillment and support operations
+                  - generic [ref=e138]: critical
+                - paragraph [ref=e139]: $80.60 cost • 0.00x ratio
+              - generic [ref=e140]:
+                - generic [ref=e141]:
+                  - generic [ref=e142]: Acquisition surfaces
+                  - generic [ref=e143]: critical
+                - paragraph [ref=e144]: $73.03 cost • 0.00x ratio
+              - generic [ref=e145]:
+                - generic [ref=e146]:
+                  - generic [ref=e147]: Retention and lifecycle
+                  - generic [ref=e148]: critical
+                - paragraph [ref=e149]: $61.10 cost • 0.00x ratio
+          - generic [ref=e150]:
+            - heading "By Team" [level=3] [ref=e151]
+            - generic [ref=e152]:
+              - generic [ref=e153]:
+                - paragraph [ref=e154]: Checkout
+                - paragraph [ref=e155]: $109.25 cost • $109.25 / order
+              - generic [ref=e156]:
+                - paragraph [ref=e157]: Operations
+                - paragraph [ref=e158]: $80.60 cost • $80.60 / order
+              - generic [ref=e159]:
+                - paragraph [ref=e160]: Growth
+                - paragraph [ref=e161]: $73.03 cost • $73.03 / order
+              - generic [ref=e162]:
+                - paragraph [ref=e163]: Lifecycle
+                - paragraph [ref=e164]: $61.10 cost • $61.10 / order
+          - generic [ref=e165]:
+            - heading "By Tenant" [level=3] [ref=e166]
+            - generic [ref=e167]:
+              - generic [ref=e168]:
+                - paragraph [ref=e169]: Store 00000000
+                - paragraph [ref=e170]: $265.66 cost • 0.00x ratio
+              - generic [ref=e171]:
+                - paragraph [ref=e172]: Shared platform overhead
+                - paragraph [ref=e173]: $58.32 cost • 0.00x ratio
+        - generic [ref=e174]:
+          - heading "Optimization Backlog" [level=3] [ref=e175]
+          - generic [ref=e176]:
+            - generic [ref=e177]:
+              - generic [ref=e178]:
+                - paragraph [ref=e179]: Optimize checkout conversion
+                - generic [ref=e180]: P0
+              - paragraph [ref=e181]: checkout • $55.47 monthly savings • planned
+            - generic [ref=e182]:
+              - generic [ref=e183]:
+                - paragraph [ref=e184]: Optimize fulfillment and support operations
+                - generic [ref=e185]: P0
+              - paragraph [ref=e186]: operations • $40.92 monthly savings • planned
+            - generic [ref=e187]:
+              - generic [ref=e188]:
+                - paragraph [ref=e189]: Optimize acquisition surfaces
+                - generic [ref=e190]: P0
+              - paragraph [ref=e191]: growth • $37.08 monthly savings • planned
+            - generic [ref=e192]:
+              - generic [ref=e193]:
+                - paragraph [ref=e194]: Optimize retention and lifecycle
+                - generic [ref=e195]: P0
+              - paragraph [ref=e196]: lifecycle • $31.02 monthly savings • planned
+      - generic [ref=e197]:
+        - generic [ref=e198]:
+          - heading "Daily Revenue" [level=2] [ref=e199]
+          - paragraph [ref=e200]: No revenue data for this period.
+        - generic [ref=e201]:
+          - heading "Conversion Funnel" [level=2] [ref=e202]
+          - generic [ref=e203]:
+            - generic [ref=e205]:
+              - generic [ref=e206]: Page Views
+              - generic [ref=e207]: "70"
+            - generic [ref=e210]:
+              - generic [ref=e211]:
+                - generic [ref=e212]: Product Views
+                - generic [ref=e213]: "13"
+              - paragraph [ref=e216]: "-81.4% drop-off"
+            - generic [ref=e217]:
+              - generic [ref=e218]:
+                - generic [ref=e219]: Add to Cart
+                - generic [ref=e220]: "7"
+              - paragraph [ref=e223]: "-46.2% drop-off"
+            - generic [ref=e224]:
+              - generic [ref=e225]:
+                - generic [ref=e226]: Checkout
+                - generic [ref=e227]: "0"
+              - paragraph [ref=e230]: "-100% drop-off"
+            - generic [ref=e232]:
+              - generic [ref=e233]: Purchases
+              - generic [ref=e234]: "0"
+      - generic [ref=e237]:
+        - generic [ref=e238]:
+          - heading "Top Sources" [level=2] [ref=e239]
+          - generic [ref=e241]:
+            - generic [ref=e242]:
+              - generic [ref=e243]: direct
+              - text: +131.0% vs previous period
+            - generic [ref=e244]: 97 events / 37 sessions
+        - generic [ref=e245]:
+          - heading "Top Campaigns" [level=2] [ref=e246]
+          - generic [ref=e248]:
+            - generic [ref=e249]:
+              - generic [ref=e250]: (none)
+              - text: +131.0% vs previous period
+            - generic [ref=e251]: 97 events / 37 sessions
+        - generic [ref=e252]:
+          - heading "Top Landing Paths" [level=2] [ref=e253]
+          - generic [ref=e254]:
+            - generic [ref=e255]:
+              - generic [ref=e256]:
+                - generic [ref=e257]: /
+                - text: +71.4% vs previous period
+              - generic [ref=e258]: 48 events / 16 sessions
+            - generic [ref=e259]:
+              - generic [ref=e260]:
+                - generic [ref=e261]: /products/pet-portrait-mug
+                - text: +188.9% vs previous period
+              - generic [ref=e262]: 26 events / 7 sessions
+            - generic [ref=e263]:
+              - generic [ref=e265]: /?__bust=10
+              - generic [ref=e266]: 6 events / 1 sessions
+            - generic [ref=e267]:
+              - generic [ref=e269]: /auth/login
+              - generic [ref=e270]: 2 events / 1 sessions
+            - generic [ref=e271]:
+              - generic [ref=e273]: /studio
+              - generic [ref=e274]: 2 events / 2 sessions
+            - generic [ref=e275]:
+              - generic [ref=e277]: /products/dog-beach-day-experience?__bust=2
+              - generic [ref=e278]: 2 events / 1 sessions
+            - generic [ref=e279]:
+              - generic [ref=e280]:
+                - generic [ref=e281]: /products/dog-beach-day-experience
+                - text: 0.0% vs previous period
+              - generic [ref=e282]: 2 events / 1 sessions
+            - generic [ref=e283]:
+              - generic [ref=e285]: /venues
+              - generic [ref=e286]: 1 events / 1 sessions
+            - generic [ref=e287]:
+              - generic [ref=e289]: /venues/1
+              - generic [ref=e290]: 1 events / 1 sessions
+            - generic [ref=e291]:
+              - generic [ref=e293]: /venues/santa-monica-dog-park
+              - generic [ref=e294]: 1 events / 1 sessions
+      - generic [ref=e295]:
+        - heading "Top Products" [level=2] [ref=e297]
+        - table [ref=e298]:
+          - rowgroup [ref=e299]:
+            - row "Product Units Sold Revenue Orders" [ref=e300]:
+              - columnheader "Product" [ref=e301]
+              - columnheader "Units Sold" [ref=e302]
+              - columnheader "Revenue" [ref=e303]
+              - columnheader "Orders" [ref=e304]
+          - rowgroup [ref=e305]:
+            - row "No product data for this period." [ref=e306]:
+              - cell "No product data for this period." [ref=e307]
+  - contentinfo [ref=e308]:
+    - generic [ref=e309]:
+      - generic [ref=e310]:
+        - generic [ref=e311]:
+          - link "petm8 home" [ref=e312] [cursor=pointer]:
+            - /url: /
+            - img [ref=e313]
+            - generic [ref=e315]: petm8
+          - paragraph [ref=e316]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e317]:
+          - heading "Shop" [level=4] [ref=e318]
+          - list [ref=e319]:
+            - listitem [ref=e320]:
+              - link "All Products" [ref=e321] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e322]:
+              - link "Collections" [ref=e323] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e324]:
+          - heading "Account" [level=4] [ref=e325]
+          - list [ref=e326]:
+            - listitem [ref=e327]:
+              - link "Orders" [ref=e328] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e329]:
+              - link "My Pets" [ref=e330] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e331]:
+          - heading "Company" [level=4] [ref=e332]
+          - list [ref=e333]:
+            - listitem [ref=e334]:
+              - link "About" [ref=e335] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e336]:
+              - link "Contact" [ref=e337] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e339]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e340]:
+    - generic [ref=e341]:
+      - heading "Your Cart" [level=2] [ref=e342]
+      - button "Close cart" [ref=e343] [cursor=pointer]:
+        - img [ref=e344]

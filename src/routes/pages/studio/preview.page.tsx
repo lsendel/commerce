@@ -45,7 +45,7 @@ export const StudioPreviewPage: FC<StudioPreviewPageProps> = ({
       <div class="text-center mb-8">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Your Pet Artwork</h1>
         <p class="mt-1 text-sm text-gray-500">
-          Preview, download, or order a print of your creation
+          Preview, download, or turn this artwork into a sellable product
         </p>
       </div>
 

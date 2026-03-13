@@ -1,0 +1,37 @@
+{
+  "startedAt": "2026-03-06T06:41:12.287Z",
+  "finishedAt": "2026-03-06T06:41:12.288Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "checks": [
+    {
+      "id": "low-risk-rollout",
+      "status": "pass",
+      "note": "Balanced small-delta rollout should remain low risk with no blockers."
+    },
+    {
+      "id": "hard-policy-block",
+      "status": "pass",
+      "note": "Policy violations in enforce mode should trigger high-risk preflight blockers."
+    },
+    {
+      "id": "monitor-mode-warnings",
+      "status": "pass",
+      "note": "Monitor mode should downgrade violations to warnings without hard blockers."
+    },
+    {
+      "id": "discount-policy-block",
+      "status": "pass",
+      "note": "Unsafe discount scenarios should produce blocking findings and mitigation guidance."
+    },
+    {
+      "id": "policy-engine-disabled-advisory",
+      "status": "pass",
+      "note": "Preflight should surface advisory warning when policy enforcement is disabled."
+    }
+  ],
+  "metrics": {
+    "totalChecks": 5,
+    "failedChecks": 0
+  }
+}

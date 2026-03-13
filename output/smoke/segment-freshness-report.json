@@ -1,0 +1,19 @@
+{
+  "startedAt": "2026-03-06T06:41:10.648Z",
+  "finishedAt": "2026-03-06T06:41:10.648Z",
+  "status": "passed_with_warnings",
+  "thresholdHours": 8,
+  "generatedLive": false,
+  "totals": {
+    "stores": 0,
+    "segments": 0,
+    "freshSegments": 0,
+    "staleSegments": 0,
+    "neverRefreshedSegments": 0,
+    "driftSegments": 0
+  },
+  "rows": [],
+  "warnings": [
+    "DATABASE_URL not set; segment freshness live checks were skipped."
+  ]
+}

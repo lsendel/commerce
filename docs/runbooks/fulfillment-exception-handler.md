@@ -7,6 +7,8 @@
   - `/admin/fulfillment` (exception scan + auto-resolve controls)
   - `/api/admin/ops/fulfillment-exceptions`
   - `/api/admin/ops/fulfillment-exceptions/auto-resolve`
+  - `/api/admin/ops/fulfillment-sla`
+  - `/api/admin/ops/fulfillment-sla/interventions`
 
 ## What It Handles
 

@@ -76,6 +76,19 @@ interface CollectionInfo {
   url: string;
 }
 
+interface ItemListInfo {
+  name: string;
+  url?: string;
+  items: Array<{ name: string; url: string; position?: number }>;
+}
+
+interface WebPageInfo {
+  name: string;
+  description?: string;
+  url: string;
+  type?: "WebPage" | "AboutPage" | "ContactPage" | "CollectionPage" | "ItemPage";
+}
+
 interface VenueInfo {
   name: string;
   description?: string;
@@ -88,6 +101,7 @@ interface VenueInfo {
   longitude?: number;
   phone?: string;
   imageUrl?: string;
+  url?: string;
 }
 
 export function buildOrganization(store: StoreInfo): Record<string, unknown> {
@@ -264,7 +278,7 @@ export function buildWebSite(store: StoreInfo): Record<string, unknown> {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${store.url}/products?q={search_term_string}`,
+        urlTemplate: `${store.url}/products?search={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },
@@ -276,6 +290,7 @@ export function buildPlace(venue: VenueInfo): Record<string, unknown> {
     "@context": "https://schema.org",
     "@type": "Place",
     name: venue.name,
+    ...(venue.url && { url: venue.url }),
     ...(venue.description && { description: venue.description }),
     ...(venue.imageUrl && { image: venue.imageUrl }),
     ...(venue.phone && { telephone: venue.phone }),
@@ -294,6 +309,31 @@ export function buildPlace(venue: VenueInfo): Record<string, unknown> {
         longitude: venue.longitude,
       },
     }),
+  };
+}
+
+export function buildItemList(input: ItemListInfo): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: input.name,
+    ...(input.url && { url: input.url }),
+    itemListElement: input.items.map((item, index) => ({
+      "@type": "ListItem",
+      position: item.position ?? index + 1,
+      name: item.name,
+      url: item.url,
+    })),
+  };
+}
+
+export function buildWebPage(input: WebPageInfo): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": input.type ?? "WebPage",
+    name: input.name,
+    url: input.url,
+    ...(input.description && { description: input.description }),
   };
 }
 

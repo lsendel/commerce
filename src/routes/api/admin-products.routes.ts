@@ -7,7 +7,7 @@ import { AnalyticsRepository } from "../../infrastructure/repositories/analytics
 import { TrackEventUseCase } from "../../application/analytics/track-event.usecase";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { rateLimit } from "../../middleware/rate-limit.middleware";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { CreateProductFromArtUseCase } from "../../application/catalog/create-product-from-art.usecase";
 import { ManageProductUseCase } from "../../application/catalog/manage-product.usecase";
 import { BuildArtProductDraftUseCase } from "../../application/catalog/build-art-product-draft.usecase";
@@ -18,9 +18,18 @@ import {
 import { GenerateMockupUseCase } from "../../application/fulfillment/generate-mockup.usecase";
 import { ProductRepository } from "../../infrastructure/repositories/product.repository";
 import { AiJobRepository } from "../../infrastructure/repositories/ai-job.repository";
-import { fulfillmentProviders, fulfillmentRequests } from "../../infrastructure/db/schema";
+import { PrintfulRepository } from "../../infrastructure/repositories/printful.repository";
+import {
+  fulfillmentProviders,
+  fulfillmentRequests,
+  productVariants,
+  providerProductMappings,
+  printfulSyncProducts,
+  printfulSyncVariants,
+} from "../../infrastructure/db/schema";
 import { canCancel } from "../../domain/fulfillment/fulfillment-status.vo";
 import { resolveFeatureFlags } from "../../shared/feature-flags";
+import { executeCacheInvalidation } from "../../infrastructure/cache/invalidation-executor";
 
 const adminProducts = new Hono<{ Bindings: Env }>();
 const merchandisingCopilotSchema = z.object({
@@ -69,6 +78,297 @@ function toCopilotResponse(copilot: MerchandisingCopilotResult) {
       slug: copilot.slugSuggestion,
     },
   };
+}
+
+async function invalidateProductCache(input: {
+  db: ReturnType<typeof createDb>;
+  storeId: string;
+  productId?: string | null;
+  productSlug?: string | null;
+  productType?: string | null;
+}) {
+  const productRepo = new ProductRepository(input.db, input.storeId);
+  const lookupProduct =
+    input.productId && (!input.productSlug || !input.productType)
+      ? await productRepo.findById(input.productId)
+      : null;
+
+  const productId = input.productId ?? lookupProduct?.id ?? null;
+  const productSlug = input.productSlug ?? lookupProduct?.slug ?? null;
+  const productType = input.productType ?? lookupProduct?.type ?? null;
+
+  const resources: Array<{
+    type: "product" | "event";
+    id?: string | null;
+    slug?: string | null;
+  }> = [
+    {
+      type: "product",
+      id: productId,
+      slug: productSlug,
+    },
+  ];
+
+  if (productType === "bookable") {
+    resources.push({
+      type: "event",
+      id: productId,
+      slug: productSlug,
+    });
+  }
+
+  await executeCacheInvalidation({
+    storeId: input.storeId,
+    resources,
+    resolvers: {
+      resolveProductSlugById: async (id) => {
+        const product = await productRepo.findById(id);
+        return product?.slug ?? null;
+      },
+      resolveEventSlugById: async (id) => {
+        const product = await productRepo.findById(id);
+        if (!product || product.type !== "bookable") return null;
+        return product.slug ?? null;
+      },
+    },
+  });
+}
+
+async function getVariantResponse(
+  db: ReturnType<typeof createDb>,
+  variantId: string,
+) {
+  const variantRows = await db
+    .select()
+    .from(productVariants)
+    .where(eq(productVariants.id, variantId))
+    .limit(1);
+
+  const variant = variantRows[0];
+  if (!variant) return null;
+
+  const mappingRows = await db
+    .select()
+    .from(providerProductMappings)
+    .where(eq(providerProductMappings.variantId, variantId))
+    .limit(1);
+
+  const mapping = mappingRows[0] ?? null;
+  return {
+    ...variant,
+    providerId: mapping?.providerId ?? null,
+    externalProductId: mapping?.externalProductId ?? null,
+    externalVariantId: mapping?.externalVariantId ?? null,
+    costPrice: mapping?.costPrice ?? null,
+  };
+}
+
+async function cleanupOrphanPrintfulProductSync(input: {
+  db: ReturnType<typeof createDb>;
+  storeId: string;
+  productId: string;
+}) {
+  const variantRows = await input.db
+    .select({ id: productVariants.id })
+    .from(productVariants)
+    .where(eq(productVariants.productId, input.productId));
+
+  const variantIds = variantRows.map((row) => row.id);
+  if (variantIds.length === 0) {
+    await input.db
+      .delete(printfulSyncProducts)
+      .where(
+        and(
+          eq(printfulSyncProducts.storeId, input.storeId),
+          eq(printfulSyncProducts.productId, input.productId),
+        ),
+      );
+    return;
+  }
+
+  const syncVariantRows = await input.db
+    .select({ id: printfulSyncVariants.id })
+    .from(printfulSyncVariants)
+    .where(inArray(printfulSyncVariants.variantId, variantIds))
+    .limit(1);
+
+  if (syncVariantRows.length === 0) {
+    await input.db
+      .delete(printfulSyncProducts)
+      .where(
+        and(
+          eq(printfulSyncProducts.storeId, input.storeId),
+          eq(printfulSyncProducts.productId, input.productId),
+        ),
+      );
+  }
+}
+
+async function syncVariantProviderState(input: {
+  db: ReturnType<typeof createDb>;
+  storeId: string;
+  productId: string;
+  variantId: string;
+  providerId?: string;
+  externalProductId?: string;
+  externalVariantId?: string;
+  costPrice?: string;
+  clearProviderMapping?: boolean;
+}) {
+  const {
+    db,
+    storeId,
+    productId,
+    variantId,
+    providerId,
+    externalProductId,
+    externalVariantId,
+    costPrice,
+    clearProviderMapping,
+  } = input;
+
+  const normalizedExternalProductId = externalProductId?.trim() || undefined;
+  const normalizedExternalVariantId = externalVariantId?.trim() || undefined;
+  const shouldClear = Boolean(clearProviderMapping || !providerId);
+  let provider:
+    | typeof fulfillmentProviders.$inferSelect
+    | undefined;
+  let printfulProductId: number | null = null;
+  let printfulVariantId: number | null = null;
+
+  if (!shouldClear) {
+    const providerRows = await db
+      .select()
+      .from(fulfillmentProviders)
+      .where(
+        and(
+          eq(fulfillmentProviders.id, providerId!),
+          eq(fulfillmentProviders.storeId, storeId),
+          eq(fulfillmentProviders.isActive, true),
+        ),
+      )
+      .limit(1);
+
+    provider = providerRows[0];
+    if (!provider) {
+      throw new Error("Selected fulfillment provider was not found.");
+    }
+
+    if (!normalizedExternalVariantId) {
+      throw new Error("Provider variant ID is required when a fulfillment provider is selected.");
+    }
+
+    if (provider.type === "printful") {
+      printfulProductId = parsePositiveInteger(normalizedExternalProductId);
+      printfulVariantId = parsePositiveInteger(normalizedExternalVariantId);
+
+      if (!printfulProductId) {
+        throw new Error("Printful product ID is required to generate mockups and submit fulfillment.");
+      }
+      if (!printfulVariantId) {
+        throw new Error("Printful variant ID must be a numeric sync variant id.");
+      }
+
+      const conflictingProductLink = await db
+        .select()
+        .from(printfulSyncProducts)
+        .where(
+          and(
+            eq(printfulSyncProducts.storeId, storeId),
+            eq(printfulSyncProducts.printfulId, printfulProductId),
+          ),
+        )
+        .limit(1);
+
+      if (
+        conflictingProductLink[0] &&
+        conflictingProductLink[0].productId !== productId
+      ) {
+        throw new Error(
+          `Printful product ${printfulProductId} is already linked to another product in this store.`,
+        );
+      }
+
+      const conflictingVariantLink = await db
+        .select()
+        .from(printfulSyncVariants)
+        .where(eq(printfulSyncVariants.printfulId, printfulVariantId))
+        .limit(1);
+
+      if (
+        conflictingVariantLink[0] &&
+        conflictingVariantLink[0].variantId !== variantId
+      ) {
+        throw new Error(
+          `Printful variant ${printfulVariantId} is already linked to another variant in this store.`,
+        );
+      }
+    }
+  }
+
+  await db
+    .update(productVariants)
+    .set({
+      fulfillmentProvider: shouldClear ? null : provider?.type,
+    })
+    .where(eq(productVariants.id, variantId));
+
+  await db
+    .delete(providerProductMappings)
+    .where(eq(providerProductMappings.variantId, variantId));
+
+  if (shouldClear) {
+    await db
+      .delete(printfulSyncVariants)
+      .where(eq(printfulSyncVariants.variantId, variantId));
+    await cleanupOrphanPrintfulProductSync({ db, storeId, productId });
+    return;
+  }
+
+  await db.insert(providerProductMappings).values({
+    variantId,
+    providerId: providerId!,
+    externalProductId: normalizedExternalProductId ?? null,
+    externalVariantId: normalizedExternalVariantId,
+    costPrice: costPrice ?? null,
+  });
+
+  await db
+    .delete(printfulSyncVariants)
+    .where(eq(printfulSyncVariants.variantId, variantId));
+
+  if (provider?.type !== "printful") {
+    await cleanupOrphanPrintfulProductSync({ db, storeId, productId });
+    return;
+  }
+
+  await db
+    .delete(printfulSyncProducts)
+    .where(
+      and(
+        eq(printfulSyncProducts.storeId, storeId),
+        eq(printfulSyncProducts.productId, productId),
+      ),
+    );
+
+  const printfulRepo = new PrintfulRepository(db, storeId);
+  await printfulRepo.upsertSyncProduct({
+    printfulId: printfulProductId!,
+    productId,
+    externalId: String(printfulProductId!),
+  });
+  await printfulRepo.upsertSyncVariant({
+    printfulId: printfulVariantId!,
+    variantId,
+    printfulProductId: printfulProductId!,
+  });
+}
+
+function parsePositiveInteger(value?: string) {
+  if (!value) return null;
+  if (!/^\d+$/.test(value)) return null;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
 adminProducts.use(
@@ -259,6 +559,13 @@ adminProducts.patch(
     const storeId = c.get("storeId") as string;
     const useCase = new ManageProductUseCase(db, storeId);
     const result = await useCase.update(c.req.param("id"), c.req.valid("json"));
+    await invalidateProductCache({
+      db,
+      storeId,
+      productId: result.product?.id ?? c.req.param("id"),
+      productSlug: result.product?.slug ?? null,
+      productType: result.product?.type ?? null,
+    });
     return c.json(result.product);
   },
 );
@@ -270,6 +577,13 @@ adminProducts.delete("/products/:id", requireAuth(), async (c) => {
   const storeId = c.get("storeId") as string;
   const useCase = new ManageProductUseCase(db, storeId);
   const product = await useCase.archive(c.req.param("id"));
+  await invalidateProductCache({
+    db,
+    storeId,
+    productId: product?.id ?? c.req.param("id"),
+    productSlug: product?.slug ?? null,
+    productType: product?.type ?? null,
+  });
   return c.json(product);
 });
 
@@ -285,6 +599,11 @@ const addVariantSchema = z.object({
   availableForSale: z.boolean().optional(),
   fulfillmentProvider: z.enum(["printful", "gooten", "prodigi", "shapeways"]).optional(),
   estimatedProductionDays: z.number().int().positive().optional(),
+  providerId: z.string().uuid().optional(),
+  externalProductId: z.string().optional(),
+  externalVariantId: z.string().optional(),
+  costPrice: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
+  clearProviderMapping: z.boolean().optional(),
 });
 
 adminProducts.post(
@@ -294,9 +613,23 @@ adminProducts.post(
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const storeId = c.get("storeId") as string;
+    const productId = c.req.param("id");
+    const body = c.req.valid("json");
     const useCase = new ManageProductUseCase(db, storeId);
-    const variant = await useCase.addVariant(c.req.param("id"), c.req.valid("json"));
-    return c.json(variant, 201);
+    const variant = await useCase.addVariant(productId, body);
+    await syncVariantProviderState({
+      db,
+      storeId,
+      productId,
+      variantId: variant.id,
+      providerId: body.providerId,
+      externalProductId: body.externalProductId,
+      externalVariantId: body.externalVariantId,
+      costPrice: body.costPrice,
+      clearProviderMapping: body.clearProviderMapping,
+    });
+    await invalidateProductCache({ db, storeId, productId });
+    return c.json((await getVariantResponse(db, variant.id)) ?? variant, 201);
   },
 );
 
@@ -309,9 +642,32 @@ adminProducts.patch(
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const storeId = c.get("storeId") as string;
+    const productId = c.req.param("id");
+    const variantId = c.req.param("variantId");
+    const body = c.req.valid("json");
     const useCase = new ManageProductUseCase(db, storeId);
-    const variant = await useCase.updateVariant(c.req.param("variantId"), c.req.valid("json"));
-    return c.json(variant);
+    const variant = await useCase.updateVariant(variantId, body);
+    const shouldSyncMapping =
+      "providerId" in body ||
+      "externalProductId" in body ||
+      "externalVariantId" in body ||
+      "costPrice" in body ||
+      "clearProviderMapping" in body;
+    if (shouldSyncMapping) {
+      await syncVariantProviderState({
+        db,
+        storeId,
+        productId,
+        variantId,
+        providerId: body.providerId,
+        externalProductId: body.externalProductId,
+        externalVariantId: body.externalVariantId,
+        costPrice: body.costPrice,
+        clearProviderMapping: body.clearProviderMapping,
+      });
+    }
+    await invalidateProductCache({ db, storeId, productId });
+    return c.json((await getVariantResponse(db, variant.id)) ?? variant);
   },
 );
 
@@ -333,6 +689,7 @@ adminProducts.post(
     const storeId = c.get("storeId") as string;
     const useCase = new ManageProductUseCase(db, storeId);
     await useCase.updateImages(c.req.param("id"), c.req.valid("json").images);
+    await invalidateProductCache({ db, storeId, productId: c.req.param("id") });
     return c.json({ success: true });
   },
 );
@@ -403,6 +760,13 @@ adminProducts.post(
       storeId,
       ...body,
     });
+    await invalidateProductCache({
+      db,
+      storeId,
+      productId: result.product?.id ?? null,
+      productSlug: result.product?.slug ?? null,
+      productType: result.product?.type ?? null,
+    });
 
     const analyticsRepo = new AnalyticsRepository(db, storeId);
     const trackEvent = new TrackEventUseCase(analyticsRepo);
@@ -434,6 +798,7 @@ adminProducts.post(
     "json",
     z.object({
       imageUrl: z.string().url(),
+      printfulProductId: z.number().int().positive().optional(),
       waitAndApply: z.boolean().optional(),
       timeoutMs: z.number().int().min(5_000).max(300_000).optional(),
       pollIntervalMs: z.number().int().min(500).max(10_000).optional(),
@@ -442,7 +807,7 @@ adminProducts.post(
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const productId = c.req.param("id");
-    const { imageUrl, waitAndApply, timeoutMs, pollIntervalMs } =
+    const { imageUrl, printfulProductId, waitAndApply, timeoutMs, pollIntervalMs } =
       c.req.valid("json");
 
     const useCase = new GenerateMockupUseCase();
@@ -452,6 +817,7 @@ adminProducts.post(
           db,
           productId,
           imageUrl,
+          printfulProductId,
           timeoutMs,
           pollIntervalMs,
         })
@@ -460,7 +826,14 @@ adminProducts.post(
           db,
           productId,
           imageUrl,
+          printfulProductId,
         });
+
+    await invalidateProductCache({
+      db,
+      storeId: c.get("storeId") as string,
+      productId,
+    });
 
     return c.json(result, 201);
   },

@@ -35,7 +35,9 @@ export const CreateProductPage: FC<CreateProductPageProps> = ({
       </div>
 
       <h1 class="text-2xl font-bold text-gray-900 mb-2">Create Product from Artwork</h1>
-      <p class="text-sm text-gray-500 mb-8">Turn your AI-generated artwork into a sellable product.</p>
+      <p class="text-sm text-gray-500 mb-8">
+        Turn your AI-generated artwork into a sellable product with provider mapping and mockups ready for launch.
+      </p>
 
       <form id="create-product-form" class="space-y-8">
         <input type="hidden" name="artJobId" value={artJobId} />
@@ -126,8 +128,8 @@ export const CreateProductPage: FC<CreateProductPageProps> = ({
         <fieldset class="space-y-4">
           <legend class="text-lg font-semibold text-gray-900">Variants</legend>
           <div id="variants-container">
-            <div class="variant-row flex items-end gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50">
-              <div class="flex-1">
+            <div class="variant-row grid gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 md:grid-cols-[minmax(0,2fr)_120px_140px_180px_140px_auto] md:items-end">
+              <div class="md:col-span-1">
                 <label class="block text-xs font-medium text-gray-600 mb-1">Title</label>
                 <input
                   type="text"
@@ -137,7 +139,7 @@ export const CreateProductPage: FC<CreateProductPageProps> = ({
                   placeholder="e.g. Small Canvas 8x10"
                 />
               </div>
-              <div class="w-28">
+              <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Price ($)</label>
                 <input
                   type="text"
@@ -147,6 +149,38 @@ export const CreateProductPage: FC<CreateProductPageProps> = ({
                   class="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm"
                   placeholder="29.99"
                 />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Compare at ($)</label>
+                <input
+                  type="text"
+                  name="variant-compare-at-price-0"
+                  pattern="^\d+(\.\d{1,2})?$"
+                  class="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm"
+                  placeholder="39.99"
+                />
+              </div>
+              <div class="provider-mapping-field hidden">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Provider Variant ID</label>
+                <input
+                  type="text"
+                  name="variant-external-id-0"
+                  class="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm"
+                  placeholder="e.g. 4012"
+                />
+              </div>
+              <div class="provider-mapping-field hidden">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Cost ($)</label>
+                <input
+                  type="text"
+                  name="variant-cost-price-0"
+                  pattern="^\d+(\.\d{1,2})?$"
+                  class="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm"
+                  placeholder="14.50"
+                />
+              </div>
+              <div class="flex items-end justify-end">
+                <span class="text-xs text-gray-400">Base variant</span>
               </div>
             </div>
           </div>
@@ -166,6 +200,9 @@ export const CreateProductPage: FC<CreateProductPageProps> = ({
         {providers.length > 0 && (
           <fieldset class="space-y-4">
             <legend class="text-lg font-semibold text-gray-900">Fulfillment Provider</legend>
+            <p class="text-sm text-gray-500">
+              Connect a provider now so published variants are ready for automated fulfillment and post-publish mockups.
+            </p>
             <select
               id="provider"
               name="providerId"
@@ -173,11 +210,43 @@ export const CreateProductPage: FC<CreateProductPageProps> = ({
             >
               <option value="">None (self-fulfilled)</option>
               {providers.map((p) => (
-                <option value={p.id}>
+                <option value={p.id} data-provider-type={p.type}>
                   {p.name} ({p.type})
                 </option>
               ))}
             </select>
+            <div id="provider-config-panel" class="hidden rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+              <p id="provider-config-hint" class="text-xs text-gray-500">
+                Add provider catalog ids so each variant can be fulfilled automatically after checkout.
+              </p>
+              <div id="provider-product-id-wrap">
+                <label for="provider-product-id" class="block text-sm font-medium text-gray-700 mb-1">
+                  Provider Product ID
+                </label>
+                <input
+                  type="text"
+                  id="provider-product-id"
+                  name="providerProductId"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                  placeholder="e.g. 12345"
+                />
+              </div>
+              <label id="mockup-toggle-wrap" class="hidden items-start gap-3 rounded-lg border border-brand-100 bg-white px-3 py-3 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  id="generate-mockup-on-publish"
+                  name="generateMockupOnPublish"
+                  checked
+                  class="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                />
+                <span>
+                  <span class="block font-medium text-gray-900">Generate Printful mockups after publish</span>
+                  <span class="block text-xs text-gray-500">
+                    Uses the mapped Printful product id and artwork preview to attach storefront-ready images automatically.
+                  </span>
+                </span>
+              </label>
+            </div>
           </fieldset>
         )}
 

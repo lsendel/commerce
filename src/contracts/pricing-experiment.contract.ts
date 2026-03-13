@@ -26,6 +26,119 @@ const guardrailSchema = z.object({
   maxVariants: z.number(),
 });
 
+const preflightRiskSchema = z.object({
+  score: z.number(),
+  level: z.enum(["low", "medium", "high"]),
+});
+
+const policyViolationPreviewSchema = z.object({
+  domain: z.string(),
+  action: z.string(),
+  severity: z.enum(["warning", "error"]),
+  message: z.string(),
+  details: z.record(z.string(), z.unknown()),
+});
+
+const preflightSchema = z.object({
+  modelVersion: z.literal("wk49-pricing-policy-preflight-v1"),
+  evaluatedAt: z.string(),
+  proposal: z.object({
+    assignments: z.array(assignmentSchema),
+    warnings: z.array(z.string()),
+    guardrails: guardrailSchema,
+  }),
+  proposalSummary: z.object({
+    assignmentsCount: z.number(),
+    markdownCount: z.number(),
+    markdownShare: z.number(),
+    avgDeltaPercent: z.number(),
+    avgMarkdownPercent: z.number().nullable(),
+    autoApply: z.boolean(),
+  }),
+  policyValidation: z.object({
+    policyEngineEnabled: z.boolean(),
+    pricing: z.object({
+      policy: z.object({
+        version: z.number(),
+        isActive: z.boolean(),
+        config: z.object({
+          pricing: z.object({
+            maxVariants: z.number(),
+            minDeltaPercent: z.number(),
+            maxDeltaPercent: z.number(),
+            allowAutoApply: z.boolean(),
+          }),
+          shipping: z.object({
+            maxFlatRate: z.number(),
+            maxEstimatedDays: z.number(),
+          }),
+          promotions: z.object({
+            maxPercentageOff: z.number(),
+            maxFixedAmount: z.number(),
+            maxCampaignDays: z.number(),
+            allowStackable: z.boolean(),
+          }),
+          enforcement: z.object({
+            mode: z.enum(["enforce", "monitor"]),
+          }),
+        }),
+      }),
+      input: z.object({
+        maxVariants: z.number().optional(),
+        minDeltaPercent: z.number().optional(),
+        maxDeltaPercent: z.number().optional(),
+        autoApply: z.boolean().optional(),
+      }),
+      violations: z.array(policyViolationPreviewSchema),
+      wouldBlock: z.boolean(),
+    }),
+    discount: z
+      .object({
+        policy: z.object({
+          version: z.number(),
+          isActive: z.boolean(),
+          config: z.object({
+            pricing: z.object({
+              maxVariants: z.number(),
+              minDeltaPercent: z.number(),
+              maxDeltaPercent: z.number(),
+              allowAutoApply: z.boolean(),
+            }),
+            shipping: z.object({
+              maxFlatRate: z.number(),
+              maxEstimatedDays: z.number(),
+            }),
+            promotions: z.object({
+              maxPercentageOff: z.number(),
+              maxFixedAmount: z.number(),
+              maxCampaignDays: z.number(),
+              allowStackable: z.boolean(),
+            }),
+            enforcement: z.object({
+              mode: z.enum(["enforce", "monitor"]),
+            }),
+          }),
+        }),
+        input: z.object({
+          strategyType: z.string().optional(),
+          strategyParams: z.unknown().optional(),
+          stackable: z.boolean().optional(),
+          startsAt: z.union([z.string(), z.date(), z.null()]).optional(),
+          endsAt: z.union([z.string(), z.date(), z.null()]).optional(),
+        }),
+        violations: z.array(policyViolationPreviewSchema),
+        wouldBlock: z.boolean(),
+      })
+      .nullable(),
+  }),
+  risk: preflightRiskSchema,
+  findings: z.object({
+    blockers: z.array(z.string()),
+    warnings: z.array(z.string()),
+    recommendations: z.array(z.string()),
+  }),
+});
+
 export const pricingExperimentContract = c.router({
   listExperiments: {
     method: "GET",
@@ -72,6 +185,33 @@ export const pricingExperimentContract = c.router({
       403: featureDisabledSchema,
     },
   },
+  preflight: {
+    method: "POST",
+    path: "/api/admin/pricing-experiments/preflight",
+    body: z.object({
+      autoApply: z.boolean().optional(),
+      maxVariants: z.number().int().min(1).max(30).optional(),
+      variantIds: z.array(z.string().uuid()).max(100).optional(),
+      minDeltaPercent: z.number().min(-20).max(0).optional(),
+      maxDeltaPercent: z.number().min(0).max(20).optional(),
+      discountScenario: z
+        .object({
+          strategyType: z.enum(["percentage_off", "fixed_amount"]).optional(),
+          value: z.number().min(0).max(5000).optional(),
+          stackable: z.boolean().optional(),
+          startsAt: z.string().datetime().optional(),
+          endsAt: z.string().datetime().optional(),
+        })
+        .optional(),
+    }),
+    responses: {
+      200: z.object({
+        preflight: preflightSchema,
+      }),
+      401: z.object({ error: z.string() }),
+      403: featureDisabledSchema,
+    },
+  },
   start: {
     method: "POST",
     path: "/api/admin/pricing-experiments/start",
@@ -82,6 +222,15 @@ export const pricingExperimentContract = c.router({
       variantIds: z.array(z.string().uuid()).max(100).optional(),
       minDeltaPercent: z.number().min(-20).max(0).optional(),
       maxDeltaPercent: z.number().min(0).max(20).optional(),
+      discountScenario: z
+        .object({
+          strategyType: z.enum(["percentage_off", "fixed_amount"]).optional(),
+          value: z.number().min(0).max(5000).optional(),
+          stackable: z.boolean().optional(),
+          startsAt: z.string().datetime().optional(),
+          endsAt: z.string().datetime().optional(),
+        })
+        .optional(),
     }),
     responses: {
       201: z.object({
@@ -95,7 +244,13 @@ export const pricingExperimentContract = c.router({
           autoApply: z.boolean(),
           guardrails: guardrailSchema,
           assignments: z.array(assignmentSchema),
+          preflight: preflightSchema,
         }),
+      }),
+      409: z.object({
+        error: z.string(),
+        code: z.literal("PRE_FLIGHT_BLOCKED"),
+        preflight: preflightSchema,
       }),
       400: z.object({ error: z.string() }),
       401: z.object({ error: z.string() }),

@@ -1,0 +1,513 @@
+{
+  "type": "object",
+  "required": [
+    "checks",
+    "error",
+    "finishedAt",
+    "flakyPolicy",
+    "metrics",
+    "mutationChecksEnabled",
+    "startedAt",
+    "status"
+  ],
+  "properties": {
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "method",
+          "name",
+          "ok",
+          "owner",
+          "path",
+          "status",
+          "tags"
+        ],
+        "optional": [
+          "attempts",
+          "durationMs",
+          "note",
+          "suppressed"
+        ],
+        "properties": {
+          "attempts": {
+            "type": "number"
+          },
+          "durationMs": {
+            "type": "number"
+          },
+          "method": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "status": {
+            "type": "union",
+            "anyOf": [
+              {
+                "type": "literal",
+                "value": "contract"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "suppressed": {
+            "type": "boolean"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "type": "union",
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "finishedAt": {
+      "type": "string"
+    },
+    "flakyPolicy": {
+      "type": "object",
+      "required": [
+        "externalProviderDefault",
+        "installIntegrationApp",
+        "uninstallIntegrationApp",
+        "verifyIntegrationApp"
+      ],
+      "properties": {
+        "externalProviderDefault": {
+          "type": "object",
+          "required": [
+            "maxAttempts",
+            "retryDelayMs",
+            "suppressFailures"
+          ],
+          "properties": {
+            "maxAttempts": {
+              "type": "number"
+            },
+            "retryDelayMs": {
+              "type": "number"
+            },
+            "suppressFailures": {
+              "type": "boolean"
+            }
+          }
+        },
+        "installIntegrationApp": {
+          "type": "object",
+          "required": [
+            "maxAttempts",
+            "retryDelayMs",
+            "suppressFailures"
+          ],
+          "properties": {
+            "maxAttempts": {
+              "type": "number"
+            },
+            "retryDelayMs": {
+              "type": "number"
+            },
+            "suppressFailures": {
+              "type": "boolean"
+            }
+          }
+        },
+        "uninstallIntegrationApp": {
+          "type": "object",
+          "required": [
+            "maxAttempts",
+            "retryDelayMs",
+            "suppressFailures"
+          ],
+          "properties": {
+            "maxAttempts": {
+              "type": "number"
+            },
+            "retryDelayMs": {
+              "type": "number"
+            },
+            "suppressFailures": {
+              "type": "boolean"
+            }
+          }
+        },
+        "verifyIntegrationApp": {
+          "type": "object",
+          "required": [
+            "maxAttempts",
+            "retryDelayMs",
+            "suppressFailures"
+          ],
+          "properties": {
+            "maxAttempts": {
+              "type": "number"
+            },
+            "retryDelayMs": {
+              "type": "number"
+            },
+            "suppressFailures": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "failedChecks",
+        "latencyMs",
+        "ownerLatencyRollups",
+        "ownerLatencySlo",
+        "ownerRollups",
+        "suppressedChecks",
+        "tagRollups",
+        "totalChecks"
+      ],
+      "properties": {
+        "failedChecks": {
+          "type": "number"
+        },
+        "latencyMs": {
+          "type": "object",
+          "required": [
+            "avg",
+            "count",
+            "max",
+            "min",
+            "p50",
+            "p95"
+          ],
+          "properties": {
+            "avg": {
+              "type": "union",
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "count": {
+              "type": "number"
+            },
+            "max": {
+              "type": "union",
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "min": {
+              "type": "union",
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "p50": {
+              "type": "union",
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "p95": {
+              "type": "union",
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        },
+        "ownerLatencyRollups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "checkCount",
+              "latencyMs",
+              "owner"
+            ],
+            "properties": {
+              "checkCount": {
+                "type": "number"
+              },
+              "latencyMs": {
+                "type": "object",
+                "required": [
+                  "avg",
+                  "count",
+                  "max",
+                  "min",
+                  "p50",
+                  "p95"
+                ],
+                "properties": {
+                  "avg": {
+                    "type": "union",
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "count": {
+                    "type": "number"
+                  },
+                  "max": {
+                    "type": "union",
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "min": {
+                    "type": "union",
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "p50": {
+                    "type": "union",
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "p95": {
+                    "type": "union",
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "owner": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "ownerLatencySlo": {
+          "type": "object",
+          "required": [
+            "configuredOwners",
+            "failures",
+            "warnings"
+          ],
+          "properties": {
+            "configuredOwners": {
+              "type": "number"
+            },
+            "failures": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "owner",
+                  "p95Ms",
+                  "thresholdMs"
+                ],
+                "properties": {
+                  "owner": {
+                    "type": "string"
+                  },
+                  "p95Ms": {
+                    "type": "number"
+                  },
+                  "thresholdMs": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "warnings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "owner",
+                  "p95Ms",
+                  "thresholdMs"
+                ],
+                "properties": {
+                  "owner": {
+                    "type": "string"
+                  },
+                  "p95Ms": {
+                    "type": "number"
+                  },
+                  "thresholdMs": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ownerRollups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "failed",
+              "key",
+              "passed",
+              "suppressed",
+              "total"
+            ],
+            "properties": {
+              "failed": {
+                "type": "number"
+              },
+              "key": {
+                "type": "string"
+              },
+              "passed": {
+                "type": "number"
+              },
+              "suppressed": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "suppressedChecks": {
+          "type": "number"
+        },
+        "tagRollups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "failed",
+              "key",
+              "passed",
+              "suppressed",
+              "total"
+            ],
+            "properties": {
+              "failed": {
+                "type": "number"
+              },
+              "key": {
+                "type": "string"
+              },
+              "passed": {
+                "type": "number"
+              },
+              "suppressed": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "totalChecks": {
+          "type": "number"
+        }
+      }
+    },
+    "mutationChecksEnabled": {
+      "type": "boolean"
+    },
+    "startedAt": {
+      "type": "string"
+    },
+    "status": {
+      "type": "union",
+      "anyOf": [
+        {
+          "type": "literal",
+          "value": "contract_only"
+        },
+        {
+          "type": "literal",
+          "value": "failed"
+        },
+        {
+          "type": "literal",
+          "value": "passed_with_suppressed"
+        },
+        {
+          "type": "literal",
+          "value": "passed"
+        }
+      ]
+    }
+  }
+}

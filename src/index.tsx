@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { secureHeaders } from "hono/secure-headers";
 import { logger } from "hono/logger";
 import { cors } from "hono/cors";
@@ -17,6 +17,7 @@ import { auditTrailMiddleware } from "./middleware/audit-trail.middleware";
 import { tenantMiddleware } from "./middleware/tenant.middleware";
 import { affiliateMiddleware } from "./middleware/affiliate.middleware";
 import { rateLimit } from "./middleware/rate-limit.middleware";
+import { apiVersioningMiddleware } from "./middleware/api-versioning.middleware";
 
 // Repositories
 import { RedirectRepository } from "./infrastructure/repositories/redirect.repository";
@@ -64,6 +65,7 @@ import { headlessChannelRoutes } from "./routes/api/headless-channel.routes";
 import { storeTemplateRoutes } from "./routes/api/store-templates.routes";
 import { policyRoutes } from "./routes/api/policies.routes";
 import { controlTowerRoutes } from "./routes/api/control-tower.routes";
+import { apiVersioningRoutes } from "./routes/api/api-versioning.routes";
 import { buildAiPluginManifest, buildLlmsTxt } from "./infrastructure/seo/llm-surface";
 import {
   buildCollectionPage,
@@ -210,7 +212,13 @@ const VerifyEmailPage = _VerifyEmailPage as any;
 
 // Infrastructure
 import { createDb } from "./infrastructure/db/client";
-import { fulfillmentProviders, couponCodes, promotions } from "./infrastructure/db/schema";
+import {
+  fulfillmentProviders,
+  couponCodes,
+  promotions,
+  providerProductMappings,
+  printfulSyncProducts,
+} from "./infrastructure/db/schema";
 import { ProductRepository } from "./infrastructure/repositories/product.repository";
 import { CartRepository } from "./infrastructure/repositories/cart.repository";
 import { OrderRepository } from "./infrastructure/repositories/order.repository";
@@ -247,6 +255,24 @@ import { GetAffiliateMissionsUseCase } from "./application/affiliates/get-affili
 
 const app = new Hono<{ Bindings: Env }>();
 
+function resolveAllowedOrigins(c: Context<{ Bindings: Env }>) {
+  const appUrl = (c.env.APP_URL || "").replace(/\/$/, "");
+  const platformDomains = (c.env.PLATFORM_DOMAINS || "")
+    .split(",")
+    .map((d: string) => d.trim())
+    .filter(Boolean)
+    .map((domain: string) => `https://${domain}`);
+
+  let requestOrigin = "";
+  try {
+    requestOrigin = new URL(c.req.url).origin;
+  } catch {
+    requestOrigin = "";
+  }
+
+  return Array.from(new Set([appUrl, requestOrigin, ...platformDomains].filter(Boolean)));
+}
+
 // ─── Global Middleware ─────────────────────────────────────
 app.use("*", async (c, next) => { validateEnv(c.env); await next(); });
 app.use("*", logger());
@@ -271,15 +297,23 @@ app.use("*", secureHeaders({
 app.use("/api/*", auditTrailMiddleware());
 app.use("*", errorHandler());
 
-// CSRF protection — verify Origin header on state-changing requests from browser pages
-app.use("*", csrf({
+// CSRF protection — verify Origin header for browser-originated state-changing requests.
+const csrfProtection = csrf({
   origin: (origin, c) => {
-    const appUrl = (c.env.APP_URL || "").replace(/\/$/, "");
-    const platformDomains = (c.env.PLATFORM_DOMAINS || "").split(",").filter(Boolean).map((d: string) => `https://${d.trim()}`);
-    const allowed = [appUrl, ...platformDomains].filter(Boolean);
+    if (!origin) return true;
+    const allowed = resolveAllowedOrigins(c);
     return allowed.includes(origin);
   },
-}));
+});
+
+app.use("*", async (c, next) => {
+  const origin = c.req.header("origin");
+  if (!origin) {
+    await next();
+    return;
+  }
+  return csrfProtection(c, next);
+});
 
 function isAdminPlatformRole(role: string | null | undefined) {
   return role === "super_admin" || role === "group_admin";
@@ -309,14 +343,13 @@ app.use("*", tenantMiddleware());
 app.use("*", affiliateMiddleware());
 app.use("/api/*", cors({
   origin: (origin, c) => {
-    const appUrl = (c.env.APP_URL || "").replace(/\/$/, "");
-    const platformDomains = (c.env.PLATFORM_DOMAINS || "").split(",").filter(Boolean).map((d: string) => `https://${d.trim()}`);
-    const allowed = [appUrl, ...platformDomains].filter(Boolean);
+    const allowed = resolveAllowedOrigins(c);
     if (!origin || allowed.includes(origin)) return origin;
     return null;
   },
   credentials: true,
 }));
+app.use("/api/*", apiVersioningMiddleware());
 
 // ─── Rate Limits for Unprotected Mutation Endpoints ─────────
 app.use("/api/cart/*", rateLimit({ windowMs: 60_000, max: 60 }));
@@ -368,6 +401,7 @@ app.get("/health/ready", async (c) => {
 
 // ─── API Routes ────────────────────────────────────────────
 app.route("/api/auth", authRoutes);
+app.route("/api", apiVersioningRoutes);
 app.route("/api", productRoutes);
 app.route("/api", cartRoutes);
 app.route("/api", checkoutRoutes);
@@ -1076,6 +1110,11 @@ app.get("/products/:slug", async (c) => {
       ogType="product"
       url={productUrl}
       jsonLd={productJsonLd}
+      breadcrumbs={[
+        { name: "Home", url: `${siteUrl}/` },
+        { name: "Products", url: `${siteUrl}/products` },
+        { name: product.name, url: productUrl },
+      ]}
       ogPriceAmount={String(product.variants?.[0]?.price || "0.00")}
       ogPriceCurrency={geoPricingContext.currency}
       storeName={storeName}
@@ -1255,6 +1294,7 @@ app.get("/checkout/success", async (c) => {
     id: "pending-order",
     status: "pending",
     subtotal: "0.00",
+    discount: "0.00",
     tax: "0.00",
     shippingCost: "0.00",
     total: "0.00",
@@ -2706,14 +2746,16 @@ app.get("/admin/analytics", async (c) => {
   const { GetConversionFunnelUseCase: FunnelUC } = await import("./application/analytics/get-conversion-funnel.usecase");
   const { GetTopProductsUseCase: TopProdUC } = await import("./application/analytics/get-top-products.usecase");
   const { GetRevenueMetricsUseCase: RevUC } = await import("./application/analytics/get-revenue-metrics.usecase");
+  const { GetCostObservabilityUseCase: CostObsUC } = await import("./application/analytics/get-cost-observability.usecase");
 
-  const [dashMetrics, funnel, topProducts, revenue, attribution, previousAttribution] = await Promise.all([
+  const [dashMetrics, funnel, topProducts, revenue, attribution, previousAttribution, costObservability] = await Promise.all([
     new DashMetrics(analyticsRepo).execute(dateFrom, dateTo),
     new FunnelUC(db, storeId).execute(dateFrom, dateTo),
     new TopProdUC(db, storeId).execute(dateFrom, dateTo),
     new RevUC(analyticsRepo).execute(dateFrom, dateTo),
     analyticsRepo.getAttributionBreakdown(dateFrom, dateTo, 10),
     analyticsRepo.getAttributionBreakdown(previousFrom, previousTo, 100),
+    new CostObsUC(analyticsRepo, storeId).execute(dateFrom, dateTo),
   ]);
 
   const previousSourceEvents = new Map(
@@ -2769,6 +2811,7 @@ app.get("/admin/analytics", async (c) => {
         topProducts={topProducts as any}
         dailyRevenue={revenue.dailyRevenue as any}
         attribution={attributionWithTrend as any}
+        costObservability={costObservability as any}
         dateFrom={dateFrom}
         dateTo={dateTo}
       />
@@ -2797,14 +2840,16 @@ app.get("/admin/analytics/export.csv", async (c) => {
   const { GetConversionFunnelUseCase: FunnelUC } = await import("./application/analytics/get-conversion-funnel.usecase");
   const { GetTopProductsUseCase: TopProdUC } = await import("./application/analytics/get-top-products.usecase");
   const { GetRevenueMetricsUseCase: RevUC } = await import("./application/analytics/get-revenue-metrics.usecase");
+  const { GetCostObservabilityUseCase: CostObsUC } = await import("./application/analytics/get-cost-observability.usecase");
 
-  const [dashMetrics, funnel, topProducts, revenue, attribution, previousAttribution] = await Promise.all([
+  const [dashMetrics, funnel, topProducts, revenue, attribution, previousAttribution, costObservability] = await Promise.all([
     new DashMetrics(analyticsRepo).execute(dateFrom, dateTo),
     new FunnelUC(db, storeId).execute(dateFrom, dateTo),
     new TopProdUC(db, storeId).execute(dateFrom, dateTo),
     new RevUC(analyticsRepo).execute(dateFrom, dateTo),
     analyticsRepo.getAttributionBreakdown(dateFrom, dateTo, 10),
     analyticsRepo.getAttributionBreakdown(previousFrom, previousTo, 100),
+    new CostObsUC(analyticsRepo, storeId).execute(dateFrom, dateTo),
   ]);
 
   const previousSourceEvents = new Map(
@@ -2827,6 +2872,11 @@ app.get("/admin/analytics/export.csv", async (c) => {
   lines.push(`summary,,,Checkout Started,${dashMetrics.checkoutStartedCount},,`);
   lines.push(`summary,,,Conversion Rate,${(dashMetrics.conversionRate * 100).toFixed(2)}%,,`);
   lines.push(`summary,,,Avg Order Value,${dashMetrics.averageOrderValue.toFixed(2)},,`);
+  lines.push(`cost_summary,,,Estimated Cost,${costObservability.summary.totalEstimatedCostUsd.toFixed(2)},,`);
+  lines.push(`cost_summary,,,Attributed Revenue,${costObservability.summary.totalRevenueUsd.toFixed(2)},,`);
+  lines.push(`cost_summary,,,Contribution Margin,${costObservability.summary.contributionMarginUsd.toFixed(2)},,`);
+  lines.push(`cost_summary,,,Blended Cost Per Order,${costObservability.summary.blendedCostPerOrderUsd.toFixed(2)},,`);
+  lines.push(`cost_summary,,,Blended Revenue To Cost Ratio,${costObservability.summary.blendedRevenueToCostRatio.toFixed(3)},,`);
 
   for (const day of revenue.dailyRevenue) {
     lines.push([
@@ -2921,6 +2971,63 @@ app.get("/admin/analytics/export.csv", async (c) => {
     ].join(","));
   }
 
+  for (const row of costObservability.dimensions.feature) {
+    lines.push([
+      "cost_feature",
+      "",
+      "estimated_cost_usd",
+      escapeCsv(row.label),
+      row.estimatedCostUsd.toFixed(2),
+      row.events,
+      "",
+    ].join(","));
+    lines.push([
+      "cost_feature",
+      "",
+      "revenue_to_cost_ratio",
+      escapeCsv(row.label),
+      row.revenueToCostRatio.toFixed(3),
+      row.orders,
+      "",
+    ].join(","));
+  }
+
+  for (const row of costObservability.dimensions.team) {
+    lines.push([
+      "cost_team",
+      "",
+      "estimated_cost_usd",
+      escapeCsv(row.label),
+      row.estimatedCostUsd.toFixed(2),
+      row.orders,
+      "",
+    ].join(","));
+  }
+
+  for (const row of costObservability.dimensions.tenant) {
+    lines.push([
+      "cost_tenant",
+      "",
+      "estimated_cost_usd",
+      escapeCsv(row.label),
+      row.estimatedCostUsd.toFixed(2),
+      row.orders,
+      "",
+    ].join(","));
+  }
+
+  for (const item of costObservability.optimizationBacklog) {
+    lines.push([
+      "cost_backlog",
+      "",
+      escapeCsv(item.priority),
+      escapeCsv(item.title),
+      item.estimatedMonthlySavingsUsd.toFixed(2),
+      "",
+      "",
+    ].join(","));
+  }
+
   const csv = lines.join("\n");
   return new Response(csv, {
     headers: {
@@ -3007,17 +3114,84 @@ app.get("/admin/products/:id", async (c) => {
   const { db, storeId, cartCount, isAuthenticated, user, storeName, storeLogo, primaryColor, secondaryColor } = await getPageContext(c);
   if (!user) return c.redirect("/auth/login");
   const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
+  const { and, eq, inArray } = await import("drizzle-orm");
 
   const productRepo = new ProductRepository(db, storeId);
   const product = await productRepo.findById(c.req.param("id"));
   if (!product) return c.notFound();
 
+  const [providers, syncProductRows, mappingRows] = await Promise.all([
+    db
+      .select({
+        id: fulfillmentProviders.id,
+        name: fulfillmentProviders.name,
+        type: fulfillmentProviders.type,
+      })
+      .from(fulfillmentProviders)
+      .where(
+        and(
+          eq(fulfillmentProviders.storeId, storeId),
+          eq(fulfillmentProviders.isActive, true),
+        ),
+      )
+      .orderBy(fulfillmentProviders.name),
+    db
+      .select({
+        printfulId: printfulSyncProducts.printfulId,
+      })
+      .from(printfulSyncProducts)
+      .where(
+        and(
+          eq(printfulSyncProducts.storeId, storeId),
+          eq(printfulSyncProducts.productId, product.id),
+        ),
+      )
+      .limit(1),
+    product.variants.length === 0
+      ? Promise.resolve([])
+      : db
+          .select({
+            variantId: providerProductMappings.variantId,
+            providerId: providerProductMappings.providerId,
+            externalProductId: providerProductMappings.externalProductId,
+            externalVariantId: providerProductMappings.externalVariantId,
+            costPrice: providerProductMappings.costPrice,
+          })
+          .from(providerProductMappings)
+          .where(
+            inArray(
+              providerProductMappings.variantId,
+              product.variants.map((variant) => variant.id),
+            ),
+          ),
+  ]);
+
+  const mappingByVariantId = new Map(
+    mappingRows.map((mapping) => [mapping.variantId, mapping]),
+  );
+  const variants = product.variants.map((variant) => {
+    const mapping = mappingByVariantId.get(variant.id);
+    return {
+      ...variant,
+      price: String(variant.price),
+      compareAtPrice:
+        variant.compareAtPrice == null ? null : String(variant.compareAtPrice),
+      providerId: mapping?.providerId ?? null,
+      externalProductId: mapping?.externalProductId ?? null,
+      externalVariantId: mapping?.externalVariantId ?? null,
+      costPrice: mapping?.costPrice ?? null,
+    };
+  });
+  const printfulSyncProductId = syncProductRows[0]?.printfulId ?? null;
+
   return c.html(
     <Layout url={c.req.url} title={`${product.name} – Admin`} isAuthenticated={isAuthenticated} cartCount={cartCount} storeName={storeName} storeLogo={storeLogo} primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <ProductEditPage
         product={product as any}
-        variants={product.variants as any}
+        variants={variants as any}
         images={product.images as any}
+        providers={providers as any}
+        printfulSyncProductId={printfulSyncProductId}
         isMerchCopilotEnabled={featureFlags.ai_merchandising_copilot}
       />
     </Layout>,
@@ -3073,7 +3247,7 @@ app.get("/admin/orders/:id", async (c) => {
 
   const orderId = c.req.param("id");
   const orderRepo = new OrderRepository(db, storeId);
-  const order = await orderRepo.findById(orderId);
+  const order = await orderRepo.findAdminDetail(orderId);
   if (!order) return c.notFound();
 
   const userRepo = new UserRepository(db);

@@ -1,4 +1,8 @@
 import type Stripe from "stripe";
+import {
+  buildStripeRequestOptions,
+  runStripeMutationWithRetry,
+} from "./retry";
 
 export class StripePortalAdapter {
   /**
@@ -9,11 +13,17 @@ export class StripePortalAdapter {
     stripe: Stripe,
     customerId: string,
     returnUrl: string,
+    idempotencyKey?: string,
   ): Promise<{ url: string }> {
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: returnUrl,
-    });
+    const session = await runStripeMutationWithRetry(() =>
+      stripe.billingPortal.sessions.create(
+        {
+          customer: customerId,
+          return_url: returnUrl,
+        },
+        buildStripeRequestOptions(idempotencyKey),
+      ),
+    );
 
     return { url: session.url };
   }
@@ -30,6 +40,7 @@ export class StripePortalAdapter {
     cancelUrl: string;
     trialDays?: number;
     metadata?: Record<string, string>;
+    idempotencyKey?: string;
   }): Promise<{ url: string; sessionId: string }> {
     const {
       stripe,
@@ -39,6 +50,7 @@ export class StripePortalAdapter {
       cancelUrl,
       trialDays,
       metadata,
+      idempotencyKey,
     } = params;
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -65,7 +77,12 @@ export class StripePortalAdapter {
       };
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    const session = await runStripeMutationWithRetry(() =>
+      stripe.checkout.sessions.create(
+        sessionParams,
+        buildStripeRequestOptions(idempotencyKey),
+      ),
+    );
 
     if (!session.url) {
       throw new Error("Stripe did not return a checkout session URL");
@@ -86,6 +103,7 @@ export class StripePortalAdapter {
     cancelUrl: string;
     trialDays?: number;
     metadata?: Record<string, string>;
+    idempotencyKey?: string;
   }): Promise<{ url: string; sessionId: string }> {
     const {
       stripe,
@@ -95,6 +113,7 @@ export class StripePortalAdapter {
       cancelUrl,
       trialDays,
       metadata,
+      idempotencyKey,
     } = params;
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -119,7 +138,12 @@ export class StripePortalAdapter {
       };
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    const session = await runStripeMutationWithRetry(() =>
+      stripe.checkout.sessions.create(
+        sessionParams,
+        buildStripeRequestOptions(idempotencyKey),
+      ),
+    );
 
     if (!session.url) {
       throw new Error("Stripe did not return a checkout session URL");

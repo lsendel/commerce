@@ -1,0 +1,169 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Shop | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "Shopping cart" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - link "Sign in" [ref=e21] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - heading "Products" [level=1] [ref=e25]
+        - paragraph [ref=e26]: 5 products found• Prices shown in USD
+      - generic [ref=e27]:
+        - complementary [ref=e28]:
+          - generic [ref=e29]:
+            - generic [ref=e30]:
+              - generic [ref=e31]: Search
+              - textbox "Search products..." [ref=e32]
+            - generic [ref=e33]:
+              - generic [ref=e34]: Product Type
+              - generic [ref=e35]:
+                - generic [ref=e36] [cursor=pointer]:
+                  - radio "All Types" [checked] [ref=e37]
+                  - generic [ref=e38]: All Types
+                - generic [ref=e39] [cursor=pointer]:
+                  - radio "Physical" [ref=e40]
+                  - generic [ref=e41]: Physical
+                - generic [ref=e42] [cursor=pointer]:
+                  - radio "Digital" [ref=e43]
+                  - generic [ref=e44]: Digital
+                - generic [ref=e45] [cursor=pointer]:
+                  - radio "Subscription" [ref=e46]
+                  - generic [ref=e47]: Subscription
+                - generic [ref=e48] [cursor=pointer]:
+                  - radio "Bookable" [ref=e49]
+                  - generic [ref=e50]: Bookable
+            - generic [ref=e51]:
+              - generic [ref=e52]: Collection
+              - combobox [ref=e53]:
+                - option "All Collections" [selected]
+                - option "Accessories"
+                - option "Digital"
+            - generic [ref=e54]:
+              - generic [ref=e55]: Price Range (USD)
+              - generic [ref=e56]:
+                - generic [ref=e57]:
+                  - generic [ref=e58]: $
+                  - spinbutton [ref=e59]
+                - generic [ref=e60]: –
+                - generic [ref=e61]:
+                  - generic [ref=e62]: $
+                  - spinbutton [ref=e63]
+            - generic [ref=e64]:
+              - generic [ref=e65]: Sort By
+              - combobox [ref=e66]:
+                - option "Default" [selected]
+                - option "Newest"
+                - 'option "Price: Low to High"'
+                - 'option "Price: High to Low"'
+                - 'option "Name: A-Z"'
+            - button "Apply Filters" [ref=e67] [cursor=pointer]
+            - link "Clear all filters" [ref=e68] [cursor=pointer]:
+              - /url: /products
+        - list "Product list" [ref=e70]:
+          - listitem [ref=e71]:
+            - link "Dog Beach Day Experience - $79.00" [ref=e72] [cursor=pointer]:
+              - /url: /products/dog-beach-day-experience
+              - generic [ref=e73]:
+                - img "Dog Beach Day Experience" [ref=e74]
+                - generic [ref=e75]: Event
+              - generic [ref=e76]:
+                - heading "Dog Beach Day Experience" [level=3] [ref=e77]
+                - generic [ref=e79]: $79.00
+          - listitem [ref=e80]:
+            - link "Petm8 Premium Monthly - $9.99" [ref=e81] [cursor=pointer]:
+              - /url: /products/petm8-premium-monthly
+              - generic [ref=e82]:
+                - img "Petm8 Premium Monthly" [ref=e83]
+                - generic [ref=e84]: Subscription
+              - generic [ref=e85]:
+                - heading "Petm8 Premium Monthly" [level=3] [ref=e86]
+                - generic [ref=e88]: $9.99
+          - listitem [ref=e89]:
+            - link "Pet Care Ultimate Guide - $14.99" [ref=e90] [cursor=pointer]:
+              - /url: /products/pet-care-ultimate-guide
+              - generic [ref=e91]:
+                - img "Pet Care Ultimate Guide" [ref=e92]
+                - generic [ref=e93]: Digital
+                - generic [ref=e94]: Sale
+              - generic [ref=e95]:
+                - heading "Pet Care Ultimate Guide" [level=3] [ref=e96]
+                - generic [ref=e97]:
+                  - generic [ref=e98]: $14.99
+                  - generic [ref=e99]: $24.99
+          - listitem [ref=e100]:
+            - link "Pet Portrait Mug - $18.99" [ref=e101] [cursor=pointer]:
+              - /url: /products/pet-portrait-mug
+              - img "Pet Portrait Mug" [ref=e103]
+              - generic [ref=e104]:
+                - heading "Pet Portrait Mug" [level=3] [ref=e105]
+                - generic [ref=e107]: From $18.99
+          - listitem [ref=e108]:
+            - link "Paw Print Tote Bag - $24.99" [ref=e109] [cursor=pointer]:
+              - /url: /products/paw-print-tote-bag
+              - generic [ref=e110]:
+                - img "Paw Print Tote Bag" [ref=e111]
+                - generic [ref=e112]: Sale
+              - generic [ref=e113]:
+                - heading "Paw Print Tote Bag" [level=3] [ref=e114]
+                - generic [ref=e116]: From $24.99
+  - contentinfo [ref=e117]:
+    - generic [ref=e118]:
+      - generic [ref=e119]:
+        - generic [ref=e120]:
+          - link "petm8 home" [ref=e121] [cursor=pointer]:
+            - /url: /
+            - img [ref=e122]
+            - generic [ref=e124]: petm8
+          - paragraph [ref=e125]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e126]:
+          - heading "Shop" [level=4] [ref=e127]
+          - list [ref=e128]:
+            - listitem [ref=e129]:
+              - link "All Products" [ref=e130] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e131]:
+              - link "Collections" [ref=e132] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e133]:
+          - heading "Account" [level=4] [ref=e134]
+          - list [ref=e135]:
+            - listitem [ref=e136]:
+              - link "Orders" [ref=e137] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e138]:
+              - link "My Pets" [ref=e139] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e140]:
+          - heading "Company" [level=4] [ref=e141]
+          - list [ref=e142]:
+            - listitem [ref=e143]:
+              - link "About" [ref=e144] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e145]:
+              - link "Contact" [ref=e146] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e148]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e149]:
+    - generic [ref=e150]:
+      - heading "Your Cart" [level=2] [ref=e151]
+      - button "Close cart" [ref=e152] [cursor=pointer]:
+        - img [ref=e153]

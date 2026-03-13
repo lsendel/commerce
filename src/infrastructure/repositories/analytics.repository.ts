@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, sql, count, countDistinct, inArray, desc } from "drizzle-orm";
+import { eq, and, gte, lte, sql, count, countDistinct, inArray, desc, isNull } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   analyticsEvents,
@@ -37,6 +37,47 @@ export class AnalyticsRepository {
         ipHash: data.ipHash ?? null,
       })
       .returning();
+
+    return rows[0] ?? null;
+  }
+
+  /**
+   * Lookup a recent event by event type + delivery key to suppress duplicate delivery.
+   */
+  async findRecentEventByDeliveryKey(input: {
+    eventType: string;
+    deliveryKey: string;
+    sessionId?: string | null;
+    withinSeconds?: number;
+  }) {
+    const withinSeconds = Math.max(5, Math.min(input.withinSeconds ?? 120, 3600));
+    const windowStart = new Date(Date.now() - withinSeconds * 1000);
+
+    const conditions = [
+      eq(analyticsEvents.storeId, this.storeId),
+      eq(analyticsEvents.eventType, input.eventType),
+      gte(analyticsEvents.createdAt, windowStart),
+      sql`coalesce(${analyticsEvents.properties}->>'deliveryKey', '') = ${input.deliveryKey}`,
+    ];
+
+    if (input.sessionId !== undefined) {
+      if (input.sessionId === null) {
+        conditions.push(isNull(analyticsEvents.sessionId));
+      } else {
+        conditions.push(eq(analyticsEvents.sessionId, input.sessionId));
+      }
+    }
+
+    const rows = await this.db
+      .select({
+        id: analyticsEvents.id,
+        eventType: analyticsEvents.eventType,
+        createdAt: analyticsEvents.createdAt,
+      })
+      .from(analyticsEvents)
+      .where(and(...conditions))
+      .orderBy(desc(analyticsEvents.createdAt))
+      .limit(1);
 
     return rows[0] ?? null;
   }

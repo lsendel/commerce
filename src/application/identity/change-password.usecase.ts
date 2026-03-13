@@ -25,6 +25,7 @@ export class ChangePasswordUseCase {
 
     const passwordHash = await hashPassword(input.newPassword);
     await this.userRepo.updatePassword(input.userId, passwordHash);
+    await this.userRepo.invalidateActivePasswordResetTokens(input.userId);
 
     return { success: true };
   }

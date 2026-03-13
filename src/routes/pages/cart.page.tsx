@@ -231,31 +231,28 @@ export const CartPage: FC<CartPageProps> = ({
 
             {/* Coupon input */}
             <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
-              <div id="coupon-section">
-                {couponCode ? (
-                  <div class="flex items-center gap-3">
-                    <span class="text-sm text-gray-700 dark:text-gray-300">
-                      Coupon <strong class="text-brand-600">{couponCode}</strong> applied
-                    </span>
-                    <button
-                      type="button"
-                      id="remove-coupon-btn"
-                      class="text-xs text-red-500 hover:text-red-700 font-medium"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <form id="coupon-form" class="flex items-center gap-2">
-                    <input
-                      type="text"
-                      name="code"
-                      placeholder="Coupon code"
-                      class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
-                    />
-                    <Button type="submit" variant="secondary" size="sm">Apply</Button>
-                  </form>
-                )}
+              <div id="coupon-section" data-has-coupon={couponCode ? "true" : "false"}>
+                <div id="coupon-applied" class={`items-center gap-3 ${couponCode ? "flex" : "hidden"}`}>
+                  <span class="text-sm text-gray-700 dark:text-gray-300">
+                    Coupon <strong id="coupon-code-text" class="text-brand-600">{couponCode ?? ""}</strong> applied
+                  </span>
+                  <button
+                    type="button"
+                    id="remove-coupon-btn"
+                    class="text-xs text-red-500 hover:text-red-700 font-medium"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <form id="coupon-form" class={`items-center gap-2 ${couponCode ? "hidden" : "flex"}`}>
+                  <input
+                    type="text"
+                    name="code"
+                    placeholder="Coupon code"
+                    class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
+                  />
+                  <Button type="submit" variant="secondary" size="sm">Apply</Button>
+                </form>
                 <div id="coupon-error" class="hidden mt-2 text-sm text-red-600" />
                 <div id="coupon-success" class="hidden mt-2 text-sm text-emerald-600" />
               </div>
@@ -327,18 +324,107 @@ export const CartPage: FC<CartPageProps> = ({
               }
             }
 
+            function readApiError(response, fallbackMessage) {
+              return response.json().catch(function() {
+                return {};
+              }).then(function(payload) {
+                throw new Error(
+                  window.petm8GetApiErrorMessage
+                    ? window.petm8GetApiErrorMessage(payload, fallbackMessage)
+                    : (payload.error || payload.message || fallbackMessage)
+                );
+              });
+            }
+
+            function showMessage(id, message) {
+              var el = document.getElementById(id);
+              if (!el) return;
+              el.textContent = message || '';
+              if (message) {
+                el.classList.remove('hidden');
+                return;
+              }
+              el.classList.add('hidden');
+            }
+
+            function setCouponState(code) {
+              var section = document.getElementById('coupon-section');
+              var applied = document.getElementById('coupon-applied');
+              var form = document.getElementById('coupon-form');
+              var codeText = document.getElementById('coupon-code-text');
+              var codeInput = form ? form.querySelector('[name=code]') : null;
+              var hasCode = typeof code === 'string' && code.trim().length > 0;
+              if (!section || !applied || !form) return;
+              section.dataset.hasCoupon = hasCode ? 'true' : 'false';
+              if (hasCode) {
+                if (codeText) codeText.textContent = code.trim();
+                applied.classList.remove('hidden');
+                applied.classList.add('flex');
+                form.classList.add('hidden');
+                form.classList.remove('flex');
+                if (codeInput) codeInput.value = '';
+                return;
+              }
+              applied.classList.add('hidden');
+              applied.classList.remove('flex');
+              form.classList.remove('hidden');
+              form.classList.add('flex');
+            }
+
+            function extractCouponCode(payload, fallbackCode) {
+              if (payload && payload.coupon) {
+                if (typeof payload.coupon === 'string' && payload.coupon.trim()) {
+                  return payload.coupon.trim();
+                }
+                if (
+                  typeof payload.coupon === 'object' &&
+                  payload.coupon &&
+                  typeof payload.coupon.code === 'string' &&
+                  payload.coupon.code.trim()
+                ) {
+                  return payload.coupon.code.trim();
+                }
+              }
+              return fallbackCode;
+            }
+
+            function refreshCartUi() {
+              var refreshPromise = Promise.resolve();
+              if (typeof window.refreshCartPage === 'function') {
+                refreshPromise = Promise.resolve(window.refreshCartPage());
+              }
+              return refreshPromise
+                .catch(function() {})
+                .then(function() {
+                  if (typeof window.updateCartBadge === 'function') {
+                    return Promise.resolve(window.updateCartBadge()).catch(function() {});
+                  }
+                });
+            }
+
             function applyCouponCode(code) {
               return fetch('/api/cart/apply-coupon', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
                 body: JSON.stringify({ code: code }),
               })
                 .then(function(r) {
-                  if (!r.ok) return r.json().then(function(d) {
-                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Invalid coupon') : (d.error || d.message || 'Invalid coupon'));
-                  });
+                  if (!r.ok) return readApiError(r, 'Invalid coupon');
                   return r.json();
                 });
+            }
+
+            function removeCouponCode() {
+              return fetch('/api/cart/remove-coupon', {
+                method: 'DELETE',
+                credentials: 'same-origin',
+              }).then(function(r) {
+                if (!r.ok) return readApiError(r, 'Unable to remove coupon');
+                return r.json().catch(function() {
+                  return {};
+                });
+              });
             }
 
             /* Apply coupon */
@@ -348,16 +434,18 @@ export const CartPage: FC<CartPageProps> = ({
                 e.preventDefault();
                 var code = couponForm.querySelector('[name=code]').value.trim();
                 if (!code) return;
-                document.getElementById('coupon-error').classList.add('hidden');
+                showMessage('coupon-error', '');
+                showMessage('coupon-success', '');
 
                 applyCouponCode(code)
-                  .then(function() {
-                    location.reload();
+                  .then(function(payload) {
+                    var appliedCode = extractCouponCode(payload, code);
+                    setCouponState(appliedCode);
+                    showMessage('coupon-success', 'Coupon applied successfully');
+                    return refreshCartUi();
                   })
                   .catch(function(err) {
-                    var el = document.getElementById('coupon-error');
-                    el.textContent = err.message;
-                    el.classList.remove('hidden');
+                    showMessage('coupon-error', err.message);
                   });
               });
             }
@@ -367,59 +455,92 @@ export const CartPage: FC<CartPageProps> = ({
               if (!sessionStorage.getItem(autoApplyKey)) {
                 sessionStorage.setItem(autoApplyKey, '1');
                 applyCouponCode(recoveryCoupon)
-                  .then(function() { location.reload(); })
+                  .then(function(payload) {
+                    setCouponState(extractCouponCode(payload, recoveryCoupon));
+                    showMessage('coupon-success', 'Recovery coupon applied');
+                    return refreshCartUi();
+                  })
                   .catch(function(err) {
-                    var el = document.getElementById('coupon-error');
-                    if (el) {
-                      el.textContent = err.message || 'Could not apply recovery offer';
-                      el.classList.remove('hidden');
-                    }
+                    showMessage('coupon-error', err.message || 'Could not apply recovery offer');
                   });
               }
             }
 
-            /* Remove coupon */
-            var removeBtn = document.getElementById('remove-coupon-btn');
-            if (removeBtn) {
-              removeBtn.addEventListener('click', function() {
-                fetch('/api/cart/remove-coupon', { method: 'DELETE' })
-                  .then(function() { location.reload(); });
-              });
-            }
-
             /* Dynamic bundles */
-            var bundleButtons = Array.prototype.slice.call(document.querySelectorAll('[data-bundle-add]'));
-            bundleButtons.forEach(function(btn) {
-              btn.addEventListener('click', function() {
-                var variantId = btn.getAttribute('data-variant-id');
-                var productName = btn.getAttribute('data-product-name') || 'bundle_item';
-                if (!variantId) return;
-
-                fetch('/api/cart/items', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ variantId: variantId, quantity: 1 }),
-                })
-                  .then(function(r) {
-                    if (!r.ok) return r.json().then(function(d) {
-                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(d, 'Unable to add item') : (d.error || d.message || 'Unable to add item'));
-                    });
-                    return r.json();
-                  })
+            document.addEventListener('click', function(e) {
+              var removeBtn = e.target.closest('#remove-coupon-btn');
+              if (removeBtn) {
+                e.preventDefault();
+                showMessage('coupon-error', '');
+                showMessage('coupon-success', '');
+                removeBtn.disabled = true;
+                removeCouponCode()
                   .then(function() {
-                    if (window.petm8Track) {
-                      window.petm8Track('bundle_add_to_cart', { productName: productName, variantId: variantId });
-                    }
-                    location.reload();
+                    setCouponState('');
+                    showMessage('coupon-success', 'Coupon removed');
+                    return refreshCartUi();
                   })
                   .catch(function(err) {
-                    var errEl = document.getElementById('bundle-error');
-                    if (errEl) {
-                      errEl.textContent = err.message;
-                      errEl.classList.remove('hidden');
-                    }
+                    showMessage('coupon-error', err.message || 'Unable to remove coupon');
+                  })
+                  .finally(function() {
+                    removeBtn.disabled = false;
                   });
-              });
+                return;
+              }
+
+              var bundleBtn = e.target.closest('[data-bundle-add]');
+              if (!bundleBtn) return;
+              e.preventDefault();
+
+              var variantId = bundleBtn.getAttribute('data-variant-id');
+              var productName = bundleBtn.getAttribute('data-product-name') || 'bundle_item';
+              if (!variantId) return;
+
+              var bundleError = document.getElementById('bundle-error');
+              if (bundleError) {
+                bundleError.textContent = '';
+                bundleError.classList.add('hidden');
+              }
+
+              var idleLabel = bundleBtn.textContent || 'Add to cart';
+              bundleBtn.disabled = true;
+              bundleBtn.textContent = 'Adding...';
+
+              fetch('/api/cart/items', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ variantId: variantId, quantity: 1 }),
+              })
+                .then(function(r) {
+                  if (!r.ok) return readApiError(r, 'Unable to add item');
+                  return r.json();
+                })
+                .then(function() {
+                  if (window.petm8Track) {
+                    window.petm8Track('bundle_add_to_cart', { productName: productName, variantId: variantId });
+                  }
+                  if (window.showToast) {
+                    window.showToast('Item added to cart', 'success');
+                  }
+                  return refreshCartUi();
+                })
+                .then(function() {
+                  bundleBtn.textContent = 'Added';
+                  setTimeout(function() {
+                    bundleBtn.disabled = false;
+                    bundleBtn.textContent = idleLabel;
+                  }, 1200);
+                })
+                .catch(function(err) {
+                  bundleBtn.disabled = false;
+                  bundleBtn.textContent = idleLabel;
+                  if (bundleError) {
+                    bundleError.textContent = err.message;
+                    bundleError.classList.remove('hidden');
+                  }
+                });
             });
           })();
         </script>

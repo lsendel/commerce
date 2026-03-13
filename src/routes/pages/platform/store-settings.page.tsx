@@ -37,7 +37,7 @@ export const StoreSettingsPage: FC<SettingsProps> = ({
       <section class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
         <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Store Logo</h2>
         <div class="flex items-center gap-6">
-          <div class="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden">
+          <div id="store-logo-preview" class="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden">
             {store.logoUrl ?? store.logo ? (
               <img src={store.logoUrl ?? store.logo ?? ""} alt="Store logo" class="w-full h-full object-cover" />
             ) : (
@@ -80,7 +80,7 @@ export const StoreSettingsPage: FC<SettingsProps> = ({
                   value={store.primaryColor ?? "#4F46E5"}
                   class="w-10 h-10 rounded cursor-pointer"
                 />
-                <span class="text-sm text-gray-500">{store.primaryColor ?? "#4F46E5"}</span>
+                <span id="primary-color-value" class="text-sm text-gray-500">{store.primaryColor ?? "#4F46E5"}</span>
               </div>
             </div>
             <div>
@@ -94,7 +94,7 @@ export const StoreSettingsPage: FC<SettingsProps> = ({
                   value={store.secondaryColor ?? "#10B981"}
                   class="w-10 h-10 rounded cursor-pointer"
                 />
-                <span class="text-sm text-gray-500">{store.secondaryColor ?? "#10B981"}</span>
+                <span id="secondary-color-value" class="text-sm text-gray-500">{store.secondaryColor ?? "#10B981"}</span>
               </div>
             </div>
           </div>

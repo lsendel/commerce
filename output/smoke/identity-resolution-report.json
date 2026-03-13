@@ -1,0 +1,23 @@
+{
+  "startedAt": "2026-03-06T06:41:11.322Z",
+  "finishedAt": "2026-03-06T06:41:11.323Z",
+  "status": "passed_with_warnings",
+  "generatedLive": false,
+  "metrics": {
+    "totalUsers": 0,
+    "duplicateNormalizedEmails": 0,
+    "duplicateGoogleSubs": 0,
+    "duplicateAppleSubs": 0,
+    "duplicateMetaSubs": 0,
+    "unverifiedUsers": 0
+  },
+  "duplicates": {
+    "normalizedEmails": [],
+    "googleSubs": [],
+    "appleSubs": [],
+    "metaSubs": []
+  },
+  "warnings": [
+    "DATABASE_URL not set; identity resolution live checks were skipped."
+  ]
+}

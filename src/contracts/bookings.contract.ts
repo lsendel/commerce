@@ -10,6 +10,7 @@ import {
 } from "../shared/validators";
 
 const c = initContract();
+const errorSchema = z.object({ error: z.string() });
 
 const availabilityPriceSchema = z.object({
   personType: z.enum(["adult", "child", "pet"]),
@@ -133,6 +134,7 @@ export const bookingsContract = c.router({
     responses: {
       200: bookingSchema,
       401: z.object({ error: z.string() }),
+      403: z.object({ error: z.string() }),
       404: z.object({ error: z.string() }),
       409: z.object({ error: z.string() }),
     },
@@ -147,6 +149,50 @@ export const bookingsContract = c.router({
       401: z.object({ error: z.string() }),
       404: z.object({ error: z.string() }),
       409: z.object({ error: z.string() }),
+    },
+  },
+  noShow: {
+    method: "POST",
+    path: "/api/bookings/:id/no-show",
+    pathParams: idParamSchema,
+    body: z.object({}),
+    responses: {
+      200: bookingSchema,
+      401: errorSchema,
+      403: errorSchema,
+      404: errorSchema,
+      409: errorSchema,
+    },
+  },
+  joinWaitlist: {
+    method: "POST",
+    path: "/api/bookings/availability/:id/waitlist",
+    pathParams: idParamSchema,
+    body: z.object({}).optional(),
+    responses: {
+      201: c.type<any>(),
+      401: errorSchema,
+      404: errorSchema,
+      409: errorSchema,
+    },
+  },
+  listWaitlist: {
+    method: "GET",
+    path: "/api/bookings/waitlist",
+    responses: {
+      200: z.object({ entries: z.array(z.any()) }),
+      401: errorSchema,
+    },
+  },
+  removeWaitlist: {
+    method: "DELETE",
+    path: "/api/bookings/waitlist/:id",
+    pathParams: idParamSchema,
+    body: z.object({}).optional(),
+    responses: {
+      200: z.object({ success: z.boolean() }),
+      401: errorSchema,
+      404: errorSchema,
     },
   },
 });

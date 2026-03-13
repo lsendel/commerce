@@ -1,0 +1,193 @@
+{
+  "registry": [
+    {
+      "experimentId": "wk45-pricing-holdout-geo",
+      "name": "Pricing Lift by Demand Bands",
+      "owner": "commerce-growth",
+      "hypothesis": "Geo-weighted dynamic pricing improves revenue per session while preserving conversion guardrails.",
+      "status": "running",
+      "startedAt": "2027-01-05T10:00:00.000Z",
+      "primaryMetric": "revenue_per_session",
+      "variants": [
+        {
+          "variantId": "control",
+          "name": "Control Pricing",
+          "allocationPercent": 20,
+          "isHoldout": true
+        },
+        {
+          "variantId": "delta-plus-3",
+          "name": "Demand Weighted +3%",
+          "allocationPercent": 40
+        },
+        {
+          "variantId": "delta-minus-2",
+          "name": "Elasticity Activation -2%",
+          "allocationPercent": 40
+        }
+      ],
+      "attribution": {
+        "model": "last_touch",
+        "lookbackDays": 14,
+        "requiredKeys": [
+          "utmSource",
+          "utmMedium",
+          "utmCampaign",
+          "landingPath"
+        ],
+        "enforceCampaignAttribution": true
+      },
+      "guardrails": [
+        {
+          "metric": "conversion_rate",
+          "direction": "not_below",
+          "warnThresholdPercent": 2,
+          "failThresholdPercent": 4,
+          "minSampleSize": 500,
+          "actionOnFail": "pause_experiment"
+        },
+        {
+          "metric": "revenue_per_session",
+          "direction": "not_below",
+          "warnThresholdPercent": 1,
+          "failThresholdPercent": 3,
+          "minSampleSize": 500,
+          "actionOnFail": "pause_experiment"
+        },
+        {
+          "metric": "refund_rate",
+          "direction": "not_above",
+          "warnThresholdPercent": 10,
+          "failThresholdPercent": 20,
+          "minSampleSize": 300,
+          "actionOnFail": "rollback_variant"
+        }
+      ],
+      "tags": [
+        "pricing",
+        "holdout",
+        "week45"
+      ]
+    },
+    {
+      "experimentId": "wk45-lp-intent-copy",
+      "name": "Intent-Led Landing Page Narrative",
+      "owner": "commerce-growth",
+      "hypothesis": "Intent-matched copy sequencing increases conversion without suppressing average order value.",
+      "status": "running",
+      "startedAt": "2027-01-06T08:30:00.000Z",
+      "primaryMetric": "conversion_rate",
+      "variants": [
+        {
+          "variantId": "control",
+          "name": "Static LP Template",
+          "allocationPercent": 25,
+          "isHoldout": true
+        },
+        {
+          "variantId": "intent-proof-first",
+          "name": "Proof-First Narrative",
+          "allocationPercent": 35
+        },
+        {
+          "variantId": "intent-offer-first",
+          "name": "Offer-First Narrative",
+          "allocationPercent": 40
+        }
+      ],
+      "attribution": {
+        "model": "first_touch",
+        "lookbackDays": 21,
+        "requiredKeys": [
+          "utmSource",
+          "utmCampaign",
+          "landingPath"
+        ],
+        "enforceCampaignAttribution": true
+      },
+      "guardrails": [
+        {
+          "metric": "conversion_rate",
+          "direction": "not_below",
+          "warnThresholdPercent": 3,
+          "failThresholdPercent": 5,
+          "minSampleSize": 600,
+          "actionOnFail": "pause_experiment"
+        },
+        {
+          "metric": "average_order_value",
+          "direction": "not_below",
+          "warnThresholdPercent": 2,
+          "failThresholdPercent": 4,
+          "minSampleSize": 400,
+          "actionOnFail": "pause_experiment"
+        }
+      ],
+      "tags": [
+        "landing-pages",
+        "copy",
+        "week45"
+      ]
+    },
+    {
+      "experimentId": "wk45-checkout-recovery-offer",
+      "name": "Checkout Recovery Offer Timing",
+      "owner": "commerce-growth",
+      "hypothesis": "Recovery offer timing optimization lifts order completion rate without raising refund rate.",
+      "status": "running",
+      "startedAt": "2027-01-07T12:15:00.000Z",
+      "primaryMetric": "order_rate",
+      "variants": [
+        {
+          "variantId": "control",
+          "name": "Current Timing",
+          "allocationPercent": 30,
+          "isHoldout": true
+        },
+        {
+          "variantId": "two-hour-delay",
+          "name": "2h Recovery Delay",
+          "allocationPercent": 35
+        },
+        {
+          "variantId": "six-hour-delay",
+          "name": "6h Recovery Delay",
+          "allocationPercent": 35
+        }
+      ],
+      "attribution": {
+        "model": "multi_touch",
+        "lookbackDays": 7,
+        "requiredKeys": [
+          "utmSource",
+          "utmCampaign",
+          "landingPath"
+        ],
+        "enforceCampaignAttribution": false
+      },
+      "guardrails": [
+        {
+          "metric": "order_rate",
+          "direction": "not_below",
+          "warnThresholdPercent": 2,
+          "failThresholdPercent": 4,
+          "minSampleSize": 300,
+          "actionOnFail": "pause_experiment"
+        },
+        {
+          "metric": "refund_rate",
+          "direction": "not_above",
+          "warnThresholdPercent": 12,
+          "failThresholdPercent": 25,
+          "minSampleSize": 250,
+          "actionOnFail": "rollback_variant"
+        }
+      ],
+      "tags": [
+        "checkout",
+        "recovery",
+        "week45"
+      ]
+    }
+  ]
+}

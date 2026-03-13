@@ -62,14 +62,22 @@ export const CartDrawer: FC = () => {
           id="cart-drawer-footer"
           style="display: none;"
         >
+          <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+            <span>Items</span>
+            <span id="cart-drawer-item-count">0</span>
+          </div>
           <div class="cart-drawer__subtotal">
             <span class="cart-drawer__subtotal-label">Subtotal</span>
             <span class="cart-drawer__subtotal-value" id="cart-drawer-subtotal">
               $0.00
             </span>
           </div>
+          <div class="flex items-center justify-between text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <span>Estimated total</span>
+            <span id="cart-drawer-total">$0.00</span>
+          </div>
           <p class="cart-drawer__shipping-note">
-            Shipping calculated at checkout
+            Includes discounts, shipping, and estimated tax when available
           </p>
           <button
             type="button"

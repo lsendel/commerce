@@ -112,9 +112,11 @@ export const OrdersPage: FC<OrdersPageProps> = ({
                   <span class="text-xs text-gray-500">
                     {order.itemCount} {order.itemCount === 1 ? "item" : "items"}
                   </span>
-                  <Badge variant={statusVariant[order.status] || "neutral"}>
-                    {statusLabel[order.status] || order.status}
-                  </Badge>
+                  <span data-order-status-badge>
+                    <Badge variant={statusVariant[order.status] || "neutral"}>
+                      {statusLabel[order.status] || order.status}
+                    </Badge>
+                  </span>
                   <span class="text-sm font-bold text-gray-900">${order.total}</span>
                   <svg
                     class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180"
@@ -177,7 +179,7 @@ export const OrdersPage: FC<OrdersPageProps> = ({
                 </div>
 
                 {/* Actions row */}
-                <div class="mt-4 flex items-center gap-4">
+                <div class="mt-4 flex items-center gap-4" data-order-actions>
                   {isIntelligentReorderEnabled !== false ? (
                     <button
                       type="button"

@@ -1,0 +1,30 @@
+[
+  {
+    "eventType": "page_view",
+    "sessionId": "wk46-replay-session",
+    "pageUrl": "https://petm8.io/products",
+    "properties": {
+      "path": "/products"
+    },
+    "source": "replay_tool"
+  },
+  {
+    "eventType": "add_to_cart",
+    "sessionId": "wk46-replay-session",
+    "pageUrl": "https://petm8.io/products/premium-harness",
+    "properties": {
+      "productId": "sample-product",
+      "variantId": "sample-variant"
+    },
+    "source": "replay_tool"
+  },
+  {
+    "eventType": "checkout_started",
+    "sessionId": "wk46-replay-session",
+    "pageUrl": "https://petm8.io/cart",
+    "properties": {
+      "cartId": "sample-cart"
+    },
+    "source": "replay_tool"
+  }
+]

@@ -1,32 +1,121 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { users, addresses, passwordResetTokens, emailVerificationTokens } from "../db/schema";
 
+const userSelectionBase = {
+  id: users.id,
+  email: users.email,
+  passwordHash: users.passwordHash,
+  googleSub: users.googleSub,
+  appleSub: users.appleSub,
+  metaSub: users.metaSub,
+  name: users.name,
+  platformRole: users.platformRole,
+  stripeCustomerId: users.stripeCustomerId,
+  emailVerifiedAt: users.emailVerifiedAt,
+  avatarUrl: users.avatarUrl,
+  locale: users.locale,
+  timezone: users.timezone,
+  marketingOptIn: users.marketingOptIn,
+  lastLoginAt: users.lastLoginAt,
+  createdAt: users.createdAt,
+  updatedAt: users.updatedAt,
+} as const;
+
+const userSelectionWithPhone = {
+  ...userSelectionBase,
+  phone: users.phone,
+} as const;
+
+const userSelectionWithoutPhone = {
+  ...userSelectionBase,
+  phone: sql<string | null>`NULL`.as("phone"),
+} as const;
+
 export class UserRepository {
+  private phoneColumnAvailable: boolean | null = null;
+
   constructor(private db: Database) {}
 
+  private async hasPhoneColumn() {
+    if (this.phoneColumnAvailable !== null) return this.phoneColumnAvailable;
+
+    try {
+      const result = await this.db.execute(sql`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'users'
+            AND column_name = 'phone'
+        ) AS exists
+      `);
+      const row = result.rows[0] as { exists?: boolean | string | number } | undefined;
+      this.phoneColumnAvailable =
+        row?.exists === true ||
+        row?.exists === "true" ||
+        row?.exists === "t" ||
+        row?.exists === 1 ||
+        row?.exists === "1";
+    } catch {
+      this.phoneColumnAvailable = true;
+    }
+
+    return this.phoneColumnAvailable;
+  }
+
+  private async getUserSelection() {
+    return (await this.hasPhoneColumn()) ? userSelectionWithPhone : userSelectionWithoutPhone;
+  }
+
   async findById(id: string) {
-    const result = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
+    const result = await this.db
+      .select(await this.getUserSelection())
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
     return result[0] ?? null;
   }
 
   async findByEmail(email: string) {
-    const result = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
-    return result[0] ?? null;
+    const candidates = await this.findEmailCandidates(email, 1);
+    return candidates[0] ?? null;
+  }
+
+  async findEmailCandidates(email: string, limit = 5) {
+    const normalizedEmail = email.toLowerCase().trim();
+    if (!normalizedEmail) return [];
+    return this.db
+      .select(await this.getUserSelection())
+      .from(users)
+      .where(sql`lower(${users.email}) = ${normalizedEmail}`)
+      .limit(Math.max(1, Math.min(limit, 20)));
   }
 
   async findByGoogleSub(googleSub: string) {
-    const result = await this.db.select().from(users).where(eq(users.googleSub, googleSub)).limit(1);
+    const result = await this.db
+      .select(await this.getUserSelection())
+      .from(users)
+      .where(eq(users.googleSub, googleSub))
+      .limit(1);
     return result[0] ?? null;
   }
 
   async findByAppleSub(appleSub: string) {
-    const result = await this.db.select().from(users).where(eq(users.appleSub, appleSub)).limit(1);
+    const result = await this.db
+      .select(await this.getUserSelection())
+      .from(users)
+      .where(eq(users.appleSub, appleSub))
+      .limit(1);
     return result[0] ?? null;
   }
 
   async findByMetaSub(metaSub: string) {
-    const result = await this.db.select().from(users).where(eq(users.metaSub, metaSub)).limit(1);
+    const result = await this.db
+      .select(await this.getUserSelection())
+      .from(users)
+      .where(eq(users.metaSub, metaSub))
+      .limit(1);
     return result[0] ?? null;
   }
 
@@ -40,16 +129,28 @@ export class UserRepository {
     metaSub?: string;
     emailVerifiedAt?: Date;
   }) {
-    const result = await this.db.insert(users).values({
-      email: data.email,
+    const normalizedEmail = data.email.toLowerCase().trim();
+    const values = {
+      email: normalizedEmail,
       passwordHash: data.passwordHash,
       name: data.name,
-      phone: data.phone ?? null,
       googleSub: data.googleSub,
       appleSub: data.appleSub,
       metaSub: data.metaSub,
       emailVerifiedAt: data.emailVerifiedAt,
-    }).returning();
+    };
+    const result = await ((await this.hasPhoneColumn())
+      ? this.db
+          .insert(users)
+          .values({
+            ...values,
+            phone: data.phone ?? null,
+          })
+          .returning(userSelectionWithPhone)
+      : this.db
+          .insert(users)
+          .values(values)
+          .returning(userSelectionWithoutPhone));
     const created = result[0];
     if (!created) {
       throw new Error("Failed to create user");
@@ -58,7 +159,11 @@ export class UserRepository {
   }
 
   async findByStripeCustomerId(stripeCustomerId: string) {
-    const result = await this.db.select().from(users).where(eq(users.stripeCustomerId, stripeCustomerId)).limit(1);
+    const result = await this.db
+      .select(await this.getUserSelection())
+      .from(users)
+      .where(eq(users.stripeCustomerId, stripeCustomerId))
+      .limit(1);
     return result[0] ?? null;
   }
 
@@ -78,7 +183,20 @@ export class UserRepository {
     timezone: string;
     marketingOptIn: boolean;
   }>) {
-    await this.db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.id, userId));
+    const patch: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    if (data.name !== undefined) patch.name = data.name;
+    if (data.avatarUrl !== undefined) patch.avatarUrl = data.avatarUrl;
+    if (data.locale !== undefined) patch.locale = data.locale;
+    if (data.timezone !== undefined) patch.timezone = data.timezone;
+    if (data.marketingOptIn !== undefined) patch.marketingOptIn = data.marketingOptIn;
+    if (await this.hasPhoneColumn()) {
+      if ("phone" in data) patch.phone = data.phone ?? null;
+    }
+
+    await this.db.update(users).set(patch).where(eq(users.id, userId));
   }
 
   async setEmailVerified(userId: string) {
@@ -116,6 +234,18 @@ export class UserRepository {
     await this.db.update(passwordResetTokens).set({ usedAt: new Date() }).where(eq(passwordResetTokens.id, id));
   }
 
+  async invalidateActivePasswordResetTokens(userId: string) {
+    await this.db
+      .update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(
+        and(
+          eq(passwordResetTokens.userId, userId),
+          isNull(passwordResetTokens.usedAt),
+        ),
+      );
+  }
+
   // Email verification tokens
   async createEmailVerificationToken(userId: string, token: string, expiresAt: Date) {
     const result = await this.db.insert(emailVerificationTokens).values({ userId, token, expiresAt }).returning();
@@ -129,6 +259,18 @@ export class UserRepository {
 
   async markEmailVerificationTokenUsed(id: string) {
     await this.db.update(emailVerificationTokens).set({ usedAt: new Date() }).where(eq(emailVerificationTokens.id, id));
+  }
+
+  async invalidateActiveEmailVerificationTokens(userId: string) {
+    await this.db
+      .update(emailVerificationTokens)
+      .set({ usedAt: new Date() })
+      .where(
+        and(
+          eq(emailVerificationTokens.userId, userId),
+          isNull(emailVerificationTokens.usedAt),
+        ),
+      );
   }
 
   // Address methods
@@ -172,26 +314,30 @@ export class UserRepository {
     await this.db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
     await this.db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, userId));
 
+    const patch: Record<string, unknown> = {
+      email: replacementEmail,
+      passwordHash: replacementPasswordHash,
+      googleSub: null,
+      appleSub: null,
+      metaSub: null,
+      name: "Deleted User",
+      stripeCustomerId: null,
+      emailVerifiedAt: null,
+      avatarUrl: null,
+      locale: "en",
+      timezone: "UTC",
+      marketingOptIn: false,
+      updatedAt: new Date(),
+    };
+    if (await this.hasPhoneColumn()) {
+      patch.phone = null;
+    }
+
     const result = await this.db
       .update(users)
-      .set({
-        email: replacementEmail,
-        passwordHash: replacementPasswordHash,
-        googleSub: null,
-        appleSub: null,
-        metaSub: null,
-        name: "Deleted User",
-        stripeCustomerId: null,
-        emailVerifiedAt: null,
-        phone: null,
-        avatarUrl: null,
-        locale: "en",
-        timezone: "UTC",
-        marketingOptIn: false,
-        updatedAt: new Date(),
-      })
+      .set(patch)
       .where(eq(users.id, userId))
-      .returning();
+      .returning(await this.getUserSelection());
 
     return result[0] ?? null;
   }

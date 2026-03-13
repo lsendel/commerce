@@ -21,6 +21,30 @@ const exceptionItemSchema = z.object({
   autoResolvable: z.boolean(),
 });
 
+const slaRiskItemSchema = z.object({
+  domain: z.enum(["fulfillment_request", "return_request"]),
+  entityId: z.string(),
+  orderId: z.string(),
+  provider: z.string().nullable(),
+  status: z.string(),
+  ageMinutes: z.number(),
+  targetMinutes: z.number(),
+  riskScore: z.number(),
+  riskLevel: z.enum(["low", "medium", "high"]),
+  breachProbability: z.number(),
+  predictedBreachAt: z.string().nullable(),
+  reasons: z.array(z.string()),
+  recommendedAction: z.enum([
+    "retry",
+    "expedite_provider",
+    "manual_review",
+    "prioritize_return_review",
+    "prioritize_return_completion",
+    "monitor",
+  ]),
+  autoActionEligible: z.boolean(),
+});
+
 export const fulfillmentExceptionContract = c.router({
   listExceptions: {
     method: "GET",
@@ -63,6 +87,87 @@ export const fulfillmentExceptionContract = c.router({
         dryRun: z.boolean(),
         resolvedRequestIds: z.array(z.string()),
         exceptions: z.array(exceptionItemSchema),
+      }),
+      401: z.object({ error: z.string() }),
+      403: featureDisabledSchema,
+    },
+  },
+  slaDashboard: {
+    method: "GET",
+    path: "/api/admin/ops/fulfillment-sla",
+    query: z.object({
+      limit: z.coerce.number().int().min(1).max(200).optional(),
+    }),
+    responses: {
+      200: z.object({
+        dashboard: z.object({
+          modelVersion: z.literal("wk50-fulfillment-sla-v1"),
+          generatedAt: z.string(),
+          totals: z.object({
+            openCount: z.number(),
+            fulfillmentOpenCount: z.number(),
+            returnsOpenCount: z.number(),
+            atRiskCount: z.number(),
+            highRiskCount: z.number(),
+            mediumRiskCount: z.number(),
+            autoActionEligibleCount: z.number(),
+            projectedBreaches24h: z.number(),
+          }),
+          actionQueue: z.array(
+            z.object({
+              action: z.enum([
+                "retry",
+                "expedite_provider",
+                "manual_review",
+                "prioritize_return_review",
+                "prioritize_return_completion",
+                "monitor",
+              ]),
+              count: z.number(),
+            }),
+          ),
+          items: z.array(slaRiskItemSchema),
+        }),
+      }),
+      401: z.object({ error: z.string() }),
+      403: featureDisabledSchema,
+    },
+  },
+  runSlaInterventions: {
+    method: "POST",
+    path: "/api/admin/ops/fulfillment-sla/interventions",
+    body: z.object({
+      dryRun: z.boolean().optional(),
+      limit: z.number().int().min(1).max(200).optional(),
+      minRiskLevel: z.enum(["low", "medium", "high"]).optional(),
+    }),
+    responses: {
+      200: z.object({
+        modelVersion: z.literal("wk50-fulfillment-sla-v1"),
+        executedAt: z.string(),
+        dryRun: z.boolean(),
+        minRiskLevel: z.enum(["low", "medium", "high"]),
+        scannedCount: z.number(),
+        candidateCount: z.number(),
+        executedCount: z.number(),
+        skippedCount: z.number(),
+        actions: z.array(
+          z.object({
+            entityId: z.string(),
+            orderId: z.string(),
+            domain: z.enum(["fulfillment_request", "return_request"]),
+            action: z.enum([
+              "retry",
+              "expedite_provider",
+              "manual_review",
+              "prioritize_return_review",
+              "prioritize_return_completion",
+              "monitor",
+            ]),
+            status: z.enum(["planned", "executed", "skipped"]),
+            note: z.string(),
+          }),
+        ),
       }),
       401: z.object({ error: z.string() }),
       403: featureDisabledSchema,

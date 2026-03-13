@@ -25,7 +25,7 @@ export interface EffectivePolicyConfig {
   };
 }
 
-interface EffectivePolicyView {
+export interface EffectivePolicyView {
   version: number;
   isActive: boolean;
   config: EffectivePolicyConfig;
@@ -34,6 +34,21 @@ interface EffectivePolicyView {
 interface PolicyViolationCandidate {
   message: string;
   details?: Record<string, unknown>;
+}
+
+export interface PolicyViolationPreview {
+  domain: string;
+  action: string;
+  severity: "warning" | "error";
+  message: string;
+  details: Record<string, unknown>;
+}
+
+export interface PolicyGuardrailPreview<TInput = unknown> {
+  policy: EffectivePolicyView;
+  input: TInput;
+  violations: PolicyViolationPreview[];
+  wouldBlock: boolean;
 }
 
 const DEFAULT_POLICY: EffectivePolicyConfig = {
@@ -221,6 +236,118 @@ export class PolicyEngineUseCase {
     actorUserId?: string | null,
   ) {
     const effective = await this.getEffectivePolicy();
+    const checks = this.collectPricingExperimentChecks(action, input, effective);
+
+    await this.handleViolations("pricing", action, checks, effective, actorUserId);
+  }
+
+  async previewPricingExperimentGuardrails(
+    action: "propose" | "start",
+    input: {
+      maxVariants?: number;
+      minDeltaPercent?: number;
+      maxDeltaPercent?: number;
+      autoApply?: boolean;
+    },
+  ): Promise<PolicyGuardrailPreview<typeof input>> {
+    const policy = await this.getEffectivePolicy();
+    const checks = this.collectPricingExperimentChecks(action, input, policy);
+    const violations = this.toPreviewViolations("pricing", action, checks, policy);
+
+    return {
+      policy,
+      input,
+      violations,
+      wouldBlock: violations.some((violation) => violation.severity === "error"),
+    };
+  }
+
+  async enforcePromotionGuardrails(
+    action: "create" | "update" | "copilot_apply",
+    input: {
+      strategyType?: string;
+      strategyParams?: unknown;
+      stackable?: boolean;
+      startsAt?: string | Date | null;
+      endsAt?: string | Date | null;
+    },
+    actorUserId?: string | null,
+  ) {
+    const effective = await this.getEffectivePolicy();
+    const checks = this.collectPromotionChecks(input, effective);
+
+    await this.handleViolations("promotions", action, checks, effective, actorUserId);
+  }
+
+  async previewPromotionGuardrails(
+    action: "create" | "update" | "copilot_apply",
+    input: {
+      strategyType?: string;
+      strategyParams?: unknown;
+      stackable?: boolean;
+      startsAt?: string | Date | null;
+      endsAt?: string | Date | null;
+    },
+  ): Promise<PolicyGuardrailPreview<typeof input>> {
+    const policy = await this.getEffectivePolicy();
+    const checks = this.collectPromotionChecks(input, policy);
+    const violations = this.toPreviewViolations("promotions", action, checks, policy);
+
+    return {
+      policy,
+      input,
+      violations,
+      wouldBlock: violations.some((violation) => violation.severity === "error"),
+    };
+  }
+
+  async enforceShippingRateGuardrails(
+    action: "create_rate" | "update_rate",
+    input: {
+      type?: string;
+      price?: string;
+      estimatedDaysMin?: number;
+      estimatedDaysMax?: number;
+    },
+    actorUserId?: string | null,
+  ) {
+    const effective = await this.getEffectivePolicy();
+    const checks = this.collectShippingChecks(input, effective);
+
+    await this.handleViolations("shipping", action, checks, effective, actorUserId);
+  }
+
+  async previewShippingRateGuardrails(
+    action: "create_rate" | "update_rate",
+    input: {
+      type?: string;
+      price?: string;
+      estimatedDaysMin?: number;
+      estimatedDaysMax?: number;
+    },
+  ): Promise<PolicyGuardrailPreview<typeof input>> {
+    const policy = await this.getEffectivePolicy();
+    const checks = this.collectShippingChecks(input, policy);
+    const violations = this.toPreviewViolations("shipping", action, checks, policy);
+
+    return {
+      policy,
+      input,
+      violations,
+      wouldBlock: violations.some((violation) => violation.severity === "error"),
+    };
+  }
+
+  private collectPricingExperimentChecks(
+    action: "propose" | "start",
+    input: {
+      maxVariants?: number;
+      minDeltaPercent?: number;
+      maxDeltaPercent?: number;
+      autoApply?: boolean;
+    },
+    effective: EffectivePolicyView,
+  ): PolicyViolationCandidate[] {
     const checks: PolicyViolationCandidate[] = [];
 
     if ((input.maxVariants ?? 0) > effective.config.pricing.maxVariants) {
@@ -272,11 +399,10 @@ export class PolicyEngineUseCase {
       });
     }
 
-    await this.handleViolations("pricing", action, checks, effective, actorUserId);
+    return checks;
   }
 
-  async enforcePromotionGuardrails(
-    action: "create" | "update" | "copilot_apply",
+  private collectPromotionChecks(
     input: {
       strategyType?: string;
       strategyParams?: unknown;
@@ -284,9 +410,8 @@ export class PolicyEngineUseCase {
       startsAt?: string | Date | null;
       endsAt?: string | Date | null;
     },
-    actorUserId?: string | null,
-  ) {
-    const effective = await this.getEffectivePolicy();
+    effective: EffectivePolicyView,
+  ): PolicyViolationCandidate[] {
     const checks: PolicyViolationCandidate[] = [];
 
     const strategyType = String(input.strategyType ?? "");
@@ -369,20 +494,18 @@ export class PolicyEngineUseCase {
       }
     }
 
-    await this.handleViolations("promotions", action, checks, effective, actorUserId);
+    return checks;
   }
 
-  async enforceShippingRateGuardrails(
-    action: "create_rate" | "update_rate",
+  private collectShippingChecks(
     input: {
       type?: string;
       price?: string;
       estimatedDaysMin?: number;
       estimatedDaysMax?: number;
     },
-    actorUserId?: string | null,
-  ) {
-    const effective = await this.getEffectivePolicy();
+    effective: EffectivePolicyView,
+  ): PolicyViolationCandidate[] {
     const checks: PolicyViolationCandidate[] = [];
 
     const rateType = String(input.type ?? "");
@@ -430,7 +553,31 @@ export class PolicyEngineUseCase {
       });
     }
 
-    await this.handleViolations("shipping", action, checks, effective, actorUserId);
+    return checks;
+  }
+
+  private toPreviewViolations(
+    domain: string,
+    action: string,
+    checks: PolicyViolationCandidate[],
+    effective: EffectivePolicyView,
+  ): PolicyViolationPreview[] {
+    const severity =
+      effective.isActive && effective.config.enforcement.mode === "enforce"
+        ? "error"
+        : "warning";
+    return checks.map((check) => ({
+      domain,
+      action,
+      severity,
+      message: check.message,
+      details: {
+        ...(check.details ?? {}),
+        policyMode: effective.config.enforcement.mode,
+        policyActive: effective.isActive,
+        policyVersion: effective.version,
+      },
+    }));
   }
 
   private async handleViolations(

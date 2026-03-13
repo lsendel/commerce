@@ -29,11 +29,27 @@ import { GenerateDownloadTokenUseCase } from "../catalog/generate-download-token
 import { TrackEventUseCase } from "../analytics/track-event.usecase";
 import { AffiliateRepository } from "../../infrastructure/repositories/affiliate.repository";
 import { AttributeConversionUseCase } from "../affiliates/attribute-conversion.usecase";
+import { UserRepository } from "../../infrastructure/repositories/user.repository";
 
 interface FulfillOrderInput {
   session: Stripe.Checkout.Session;
   fulfillmentQueue?: Queue;
   splitShipmentOptimizer?: boolean;
+}
+
+interface PersistedShippingAddress extends Record<string, unknown> {
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  street?: string | null;
+  address1?: string | null;
+  address2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  source: "stripe_checkout" | "account_default" | "checkout_metadata";
 }
 
 export class FulfillOrderUseCase {
@@ -124,7 +140,7 @@ export class FulfillOrderUseCase {
         shippingCost: shippingCost.toFixed(2),
         discount: discount.toFixed(2),
         total: total.toFixed(2),
-        shippingAddress: null,
+        shippingAddress: await this.resolveShippingAddress(session, userId),
         couponCode: metadata.couponCode ?? null,
       },
       orderItems,
@@ -324,6 +340,76 @@ export class FulfillOrderUseCase {
     }
 
     return order;
+  }
+
+  private async resolveShippingAddress(
+    session: Stripe.Checkout.Session,
+    userId: string,
+  ): Promise<PersistedShippingAddress | null> {
+    const metadata = session.metadata ?? {};
+    const customerDetails = session.customer_details;
+    const shippingDetails = session.shipping_details;
+    const stripeAddress = shippingDetails?.address ?? customerDetails?.address ?? null;
+    const recipientName = shippingDetails?.name ?? customerDetails?.name ?? null;
+    const recipientEmail = customerDetails?.email ?? null;
+    const userRepo = new UserRepository(this.db);
+    const dbUser = await userRepo.findById(userId);
+
+    if (stripeAddress?.line1) {
+      return {
+        name: recipientName ?? dbUser?.name ?? null,
+        email: recipientEmail ?? dbUser?.email ?? null,
+        phone: customerDetails?.phone ?? dbUser?.phone ?? null,
+        street: stripeAddress.line1,
+        address1: stripeAddress.line1,
+        address2: stripeAddress.line2 ?? null,
+        city: stripeAddress.city ?? null,
+        state: stripeAddress.state ?? null,
+        zip: stripeAddress.postal_code ?? null,
+        postal_code: stripeAddress.postal_code ?? null,
+        country: stripeAddress.country ?? null,
+        source: "stripe_checkout",
+      };
+    }
+
+    const savedAddresses = await userRepo.findAddresses(userId);
+    const defaultAddress =
+      savedAddresses.find((address) => address.isDefault) ?? savedAddresses[0] ?? null;
+    if (defaultAddress) {
+      return {
+        name: dbUser?.name ?? recipientName ?? null,
+        email: dbUser?.email ?? recipientEmail ?? null,
+        phone: dbUser?.phone ?? null,
+        street: defaultAddress.street,
+        address1: defaultAddress.street,
+        address2: null,
+        city: defaultAddress.city,
+        state: defaultAddress.state ?? null,
+        zip: defaultAddress.zip,
+        postal_code: defaultAddress.zip,
+        country: defaultAddress.country,
+        source: "account_default",
+      };
+    }
+
+    if (metadata.shippingCountry || metadata.shippingPostalCode || metadata.shippingState) {
+      return {
+        name: recipientName ?? dbUser?.name ?? null,
+        email: recipientEmail ?? dbUser?.email ?? null,
+        phone: customerDetails?.phone ?? dbUser?.phone ?? null,
+        street: null,
+        address1: null,
+        address2: null,
+        city: null,
+        state: metadata.shippingState ?? null,
+        zip: metadata.shippingPostalCode ?? null,
+        postal_code: metadata.shippingPostalCode ?? null,
+        country: metadata.shippingCountry ?? null,
+        source: "checkout_metadata",
+      };
+    }
+
+    return null;
   }
 
   /**

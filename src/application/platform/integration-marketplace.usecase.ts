@@ -27,9 +27,24 @@ export interface MarketplaceAppView extends MarketplaceAppDefinition {
   lastVerifiedAt: string | null;
   lastSyncAt: string | null;
   hasSecretsConfigured: boolean;
+  configuredSecretKeys: string[];
+  config: Record<string, unknown>;
 }
 
-const APP_CATALOG: MarketplaceAppDefinition[] = [
+export const PARTNER_PROVIDERS = [
+  "printful",
+  "gooten",
+  "prodigi",
+  "shapeways",
+] as const;
+
+export type PartnerProvider = (typeof PARTNER_PROVIDERS)[number];
+
+export function isPartnerProvider(provider: IntegrationProvider): provider is PartnerProvider {
+  return (PARTNER_PROVIDERS as readonly string[]).includes(provider);
+}
+
+export const APP_CATALOG: MarketplaceAppDefinition[] = [
   {
     provider: "stripe",
     name: "Stripe",
@@ -109,6 +124,10 @@ const APP_CATALOG: MarketplaceAppDefinition[] = [
   },
 ];
 
+export function getMarketplaceAppDefinition(provider: IntegrationProvider): MarketplaceAppDefinition | null {
+  return APP_CATALOG.find((app) => app.provider === provider) ?? null;
+}
+
 export class IntegrationMarketplaceUseCase {
   constructor(
     private readonly integrationRepo: IntegrationRepository,
@@ -126,6 +145,9 @@ export class IntegrationMarketplaceUseCase {
       const hasSecretsConfigured = integration
         ? Object.keys(integration.secrets ?? {}).length > 0
         : false;
+      const configuredSecretKeys = integration
+        ? Object.keys(integration.secrets ?? {})
+        : [];
 
       return {
         ...app,
@@ -141,6 +163,8 @@ export class IntegrationMarketplaceUseCase {
           ? new Date(integration.lastSyncAt).toISOString()
           : null,
         hasSecretsConfigured,
+        configuredSecretKeys,
+        config: integration?.config ?? {},
       };
     });
   }

@@ -1,0 +1,102 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: AI Studio | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "Shopping cart" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - link "Sign in" [ref=e21] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - heading "AI Pet Art Studio" [level=1] [ref=e25]
+        - paragraph [ref=e26]: Transform your pet's photo into unique artwork
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - generic [ref=e30]: "1"
+            - heading "Choose Your Pet" [level=2] [ref=e31]
+          - button "Use a different photo" [ref=e32] [cursor=pointer]:
+            - img [ref=e33]
+            - text: Use a different photo
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]: "2"
+            - heading "Upload Photo" [level=2] [ref=e38]
+          - generic [ref=e39] [cursor=pointer]:
+            - generic [ref=e40]:
+              - img [ref=e42]
+              - generic [ref=e44]:
+                - paragraph [ref=e45]: Drop your pet's photo here
+                - paragraph [ref=e46]: or click to browse
+              - paragraph [ref=e47]: JPEG, PNG, or WebP -- max 10 MB
+            - button "Choose File" [ref=e48]
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic [ref=e51]: "3"
+            - heading "Pick a Style" [level=2] [ref=e52]
+          - generic [ref=e54]:
+            - generic [ref=e55]: Custom Prompt (optional)
+            - textbox "Custom Prompt (optional)" [ref=e56]:
+              - /placeholder: Describe any customizations, e.g. 'Make the background a sunset over the ocean'
+        - button "Generate Artwork" [disabled] [ref=e59]:
+          - img [ref=e60]
+          - text: Generate Artwork
+  - contentinfo [ref=e62]:
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e65]:
+          - link "petm8 home" [ref=e66] [cursor=pointer]:
+            - /url: /
+            - img [ref=e67]
+            - generic [ref=e69]: petm8
+          - paragraph [ref=e70]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e71]:
+          - heading "Shop" [level=4] [ref=e72]
+          - list [ref=e73]:
+            - listitem [ref=e74]:
+              - link "All Products" [ref=e75] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e76]:
+              - link "Collections" [ref=e77] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e78]:
+          - heading "Account" [level=4] [ref=e79]
+          - list [ref=e80]:
+            - listitem [ref=e81]:
+              - link "Orders" [ref=e82] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e83]:
+              - link "My Pets" [ref=e84] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e85]:
+          - heading "Company" [level=4] [ref=e86]
+          - list [ref=e87]:
+            - listitem [ref=e88]:
+              - link "About" [ref=e89] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e90]:
+              - link "Contact" [ref=e91] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e93]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e94]:
+    - generic [ref=e95]:
+      - heading "Your Cart" [level=2] [ref=e96]
+      - button "Close cart" [ref=e97] [cursor=pointer]:
+        - img [ref=e98]

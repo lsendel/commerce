@@ -1,0 +1,2079 @@
+{
+  "startedAt": "2026-03-06T06:41:13.350Z",
+  "finishedAt": "2026-03-06T06:41:13.355Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "matrixPath": "docs/policies/compliance-control-matrix-v1.json",
+  "checks": [
+    {
+      "id": "matrix-has-controls",
+      "status": "pass",
+      "note": "Control matrix must define at least one control record."
+    },
+    {
+      "id": "CC-001:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-001:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-001:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-001:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-001:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-001:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-policy-control-tower.ts"
+    },
+    {
+      "id": "CC-001:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: src/contracts/policies.contract.ts"
+    },
+    {
+      "id": "CC-001:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: src/contracts/control-tower.contract.ts"
+    },
+    {
+      "id": "CC-001:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-001:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/admin-api-parity-smoke.md"
+    },
+    {
+      "id": "CC-001:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/policy-engine-guardrails.md"
+    },
+    {
+      "id": "CC-001:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-001:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: repo_file"
+    },
+    {
+      "id": "CC-001:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-001:evidence-1:repo-file-exists",
+      "status": "pass",
+      "note": "Repository evidence path must exist: docs/snapshots/admin-api-parity-report.schema.snapshot.json"
+    },
+    {
+      "id": "CC-001:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-001:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-001:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/admin-api-parity-report.contract.json"
+    },
+    {
+      "id": "CC-001:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-001:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:admin-parity"
+    },
+    {
+      "id": "CC-002:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-002:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-002:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-002:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-002:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-002:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-e2e-matrix.ts"
+    },
+    {
+      "id": "CC-002:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-production.sh"
+    },
+    {
+      "id": "CC-002:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-002:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/e2e-smoke-matrix.md"
+    },
+    {
+      "id": "CC-002:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/admin-api-parity-smoke.md"
+    },
+    {
+      "id": "CC-002:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-002:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-002:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-002:evidence-1:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/e2e-smoke-matrix-report.json"
+    },
+    {
+      "id": "CC-002:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-002:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-002:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/compliance-controls-report.json"
+    },
+    {
+      "id": "CC-002:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-002:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:e2e-matrix"
+    },
+    {
+      "id": "CC-002:command-gate-2",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:production"
+    },
+    {
+      "id": "CC-002:command-gate-3",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:compliance-controls"
+    },
+    {
+      "id": "CC-003:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-003:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-003:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-003:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-003:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-003:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: src/routes/api/auth.routes.ts"
+    },
+    {
+      "id": "CC-003:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-e2e-matrix.ts"
+    },
+    {
+      "id": "CC-003:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-production.sh"
+    },
+    {
+      "id": "CC-003:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-003:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/e2e-smoke-matrix.md"
+    },
+    {
+      "id": "CC-003:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/admin-api-parity-smoke.md"
+    },
+    {
+      "id": "CC-003:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-003:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-003:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-003:evidence-1:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/e2e-smoke-matrix-report.md"
+    },
+    {
+      "id": "CC-003:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-003:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-003:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/admin-api-parity-report.contract.md"
+    },
+    {
+      "id": "CC-003:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-003:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:e2e-matrix"
+    },
+    {
+      "id": "CC-003:command-gate-2",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:admin-parity"
+    },
+    {
+      "id": "CC-004:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-004:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-004:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-004:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-004:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-004:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-event-pipeline.ts"
+    },
+    {
+      "id": "CC-004:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: docs/policies/event-taxonomy-governance.md"
+    },
+    {
+      "id": "CC-004:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-004:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/event-pipeline-reliability.md"
+    },
+    {
+      "id": "CC-004:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-004:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-004:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-004:evidence-1:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/event-pipeline-report.json"
+    },
+    {
+      "id": "CC-004:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-004:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-004:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/event-pipeline-report.md"
+    },
+    {
+      "id": "CC-004:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-004:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:event-pipeline"
+    },
+    {
+      "id": "CC-005:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-005:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-005:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-005:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-005:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-005:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: src/application/fulfillment/fulfillment-sla-prediction.usecase.ts"
+    },
+    {
+      "id": "CC-005:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-fulfillment-sla.ts"
+    },
+    {
+      "id": "CC-005:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-005:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/fulfillment-sla-prediction.md"
+    },
+    {
+      "id": "CC-005:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/fulfillment-exception-handler.md"
+    },
+    {
+      "id": "CC-005:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-005:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-005:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-005:evidence-1:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/fulfillment-sla-report.json"
+    },
+    {
+      "id": "CC-005:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-005:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-005:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/fulfillment-sla-report.md"
+    },
+    {
+      "id": "CC-005:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-005:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:fulfillment-sla"
+    },
+    {
+      "id": "CC-006:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-006:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-006:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-006:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-006:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-006:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-production.sh"
+    },
+    {
+      "id": "CC-006:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-policy-control-tower.ts"
+    },
+    {
+      "id": "CC-006:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-006:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/incident-responder.md"
+    },
+    {
+      "id": "CC-006:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/subscription-incident-response.md"
+    },
+    {
+      "id": "CC-006:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-006:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-006:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-006:evidence-1:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/e2e-smoke-matrix-report.md"
+    },
+    {
+      "id": "CC-006:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-006:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-006:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/admin-api-parity-report.contract.md"
+    },
+    {
+      "id": "CC-006:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-006:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:production"
+    },
+    {
+      "id": "CC-006:command-gate-2",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:admin-parity"
+    },
+    {
+      "id": "CC-007:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-007:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-007:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-007:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-007:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-007:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: src/application/platform/policy-engine.usecase.ts"
+    },
+    {
+      "id": "CC-007:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-pricing-policy-simulation.ts"
+    },
+    {
+      "id": "CC-007:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-growth-experiment-os.ts"
+    },
+    {
+      "id": "CC-007:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-007:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/policy-engine-guardrails.md"
+    },
+    {
+      "id": "CC-007:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/growth-experiment-os.md"
+    },
+    {
+      "id": "CC-007:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-007:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-007:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-007:evidence-1:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/pricing-policy-simulation-report.json"
+    },
+    {
+      "id": "CC-007:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-007:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-007:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/growth-experiment-os-report.json"
+    },
+    {
+      "id": "CC-007:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-007:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:pricing-policy-simulation"
+    },
+    {
+      "id": "CC-007:command-gate-2",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:growth-experiments"
+    },
+    {
+      "id": "CC-008:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-008:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-008:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-008:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-008:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-008:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-seo-audit.ts"
+    },
+    {
+      "id": "CC-008:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-llm-surface.ts"
+    },
+    {
+      "id": "CC-008:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: docs/policies/llm-discoverability-rules.md"
+    },
+    {
+      "id": "CC-008:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-008:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/technical-seo-smoke.md"
+    },
+    {
+      "id": "CC-008:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/llm-surface-smoke.md"
+    },
+    {
+      "id": "CC-008:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-008:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-008:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-008:evidence-1:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/seo-audit-report.json"
+    },
+    {
+      "id": "CC-008:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-008:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-008:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/llm-surface-smoke-report.json"
+    },
+    {
+      "id": "CC-008:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-008:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:seo"
+    },
+    {
+      "id": "CC-008:command-gate-2",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:llm-surface"
+    },
+    {
+      "id": "CC-009:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-009:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-009:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-009:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-009:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-009:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: src/middleware/audit-trail.middleware.ts"
+    },
+    {
+      "id": "CC-009:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: src/shared/audit-trail.ts"
+    },
+    {
+      "id": "CC-009:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: src/shared/pii-redaction.ts"
+    },
+    {
+      "id": "CC-009:implementation-path-4",
+      "status": "pass",
+      "note": "Implementation path must exist: src/middleware/error-handler.middleware.ts"
+    },
+    {
+      "id": "CC-009:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-009:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/audit-trail-pii-guardrails.md"
+    },
+    {
+      "id": "CC-009:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/compliance-control-framework.md"
+    },
+    {
+      "id": "CC-009:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-009:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-009:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-009:evidence-1:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/audit-pii-report.json"
+    },
+    {
+      "id": "CC-009:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-009:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-009:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/audit-pii-report.md"
+    },
+    {
+      "id": "CC-009:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-009:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:audit-pii"
+    },
+    {
+      "id": "CC-010:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-010:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-010:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-010:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-010:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-010:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-secrets-hygiene.ts"
+    },
+    {
+      "id": "CC-010:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: src/env.ts"
+    },
+    {
+      "id": "CC-010:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: .github/workflows/admin-api-smoke.yml"
+    },
+    {
+      "id": "CC-010:implementation-path-4",
+      "status": "pass",
+      "note": "Implementation path must exist: .github/workflows/e2e-smoke-matrix.yml"
+    },
+    {
+      "id": "CC-010:implementation-path-5",
+      "status": "pass",
+      "note": "Implementation path must exist: .github/workflows/deploy.yml"
+    },
+    {
+      "id": "CC-010:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-010:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/secrets-rotation-hygiene.md"
+    },
+    {
+      "id": "CC-010:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/policies/secrets-key-inventory-v1.md"
+    },
+    {
+      "id": "CC-010:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-010:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: repo_file"
+    },
+    {
+      "id": "CC-010:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-010:evidence-1:repo-file-exists",
+      "status": "pass",
+      "note": "Repository evidence path must exist: docs/policies/secrets-key-inventory-v1.json"
+    },
+    {
+      "id": "CC-010:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-010:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-010:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/secrets-hygiene-report.json"
+    },
+    {
+      "id": "CC-010:evidence-3:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-010:evidence-3:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-010:evidence-3:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/secrets-hygiene-report.md"
+    },
+    {
+      "id": "CC-010:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-010:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:secrets-hygiene"
+    },
+    {
+      "id": "CC-011:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-011:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-011:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-011:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-011:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-011:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-access-governance.ts"
+    },
+    {
+      "id": "CC-011:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: src/middleware/role.middleware.ts"
+    },
+    {
+      "id": "CC-011:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: src/index.tsx"
+    },
+    {
+      "id": "CC-011:implementation-path-4",
+      "status": "pass",
+      "note": "Implementation path must exist: src/routes/api/platform.routes.ts"
+    },
+    {
+      "id": "CC-011:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-011:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/access-governance-break-glass.md"
+    },
+    {
+      "id": "CC-011:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/policies/access-governance-policy-v1.md"
+    },
+    {
+      "id": "CC-011:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-011:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: repo_file"
+    },
+    {
+      "id": "CC-011:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-011:evidence-1:repo-file-exists",
+      "status": "pass",
+      "note": "Repository evidence path must exist: docs/policies/access-governance-policy-v1.json"
+    },
+    {
+      "id": "CC-011:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-011:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-011:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/access-governance-report.json"
+    },
+    {
+      "id": "CC-011:evidence-3:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-011:evidence-3:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-011:evidence-3:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/break-glass-drill-report.json"
+    },
+    {
+      "id": "CC-011:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-011:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:access-governance"
+    },
+    {
+      "id": "CC-012:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-012:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-012:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-012:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-012:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-012:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: src/application/analytics/get-cost-observability.usecase.ts"
+    },
+    {
+      "id": "CC-012:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: src/routes/api/analytics.routes.ts"
+    },
+    {
+      "id": "CC-012:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: src/routes/pages/admin/analytics.page.tsx"
+    },
+    {
+      "id": "CC-012:implementation-path-4",
+      "status": "pass",
+      "note": "Implementation path must exist: src/index.tsx"
+    },
+    {
+      "id": "CC-012:implementation-path-5",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-cost-observability.ts"
+    },
+    {
+      "id": "CC-012:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-012:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/cost-observability-unit-economics.md"
+    },
+    {
+      "id": "CC-012:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/policies/cost-observability-unit-economics-v1.md"
+    },
+    {
+      "id": "CC-012:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-012:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: repo_file"
+    },
+    {
+      "id": "CC-012:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-012:evidence-1:repo-file-exists",
+      "status": "pass",
+      "note": "Repository evidence path must exist: docs/policies/cost-observability-unit-economics-v1.json"
+    },
+    {
+      "id": "CC-012:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-012:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-012:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/cost-observability-report.json"
+    },
+    {
+      "id": "CC-012:evidence-3:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-012:evidence-3:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-012:evidence-3:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/cost-observability-report.md"
+    },
+    {
+      "id": "CC-012:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-012:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:cost-observability"
+    },
+    {
+      "id": "CC-013:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-013:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-013:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-013:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-013:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-013:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: src/infrastructure/db/schema.ts"
+    },
+    {
+      "id": "CC-013:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: src/infrastructure/repositories/cart.repository.ts"
+    },
+    {
+      "id": "CC-013:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: src/infrastructure/repositories/order.repository.ts"
+    },
+    {
+      "id": "CC-013:implementation-path-4",
+      "status": "pass",
+      "note": "Implementation path must exist: src/infrastructure/repositories/promotion.repository.ts"
+    },
+    {
+      "id": "CC-013:implementation-path-5",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/sql/add-week57-performance-indexes.sql"
+    },
+    {
+      "id": "CC-013:implementation-path-6",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-query-performance.ts"
+    },
+    {
+      "id": "CC-013:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-013:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/query-performance-budget-wave1.md"
+    },
+    {
+      "id": "CC-013:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/policies/query-performance-budget-v1.md"
+    },
+    {
+      "id": "CC-013:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-013:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: repo_file"
+    },
+    {
+      "id": "CC-013:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-013:evidence-1:repo-file-exists",
+      "status": "pass",
+      "note": "Repository evidence path must exist: docs/policies/query-performance-budget-v1.json"
+    },
+    {
+      "id": "CC-013:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-013:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-013:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/query-performance-report.json"
+    },
+    {
+      "id": "CC-013:evidence-3:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-013:evidence-3:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-013:evidence-3:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/query-performance-report.md"
+    },
+    {
+      "id": "CC-013:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-013:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:query-performance"
+    },
+    {
+      "id": "CC-014:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-014:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-014:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-014:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-014:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-014:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: src/infrastructure/cache/invalidation-plan.ts"
+    },
+    {
+      "id": "CC-014:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: src/infrastructure/cache/invalidation-executor.ts"
+    },
+    {
+      "id": "CC-014:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: src/routes/api/cache.routes.ts"
+    },
+    {
+      "id": "CC-014:implementation-path-4",
+      "status": "pass",
+      "note": "Implementation path must exist: src/routes/api/admin-products.routes.ts"
+    },
+    {
+      "id": "CC-014:implementation-path-5",
+      "status": "pass",
+      "note": "Implementation path must exist: src/routes/api/admin-collections.routes.ts"
+    },
+    {
+      "id": "CC-014:implementation-path-6",
+      "status": "pass",
+      "note": "Implementation path must exist: src/routes/api/currency.routes.ts"
+    },
+    {
+      "id": "CC-014:implementation-path-7",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-cache-invalidation.ts"
+    },
+    {
+      "id": "CC-014:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-014:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/cache-invalidation-automation.md"
+    },
+    {
+      "id": "CC-014:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/policies/cache-policy-matrix-v1.md"
+    },
+    {
+      "id": "CC-014:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-014:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: repo_file"
+    },
+    {
+      "id": "CC-014:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-014:evidence-1:repo-file-exists",
+      "status": "pass",
+      "note": "Repository evidence path must exist: docs/policies/cache-policy-matrix-v1.json"
+    },
+    {
+      "id": "CC-014:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-014:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-014:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/cache-invalidation-report.json"
+    },
+    {
+      "id": "CC-014:evidence-3:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-014:evidence-3:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-014:evidence-3:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/cache-invalidation-report.md"
+    },
+    {
+      "id": "CC-014:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-014:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:cache-invalidation"
+    },
+    {
+      "id": "CC-015:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-015:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-015:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-015:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-015:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-015:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: src/queues/orchestration-policy.ts"
+    },
+    {
+      "id": "CC-015:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: src/queues/handler.ts"
+    },
+    {
+      "id": "CC-015:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: src/queues/ai-generation.consumer.ts"
+    },
+    {
+      "id": "CC-015:implementation-path-4",
+      "status": "pass",
+      "note": "Implementation path must exist: src/queues/order-fulfillment.consumer.ts"
+    },
+    {
+      "id": "CC-015:implementation-path-5",
+      "status": "pass",
+      "note": "Implementation path must exist: src/queues/notification.consumer.ts"
+    },
+    {
+      "id": "CC-015:implementation-path-6",
+      "status": "pass",
+      "note": "Implementation path must exist: src/routes/api/workflows.routes.ts"
+    },
+    {
+      "id": "CC-015:implementation-path-7",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-workflow-reliability.ts"
+    },
+    {
+      "id": "CC-015:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-015:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/async-workflow-orchestration.md"
+    },
+    {
+      "id": "CC-015:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/policies/workflow-reliability-scorecard-v1.md"
+    },
+    {
+      "id": "CC-015:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-015:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: repo_file"
+    },
+    {
+      "id": "CC-015:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-015:evidence-1:repo-file-exists",
+      "status": "pass",
+      "note": "Repository evidence path must exist: docs/policies/workflow-reliability-scorecard-v1.json"
+    },
+    {
+      "id": "CC-015:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-015:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-015:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/workflow-reliability-report.json"
+    },
+    {
+      "id": "CC-015:evidence-3:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-015:evidence-3:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-015:evidence-3:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/workflow-reliability-report.md"
+    },
+    {
+      "id": "CC-015:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-015:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:workflow-reliability"
+    },
+    {
+      "id": "CC-016:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-016:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-016:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-016:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-016:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-016:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: src/queues/dlq-remediation.ts"
+    },
+    {
+      "id": "CC-016:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: src/queues/handler.ts"
+    },
+    {
+      "id": "CC-016:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: src/queues/orchestration-policy.ts"
+    },
+    {
+      "id": "CC-016:implementation-path-4",
+      "status": "pass",
+      "note": "Implementation path must exist: src/queues/order-fulfillment.consumer.ts"
+    },
+    {
+      "id": "CC-016:implementation-path-5",
+      "status": "pass",
+      "note": "Implementation path must exist: src/queues/notification.consumer.ts"
+    },
+    {
+      "id": "CC-016:implementation-path-6",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-dlq-remediation.ts"
+    },
+    {
+      "id": "CC-016:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-016:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/dlq-auto-remediation-playbook.md"
+    },
+    {
+      "id": "CC-016:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/policies/dlq-auto-remediation-v1.md"
+    },
+    {
+      "id": "CC-016:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-016:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: repo_file"
+    },
+    {
+      "id": "CC-016:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-016:evidence-1:repo-file-exists",
+      "status": "pass",
+      "note": "Repository evidence path must exist: docs/policies/dlq-auto-remediation-v1.json"
+    },
+    {
+      "id": "CC-016:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-016:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-016:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/dlq-remediation-report.json"
+    },
+    {
+      "id": "CC-016:evidence-3:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-016:evidence-3:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-016:evidence-3:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/dlq-remediation-report.md"
+    },
+    {
+      "id": "CC-016:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-016:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:dlq-remediation"
+    },
+    {
+      "id": "CC-017:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-017:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-017:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-017:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-017:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-017:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: src/shared/api-versioning.ts"
+    },
+    {
+      "id": "CC-017:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: src/middleware/api-versioning.middleware.ts"
+    },
+    {
+      "id": "CC-017:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: src/routes/api/api-versioning.routes.ts"
+    },
+    {
+      "id": "CC-017:implementation-path-4",
+      "status": "pass",
+      "note": "Implementation path must exist: src/index.tsx"
+    },
+    {
+      "id": "CC-017:implementation-path-5",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-api-versioning.ts"
+    },
+    {
+      "id": "CC-017:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-017:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/api-versioning-migration.md"
+    },
+    {
+      "id": "CC-017:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/policies/api-version-policy-v1.md"
+    },
+    {
+      "id": "CC-017:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-017:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: repo_file"
+    },
+    {
+      "id": "CC-017:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-017:evidence-1:repo-file-exists",
+      "status": "pass",
+      "note": "Repository evidence path must exist: docs/policies/api-version-policy-v1.json"
+    },
+    {
+      "id": "CC-017:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-017:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-017:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/api-versioning-report.json"
+    },
+    {
+      "id": "CC-017:evidence-3:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-017:evidence-3:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-017:evidence-3:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/api-versioning-report.md"
+    },
+    {
+      "id": "CC-017:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-017:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:api-versioning"
+    },
+    {
+      "id": "CC-018:id-present",
+      "status": "pass",
+      "note": "Control must include a non-empty controlId."
+    },
+    {
+      "id": "CC-018:id-unique",
+      "status": "pass",
+      "note": "Control IDs must be unique inside the matrix."
+    },
+    {
+      "id": "CC-018:domain-present",
+      "status": "pass",
+      "note": "Each control must include the SOC2 domain mapping."
+    },
+    {
+      "id": "CC-018:objective-present",
+      "status": "pass",
+      "note": "Each control must include an objective."
+    },
+    {
+      "id": "CC-018:implementation-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one implementation path."
+    },
+    {
+      "id": "CC-018:implementation-path-1",
+      "status": "pass",
+      "note": "Implementation path must exist: src/application/platform/partner-onboarding.usecase.ts"
+    },
+    {
+      "id": "CC-018:implementation-path-2",
+      "status": "pass",
+      "note": "Implementation path must exist: src/routes/api/integration-marketplace.routes.ts"
+    },
+    {
+      "id": "CC-018:implementation-path-3",
+      "status": "pass",
+      "note": "Implementation path must exist: src/contracts/integration-marketplace.contract.ts"
+    },
+    {
+      "id": "CC-018:implementation-path-4",
+      "status": "pass",
+      "note": "Implementation path must exist: public/scripts/admin-integration-marketplace.js"
+    },
+    {
+      "id": "CC-018:implementation-path-5",
+      "status": "pass",
+      "note": "Implementation path must exist: scripts/smoke-partner-onboarding.ts"
+    },
+    {
+      "id": "CC-018:runbook-paths-present",
+      "status": "pass",
+      "note": "Each control must map to at least one runbook path."
+    },
+    {
+      "id": "CC-018:runbook-path-1",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/runbooks/partner-onboarding-self-serve.md"
+    },
+    {
+      "id": "CC-018:runbook-path-2",
+      "status": "pass",
+      "note": "Runbook path must exist: docs/policies/partner-onboarding-contract-v1.md"
+    },
+    {
+      "id": "CC-018:evidence-paths-present",
+      "status": "pass",
+      "note": "Each control must include at least one evidence path."
+    },
+    {
+      "id": "CC-018:evidence-1:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: repo_file"
+    },
+    {
+      "id": "CC-018:evidence-1:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-018:evidence-1:repo-file-exists",
+      "status": "pass",
+      "note": "Repository evidence path must exist: docs/policies/partner-onboarding-contract-v1.json"
+    },
+    {
+      "id": "CC-018:evidence-2:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-018:evidence-2:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-018:evidence-2:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/partner-onboarding-report.json"
+    },
+    {
+      "id": "CC-018:evidence-3:kind-valid",
+      "status": "pass",
+      "note": "Evidence kind must be repo_file or generated_artifact: generated_artifact"
+    },
+    {
+      "id": "CC-018:evidence-3:path-present",
+      "status": "pass",
+      "note": "Evidence path must be non-empty."
+    },
+    {
+      "id": "CC-018:evidence-3:artifact-path-policy",
+      "status": "pass",
+      "note": "Generated artifact paths must live under output/smoke/: output/smoke/partner-onboarding-report.md"
+    },
+    {
+      "id": "CC-018:command-gates-present",
+      "status": "pass",
+      "note": "Each control must map to at least one smoke command."
+    },
+    {
+      "id": "CC-018:command-gate-1",
+      "status": "pass",
+      "note": "Command gate must exist in package.json scripts: smoke:partner-onboarding"
+    }
+  ],
+  "metrics": {
+    "totalChecks": 413,
+    "failedChecks": 0,
+    "controlCount": 18
+  }
+}

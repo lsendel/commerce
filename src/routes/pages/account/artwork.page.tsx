@@ -27,6 +27,7 @@ export const ArtworkPage: FC<ArtworkPageProps> = ({
   isAdmin,
 }) => {
   const totalPages = Math.ceil(total / limit);
+  const hasArtwork = artwork.length > 0;
 
   return (
     <div class="max-w-6xl mx-auto px-4 py-8">
@@ -34,7 +35,7 @@ export const ArtworkPage: FC<ArtworkPageProps> = ({
         <div>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Your Artwork</h1>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {total} {total === 1 ? "creation" : "creations"} so far
+            <span id="artwork-count">{total}</span> {total === 1 ? "creation" : "creations"} so far
           </p>
         </div>
         <Button variant="primary" href="/studio/create">
@@ -42,8 +43,10 @@ export const ArtworkPage: FC<ArtworkPageProps> = ({
         </Button>
       </div>
 
-      {artwork.length === 0 ? (
-        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-12 text-center">
+      <div
+        id="artwork-empty-state"
+        class={`bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-12 text-center ${hasArtwork ? "hidden" : ""}`}
+      >
           <div class="w-16 h-16 rounded-full bg-brand-50 text-brand-500 flex items-center justify-center mx-auto mb-4">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
@@ -54,12 +57,12 @@ export const ArtworkPage: FC<ArtworkPageProps> = ({
           <Button variant="primary" href="/studio/create">
             Get Started
           </Button>
-        </div>
-      ) : (
-        <>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      </div>
+
+      <div id="artwork-content" class={hasArtwork ? "" : "hidden"}>
+        <div id="artwork-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {artwork.map((item) => (
-              <div class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden" data-artwork-card={item.id}>
                 {/* Image */}
                 <a href={`/studio/preview/${item.id}`} class="block aspect-square bg-gray-100 overflow-hidden">
                   {item.outputRasterUrl ? (
@@ -119,32 +122,31 @@ export const ArtworkPage: FC<ArtworkPageProps> = ({
                 </div>
               </div>
             ))}
-          </div>
+        </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div class="mt-8 flex items-center justify-center gap-2">
-              {page > 1 && (
-                <a
-                  href={`/account/artwork?page=${page - 1}`}
-                  class="px-3 py-2 text-sm font-medium rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition-colors"
-                >
-                  Previous
-                </a>
-              )}
-              <span class="text-sm text-gray-500">Page {page} of {totalPages}</span>
-              {page < totalPages && (
-                <a
-                  href={`/account/artwork?page=${page + 1}`}
-                  class="px-3 py-2 text-sm font-medium rounded-xl bg-brand-500 text-white hover:bg-brand-600 transition-colors"
-                >
-                  Next
-                </a>
-              )}
-            </div>
-          )}
-        </>
-      )}
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div class="mt-8 flex items-center justify-center gap-2">
+            {page > 1 && (
+              <a
+                href={`/account/artwork?page=${page - 1}`}
+                class="px-3 py-2 text-sm font-medium rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                Previous
+              </a>
+            )}
+            <span class="text-sm text-gray-500">Page {page} of {totalPages}</span>
+            {page < totalPages && (
+              <a
+                href={`/account/artwork?page=${page + 1}`}
+                class="px-3 py-2 text-sm font-medium rounded-xl bg-brand-500 text-white hover:bg-brand-600 transition-colors"
+              >
+                Next
+              </a>
+            )}
+          </div>
+        )}
+      </div>
 
       {html`<script>
         function notify(message, type) {
@@ -178,17 +180,37 @@ export const ArtworkPage: FC<ArtworkPageProps> = ({
           btn.dataset.confirming = 'false';
           if (btn._confirmTimer) clearTimeout(btn._confirmTimer);
           var id = btn.dataset.deleteArtwork;
+          var card = btn.closest('[data-artwork-card]');
           btn.disabled = true;
           btn.textContent = 'Deleting...';
           try {
             var res = await fetch('/api/studio/jobs/' + id, { method: 'DELETE' });
-            if (res.ok) location.reload();
-            else notify('Failed to delete artwork', 'error');
+            if (!res.ok) {
+              notify('Failed to delete artwork', 'error');
+              btn.disabled = false;
+              btn.textContent = 'Delete';
+              return;
+            }
+
+            if (card) card.remove();
+            var countEl = document.getElementById('artwork-count');
+            if (countEl) {
+              var current = parseInt(countEl.textContent || '0', 10) || 0;
+              countEl.textContent = String(Math.max(0, current - 1));
+            }
+
+            var grid = document.getElementById('artwork-grid');
+            var content = document.getElementById('artwork-content');
+            var emptyState = document.getElementById('artwork-empty-state');
+            if (grid && grid.children.length === 0 && emptyState) {
+              if (content) content.classList.add('hidden');
+              emptyState.classList.remove('hidden');
+            }
+
+            notify('Artwork deleted', 'success');
           } catch {
             notify('Failed to delete artwork', 'error');
           }
-          btn.disabled = false;
-          btn.textContent = 'Delete';
         });
       </script>`}
     </div>

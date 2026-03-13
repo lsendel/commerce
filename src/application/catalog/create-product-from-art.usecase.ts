@@ -1,11 +1,15 @@
+import { and, eq, inArray } from "drizzle-orm";
 import type { Database } from "../../infrastructure/db/client";
 import type { AiJobRepository } from "../../infrastructure/repositories/ai-job.repository";
+import { PrintfulRepository } from "../../infrastructure/repositories/printful.repository";
 import {
   products,
   productVariants,
   productImages,
   providerProductMappings,
   designPlacements,
+  printfulSyncProducts,
+  printfulSyncVariants,
 } from "../../infrastructure/db/schema";
 import { NotFoundError, ValidationError, ForbiddenError } from "../../shared/errors";
 import { generateDefaults } from "../../domain/catalog/seo-metadata.vo";
@@ -80,6 +84,8 @@ export class CreateProductFromArtUseCase {
       throw new ValidationError("Art job must be completed before creating a product");
     }
 
+    const printfulLinkage = await this.validatePrintfulMappings(storeId, variantInputs);
+
     // 2. Generate slug + SEO defaults
     const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${Date.now()}`;
     const seo = generateDefaults(name, input.description);
@@ -108,6 +114,11 @@ export class CreateProductFromArtUseCase {
 
     // 4. Create variants + optional provider mappings
     const createdVariants = [];
+    const printfulRepo =
+      printfulLinkage.productId || printfulLinkage.variantIds.length > 0
+        ? new PrintfulRepository(this.db, storeId)
+        : null;
+
     for (const v of variantInputs) {
       const variantRows = await this.db
         .insert(productVariants)
@@ -139,7 +150,27 @@ export class CreateProductFromArtUseCase {
         });
       }
 
+      const printfulVariantId =
+        v.fulfillmentProvider === "printful"
+          ? parsePositiveInt(v.externalVariantId)
+          : null;
+      if (printfulRepo && printfulVariantId) {
+        await printfulRepo.upsertSyncVariant({
+          printfulId: printfulVariantId,
+          variantId: variant.id,
+          printfulProductId: printfulLinkage.productId ?? undefined,
+        });
+      }
+
       createdVariants.push(variant);
+    }
+
+    if (printfulRepo && printfulLinkage.productId) {
+      await printfulRepo.upsertSyncProduct({
+        printfulId: printfulLinkage.productId,
+        productId: product.id,
+        externalId: String(printfulLinkage.productId),
+      });
     }
 
     // 6. Create design placements
@@ -186,4 +217,83 @@ export class CreateProductFromArtUseCase {
       imageCount,
     };
   }
+
+  private async validatePrintfulMappings(
+    storeId: string,
+    variants: VariantInput[],
+  ): Promise<{
+    productId: number | null;
+    variantIds: number[];
+  }> {
+    const printfulProductIds = new Set<number>();
+    const printfulVariantIds = new Set<number>();
+
+    for (const variant of variants) {
+      if (variant.fulfillmentProvider !== "printful") continue;
+
+      const productId = parsePositiveInt(variant.externalProductId);
+      const variantId = parsePositiveInt(variant.externalVariantId);
+
+      if (productId) {
+        printfulProductIds.add(productId);
+      }
+      if (variantId) {
+        printfulVariantIds.add(variantId);
+      }
+    }
+
+    if (printfulProductIds.size > 1) {
+      throw new ValidationError(
+        "All Printful variants for a product must use the same external product ID",
+      );
+    }
+
+    const [printfulProductId] = [...printfulProductIds];
+    const printfulVariantIdList = [...printfulVariantIds];
+
+    if (printfulProductId) {
+      const existingProducts = await this.db
+        .select()
+        .from(printfulSyncProducts)
+        .where(
+          and(
+            eq(printfulSyncProducts.storeId, storeId),
+            eq(printfulSyncProducts.printfulId, printfulProductId),
+          ),
+        )
+        .limit(1);
+
+      if (existingProducts[0]) {
+        throw new ValidationError(
+          `Printful product ${printfulProductId} is already linked in this store`,
+        );
+      }
+    }
+
+    if (printfulVariantIdList.length > 0) {
+      const existingVariants = await this.db
+        .select()
+        .from(printfulSyncVariants)
+        .where(inArray(printfulSyncVariants.printfulId, printfulVariantIdList));
+
+      if (existingVariants.length > 0) {
+        const linkedIds = existingVariants.map((variant) => variant.printfulId).join(", ");
+        throw new ValidationError(
+          `Printful variants already linked elsewhere: ${linkedIds}`,
+        );
+      }
+    }
+
+    return {
+      productId: printfulProductId ?? null,
+      variantIds: printfulVariantIdList,
+    };
+  }
+}
+
+function parsePositiveInt(value?: string | null) {
+  if (!value) return null;
+  if (!/^\d+$/.test(value.trim())) return null;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }

@@ -55,6 +55,14 @@ check GET "/api/cart" "$BASE/api/cart" 200
 check GET "/api/platform/plans" "$BASE/api/platform/plans" 200
 check GET "/graphql" "$BASE/graphql" 200
 
+# ─── Technical SEO surfaces (200) ──────────────────────────────────────────
+echo ""
+echo "— Technical SEO surfaces —"
+check GET "/robots.txt" "$BASE/robots.txt" 200
+check GET "/sitemap.xml" "$BASE/sitemap.xml" 200
+check GET "/llms.txt" "$BASE/llms.txt" 200
+check GET "/.well-known/ai-plugin.json" "$BASE/.well-known/ai-plugin.json" 200
+
 # ─── Auth-gated API (expect 401) ────────────────────────────────────────────
 echo ""
 echo "— Auth-gated API (expect 401) —"
@@ -66,6 +74,7 @@ for ep in \
   "/api/account/subscriptions" \
   "/api/account/addresses" \
   "/api/analytics/readiness" \
+  "/api/analytics/recommendations/history" \
   "/api/analytics/top-products" \
   "/api/analytics/revenue" \
   "/api/promotions" \
@@ -82,6 +91,7 @@ echo "— POST API (public, empty body → 400 validation) —"
 check POST "/api/auth/register" "$BASE/api/auth/register" 400
 check POST "/api/auth/login" "$BASE/api/auth/login" 400
 check POST "/api/cart/items" "$BASE/api/cart/items" 400
+check POST "/api/cart/apply-coupon" "$BASE/api/cart/apply-coupon" 400
 
 echo ""
 echo "— POST API (public, no body needed) —"
@@ -91,8 +101,11 @@ check POST "/api/auth/logout" "$BASE/api/auth/logout" 200
 echo ""
 echo "— Auth-gated POST API (expect 401) —"
 for ep in \
+  "/api/checkout" \
+  "/api/analytics/recommendations/apply" \
   "/api/fulfillment/sync" \
-  "/api/fulfillment/mockup"; do
+  "/api/fulfillment/mockup" \
+  "/api/admin/ops/fulfillment-sla/interventions"; do
   check POST "$ep" "$BASE$ep" 401
 done
 
@@ -114,11 +127,14 @@ for ep in \
   "/api/admin/workflows" \
   "/api/admin/pricing-experiments" \
   "/api/admin/returns" \
+  "/api/admin/ops/fulfillment-sla" \
   "/api/admin/ops/incidents/runbooks" \
   "/api/admin/integration-marketplace/apps" \
   "/api/admin/headless/api-packs" \
   "/api/admin/policies" \
+  "/api/admin/policies/violations" \
   "/api/admin/store-templates" \
+  "/api/admin/control-tower/summary" \
   "/api/admin/control-tower/health"; do
   check GET "$ep" "$BASE$ep" 401
 done

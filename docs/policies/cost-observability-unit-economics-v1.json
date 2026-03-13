@@ -1,0 +1,175 @@
+{
+  "version": "v1",
+  "owner": "commerce-finops",
+  "reviewCadenceDays": 7,
+  "lastReviewedOn": "2026-03-01",
+  "nextReviewBy": "2026-03-08",
+  "dimensions": {
+    "required": [
+      "feature",
+      "team",
+      "tenant"
+    ],
+    "feature": [
+      {
+        "key": "acquisition",
+        "label": "Acquisition surfaces",
+        "ownerTeam": "growth",
+        "targetRevenueToCostRatio": 3.8,
+        "targetCostPerOrderUsd": 1.25,
+        "sourceEventTypes": [
+          "page_view",
+          "product_view",
+          "search_performed"
+        ]
+      },
+      {
+        "key": "conversion",
+        "label": "Checkout conversion",
+        "ownerTeam": "checkout",
+        "targetRevenueToCostRatio": 5.5,
+        "targetCostPerOrderUsd": 2.15,
+        "sourceEventTypes": [
+          "add_to_cart",
+          "checkout_started",
+          "purchase",
+          "order_completed"
+        ]
+      },
+      {
+        "key": "retention",
+        "label": "Retention and lifecycle",
+        "ownerTeam": "lifecycle",
+        "targetRevenueToCostRatio": 4.2,
+        "targetCostPerOrderUsd": 1.4,
+        "sourceEventTypes": [
+          "subscription_renewed",
+          "email_clicked",
+          "loyalty_redeemed",
+          "account_login"
+        ]
+      },
+      {
+        "key": "operations",
+        "label": "Fulfillment and support operations",
+        "ownerTeam": "operations",
+        "targetRevenueToCostRatio": 3.2,
+        "targetCostPerOrderUsd": 1.8,
+        "sourceEventTypes": [
+          "fulfillment_job_processed",
+          "fulfillment_succeeded",
+          "fulfillment_job_failed",
+          "fulfillment_failed",
+          "support_ticket_created"
+        ]
+      }
+    ],
+    "team": [
+      {
+        "key": "growth",
+        "label": "Growth",
+        "focus": "Acquisition efficiency and attribution quality."
+      },
+      {
+        "key": "checkout",
+        "label": "Checkout",
+        "focus": "Checkout reliability and idempotent payment sequencing."
+      },
+      {
+        "key": "lifecycle",
+        "label": "Lifecycle",
+        "focus": "Retention program efficiency and campaign relevance."
+      },
+      {
+        "key": "operations",
+        "label": "Operations",
+        "focus": "Fulfillment/support throughput and escalation reduction."
+      }
+    ],
+    "tenant": [
+      {
+        "key": "store",
+        "label": "Store tenant direct costs",
+        "scope": "Per-store usage and revenue attribution."
+      },
+      {
+        "key": "shared-platform",
+        "label": "Shared platform overhead",
+        "scope": "Cross-tenant infra and support overhead allocation."
+      }
+    ]
+  },
+  "telemetry": {
+    "metricCatalog": [
+      {
+        "id": "estimated_cost_usd",
+        "unit": "usd",
+        "required": true
+      },
+      {
+        "id": "attributed_revenue_usd",
+        "unit": "usd",
+        "required": true
+      },
+      {
+        "id": "cost_per_order_usd",
+        "unit": "usd",
+        "required": true
+      },
+      {
+        "id": "revenue_to_cost_ratio",
+        "unit": "ratio",
+        "required": true
+      },
+      {
+        "id": "orders",
+        "unit": "count",
+        "required": true
+      },
+      {
+        "id": "events",
+        "unit": "count",
+        "required": true
+      }
+    ],
+    "dashboardSections": [
+      "summary",
+      "feature_dimension",
+      "team_dimension",
+      "tenant_dimension",
+      "optimization_backlog"
+    ]
+  },
+  "optimizationBacklog": [
+    {
+      "id": "cost-opt-001",
+      "title": "Reduce duplicate checkout submissions",
+      "dimension": "feature",
+      "ownerTeam": "checkout",
+      "estimatedMonthlySavingsUsd": 420,
+      "status": "planned",
+      "priority": "p0",
+      "targetDate": "2026-03-12"
+    },
+    {
+      "id": "cost-opt-002",
+      "title": "Move high-volume landing routes to edge cache",
+      "dimension": "feature",
+      "ownerTeam": "growth",
+      "estimatedMonthlySavingsUsd": 280,
+      "status": "candidate",
+      "priority": "p1",
+      "targetDate": "2026-03-15"
+    },
+    {
+      "id": "cost-opt-003",
+      "title": "Auto-remediate known fulfillment transient failures",
+      "dimension": "team",
+      "ownerTeam": "operations",
+      "estimatedMonthlySavingsUsd": 260,
+      "status": "in_progress",
+      "priority": "p1",
+      "targetDate": "2026-03-10"
+    }
+  ]
+}

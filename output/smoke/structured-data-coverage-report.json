@@ -1,0 +1,514 @@
+{
+  "startedAt": "2026-03-06T05:05:24.277Z",
+  "finishedAt": "2026-03-06T05:05:26.544Z",
+  "status": "passed",
+  "baseUrl": "https://petm8.io",
+  "skipHttpChecks": false,
+  "metrics": {
+    "totalChecks": 48,
+    "passedChecks": 48,
+    "failedChecks": 0,
+    "skippedChecks": 0
+  },
+  "checks": [
+    {
+      "id": "schema-organization-type",
+      "section": "schema-tests",
+      "target": "buildOrganization",
+      "ok": true,
+      "statusCode": null,
+      "note": "type=Organization"
+    },
+    {
+      "id": "schema-website-search-action",
+      "section": "schema-tests",
+      "target": "buildWebSite",
+      "ok": true,
+      "statusCode": null,
+      "note": "urlTemplate=https://petm8.io/products?search={search_term_string}"
+    },
+    {
+      "id": "schema-collection-page-shape",
+      "section": "schema-tests",
+      "target": "buildCollectionPage",
+      "ok": true,
+      "statusCode": null,
+      "note": "numberOfItems=10"
+    },
+    {
+      "id": "schema-item-list-elements",
+      "section": "schema-tests",
+      "target": "buildItemList",
+      "ok": true,
+      "statusCode": null,
+      "note": "itemListElementCount=2"
+    },
+    {
+      "id": "schema-web-page-type",
+      "section": "schema-tests",
+      "target": "buildWebPage",
+      "ok": true,
+      "statusCode": null,
+      "note": "type=AboutPage"
+    },
+    {
+      "id": "schema-place-address",
+      "section": "schema-tests",
+      "target": "buildPlace",
+      "ok": true,
+      "statusCode": null,
+      "note": "streetAddress=123 Pet St"
+    },
+    {
+      "id": "coverage-sitemap-status",
+      "section": "live-coverage",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "home-status",
+      "section": "live-coverage",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "home-jsonld-parse",
+      "section": "live-coverage",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "home-jsonld-present",
+      "section": "live-coverage",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=1"
+    },
+    {
+      "id": "home-type-organization",
+      "section": "live-coverage",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=EntryPoint, Organization, SearchAction, WebPage, WebSite"
+    },
+    {
+      "id": "home-type-website",
+      "section": "live-coverage",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=EntryPoint, Organization, SearchAction, WebPage, WebSite"
+    },
+    {
+      "id": "products-status",
+      "section": "live-coverage",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "products-jsonld-parse",
+      "section": "live-coverage",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "products-jsonld-present",
+      "section": "live-coverage",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=1"
+    },
+    {
+      "id": "products-type-collectionpage",
+      "section": "live-coverage",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=CollectionPage, ItemList, ListItem"
+    },
+    {
+      "id": "products-type-itemlist",
+      "section": "live-coverage",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=CollectionPage, ItemList, ListItem"
+    },
+    {
+      "id": "events-status",
+      "section": "live-coverage",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "events-jsonld-parse",
+      "section": "live-coverage",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "events-jsonld-present",
+      "section": "live-coverage",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=1"
+    },
+    {
+      "id": "events-type-collectionpage",
+      "section": "live-coverage",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=CollectionPage, ItemList, ListItem"
+    },
+    {
+      "id": "events-type-itemlist",
+      "section": "live-coverage",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=CollectionPage, ItemList, ListItem"
+    },
+    {
+      "id": "events-calendar-status",
+      "section": "live-coverage",
+      "target": "/events/calendar",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "events-calendar-jsonld-parse",
+      "section": "live-coverage",
+      "target": "/events/calendar",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "events-calendar-jsonld-present",
+      "section": "live-coverage",
+      "target": "/events/calendar",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=1"
+    },
+    {
+      "id": "events-calendar-type-collectionpage",
+      "section": "live-coverage",
+      "target": "/events/calendar",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=CollectionPage"
+    },
+    {
+      "id": "venues-status",
+      "section": "live-coverage",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "venues-jsonld-parse",
+      "section": "live-coverage",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "venues-jsonld-present",
+      "section": "live-coverage",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=1"
+    },
+    {
+      "id": "venues-type-collectionpage",
+      "section": "live-coverage",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=CollectionPage, ItemList"
+    },
+    {
+      "id": "venues-type-itemlist",
+      "section": "live-coverage",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=CollectionPage, ItemList"
+    },
+    {
+      "id": "about-status",
+      "section": "live-coverage",
+      "target": "/about",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "about-jsonld-parse",
+      "section": "live-coverage",
+      "target": "/about",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "about-jsonld-present",
+      "section": "live-coverage",
+      "target": "/about",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=1"
+    },
+    {
+      "id": "about-type-aboutpage",
+      "section": "live-coverage",
+      "target": "/about",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=AboutPage"
+    },
+    {
+      "id": "contact-status",
+      "section": "live-coverage",
+      "target": "/contact",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "contact-jsonld-parse",
+      "section": "live-coverage",
+      "target": "/contact",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "contact-jsonld-present",
+      "section": "live-coverage",
+      "target": "/contact",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=1"
+    },
+    {
+      "id": "contact-type-contactpage",
+      "section": "live-coverage",
+      "target": "/contact",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=ContactPage"
+    },
+    {
+      "id": "product-detail-status",
+      "section": "live-coverage",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "product-detail-jsonld-parse",
+      "section": "live-coverage",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=2"
+    },
+    {
+      "id": "product-detail-jsonld-present",
+      "section": "live-coverage",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=2"
+    },
+    {
+      "id": "product-detail-type-product",
+      "section": "live-coverage",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=BreadcrumbList, ListItem, Offer, Organization, Product"
+    },
+    {
+      "id": "product-detail-type-breadcrumblist",
+      "section": "live-coverage",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=BreadcrumbList, ListItem, Offer, Organization, Product"
+    },
+    {
+      "id": "event-detail-status",
+      "section": "live-coverage",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "event-detail-jsonld-parse",
+      "section": "live-coverage",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "event-detail-jsonld-present",
+      "section": "live-coverage",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=1"
+    },
+    {
+      "id": "event-detail-type-event",
+      "section": "live-coverage",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "discovered=Answer, Event, FAQPage, Offer, Place, Question"
+    }
+  ],
+  "coverage": [
+    {
+      "path": "/",
+      "expectedTypes": [
+        "Organization",
+        "WebSite"
+      ],
+      "discoveredTypes": [
+        "EntryPoint",
+        "Organization",
+        "SearchAction",
+        "WebPage",
+        "WebSite"
+      ],
+      "payloadCount": 1
+    },
+    {
+      "path": "/products",
+      "expectedTypes": [
+        "CollectionPage",
+        "ItemList"
+      ],
+      "discoveredTypes": [
+        "CollectionPage",
+        "ItemList",
+        "ListItem"
+      ],
+      "payloadCount": 1
+    },
+    {
+      "path": "/events",
+      "expectedTypes": [
+        "CollectionPage",
+        "ItemList"
+      ],
+      "discoveredTypes": [
+        "CollectionPage",
+        "ItemList",
+        "ListItem"
+      ],
+      "payloadCount": 1
+    },
+    {
+      "path": "/events/calendar",
+      "expectedTypes": [
+        "CollectionPage"
+      ],
+      "discoveredTypes": [
+        "CollectionPage"
+      ],
+      "payloadCount": 1
+    },
+    {
+      "path": "/venues",
+      "expectedTypes": [
+        "CollectionPage",
+        "ItemList"
+      ],
+      "discoveredTypes": [
+        "CollectionPage",
+        "ItemList"
+      ],
+      "payloadCount": 1
+    },
+    {
+      "path": "/about",
+      "expectedTypes": [
+        "AboutPage"
+      ],
+      "discoveredTypes": [
+        "AboutPage"
+      ],
+      "payloadCount": 1
+    },
+    {
+      "path": "/contact",
+      "expectedTypes": [
+        "ContactPage"
+      ],
+      "discoveredTypes": [
+        "ContactPage"
+      ],
+      "payloadCount": 1
+    },
+    {
+      "path": "/products/dog-beach-day-experience",
+      "expectedTypes": [
+        "Product",
+        "BreadcrumbList"
+      ],
+      "discoveredTypes": [
+        "BreadcrumbList",
+        "ListItem",
+        "Offer",
+        "Organization",
+        "Product"
+      ],
+      "payloadCount": 2
+    },
+    {
+      "path": "/events/dog-beach-day-experience",
+      "expectedTypes": [
+        "Event"
+      ],
+      "discoveredTypes": [
+        "Answer",
+        "Event",
+        "FAQPage",
+        "Offer",
+        "Place",
+        "Question"
+      ],
+      "payloadCount": 1
+    }
+  ]
+}

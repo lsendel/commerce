@@ -1,0 +1,81 @@
+{
+  "startedAt": "2026-03-06T06:41:14.736Z",
+  "finishedAt": "2026-03-06T06:41:14.754Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "policyPath": "docs/policies/access-governance-policy-v1.json",
+  "checks": [
+    {
+      "id": "role-model-platform-coverage",
+      "status": "pass",
+      "note": "Role model must include super_admin/group_admin/user platform roles."
+    },
+    {
+      "id": "role-model-store-coverage",
+      "status": "pass",
+      "note": "Role model must include owner/admin/staff store roles."
+    },
+    {
+      "id": "admin-alias-coverage",
+      "status": "pass",
+      "note": "Admin alias must resolve to super_admin and group_admin."
+    },
+    {
+      "id": "binding-platform-admin-alias",
+      "status": "pass",
+      "note": "Role binding platform-admin-alias source snippets verified."
+    },
+    {
+      "id": "binding-admin-api-global-guard",
+      "status": "pass",
+      "note": "Role binding admin-api-global-guard source snippets verified."
+    },
+    {
+      "id": "binding-admin-page-global-guard",
+      "status": "pass",
+      "note": "Role binding admin-page-global-guard source snippets verified."
+    },
+    {
+      "id": "binding-super-admin-platform-scope",
+      "status": "pass",
+      "note": "Role binding super-admin-platform-scope source snippets verified."
+    },
+    {
+      "id": "guard-admin-page-fence",
+      "status": "pass",
+      "note": "Guard assertion admin-page-fence verified."
+    },
+    {
+      "id": "guard-admin-api-fence",
+      "status": "pass",
+      "note": "Guard assertion admin-api-fence verified."
+    },
+    {
+      "id": "guard-role-middleware-enforcement",
+      "status": "pass",
+      "note": "Guard assertion role-middleware-enforcement verified."
+    },
+    {
+      "id": "admin-api-surface-discovered",
+      "status": "pass",
+      "note": "Admin API surface discovery must find endpoints (found 67)."
+    },
+    {
+      "id": "role-protected-surface-discovered",
+      "status": "pass",
+      "note": "Role-protected API surface discovery must find endpoints (found 98)."
+    },
+    {
+      "id": "break-glass-drill-status",
+      "status": "pass",
+      "note": "Break-glass drill simulation passed."
+    }
+  ],
+  "metrics": {
+    "totalChecks": 13,
+    "failedChecks": 0,
+    "discoveredAdminApiEndpoints": 67,
+    "discoveredRoleProtectedApiRoutes": 98
+  },
+  "drillArtifactPath": "output/smoke/break-glass-drill-report.json"
+}

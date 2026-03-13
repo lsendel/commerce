@@ -1,0 +1,556 @@
+{
+  "startedAt": "2026-03-06T06:41:16.526Z",
+  "finishedAt": "2026-03-06T06:41:16.530Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "policyPath": "docs/policies/workflow-reliability-scorecard-v1.json",
+  "checks": [
+    {
+      "id": "policy-owner-present",
+      "status": "pass",
+      "note": "Policy owner must be defined."
+    },
+    {
+      "id": "workflows-present",
+      "status": "pass",
+      "note": "Policy must define at least one workflow scorecard entry."
+    },
+    {
+      "id": "dimensions-present",
+      "status": "pass",
+      "note": "Policy must define scorecard dimensions."
+    },
+    {
+      "id": "workflow-id-coverage",
+      "status": "pass",
+      "note": "Policy workflows must include required IDs: ai-generation-consumer, order-fulfillment-consumer, notifications-consumer, queue-handler-fallback, workflow-builder-dispatch"
+    },
+    {
+      "id": "dimension-id-coverage",
+      "status": "pass",
+      "note": "Policy dimensions must include required IDs: timeout-coverage, retry-budget-enforcement, compensation-path-coverage, enqueue-dedup-guardrails"
+    },
+    {
+      "id": "review-cadence-valid",
+      "status": "pass",
+      "note": "reviewCadenceDays must be a positive number."
+    },
+    {
+      "id": "review-dates-format",
+      "status": "pass",
+      "note": "lastReviewedOn and nextReviewBy must use YYYY-MM-DD format."
+    },
+    {
+      "id": "review-next-after-last",
+      "status": "pass",
+      "note": "nextReviewBy must be on or after lastReviewedOn."
+    },
+    {
+      "id": "review-window-valid",
+      "status": "pass",
+      "note": "nextReviewBy must stay within reviewCadenceDays window."
+    },
+    {
+      "id": "review-not-overdue",
+      "status": "pass",
+      "note": "Workflow reliability policy review date must not be overdue."
+    },
+    {
+      "id": "wf-ai-generation-consumer-label-present",
+      "status": "pass",
+      "note": "Workflow label must be non-empty."
+    },
+    {
+      "id": "wf-ai-generation-consumer-source-paths-present",
+      "status": "pass",
+      "note": "Workflow sourcePaths must include at least one path."
+    },
+    {
+      "id": "wf-ai-generation-consumer-required-snippets-present",
+      "status": "pass",
+      "note": "Workflow requiredSnippets must include at least one snippet."
+    },
+    {
+      "id": "wf-ai-generation-consumer-retry-signals-present",
+      "status": "pass",
+      "note": "Workflow retrySignals must include at least one signal."
+    },
+    {
+      "id": "wf-ai-generation-consumer-compensation-present",
+      "status": "pass",
+      "note": "Workflow compensationPlan must be non-empty."
+    },
+    {
+      "id": "wf-ai-generation-consumer-timeout-valid",
+      "status": "pass",
+      "note": "Queue consumer timeoutMs must be positive: 120000"
+    },
+    {
+      "id": "wf-ai-generation-consumer-max-attempts-valid",
+      "status": "pass",
+      "note": "Queue consumer maxAttempts must be positive: 2"
+    },
+    {
+      "id": "wf-ai-generation-consumer-runtime-timeout-aligned",
+      "status": "pass",
+      "note": "Policy timeoutMs must align with runtime queue policy for ai-generation."
+    },
+    {
+      "id": "wf-ai-generation-consumer-runtime-attempts-aligned",
+      "status": "pass",
+      "note": "Policy maxAttempts must align with runtime queue policy for ai-generation."
+    },
+    {
+      "id": "wf-ai-generation-consumer-slo-success-rate-valid",
+      "status": "pass",
+      "note": "sloTargets.successRatePercent must be in range (0, 100]."
+    },
+    {
+      "id": "wf-ai-generation-consumer-slo-error-budget-valid",
+      "status": "pass",
+      "note": "sloTargets.errorBudgetPercent must be in range [0, 100]."
+    },
+    {
+      "id": "wf-ai-generation-consumer-source-1",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/ai-generation.consumer.ts"
+    },
+    {
+      "id": "wf-ai-generation-consumer-source-2",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/orchestration-policy.ts"
+    },
+    {
+      "id": "wf-ai-generation-consumer-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present for ai-generation-consumer: QUEUE_WORKFLOW_POLICIES[\"ai-generation\"]"
+    },
+    {
+      "id": "wf-ai-generation-consumer-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present for ai-generation-consumer: for (let attempt = 1; attempt <= workflowSettings.maxAttempts; attempt++)"
+    },
+    {
+      "id": "wf-ai-generation-consumer-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present for ai-generation-consumer: withWorkflowTimeout("
+    },
+    {
+      "id": "wf-ai-generation-consumer-snippet-4",
+      "status": "pass",
+      "note": "Required snippet must be present for ai-generation-consumer: isRetryableWorkflowError(error)"
+    },
+    {
+      "id": "wf-ai-generation-consumer-snippet-5",
+      "status": "pass",
+      "note": "Required snippet must be present for ai-generation-consumer: message.ack();"
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-label-present",
+      "status": "pass",
+      "note": "Workflow label must be non-empty."
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-source-paths-present",
+      "status": "pass",
+      "note": "Workflow sourcePaths must include at least one path."
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-required-snippets-present",
+      "status": "pass",
+      "note": "Workflow requiredSnippets must include at least one snippet."
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-retry-signals-present",
+      "status": "pass",
+      "note": "Workflow retrySignals must include at least one signal."
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-compensation-present",
+      "status": "pass",
+      "note": "Workflow compensationPlan must be non-empty."
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-timeout-valid",
+      "status": "pass",
+      "note": "Queue consumer timeoutMs must be positive: 45000"
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-max-attempts-valid",
+      "status": "pass",
+      "note": "Queue consumer maxAttempts must be positive: 4"
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-runtime-timeout-aligned",
+      "status": "pass",
+      "note": "Policy timeoutMs must align with runtime queue policy for order-fulfillment."
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-runtime-attempts-aligned",
+      "status": "pass",
+      "note": "Policy maxAttempts must align with runtime queue policy for order-fulfillment."
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-slo-success-rate-valid",
+      "status": "pass",
+      "note": "sloTargets.successRatePercent must be in range (0, 100]."
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-slo-error-budget-valid",
+      "status": "pass",
+      "note": "sloTargets.errorBudgetPercent must be in range [0, 100]."
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-source-1",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/order-fulfillment.consumer.ts"
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-source-2",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/orchestration-policy.ts"
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present for order-fulfillment-consumer: QUEUE_WORKFLOW_POLICIES[\"order-fulfillment\"]"
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present for order-fulfillment-consumer: withWorkflowTimeout("
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present for order-fulfillment-consumer: if (attempt >= workflowSettings.maxAttempts)"
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-snippet-4",
+      "status": "pass",
+      "note": "Required snippet must be present for order-fulfillment-consumer: compensateOrderFulfillmentFailure"
+    },
+    {
+      "id": "wf-order-fulfillment-consumer-snippet-5",
+      "status": "pass",
+      "note": "Required snippet must be present for order-fulfillment-consumer: message.retry();"
+    },
+    {
+      "id": "wf-notifications-consumer-label-present",
+      "status": "pass",
+      "note": "Workflow label must be non-empty."
+    },
+    {
+      "id": "wf-notifications-consumer-source-paths-present",
+      "status": "pass",
+      "note": "Workflow sourcePaths must include at least one path."
+    },
+    {
+      "id": "wf-notifications-consumer-required-snippets-present",
+      "status": "pass",
+      "note": "Workflow requiredSnippets must include at least one snippet."
+    },
+    {
+      "id": "wf-notifications-consumer-retry-signals-present",
+      "status": "pass",
+      "note": "Workflow retrySignals must include at least one signal."
+    },
+    {
+      "id": "wf-notifications-consumer-compensation-present",
+      "status": "pass",
+      "note": "Workflow compensationPlan must be non-empty."
+    },
+    {
+      "id": "wf-notifications-consumer-timeout-valid",
+      "status": "pass",
+      "note": "Queue consumer timeoutMs must be positive: 20000"
+    },
+    {
+      "id": "wf-notifications-consumer-max-attempts-valid",
+      "status": "pass",
+      "note": "Queue consumer maxAttempts must be positive: 3"
+    },
+    {
+      "id": "wf-notifications-consumer-runtime-timeout-aligned",
+      "status": "pass",
+      "note": "Policy timeoutMs must align with runtime queue policy for notifications."
+    },
+    {
+      "id": "wf-notifications-consumer-runtime-attempts-aligned",
+      "status": "pass",
+      "note": "Policy maxAttempts must align with runtime queue policy for notifications."
+    },
+    {
+      "id": "wf-notifications-consumer-slo-success-rate-valid",
+      "status": "pass",
+      "note": "sloTargets.successRatePercent must be in range (0, 100]."
+    },
+    {
+      "id": "wf-notifications-consumer-slo-error-budget-valid",
+      "status": "pass",
+      "note": "sloTargets.errorBudgetPercent must be in range [0, 100]."
+    },
+    {
+      "id": "wf-notifications-consumer-source-1",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/notification.consumer.ts"
+    },
+    {
+      "id": "wf-notifications-consumer-source-2",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/orchestration-policy.ts"
+    },
+    {
+      "id": "wf-notifications-consumer-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present for notifications-consumer: QUEUE_WORKFLOW_POLICIES.notifications"
+    },
+    {
+      "id": "wf-notifications-consumer-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present for notifications-consumer: withWorkflowTimeout("
+    },
+    {
+      "id": "wf-notifications-consumer-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present for notifications-consumer: compensateNotificationFailure"
+    },
+    {
+      "id": "wf-notifications-consumer-snippet-4",
+      "status": "pass",
+      "note": "Required snippet must be present for notifications-consumer: eventType: \"checkout_recovery_delivery_failed\""
+    },
+    {
+      "id": "wf-notifications-consumer-snippet-5",
+      "status": "pass",
+      "note": "Required snippet must be present for notifications-consumer: message.ack();"
+    },
+    {
+      "id": "wf-queue-handler-fallback-label-present",
+      "status": "pass",
+      "note": "Workflow label must be non-empty."
+    },
+    {
+      "id": "wf-queue-handler-fallback-source-paths-present",
+      "status": "pass",
+      "note": "Workflow sourcePaths must include at least one path."
+    },
+    {
+      "id": "wf-queue-handler-fallback-required-snippets-present",
+      "status": "pass",
+      "note": "Workflow requiredSnippets must include at least one snippet."
+    },
+    {
+      "id": "wf-queue-handler-fallback-retry-signals-present",
+      "status": "pass",
+      "note": "Workflow retrySignals must include at least one signal."
+    },
+    {
+      "id": "wf-queue-handler-fallback-compensation-present",
+      "status": "pass",
+      "note": "Workflow compensationPlan must be non-empty."
+    },
+    {
+      "id": "wf-queue-handler-fallback-slo-success-rate-valid",
+      "status": "pass",
+      "note": "sloTargets.successRatePercent must be in range (0, 100]."
+    },
+    {
+      "id": "wf-queue-handler-fallback-slo-error-budget-valid",
+      "status": "pass",
+      "note": "sloTargets.errorBudgetPercent must be in range [0, 100]."
+    },
+    {
+      "id": "wf-queue-handler-fallback-source-1",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/handler.ts"
+    },
+    {
+      "id": "wf-queue-handler-fallback-source-2",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/orchestration-policy.ts"
+    },
+    {
+      "id": "wf-queue-handler-fallback-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present for queue-handler-fallback: QUEUE_WORKFLOW_POLICIES"
+    },
+    {
+      "id": "wf-queue-handler-fallback-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present for queue-handler-fallback: isRetryableWorkflowError(error)"
+    },
+    {
+      "id": "wf-queue-handler-fallback-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present for queue-handler-fallback: if (retryable && attempt < policy.maxAttempts)"
+    },
+    {
+      "id": "wf-queue-handler-fallback-snippet-4",
+      "status": "pass",
+      "note": "Required snippet must be present for queue-handler-fallback: compensateNotificationFailure"
+    },
+    {
+      "id": "wf-queue-handler-fallback-snippet-5",
+      "status": "pass",
+      "note": "Required snippet must be present for queue-handler-fallback: compensateOrderFulfillmentFailure"
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-label-present",
+      "status": "pass",
+      "note": "Workflow label must be non-empty."
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-source-paths-present",
+      "status": "pass",
+      "note": "Workflow sourcePaths must include at least one path."
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-required-snippets-present",
+      "status": "pass",
+      "note": "Workflow requiredSnippets must include at least one snippet."
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-retry-signals-present",
+      "status": "pass",
+      "note": "Workflow retrySignals must include at least one signal."
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-compensation-present",
+      "status": "pass",
+      "note": "Workflow compensationPlan must be non-empty."
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-slo-success-rate-valid",
+      "status": "pass",
+      "note": "sloTargets.successRatePercent must be in range (0, 100]."
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-slo-error-budget-valid",
+      "status": "pass",
+      "note": "sloTargets.errorBudgetPercent must be in range [0, 100]."
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-source-1",
+      "status": "pass",
+      "note": "Source path must exist: src/routes/api/workflows.routes.ts"
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-source-2",
+      "status": "pass",
+      "note": "Source path must exist: src/application/ops/no-code-workflow-builder.usecase.ts"
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present for workflow-builder-dispatch: c.env.NOTIFICATION_QUEUE.send({"
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present for workflow-builder-dispatch: eventType: \"checkout_recovery_enqueued\""
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present for workflow-builder-dispatch: skippedRecentlyEnqueued"
+    },
+    {
+      "id": "wf-workflow-builder-dispatch-snippet-4",
+      "status": "pass",
+      "note": "Required snippet must be present for workflow-builder-dispatch: skippedMissingChannelAddress"
+    },
+    {
+      "id": "helper-attempt-default",
+      "status": "pass",
+      "note": "resolveQueueMessageAttempt defaults to 1."
+    },
+    {
+      "id": "helper-attempt-explicit",
+      "status": "pass",
+      "note": "resolveQueueMessageAttempt honors attempts metadata."
+    },
+    {
+      "id": "helper-retryable-timeout",
+      "status": "pass",
+      "note": "Timeout errors are retryable."
+    },
+    {
+      "id": "helper-retryable-5xx",
+      "status": "pass",
+      "note": "503 errors are retryable."
+    },
+    {
+      "id": "helper-non-retryable-4xx",
+      "status": "pass",
+      "note": "422 errors are non-retryable."
+    },
+    {
+      "id": "helper-backoff-positive",
+      "status": "pass",
+      "note": "Retry backoff must be positive."
+    },
+    {
+      "id": "helper-backoff-growth",
+      "status": "pass",
+      "note": "Retry backoff should generally increase with attempt number."
+    },
+    {
+      "id": "runbook-exists",
+      "status": "pass",
+      "note": "Runbook must exist: docs/runbooks/async-workflow-orchestration.md"
+    },
+    {
+      "id": "policy-md-exists",
+      "status": "pass",
+      "note": "Policy markdown must exist: docs/policies/workflow-reliability-scorecard-v1.md"
+    }
+  ],
+  "workflows": [
+    {
+      "workflowId": "ai-generation-consumer",
+      "label": "AI image generation queue consumer",
+      "status": "pass",
+      "checkCount": 18,
+      "failedChecks": 0
+    },
+    {
+      "workflowId": "order-fulfillment-consumer",
+      "label": "Order fulfillment submit queue consumer",
+      "status": "pass",
+      "checkCount": 18,
+      "failedChecks": 0
+    },
+    {
+      "workflowId": "notifications-consumer",
+      "label": "Notification delivery queue consumer",
+      "status": "pass",
+      "checkCount": 18,
+      "failedChecks": 0
+    },
+    {
+      "workflowId": "queue-handler-fallback",
+      "label": "Global queue handler retry and compensation gate",
+      "status": "pass",
+      "checkCount": 14,
+      "failedChecks": 0
+    },
+    {
+      "workflowId": "workflow-builder-dispatch",
+      "label": "Workflow builder async notification dispatch",
+      "status": "pass",
+      "checkCount": 13,
+      "failedChecks": 0
+    }
+  ],
+  "scorecard": {
+    "reliabilityScorePercent": 100,
+    "dimensionsCovered": 4
+  },
+  "metrics": {
+    "totalChecks": 100,
+    "failedChecks": 0,
+    "workflowCount": 5,
+    "workflowsPassing": 5
+  }
+}

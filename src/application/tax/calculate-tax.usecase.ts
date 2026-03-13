@@ -16,6 +16,11 @@ interface CalculateTaxInput {
 export class CalculateTaxUseCase {
   async execute(input: CalculateTaxInput): Promise<TaxBreakdown> {
     const { db, storeId, lineItems, shippingAmount, address } = input;
+    const calculateWithLocalRules = async () => {
+      const taxRepo = new TaxRepository(db, storeId);
+      const calculator = new TaxCalculator(taxRepo);
+      return calculator.calculateTax({ lineItems, shippingAmount, address });
+    };
 
     // Check if an external tax provider is configured
     const integrationRepo = new IntegrationRepository(db);
@@ -26,8 +31,12 @@ export class CalculateTaxUseCase {
 
     // If TaxJar is connected, use the external adapter
     if (taxjarIntegration && taxjarIntegration.status === "connected") {
-      const adapter = new TaxJarAdapter();
-      return adapter.calculateTax({ lineItems, shippingAmount, address });
+      try {
+        const adapter = new TaxJarAdapter();
+        return await adapter.calculateTax({ lineItems, shippingAmount, address });
+      } catch {
+        return calculateWithLocalRules();
+      }
     }
 
     // Also check for Avalara (future provider)
@@ -37,15 +46,10 @@ export class CalculateTaxUseCase {
     );
 
     if (avalaraIntegration && avalaraIntegration.status === "connected") {
-      // Avalara adapter would go here when implemented
-      throw new Error(
-        "Avalara integration not configured. Add API key via platform integrations.",
-      );
+      return calculateWithLocalRules();
     }
 
     // Default: use built-in tax calculator with local zones/rates
-    const taxRepo = new TaxRepository(db, storeId);
-    const calculator = new TaxCalculator(taxRepo);
-    return calculator.calculateTax({ lineItems, shippingAmount, address });
+    return calculateWithLocalRules();
   }
 }

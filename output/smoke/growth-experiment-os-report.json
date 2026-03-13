@@ -1,0 +1,129 @@
+{
+  "startedAt": "2026-03-06T06:41:09.258Z",
+  "finishedAt": "2026-03-06T06:41:09.259Z",
+  "status": "passed_with_warnings",
+  "reportVersion": "v1",
+  "totals": {
+    "experiments": 3,
+    "passed": 2,
+    "warnings": 1,
+    "failed": 0,
+    "invalidDefinitions": 0
+  },
+  "experimentResults": [
+    {
+      "experimentId": "wk45-pricing-holdout-geo",
+      "name": "Pricing Lift by Demand Bands",
+      "owner": "commerce-growth",
+      "registryValid": true,
+      "registryErrors": [],
+      "guardrailStatus": "pass",
+      "guardrails": [
+        {
+          "metric": "conversion_rate",
+          "direction": "not_below",
+          "baselineValue": 3.1,
+          "currentValue": 3.04,
+          "sampleSize": 1300,
+          "deltaPercent": -1.94,
+          "breachPercent": 1.94,
+          "status": "pass",
+          "note": "Within configured threshold.",
+          "action": "none"
+        },
+        {
+          "metric": "revenue_per_session",
+          "direction": "not_below",
+          "baselineValue": 2.85,
+          "currentValue": 2.94,
+          "sampleSize": 1300,
+          "deltaPercent": 3.16,
+          "breachPercent": 0,
+          "status": "pass",
+          "note": "Within configured threshold.",
+          "action": "none"
+        },
+        {
+          "metric": "refund_rate",
+          "direction": "not_above",
+          "baselineValue": 1.4,
+          "currentValue": 1.49,
+          "sampleSize": 600,
+          "deltaPercent": 6.43,
+          "breachPercent": 6.43,
+          "status": "pass",
+          "note": "Within configured threshold.",
+          "action": "none"
+        }
+      ]
+    },
+    {
+      "experimentId": "wk45-lp-intent-copy",
+      "name": "Intent-Led Landing Page Narrative",
+      "owner": "commerce-growth",
+      "registryValid": true,
+      "registryErrors": [],
+      "guardrailStatus": "warn",
+      "guardrails": [
+        {
+          "metric": "conversion_rate",
+          "direction": "not_below",
+          "baselineValue": 2.6,
+          "currentValue": 2.52,
+          "sampleSize": 780,
+          "deltaPercent": -3.08,
+          "breachPercent": 3.08,
+          "status": "warn",
+          "note": "Breach 3.08% exceeded warn threshold 3%.",
+          "action": "none"
+        },
+        {
+          "metric": "average_order_value",
+          "direction": "not_below",
+          "baselineValue": 42.5,
+          "currentValue": 42.3,
+          "sampleSize": 780,
+          "deltaPercent": -0.47,
+          "breachPercent": 0.47,
+          "status": "pass",
+          "note": "Within configured threshold.",
+          "action": "none"
+        }
+      ]
+    },
+    {
+      "experimentId": "wk45-checkout-recovery-offer",
+      "name": "Checkout Recovery Offer Timing",
+      "owner": "commerce-growth",
+      "registryValid": true,
+      "registryErrors": [],
+      "guardrailStatus": "pass",
+      "guardrails": [
+        {
+          "metric": "order_rate",
+          "direction": "not_below",
+          "baselineValue": 1.8,
+          "currentValue": 1.84,
+          "sampleSize": 420,
+          "deltaPercent": 2.22,
+          "breachPercent": 0,
+          "status": "pass",
+          "note": "Within configured threshold.",
+          "action": "none"
+        },
+        {
+          "metric": "refund_rate",
+          "direction": "not_above",
+          "baselineValue": 1.3,
+          "currentValue": 1.35,
+          "sampleSize": 420,
+          "deltaPercent": 3.85,
+          "breachPercent": 3.85,
+          "status": "pass",
+          "note": "Within configured threshold.",
+          "action": "none"
+        }
+      ]
+    }
+  ]
+}

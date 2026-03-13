@@ -15,6 +15,10 @@ interface VariantRow {
   inventoryQuantity: number;
   availableForSale: boolean;
   fulfillmentProvider: string | null;
+  providerId?: string | null;
+  externalProductId?: string | null;
+  externalVariantId?: string | null;
+  costPrice?: string | null;
 }
 
 interface ImageRow {
@@ -22,6 +26,12 @@ interface ImageRow {
   url: string;
   altText: string | null;
   position: number;
+}
+
+interface ProviderOption {
+  id: string;
+  name: string;
+  type: string;
 }
 
 interface ProductEditPageProps {
@@ -40,6 +50,8 @@ interface ProductEditPageProps {
   };
   variants: VariantRow[];
   images: ImageRow[];
+  providers?: ProviderOption[];
+  printfulSyncProductId?: number | null;
   isNew?: boolean;
   isMerchCopilotEnabled?: boolean;
 }
@@ -69,9 +81,17 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
   product,
   variants,
   images,
+  providers = [],
+  printfulSyncProductId = null,
   isNew,
   isMerchCopilotEnabled = false,
 }) => {
+  const providerSelectOptions = providers.map((provider) => ({
+    value: provider.id,
+    label: `${provider.name} (${provider.type})`,
+  }));
+  const defaultMockupImageUrl =
+    product.featuredImageUrl || images[0]?.url || "";
   return (
     <div class="max-w-4xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between mb-8">
@@ -279,77 +299,89 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
         <section class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 mb-6">
           <div class="flex items-center justify-between mb-5">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Variants ({variants.length})
+              Variants (<span id="variants-count">{variants.length}</span>)
             </h2>
             <Button type="button" variant="secondary" id="add-variant-btn" size="sm">
               Add Variant
             </Button>
           </div>
 
-          {variants.length === 0 ? (
-            <p class="text-sm text-gray-400 text-center py-4">No variants yet.</p>
-          ) : (
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead class="border-b border-gray-100">
-                  <tr>
-                    <th class="text-left px-3 py-2 font-medium text-gray-500">Title</th>
-                    <th class="text-left px-3 py-2 font-medium text-gray-500">SKU</th>
-                    <th class="text-left px-3 py-2 font-medium text-gray-500">Price</th>
-                    <th class="text-left px-3 py-2 font-medium text-gray-500">Inventory</th>
-                    <th class="text-left px-3 py-2 font-medium text-gray-500">Provider</th>
-                    <th class="text-right px-3 py-2 font-medium text-gray-500">Actions</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50">
-                  {variants.map((v) => (
-                    <tr
-                      data-variant-id={v.id}
-                      data-title={v.title}
-                      data-sku={v.sku || ""}
-                      data-price={v.price}
-                      data-compare-at-price={v.compareAtPrice || ""}
-                      data-inventory={String(v.inventoryQuantity)}
-                      data-provider={v.fulfillmentProvider || ""}
-                    >
-                      <td class="px-3 py-2 font-medium text-gray-900">{v.title}</td>
-                      <td class="px-3 py-2 text-gray-500">{v.sku || "—"}</td>
-                      <td class="px-3 py-2">
-                        <span class="font-medium">${v.price}</span>
-                        {v.compareAtPrice && (
-                          <span class="ml-1 text-xs text-gray-400 line-through">${v.compareAtPrice}</span>
-                        )}
-                      </td>
-                      <td class="px-3 py-2">
-                        <span class={Number(v.inventoryQuantity) <= 0 ? "text-red-600" : ""}>
-                          {v.inventoryQuantity}
-                        </span>
-                      </td>
-                      <td class="px-3 py-2">
-                        {v.fulfillmentProvider ? (
+          <p id="variants-empty-state" class={`text-sm text-gray-400 text-center py-4 ${variants.length === 0 ? "" : "hidden"}`}>No variants yet.</p>
+
+          <div id="variants-table-wrap" class={`overflow-x-auto ${variants.length === 0 ? "hidden" : ""}`}>
+            <table class="w-full text-sm">
+              <thead class="border-b border-gray-100">
+                <tr>
+                  <th class="text-left px-3 py-2 font-medium text-gray-500">Title</th>
+                  <th class="text-left px-3 py-2 font-medium text-gray-500">SKU</th>
+                  <th class="text-left px-3 py-2 font-medium text-gray-500">Price</th>
+                  <th class="text-left px-3 py-2 font-medium text-gray-500">Inventory</th>
+                  <th class="text-left px-3 py-2 font-medium text-gray-500">Provider</th>
+                  <th class="text-right px-3 py-2 font-medium text-gray-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="variants-tbody" class="divide-y divide-gray-50">
+                {variants.map((v) => (
+                  <tr
+                    data-variant-row
+                    data-variant-id={v.id}
+                    data-title={v.title}
+                    data-sku={v.sku || ""}
+                    data-price={v.price}
+                    data-compare-at-price={v.compareAtPrice || ""}
+                    data-inventory={String(v.inventoryQuantity)}
+                    data-provider={v.fulfillmentProvider || ""}
+                    data-provider-id={v.providerId || ""}
+                    data-external-product-id={v.externalProductId || ""}
+                    data-external-variant-id={v.externalVariantId || ""}
+                    data-cost-price={v.costPrice || ""}
+                  >
+                    <td class="px-3 py-2 font-medium text-gray-900">{v.title}</td>
+                    <td class="px-3 py-2 text-gray-500">{v.sku || "—"}</td>
+                    <td class="px-3 py-2">
+                      <span class="font-medium">${v.price}</span>
+                      {v.compareAtPrice && (
+                        <span class="ml-1 text-xs text-gray-400 line-through">${v.compareAtPrice}</span>
+                      )}
+                    </td>
+                    <td class="px-3 py-2">
+                      <span class={Number(v.inventoryQuantity) <= 0 ? "text-red-600" : ""}>
+                        {v.inventoryQuantity}
+                      </span>
+                    </td>
+                    <td class="px-3 py-2">
+                      {v.fulfillmentProvider ? (
+                        <div class="space-y-1">
                           <Badge variant="info">{v.fulfillmentProvider}</Badge>
-                        ) : (
-                          <span class="text-gray-400">—</span>
-                        )}
-                      </td>
-                      <td class="px-3 py-2 text-right">
-                        <button
-                          type="button"
-                          class="p-1 text-gray-400 hover:text-brand-600 transition-colors"
-                          data-edit-variant={v.id}
-                          title="Edit"
-                        >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                          {(v.externalProductId || v.externalVariantId || v.costPrice) && (
+                            <div class="text-[11px] leading-4 text-gray-500">
+                              {v.externalProductId && <div>Product ID: {v.externalProductId}</div>}
+                              {v.externalVariantId && <div>Variant ID: {v.externalVariantId}</div>}
+                              {v.costPrice && <div>Cost: ${v.costPrice}</div>}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span class="text-gray-400">—</span>
+                      )}
+                    </td>
+                    <td class="px-3 py-2 text-right">
+                      <button
+                        type="button"
+                        class="p-1 text-gray-400 hover:text-brand-600 transition-colors"
+                        data-edit-variant={v.id}
+                        title="Edit"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* Variant form (hidden by default) */}
           <div id="variant-form-section" class="hidden mt-5 p-4 rounded-xl border border-gray-200 bg-gray-50 dark:bg-gray-900">
@@ -366,6 +398,54 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
                 <Input label="Inventory" name="inventoryQuantity" type="number" value="0" />
               </div>
               <Select label="Fulfillment provider" name="fulfillmentProvider" options={PROVIDER_OPTIONS} />
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div class="flex flex-col gap-1.5">
+                  <label for="variant-provider-id" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Connected provider
+                  </label>
+                  <select
+                    id="variant-provider-id"
+                    name="providerId"
+                    class="block w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm transition-all duration-200 ease-out focus:outline-none focus:ring-4 focus:border-brand-500 focus:ring-brand-500/20 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
+                  >
+                    <option value="">None</option>
+                    {providerSelectOptions.map((option) => {
+                      const provider = providers.find((candidate) => candidate.id === option.value);
+                      return (
+                        <option
+                          value={option.value}
+                          data-provider-type={provider?.type || ""}
+                        >
+                          {option.label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p class="text-xs text-gray-500">
+                    Choose the active provider connection for this variant before saving mapping ids.
+                  </p>
+                </div>
+                <Input
+                  label="Provider product ID"
+                  name="externalProductId"
+                  placeholder="e.g. 12345"
+                />
+              </div>
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Input
+                  label="Provider variant ID"
+                  name="externalVariantId"
+                  placeholder="e.g. 4012"
+                />
+                <Input
+                  label="Cost price"
+                  name="costPrice"
+                  placeholder="0.00"
+                />
+              </div>
+              <p class="text-xs text-gray-500">
+                Printful variants require both product and variant ids. Leaving the connected provider empty clears fulfillment linkage for this variant.
+              </p>
               <div class="flex items-center gap-3">
                 <Button type="submit" variant="primary" id="variant-save-btn" size="sm">
                   Save Variant
@@ -398,6 +478,48 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
           </div>
 
           <p class="text-xs text-gray-400">Image management via API: POST /api/admin/products/{product.id}/images</p>
+        </section>
+      )}
+
+      {!isNew && (
+        <section class="mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+          <div class="flex items-start justify-between gap-4 mb-5">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Printful Mockups</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Generate storefront-ready mockups after provider mapping is connected.
+              </p>
+            </div>
+            <span id="printful-link-badge">
+              {printfulSyncProductId ? (
+                <Badge variant="info">Linked Product {String(printfulSyncProductId)}</Badge>
+              ) : (
+                <Badge variant="warning">No Printful link yet</Badge>
+              )}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Input
+              label="Artwork image URL"
+              name="mockupImageUrl"
+              value={defaultMockupImageUrl}
+              placeholder="https://..."
+            />
+            <Input
+              label="Printful product ID override"
+              name="mockupPrintfulProductId"
+              value={printfulSyncProductId ? String(printfulSyncProductId) : ""}
+              placeholder="Optional if product is already linked"
+            />
+          </div>
+
+          <div class="mt-4 flex items-center gap-3">
+            <Button type="button" variant="secondary" id="generate-mockup-btn" size="sm">
+              Generate Mockups
+            </Button>
+            <p id="mockup-status" class="text-sm text-gray-500 dark:text-gray-400" />
+          </div>
         </section>
       )}
 
@@ -673,11 +795,131 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
             var variantForm = document.getElementById('variant-form');
             var addVariantBtn = document.getElementById('add-variant-btn');
             var cancelVariantBtn = document.getElementById('variant-cancel-btn');
+            var variantsTableWrap = document.getElementById('variants-table-wrap');
+            var variantsEmptyState = document.getElementById('variants-empty-state');
+            var variantsCountEl = document.getElementById('variants-count');
+            var variantsTbody = document.getElementById('variants-tbody');
+
+            function setButtonLoading(button, loading, loadingText, idleText) {
+              if (!button) return;
+              if (loading) {
+                if (!button.dataset.originalLabel) button.dataset.originalLabel = button.textContent || '';
+                button.textContent = loadingText;
+                button.setAttribute('disabled', 'true');
+                return;
+              }
+              button.textContent = idleText || button.dataset.originalLabel || button.textContent;
+              button.removeAttribute('disabled');
+            }
+
+            function escapeHtml(value) {
+              return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            }
+
+            function syncProviderTypeFromConnection(form) {
+              if (!form) return;
+              var providerSelect = form.querySelector('[name="providerId"]');
+              var typeSelect = form.querySelector('[name="fulfillmentProvider"]');
+              if (!providerSelect || !typeSelect) return;
+              var option = providerSelect.selectedOptions && providerSelect.selectedOptions[0]
+                ? providerSelect.selectedOptions[0]
+                : null;
+              var providerType = option ? option.getAttribute('data-provider-type') : '';
+              if (providerType) {
+                typeSelect.value = providerType;
+              } else if (!providerSelect.value) {
+                typeSelect.value = '';
+              }
+            }
+
+            function normalizeVariant(raw) {
+              if (!raw || typeof raw !== 'object') return null;
+              var id = raw.id ? String(raw.id) : '';
+              if (!id) return null;
+              return {
+                id: id,
+                title: raw.title ? String(raw.title) : 'Untitled variant',
+                sku: raw.sku ? String(raw.sku) : '',
+                price: raw.price != null ? String(raw.price) : '0.00',
+                compareAtPrice: raw.compareAtPrice != null ? String(raw.compareAtPrice) : '',
+                inventoryQuantity: Number(raw.inventoryQuantity || 0),
+                fulfillmentProvider: raw.fulfillmentProvider ? String(raw.fulfillmentProvider) : '',
+                providerId: raw.providerId ? String(raw.providerId) : '',
+                externalProductId: raw.externalProductId ? String(raw.externalProductId) : '',
+                externalVariantId: raw.externalVariantId ? String(raw.externalVariantId) : '',
+                costPrice: raw.costPrice != null ? String(raw.costPrice) : '',
+              };
+            }
+
+            function renderProvider(provider) {
+              if (!provider) return '<span class="text-gray-400">—</span>';
+              return '<span class="inline-flex items-center rounded-full font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2.5 py-0.5 text-xs">' + escapeHtml(provider) + '</span>';
+            }
+
+            function renderVariantRow(variant) {
+              var compareAt = variant.compareAtPrice
+                ? '<span class="ml-1 text-xs text-gray-400 line-through">$' + escapeHtml(variant.compareAtPrice) + '</span>'
+                : '';
+              var mappingMeta = '';
+              if (variant.externalProductId || variant.externalVariantId || variant.costPrice) {
+                mappingMeta = '<div class="text-[11px] leading-4 text-gray-500">';
+                if (variant.externalProductId) {
+                  mappingMeta += '<div>Product ID: ' + escapeHtml(variant.externalProductId) + '</div>';
+                }
+                if (variant.externalVariantId) {
+                  mappingMeta += '<div>Variant ID: ' + escapeHtml(variant.externalVariantId) + '</div>';
+                }
+                if (variant.costPrice) {
+                  mappingMeta += '<div>Cost: $' + escapeHtml(variant.costPrice) + '</div>';
+                }
+                mappingMeta += '</div>';
+              }
+              return '' +
+                '<tr data-variant-row data-variant-id="' + escapeHtml(variant.id) + '" data-title="' + escapeHtml(variant.title) + '" data-sku="' + escapeHtml(variant.sku) + '" data-price="' + escapeHtml(variant.price) + '" data-compare-at-price="' + escapeHtml(variant.compareAtPrice) + '" data-inventory="' + variant.inventoryQuantity + '" data-provider="' + escapeHtml(variant.fulfillmentProvider) + '" data-provider-id="' + escapeHtml(variant.providerId) + '" data-external-product-id="' + escapeHtml(variant.externalProductId) + '" data-external-variant-id="' + escapeHtml(variant.externalVariantId) + '" data-cost-price="' + escapeHtml(variant.costPrice) + '">' +
+                  '<td class="px-3 py-2 font-medium text-gray-900">' + escapeHtml(variant.title) + '</td>' +
+                  '<td class="px-3 py-2 text-gray-500">' + (variant.sku ? escapeHtml(variant.sku) : '—') + '</td>' +
+                  '<td class="px-3 py-2"><span class="font-medium">$' + escapeHtml(variant.price) + '</span>' + compareAt + '</td>' +
+                  '<td class="px-3 py-2"><span class="' + (variant.inventoryQuantity <= 0 ? 'text-red-600' : '') + '">' + variant.inventoryQuantity + '</span></td>' +
+                  '<td class="px-3 py-2">' + renderProvider(variant.fulfillmentProvider) + mappingMeta + '</td>' +
+                  '<td class="px-3 py-2 text-right">' +
+                    '<button type="button" class="p-1 text-gray-400 hover:text-brand-600 transition-colors" data-edit-variant="' + escapeHtml(variant.id) + '" title="Edit">' +
+                      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>' +
+                      '</svg>' +
+                    '</button>' +
+                  '</td>' +
+                '</tr>';
+            }
+
+            function syncVariantTableState() {
+              if (!variantsTbody) return;
+              var count = variantsTbody.querySelectorAll('[data-variant-row]').length;
+              if (variantsCountEl) variantsCountEl.textContent = String(count);
+              if (variantsTableWrap) variantsTableWrap.classList.toggle('hidden', count === 0);
+              if (variantsEmptyState) variantsEmptyState.classList.toggle('hidden', count !== 0);
+            }
+
+            function upsertVariantRow(variant) {
+              if (!variantsTbody) return;
+              var existing = variantsTbody.querySelector('[data-variant-row][data-variant-id="' + variant.id + '"]');
+              if (existing) {
+                existing.outerHTML = renderVariantRow(variant);
+              } else {
+                variantsTbody.insertAdjacentHTML('afterbegin', renderVariantRow(variant));
+              }
+              syncVariantTableState();
+            }
 
             if (addVariantBtn) {
               addVariantBtn.addEventListener('click', function() {
                 if (variantForm) variantForm.reset();
                 if (variantForm) variantForm.querySelector('[name="variantId"]').value = '';
+                syncProviderTypeFromConnection(variantForm);
                 document.getElementById('variant-form-title').textContent = 'Add Variant';
                 variantFormSection.classList.remove('hidden');
               });
@@ -689,22 +931,40 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
               });
             }
 
-            document.querySelectorAll('[data-edit-variant]').forEach(function(btn) {
-              btn.addEventListener('click', function() {
-                var row = this.closest('tr');
-                if (!row || !variantForm) return;
-                variantForm.querySelector('[name="variantId"]').value = row.dataset.variantId || '';
-                variantForm.querySelector('[name="title"]').value = row.dataset.title || '';
-                variantForm.querySelector('[name="sku"]').value = row.dataset.sku || '';
-                variantForm.querySelector('[name="price"]').value = row.dataset.price || '';
-                variantForm.querySelector('[name="compareAtPrice"]').value = row.dataset.compareAtPrice || '';
-                variantForm.querySelector('[name="inventoryQuantity"]').value = row.dataset.inventory || '0';
-                var providerSelect = variantForm.querySelector('[name="fulfillmentProvider"]');
-                if (providerSelect) providerSelect.value = row.dataset.provider || '';
-                document.getElementById('variant-form-title').textContent = 'Edit Variant';
-                variantFormSection.classList.remove('hidden');
-              });
+            document.addEventListener('click', function(event) {
+              var editVariantBtn = event.target && event.target.closest ? event.target.closest('[data-edit-variant]') : null;
+              if (!editVariantBtn) return;
+              var row = editVariantBtn.closest('tr');
+              if (!row || !variantForm) return;
+              variantForm.querySelector('[name="variantId"]').value = row.dataset.variantId || '';
+              variantForm.querySelector('[name="title"]').value = row.dataset.title || '';
+              variantForm.querySelector('[name="sku"]').value = row.dataset.sku || '';
+              variantForm.querySelector('[name="price"]').value = row.dataset.price || '';
+              variantForm.querySelector('[name="compareAtPrice"]').value = row.dataset.compareAtPrice || '';
+              variantForm.querySelector('[name="inventoryQuantity"]').value = row.dataset.inventory || '0';
+              var providerSelect = variantForm.querySelector('[name="fulfillmentProvider"]');
+              if (providerSelect) providerSelect.value = row.dataset.provider || '';
+              var providerConnectionSelect = variantForm.querySelector('[name="providerId"]');
+              if (providerConnectionSelect) providerConnectionSelect.value = row.dataset.providerId || '';
+              var externalProductIdInput = variantForm.querySelector('[name="externalProductId"]');
+              if (externalProductIdInput) externalProductIdInput.value = row.dataset.externalProductId || '';
+              var externalVariantIdInput = variantForm.querySelector('[name="externalVariantId"]');
+              if (externalVariantIdInput) externalVariantIdInput.value = row.dataset.externalVariantId || '';
+              var costPriceInput = variantForm.querySelector('[name="costPrice"]');
+              if (costPriceInput) costPriceInput.value = row.dataset.costPrice || '';
+              syncProviderTypeFromConnection(variantForm);
+              document.getElementById('variant-form-title').textContent = 'Edit Variant';
+              variantFormSection.classList.remove('hidden');
             });
+
+            if (variantForm) {
+              var providerConnectionSelect = variantForm.querySelector('[name="providerId"]');
+              if (providerConnectionSelect) {
+                providerConnectionSelect.addEventListener('change', function() {
+                  syncProviderTypeFromConnection(variantForm);
+                });
+              }
+            }
 
             if (variantForm) {
               variantForm.addEventListener('submit', async function(e) {
@@ -712,7 +972,7 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
                 var btn = document.getElementById('variant-save-btn');
                 var successEl = document.getElementById('product-success');
                 var errorEl = document.getElementById('product-error');
-                btn.disabled = true;
+                setButtonLoading(btn, true, 'Saving...', 'Save Variant');
                 successEl.classList.add('hidden');
                 errorEl.classList.add('hidden');
 
@@ -725,6 +985,10 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
                 var method = variantId ? 'PATCH' : 'POST';
 
                 try {
+                  var connectedProviderId = fd.get('providerId') ? String(fd.get('providerId')) : '';
+                  var externalProductId = fd.get('externalProductId') ? String(fd.get('externalProductId')).trim() : '';
+                  var externalVariantId = fd.get('externalVariantId') ? String(fd.get('externalVariantId')).trim() : '';
+                  var costPrice = fd.get('costPrice') ? String(fd.get('costPrice')).trim() : '';
                   var body = {
                     title: fd.get('title'),
                     price: fd.get('price'),
@@ -732,21 +996,120 @@ export const ProductEditPage: FC<ProductEditPageProps> = ({
                     compareAtPrice: fd.get('compareAtPrice') || undefined,
                     inventoryQuantity: Number(fd.get('inventoryQuantity')) || 0,
                     fulfillmentProvider: fd.get('fulfillmentProvider') || undefined,
+                    providerId: connectedProviderId || undefined,
+                    externalProductId: externalProductId || undefined,
+                    externalVariantId: externalVariantId || undefined,
+                    costPrice: costPrice || undefined,
+                    clearProviderMapping: !connectedProviderId,
                   };
                   var res = await fetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body),
                   });
+                  var data = await res.json().catch(function() { return {}; });
                   if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
                     throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to save variant') : (data.error || data.message || 'Failed to save variant'));
                   }
-                  window.location.reload();
+                  var variant = normalizeVariant(data);
+                  if (variant) {
+                    upsertVariantRow(variant);
+                    if (variant.fulfillmentProvider === 'printful' && variant.externalProductId) {
+                      var mockupProductIdInput = document.querySelector('[name="mockupPrintfulProductId"]');
+                      if (mockupProductIdInput) {
+                        mockupProductIdInput.value = variant.externalProductId;
+                      }
+                      var printfulLinkBadge = document.getElementById('printful-link-badge');
+                      if (printfulLinkBadge) {
+                        printfulLinkBadge.innerHTML = '<span class="inline-flex items-center rounded-full font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2.5 py-0.5 text-xs">Linked Product ' + escapeHtml(variant.externalProductId) + '</span>';
+                      }
+                    }
+                  }
+                  successEl.textContent = variantId ? 'Variant updated.' : 'Variant created.';
+                  successEl.classList.remove('hidden');
+                  variantFormSection.classList.add('hidden');
+                  variantForm.reset();
+                  variantForm.querySelector('[name="variantId"]').value = '';
+                  syncProviderTypeFromConnection(variantForm);
+                  document.getElementById('variant-form-title').textContent = 'Add Variant';
                 } catch (err) {
                   errorEl.textContent = err.message;
                   errorEl.classList.remove('hidden');
-                  btn.disabled = false;
+                } finally {
+                  setButtonLoading(btn, false, null, 'Save Variant');
+                }
+              });
+            }
+
+            var generateMockupBtn = document.getElementById('generate-mockup-btn');
+            if (generateMockupBtn) {
+              generateMockupBtn.addEventListener('click', async function() {
+                var productForm = document.getElementById('product-form');
+                var successEl = document.getElementById('product-success');
+                var errorEl = document.getElementById('product-error');
+                var statusEl = document.getElementById('mockup-status');
+                if (!productForm) return;
+
+                var productId = productForm.dataset.productId;
+                var imageUrlInput = document.querySelector('[name="mockupImageUrl"]');
+                var printfulProductIdInput = document.querySelector('[name="mockupPrintfulProductId"]');
+                var imageUrl = imageUrlInput ? String(imageUrlInput.value || '').trim() : '';
+                var printfulProductIdRaw = printfulProductIdInput
+                  ? String(printfulProductIdInput.value || '').trim()
+                  : '';
+
+                successEl.classList.add('hidden');
+                errorEl.classList.add('hidden');
+                if (statusEl) statusEl.textContent = '';
+
+                if (!imageUrl) {
+                  errorEl.textContent = 'Enter an artwork image URL before generating mockups.';
+                  errorEl.classList.remove('hidden');
+                  return;
+                }
+                if (printfulProductIdRaw && !/^\\d+$/.test(printfulProductIdRaw)) {
+                  errorEl.textContent = 'Printful product ID override must be a positive integer.';
+                  errorEl.classList.remove('hidden');
+                  return;
+                }
+
+                setButtonLoading(generateMockupBtn, true, 'Generating...', 'Generate Mockups');
+                if (statusEl) statusEl.textContent = 'Submitting Printful mockup task...';
+
+                try {
+                  var payload = {
+                    imageUrl: imageUrl,
+                    waitAndApply: true,
+                  };
+                  if (printfulProductIdRaw) {
+                    payload.printfulProductId = Number(printfulProductIdRaw);
+                  }
+
+                  var res = await fetch('/api/admin/products/' + productId + '/mockup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                  });
+                  var data = await res.json().catch(function() { return {}; });
+                  if (!res.ok) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to generate mockups') : (data.error || data.message || 'Failed to generate mockups'));
+                  }
+
+                  if (statusEl) {
+                    statusEl.textContent = data.status === 'completed'
+                      ? 'Mockups generated and applied to product images.'
+                      : (data.message || 'Mockup task created.');
+                  }
+                  successEl.textContent = data.status === 'completed'
+                    ? 'Printful mockups generated and applied.'
+                    : 'Printful mockup job submitted.';
+                  successEl.classList.remove('hidden');
+                } catch (err) {
+                  errorEl.textContent = err.message;
+                  errorEl.classList.remove('hidden');
+                  if (statusEl) statusEl.textContent = 'Mockup generation failed.';
+                } finally {
+                  setButtonLoading(generateMockupBtn, false, null, 'Generate Mockups');
                 }
               });
             }

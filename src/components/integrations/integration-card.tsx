@@ -40,27 +40,32 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
     class="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-6 mb-4"
     data-provider={provider}
     data-store-id={storeId ?? ""}
+    data-read-only={readOnly ? "true" : "false"}
   >
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <StatusBadge status={status} message={statusMessage} />
         <h3 class="text-lg font-semibold dark:text-gray-100">{label}</h3>
       </div>
-      {!readOnly && (
-        <label class="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={enabled}
-            class="toggle-integration rounded"
-            data-provider={provider}
-          />
-          <span class="text-sm text-gray-600 dark:text-gray-400">Enabled</span>
-        </label>
-      )}
+      <label
+        data-toggle-wrap
+        class={`flex items-center gap-2 ${readOnly ? "hidden" : ""}`}
+      >
+        <input
+          type="checkbox"
+          checked={enabled}
+          disabled={readOnly}
+          class="toggle-integration rounded"
+          data-provider={provider}
+        />
+        <span class="text-sm text-gray-600 dark:text-gray-400">Enabled</span>
+      </label>
     </div>
 
     <div class="text-xs mb-4">
       <span
+        data-integration-source
+        data-source={source}
         class={`px-2 py-0.5 rounded ${
           source === "store_override"
             ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400"
@@ -72,89 +77,104 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
       </span>
     </div>
 
-    {!readOnly && (
-      <form
-        class="integration-form space-y-3"
-        data-provider={provider}
-        data-store-id={storeId ?? ""}
-      >
-        {secretFields.map((field) => (
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {field.label}
-            </label>
-            <div class="flex gap-2">
-              <input
-                type="password"
-                name={field.key}
-                placeholder={secrets[field.key] || field.placeholder}
-                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg text-sm font-mono"
-                autocomplete="off"
-              />
-              <button
-                type="button"
-                class="toggle-visibility px-2 py-1 text-xs border dark:border-gray-600 rounded text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Show
-              </button>
-            </div>
-          </div>
-        ))}
+    <p
+      data-readonly-note
+      class={`mb-3 text-xs text-gray-500 dark:text-gray-400 ${readOnly ? "" : "hidden"}`}
+    >
+      Using platform defaults. Click "Use your own account" to enable store-specific credentials.
+    </p>
 
-        {configFields && configFields.length > 0 && (
-          <details class="mt-3">
-            <summary class="text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer">
-              Advanced Settings
-            </summary>
-            <div class="mt-2 space-y-2">
-              {configFields.map((field) => (
-                <div>
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    {field.label}
-                  </label>
-                  <input
-                    type={field.type}
-                    name={`config_${field.key}`}
-                    value={String(config[field.key] ?? "")}
-                    class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded text-sm"
-                  />
-                </div>
-              ))}
-            </div>
-          </details>
-        )}
-
-        <div class="flex items-center gap-3 pt-2">
-          <button
-            type="submit"
-            class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700"
-          >
-            Save Changes
-          </button>
-          <button
-            type="button"
-            class="verify-btn border border-gray-300 dark:border-gray-600 dark:text-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-            data-provider={provider}
-          >
-            Verify Connection
-          </button>
-          {actions?.map((a) => (
+    <form
+      class="integration-form space-y-3"
+      data-provider={provider}
+      data-store-id={storeId ?? ""}
+    >
+      {secretFields.map((field) => (
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {field.label}
+          </label>
+          <div class="flex gap-2">
+            <input
+              type="password"
+              name={field.key}
+              disabled={readOnly}
+              placeholder={secrets[field.key] || field.placeholder}
+              class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg text-sm font-mono"
+              autocomplete="off"
+            />
             <button
               type="button"
-              class="action-btn border border-gray-300 dark:border-gray-600 dark:text-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-              data-provider={provider}
-              data-action={a.action}
+              disabled={readOnly}
+              class="toggle-visibility px-2 py-1 text-xs border dark:border-gray-600 rounded text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
-              {a.label}
+              Show
             </button>
-          ))}
+          </div>
         </div>
-      </form>
-    )}
+      ))}
+
+      {configFields && configFields.length > 0 && (
+        <details class="mt-3">
+          <summary class="text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer">
+            Advanced Settings
+          </summary>
+          <div class="mt-2 space-y-2">
+            {configFields.map((field) => (
+              <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  {field.label}
+                </label>
+                <input
+                  type={field.type}
+                  name={`config_${field.key}`}
+                  disabled={readOnly}
+                  value={String(config[field.key] ?? "")}
+                  class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded text-sm"
+                />
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+
+      <div class="flex items-center gap-3 pt-2">
+        <button
+          type="submit"
+          disabled={readOnly}
+          class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700"
+        >
+          Save Changes
+        </button>
+        <button
+          type="button"
+          disabled={readOnly}
+          class="verify-btn border border-gray-300 dark:border-gray-600 dark:text-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+          data-provider={provider}
+        >
+          Verify Connection
+        </button>
+        {actions?.map((a) => (
+          <button
+            type="button"
+            disabled={readOnly}
+            class="action-btn border border-gray-300 dark:border-gray-600 dark:text-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+            data-provider={provider}
+            data-action={a.action}
+          >
+            {a.label}
+          </button>
+        ))}
+      </div>
+    </form>
 
     <div class="mt-3 flex gap-4 text-xs text-gray-500 dark:text-gray-400">
-      {lastVerifiedAt && <span>Last verified: {lastVerifiedAt}</span>}
-      {lastSyncAt && <span>Last sync: {lastSyncAt}</span>}
+      <span data-last-verified class={lastVerifiedAt ? "" : "hidden"}>
+        Last verified: <span data-last-verified-value>{lastVerifiedAt ?? ""}</span>
+      </span>
+      <span data-last-sync class={lastSyncAt ? "" : "hidden"}>
+        Last sync: <span data-last-sync-value>{lastSyncAt ?? ""}</span>
+      </span>
     </div>
   </div>
 );

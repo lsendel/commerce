@@ -6,8 +6,35 @@ import { createDb } from "../../infrastructure/db/client";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { ProductRepository } from "../../infrastructure/repositories/product.repository";
 import { ManageCollectionUseCase } from "../../application/catalog/manage-collection.usecase";
+import { executeCacheInvalidation } from "../../infrastructure/cache/invalidation-executor";
 
 const adminCollections = new Hono<{ Bindings: Env }>();
+
+async function invalidateCollectionCache(input: {
+  db: ReturnType<typeof createDb>;
+  storeId: string;
+  collectionId?: string | null;
+  collectionSlug?: string | null;
+}) {
+  const productRepo = new ProductRepository(input.db, input.storeId);
+  await executeCacheInvalidation({
+    storeId: input.storeId,
+    resources: [
+      {
+        type: "collection",
+        id: input.collectionId ?? null,
+        slug: input.collectionSlug ?? null,
+      },
+    ],
+    resolvers: {
+      resolveCollectionSlugById: async (id) => {
+        const collections = await productRepo.findCollections();
+        const collection = collections.find((row) => row.id === id);
+        return collection?.slug ?? null;
+      },
+    },
+  });
+}
 
 // ─── GET / — List collections ───────────────────────────────────────────────
 
@@ -38,6 +65,12 @@ adminCollections.post(
     const storeId = c.get("storeId") as string;
     const useCase = new ManageCollectionUseCase(db, storeId);
     const collection = await useCase.create(c.req.valid("json"));
+    await invalidateCollectionCache({
+      db,
+      storeId,
+      collectionId: collection?.id ?? null,
+      collectionSlug: collection?.slug ?? null,
+    });
     return c.json(collection, 201);
   },
 );
@@ -53,6 +86,12 @@ adminCollections.patch(
     const storeId = c.get("storeId") as string;
     const useCase = new ManageCollectionUseCase(db, storeId);
     const result = await useCase.update(c.req.param("id"), c.req.valid("json"));
+    await invalidateCollectionCache({
+      db,
+      storeId,
+      collectionId: result.collection?.id ?? c.req.param("id"),
+      collectionSlug: result.collection?.slug ?? null,
+    });
     return c.json(result.collection);
   },
 );
@@ -64,6 +103,11 @@ adminCollections.delete("/:id", requireAuth(), async (c) => {
   const storeId = c.get("storeId") as string;
   const useCase = new ManageCollectionUseCase(db, storeId);
   await useCase.remove(c.req.param("id"));
+  await invalidateCollectionCache({
+    db,
+    storeId,
+    collectionId: c.req.param("id"),
+  });
   return c.json({ success: true });
 });
 
@@ -82,6 +126,11 @@ adminCollections.post(
     const storeId = c.get("storeId") as string;
     const useCase = new ManageCollectionUseCase(db, storeId);
     await useCase.addProducts(c.req.param("id"), c.req.valid("json").productIds);
+    await invalidateCollectionCache({
+      db,
+      storeId,
+      collectionId: c.req.param("id"),
+    });
     return c.json({ success: true });
   },
 );
@@ -97,6 +146,11 @@ adminCollections.delete(
     const storeId = c.get("storeId") as string;
     const useCase = new ManageCollectionUseCase(db, storeId);
     await useCase.removeProducts(c.req.param("id"), c.req.valid("json").productIds);
+    await invalidateCollectionCache({
+      db,
+      storeId,
+      collectionId: c.req.param("id"),
+    });
     return c.json({ success: true });
   },
 );

@@ -26,6 +26,7 @@ export const Header: FC<HeaderProps> = ({
   const initials = userName
     ? userName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
     : "?";
+  const cartCountLabel = cartCount === 0 ? "Empty" : `${cartCount} ${cartCount === 1 ? "item" : "items"}`;
 
   return (
     <header class="sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md" role="banner">
@@ -66,23 +67,42 @@ export const Header: FC<HeaderProps> = ({
           {/* Cart */}
           <button
             type="button"
-            class="relative inline-flex items-center rounded-xl p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-            aria-label="Shopping cart"
+            class="inline-flex items-center gap-3 rounded-xl border border-gray-200 bg-white/70 px-3 py-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            aria-label={`Shopping basket, ${cartCount > 0 ? `${cartCountLabel}, total $0.00` : "empty"}`}
             data-cart-trigger
+            data-cart-trigger-button
           >
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-            </svg>
-            <span
-              id="cart-count-badge"
-              class={`absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white ${
-                cartCount > 0 ? "" : "hidden"
-              }`}
-              data-cart-count={cartCount}
-              aria-live="polite"
-              aria-label={`${cartCount} items in cart`}
-            >
-              {cartCount > 0 ? cartCount : ""}
+            <span class="relative inline-flex items-center justify-center">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+              </svg>
+              <span
+                id="cart-count-badge"
+                class={`absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white ${
+                  cartCount > 0 ? "" : "hidden"
+                }`}
+                data-cart-count={cartCount}
+                aria-live="polite"
+                aria-label={`${cartCount} items in cart`}
+              >
+                {cartCount > 0 ? cartCount : ""}
+              </span>
+            </span>
+            <span class="flex flex-col items-start leading-tight">
+              <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">
+                Basket
+              </span>
+              <span class="flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                <span data-cart-summary-count>{cartCountLabel}</span>
+                <span
+                  class={`text-gray-300 dark:text-gray-600 ${cartCount > 0 ? "" : "hidden"}`}
+                  data-cart-summary-separator
+                  aria-hidden="true"
+                >
+                  &middot;
+                </span>
+                <span data-cart-summary-total>$0.00</span>
+              </span>
             </span>
           </button>
 
@@ -136,20 +156,29 @@ export const Header: FC<HeaderProps> = ({
 
           <button
             type="button"
-            class="relative inline-flex items-center rounded-xl p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Shopping cart"
+            class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white/70 px-2.5 py-2 text-gray-600 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-400 dark:hover:bg-gray-800"
+            aria-label={`Shopping basket, ${cartCount > 0 ? `${cartCountLabel}, total $0.00` : "empty"}`}
             data-cart-trigger
+            data-cart-trigger-button
           >
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-            </svg>
+            <span class="relative inline-flex items-center justify-center">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+              </svg>
+              <span
+                class={`absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white cart-count-mobile ${
+                  cartCount > 0 ? "" : "hidden"
+                }`}
+                data-cart-count={cartCount}
+              >
+                {cartCount > 0 ? cartCount : ""}
+              </span>
+            </span>
             <span
-              class={`absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white cart-count-mobile ${
-                cartCount > 0 ? "" : "hidden"
-              }`}
-              data-cart-count={cartCount}
+              class="max-w-[4.75rem] truncate text-xs font-semibold tabular-nums text-gray-900 dark:text-gray-100"
+              data-cart-summary-total-mobile
             >
-              {cartCount > 0 ? cartCount : ""}
+              $0.00
             </span>
           </button>
 

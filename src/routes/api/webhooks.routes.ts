@@ -50,11 +50,17 @@ webhooks.post("/webhooks/stripe", async (c) => {
 
       try {
         const db = createDb(c.env.DATABASE_URL);
-        const orderRepo = new OrderRepository(db, c.get("storeId") as string);
-        const cartRepo = new CartRepository(db, c.get("storeId") as string);
+        const webhookStoreId =
+          session.metadata?.storeId ?? (c.get("storeId") as string | undefined);
+        if (!webhookStoreId) {
+          return c.json({ error: "Missing store context for checkout session" }, 400);
+        }
+
+        const orderRepo = new OrderRepository(db, webhookStoreId);
+        const cartRepo = new CartRepository(db, webhookStoreId);
         const featureFlags = resolveFeatureFlags(c.env.FEATURE_FLAGS);
 
-        const useCase = new FulfillOrderUseCase(orderRepo, cartRepo, db, c.get("storeId") as string);
+        const useCase = new FulfillOrderUseCase(orderRepo, cartRepo, db, webhookStoreId);
         await useCase.execute({
           session,
           fulfillmentQueue: c.env.FULFILLMENT_QUEUE,

@@ -1,0 +1,349 @@
+{
+  "startedAt": "2026-03-06T06:41:17.685Z",
+  "finishedAt": "2026-03-06T06:41:17.689Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "policyPath": "docs/policies/api-version-policy-v1.json",
+  "checks": [
+    {
+      "id": "policy-owner-present",
+      "status": "pass",
+      "note": "Policy owner must be defined."
+    },
+    {
+      "id": "supported-versions-present",
+      "status": "pass",
+      "note": "Policy must define supported API versions."
+    },
+    {
+      "id": "deprecated-versions-present",
+      "status": "pass",
+      "note": "Policy must define at least one deprecated API version."
+    },
+    {
+      "id": "migration-hooks-present",
+      "status": "pass",
+      "note": "Policy must define migration hooks."
+    },
+    {
+      "id": "simulation-cases-present",
+      "status": "pass",
+      "note": "Policy must define simulation cases."
+    },
+    {
+      "id": "latest-supported",
+      "status": "pass",
+      "note": "Latest version must be part of supportedVersions."
+    },
+    {
+      "id": "default-supported",
+      "status": "pass",
+      "note": "Default version must be part of supportedVersions."
+    },
+    {
+      "id": "latest-equals-runtime",
+      "status": "pass",
+      "note": "Policy latestVersion must match runtime latest API version."
+    },
+    {
+      "id": "default-equals-runtime",
+      "status": "pass",
+      "note": "Policy defaultVersion must match runtime default API version."
+    },
+    {
+      "id": "supported-equals-runtime",
+      "status": "pass",
+      "note": "Policy supportedVersions must match runtime supported API versions."
+    },
+    {
+      "id": "request-header-channels",
+      "status": "pass",
+      "note": "Policy must define request header channels for version negotiation."
+    },
+    {
+      "id": "request-query-channels",
+      "status": "pass",
+      "note": "Policy must define request query channels for version negotiation."
+    },
+    {
+      "id": "review-cadence-valid",
+      "status": "pass",
+      "note": "reviewCadenceDays must be a positive number."
+    },
+    {
+      "id": "review-dates-format",
+      "status": "pass",
+      "note": "lastReviewedOn and nextReviewBy must use YYYY-MM-DD format."
+    },
+    {
+      "id": "review-next-after-last",
+      "status": "pass",
+      "note": "nextReviewBy must be on or after lastReviewedOn."
+    },
+    {
+      "id": "review-window-valid",
+      "status": "pass",
+      "note": "nextReviewBy must stay within reviewCadenceDays window."
+    },
+    {
+      "id": "review-not-overdue",
+      "status": "pass",
+      "note": "API version policy review date must not be overdue."
+    },
+    {
+      "id": "source-path-1",
+      "status": "pass",
+      "note": "Source path must exist: src/shared/api-versioning.ts"
+    },
+    {
+      "id": "source-path-2",
+      "status": "pass",
+      "note": "Source path must exist: src/middleware/api-versioning.middleware.ts"
+    },
+    {
+      "id": "source-path-3",
+      "status": "pass",
+      "note": "Source path must exist: src/routes/api/api-versioning.routes.ts"
+    },
+    {
+      "id": "source-path-4",
+      "status": "pass",
+      "note": "Source path must exist: src/index.tsx"
+    },
+    {
+      "id": "required-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present: X-API-Version"
+    },
+    {
+      "id": "required-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present: Unsupported API version requested."
+    },
+    {
+      "id": "required-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present: apiVersioningRoutes.get(\"/versioning\""
+    },
+    {
+      "id": "required-snippet-4",
+      "status": "pass",
+      "note": "Required snippet must be present: app.use(\"/api/*\", apiVersioningMiddleware());"
+    },
+    {
+      "id": "policy-md-exists",
+      "status": "pass",
+      "note": "Policy markdown must exist: docs/policies/api-version-policy-v1.md"
+    },
+    {
+      "id": "migration-guide-exists",
+      "status": "pass",
+      "note": "Migration guide must exist: docs/runbooks/api-versioning-migration.md"
+    },
+    {
+      "id": "migration-hook-adopt-version-header-from-supported",
+      "status": "pass",
+      "note": "Migration hook fromVersion must be supported."
+    },
+    {
+      "id": "migration-hook-adopt-version-header-to-supported",
+      "status": "pass",
+      "note": "Migration hook toVersion must be supported."
+    },
+    {
+      "id": "migration-hook-adopt-version-header-required-by-format",
+      "status": "pass",
+      "note": "Migration hook requiredBy must use YYYY-MM-DD format."
+    },
+    {
+      "id": "migration-hook-adopt-version-header-endpoint-format",
+      "status": "pass",
+      "note": "Migration hook endpoint must begin with /api/."
+    },
+    {
+      "id": "migration-hook-verify-deprecation-readiness-from-supported",
+      "status": "pass",
+      "note": "Migration hook fromVersion must be supported."
+    },
+    {
+      "id": "migration-hook-verify-deprecation-readiness-to-supported",
+      "status": "pass",
+      "note": "Migration hook toVersion must be supported."
+    },
+    {
+      "id": "migration-hook-verify-deprecation-readiness-required-by-format",
+      "status": "pass",
+      "note": "Migration hook requiredBy must use YYYY-MM-DD format."
+    },
+    {
+      "id": "migration-hook-verify-deprecation-readiness-endpoint-format",
+      "status": "pass",
+      "note": "Migration hook endpoint must begin with /api/."
+    },
+    {
+      "id": "migration-hook-contract-matrix-gate-from-supported",
+      "status": "pass",
+      "note": "Migration hook fromVersion must be supported."
+    },
+    {
+      "id": "migration-hook-contract-matrix-gate-to-supported",
+      "status": "pass",
+      "note": "Migration hook toVersion must be supported."
+    },
+    {
+      "id": "migration-hook-contract-matrix-gate-required-by-format",
+      "status": "pass",
+      "note": "Migration hook requiredBy must use YYYY-MM-DD format."
+    },
+    {
+      "id": "migration-hook-contract-matrix-gate-endpoint-format",
+      "status": "pass",
+      "note": "Migration hook endpoint must begin with /api/."
+    },
+    {
+      "id": "simulation-default-no-version-supported",
+      "status": "pass",
+      "note": "Expected supported=true, got true"
+    },
+    {
+      "id": "simulation-default-no-version-effective-version",
+      "status": "pass",
+      "note": "Expected effectiveVersion=2026-04-26, got 2026-04-26"
+    },
+    {
+      "id": "simulation-default-no-version-defaulted",
+      "status": "pass",
+      "note": "Expected defaulted=true, got true"
+    },
+    {
+      "id": "simulation-default-no-version-deprecated",
+      "status": "pass",
+      "note": "Expected deprecated=false, got false"
+    },
+    {
+      "id": "simulation-explicit-latest-supported",
+      "status": "pass",
+      "note": "Expected supported=true, got true"
+    },
+    {
+      "id": "simulation-explicit-latest-effective-version",
+      "status": "pass",
+      "note": "Expected effectiveVersion=2026-04-26, got 2026-04-26"
+    },
+    {
+      "id": "simulation-explicit-latest-defaulted",
+      "status": "pass",
+      "note": "Expected defaulted=false, got false"
+    },
+    {
+      "id": "simulation-explicit-latest-deprecated",
+      "status": "pass",
+      "note": "Expected deprecated=false, got false"
+    },
+    {
+      "id": "simulation-explicit-deprecated-supported",
+      "status": "pass",
+      "note": "Expected supported=true, got true"
+    },
+    {
+      "id": "simulation-explicit-deprecated-effective-version",
+      "status": "pass",
+      "note": "Expected effectiveVersion=2025-12-01, got 2025-12-01"
+    },
+    {
+      "id": "simulation-explicit-deprecated-defaulted",
+      "status": "pass",
+      "note": "Expected defaulted=false, got false"
+    },
+    {
+      "id": "simulation-explicit-deprecated-deprecated",
+      "status": "pass",
+      "note": "Expected deprecated=true, got true"
+    },
+    {
+      "id": "simulation-unsupported-version-supported",
+      "status": "pass",
+      "note": "Expected supported=false, got false"
+    },
+    {
+      "id": "simulation-unsupported-version-effective-version",
+      "status": "pass",
+      "note": "Expected effectiveVersion=2026-04-26, got 2026-04-26"
+    },
+    {
+      "id": "simulation-unsupported-version-defaulted",
+      "status": "pass",
+      "note": "Expected defaulted=true, got true"
+    },
+    {
+      "id": "simulation-unsupported-version-deprecated",
+      "status": "pass",
+      "note": "Expected deprecated=false, got false"
+    },
+    {
+      "id": "runtime-policy-version",
+      "status": "pass",
+      "note": "Runtime API version policy must be v1."
+    }
+  ],
+  "simulationResults": [
+    {
+      "id": "default-no-version",
+      "requestedVersion": null,
+      "expectedSupported": true,
+      "actualSupported": true,
+      "expectedEffectiveVersion": "2026-04-26",
+      "actualEffectiveVersion": "2026-04-26",
+      "expectedDefaulted": true,
+      "actualDefaulted": true,
+      "expectedDeprecated": false,
+      "actualDeprecated": false,
+      "status": "pass"
+    },
+    {
+      "id": "explicit-latest",
+      "requestedVersion": "2026-04-26",
+      "expectedSupported": true,
+      "actualSupported": true,
+      "expectedEffectiveVersion": "2026-04-26",
+      "actualEffectiveVersion": "2026-04-26",
+      "expectedDefaulted": false,
+      "actualDefaulted": false,
+      "expectedDeprecated": false,
+      "actualDeprecated": false,
+      "status": "pass"
+    },
+    {
+      "id": "explicit-deprecated",
+      "requestedVersion": "2025-12-01",
+      "expectedSupported": true,
+      "actualSupported": true,
+      "expectedEffectiveVersion": "2025-12-01",
+      "actualEffectiveVersion": "2025-12-01",
+      "expectedDefaulted": false,
+      "actualDefaulted": false,
+      "expectedDeprecated": true,
+      "actualDeprecated": true,
+      "status": "pass"
+    },
+    {
+      "id": "unsupported-version",
+      "requestedVersion": "2023-01-01",
+      "expectedSupported": false,
+      "actualSupported": false,
+      "expectedEffectiveVersion": "2026-04-26",
+      "actualEffectiveVersion": "2026-04-26",
+      "expectedDefaulted": true,
+      "actualDefaulted": true,
+      "expectedDeprecated": false,
+      "actualDeprecated": false,
+      "status": "pass"
+    }
+  ],
+  "metrics": {
+    "totalChecks": 56,
+    "failedChecks": 0,
+    "simulationCount": 4,
+    "simulationPassing": 4
+  }
+}

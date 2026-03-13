@@ -1,0 +1,218 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Dog Beach Day Experience | Petm8 | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "Shopping cart" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - link "Sign in" [ref=e21] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - navigation "Breadcrumb" [ref=e24]:
+        - list [ref=e25]:
+          - listitem [ref=e26]:
+            - link "Home" [ref=e27] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=e28]: /
+          - listitem [ref=e29]:
+            - link "Products" [ref=e30] [cursor=pointer]:
+              - /url: /products
+          - listitem [ref=e31]: /
+          - listitem [ref=e32]: Dog Beach Day Experience
+      - generic [ref=e33]:
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - img "Dogs playing on the beach during a Beach Day Experience" [ref=e37]
+            - button "Previous image" [ref=e38] [cursor=pointer]:
+              - img [ref=e39]
+            - button "Next image" [ref=e41] [cursor=pointer]:
+              - img [ref=e42]
+            - generic [ref=e44]: 1 / 4
+          - generic [ref=e45]:
+            - button "View image 1" [ref=e46] [cursor=pointer]:
+              - img "Dogs playing on the beach during a Beach Day Experience" [ref=e47]
+            - button "View image 2" [ref=e48] [cursor=pointer]:
+              - img "Dog running through agility course on sand" [ref=e49]
+            - button "View image 3" [ref=e50] [cursor=pointer]:
+              - img "Gourmet puppy picnic setup on the beach" [ref=e51]
+            - button "View image 4" [ref=e52] [cursor=pointer]:
+              - img "Group of happy dogs and owners at the beach" [ref=e53]
+        - generic [ref=e54]:
+          - generic [ref=e55]: Bookable Event
+          - heading "Dog Beach Day Experience" [level=1] [ref=e56]
+          - generic [ref=e58]:
+            - 'generic "Price: $79.00" [ref=e60]':
+              - generic [ref=e61]: $79.00
+            - button "Add to Cart" [ref=e62] [cursor=pointer]:
+              - img [ref=e63]
+              - text: Add to Cart
+          - generic [ref=e65]:
+            - heading "Booking Details" [level=3] [ref=e66]
+            - generic [ref=e67]:
+              - generic [ref=e68]:
+                - img [ref=e70]
+                - generic [ref=e72]:
+                  - generic [ref=e73]: Duration
+                  - generic [ref=e74]: 180 minutes
+              - generic [ref=e75]:
+                - img [ref=e77]
+                - generic [ref=e79]:
+                  - generic [ref=e80]: Capacity
+                  - generic [ref=e81]: 12 per group
+              - generic [ref=e82]:
+                - img [ref=e84]
+                - generic [ref=e87]:
+                  - generic [ref=e88]: Location
+                  - generic [ref=e89]: Bondi Beach, Sydney NSW 2026, Australia
+            - generic [ref=e90]:
+              - heading "What's Included" [level=4] [ref=e91]
+              - list [ref=e92]:
+                - listitem [ref=e93]:
+                  - img [ref=e94]
+                  - text: Professional dog handlers (1 per 4 dogs)
+                - listitem [ref=e96]:
+                  - img [ref=e97]
+                  - text: Water toys & agility equipment
+                - listitem [ref=e99]:
+                  - img [ref=e100]
+                  - text: Gourmet puppy picnic lunch
+                - listitem [ref=e102]:
+                  - img [ref=e103]
+                  - text: Fresh water stations
+                - listitem [ref=e105]:
+                  - img [ref=e106]
+                  - text: Professional photo package (10+ edited photos)
+                - listitem [ref=e108]:
+                  - img [ref=e109]
+                  - text: Doggy bandana souvenir
+            - generic [ref=e111]:
+              - heading "Not Included" [level=4] [ref=e112]
+              - list [ref=e113]:
+                - listitem [ref=e114]:
+                  - img [ref=e115]
+                  - text: Transport to/from venue
+                - listitem [ref=e117]:
+                  - img [ref=e118]
+                  - text: Human food & beverages
+                - listitem [ref=e120]:
+                  - img [ref=e121]
+                  - text: Pet insurance
+            - generic [ref=e124]:
+              - img [ref=e125]
+              - generic [ref=e127]:
+                - generic [ref=e128]: Cancellation Policy
+                - paragraph [ref=e129]: Free cancellation up to 48 hours before the scheduled time. Cancellations within 48 hours receive a 50% refund. No-shows are non-refundable.
+          - generic [ref=e130]:
+            - heading "Description" [level=3] [ref=e131]
+            - generic [ref=e132]:
+              - paragraph [ref=e133]: Treat your pup to the ultimate beach day! A guided 3-hour group experience at Bondi Beach with professional dog handlers.
+              - heading "What's Included" [level=3] [ref=e134]
+              - list [ref=e135]:
+                - listitem [ref=e136]: Professional dog handlers (1 per 4 dogs)
+                - listitem [ref=e137]: Water toys & agility equipment
+                - listitem [ref=e138]: Gourmet puppy picnic lunch
+                - listitem [ref=e139]: Fresh water stations
+                - listitem [ref=e140]: Professional photo package (10+ edited photos)
+                - listitem [ref=e141]: Doggy bandana souvenir
+              - heading "What to Bring" [level=3] [ref=e142]
+              - list [ref=e143]:
+                - listitem [ref=e144]: Leash & collar with ID tag
+                - listitem [ref=e145]: Towel for your dog
+                - listitem [ref=e146]: Sunscreen (for you!)
+          - button "Share" [ref=e148] [cursor=pointer]:
+            - img [ref=e149]
+            - text: Share
+      - generic [ref=e151]:
+        - heading "You May Also Like" [level=2] [ref=e152]
+        - generic [ref=e153]:
+          - link "Pet Portrait Mug - $18.99" [ref=e154] [cursor=pointer]:
+            - /url: /products/pet-portrait-mug
+            - img "Pet Portrait Mug" [ref=e156]
+            - generic [ref=e157]:
+              - heading "Pet Portrait Mug" [level=3] [ref=e158]
+              - generic [ref=e160]: From $18.99
+          - link "Paw Print Tote Bag - $24.99" [ref=e161] [cursor=pointer]:
+            - /url: /products/paw-print-tote-bag
+            - generic [ref=e162]:
+              - img "Paw Print Tote Bag" [ref=e163]
+              - generic [ref=e164]: Sale
+            - generic [ref=e165]:
+              - heading "Paw Print Tote Bag" [level=3] [ref=e166]
+              - generic [ref=e168]: From $24.99
+          - link "Pet Care Ultimate Guide - $14.99" [ref=e169] [cursor=pointer]:
+            - /url: /products/pet-care-ultimate-guide
+            - generic [ref=e170]:
+              - img "Pet Care Ultimate Guide" [ref=e171]
+              - generic [ref=e172]: Digital
+              - generic [ref=e173]: Sale
+            - generic [ref=e174]:
+              - heading "Pet Care Ultimate Guide" [level=3] [ref=e175]
+              - generic [ref=e176]:
+                - generic [ref=e177]: $14.99
+                - generic [ref=e178]: $24.99
+          - link "Petm8 Premium Monthly - $9.99" [ref=e179] [cursor=pointer]:
+            - /url: /products/petm8-premium-monthly
+            - generic [ref=e180]:
+              - img "Petm8 Premium Monthly" [ref=e181]
+              - generic [ref=e182]: Subscription
+            - generic [ref=e183]:
+              - heading "Petm8 Premium Monthly" [level=3] [ref=e184]
+              - generic [ref=e186]: $9.99
+  - contentinfo [ref=e187]:
+    - generic [ref=e188]:
+      - generic [ref=e189]:
+        - generic [ref=e190]:
+          - link "petm8 home" [ref=e191] [cursor=pointer]:
+            - /url: /
+            - img [ref=e192]
+            - generic [ref=e194]: petm8
+          - paragraph [ref=e195]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e196]:
+          - heading "Shop" [level=4] [ref=e197]
+          - list [ref=e198]:
+            - listitem [ref=e199]:
+              - link "All Products" [ref=e200] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e201]:
+              - link "Collections" [ref=e202] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e203]:
+          - heading "Account" [level=4] [ref=e204]
+          - list [ref=e205]:
+            - listitem [ref=e206]:
+              - link "Orders" [ref=e207] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e208]:
+              - link "My Pets" [ref=e209] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e210]:
+          - heading "Company" [level=4] [ref=e211]
+          - list [ref=e212]:
+            - listitem [ref=e213]:
+              - link "About" [ref=e214] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e215]:
+              - link "Contact" [ref=e216] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e218]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e219]:
+    - generic [ref=e220]:
+      - heading "Your Cart" [level=2] [ref=e221]
+      - button "Close cart" [ref=e222] [cursor=pointer]:
+        - img [ref=e223]

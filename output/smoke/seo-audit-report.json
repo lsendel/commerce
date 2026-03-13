@@ -1,0 +1,679 @@
+{
+  "startedAt": "2026-03-06T05:05:21.755Z",
+  "finishedAt": "2026-03-06T05:05:22.474Z",
+  "status": "passed",
+  "baseUrl": "https://petm8.io",
+  "skipHttpChecks": false,
+  "metrics": {
+    "totalChecks": 83,
+    "passedChecks": 83,
+    "failedChecks": 0,
+    "skippedChecks": 0
+  },
+  "checks": [
+    {
+      "id": "robots-status",
+      "section": "robots",
+      "target": "/robots.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "robots-content-type",
+      "section": "robots",
+      "target": "/robots.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "text/plain; charset=utf-8"
+    },
+    {
+      "id": "robots-rule-user-agent-",
+      "section": "robots",
+      "target": "/robots.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect \"User-agent: *\""
+    },
+    {
+      "id": "robots-rule-disallow-api-",
+      "section": "robots",
+      "target": "/robots.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect \"Disallow: /api/\""
+    },
+    {
+      "id": "robots-rule-disallow-admin-",
+      "section": "robots",
+      "target": "/robots.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect \"Disallow: /admin/\""
+    },
+    {
+      "id": "robots-rule-disallow-platform-",
+      "section": "robots",
+      "target": "/robots.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect \"Disallow: /platform/\""
+    },
+    {
+      "id": "robots-rule-disallow-account-",
+      "section": "robots",
+      "target": "/robots.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect \"Disallow: /account/\""
+    },
+    {
+      "id": "robots-rule-disallow-auth-",
+      "section": "robots",
+      "target": "/robots.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect \"Disallow: /auth/\""
+    },
+    {
+      "id": "robots-sitemap-directive",
+      "section": "robots",
+      "target": "/robots.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/sitemap.xml"
+    },
+    {
+      "id": "sitemap-status",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "sitemap-content-type",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "application/xml; charset=utf-8"
+    },
+    {
+      "id": "sitemap-has-urls",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Found 16 URL entries."
+    },
+    {
+      "id": "sitemap-no-duplicates",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Entries=16, unique=16."
+    },
+    {
+      "id": "sitemap-contains--",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect path \"/\""
+    },
+    {
+      "id": "sitemap-contains--products",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect path \"/products\""
+    },
+    {
+      "id": "sitemap-contains--events",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect path \"/events\""
+    },
+    {
+      "id": "sitemap-contains--venues",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect path \"/venues\""
+    },
+    {
+      "id": "sitemap-excludes--api-",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "sitemap-excludes--admin-",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "sitemap-excludes--platform-",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "sitemap-excludes--account-",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "sitemap-excludes--auth-",
+      "section": "sitemap",
+      "target": "/sitemap.xml",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "home-status",
+      "section": "metadata",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "home-content-type",
+      "section": "metadata",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "text/html; charset=UTF-8"
+    },
+    {
+      "id": "home-title",
+      "section": "metadata",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Title length=12"
+    },
+    {
+      "id": "home-description",
+      "section": "metadata",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Description length=105"
+    },
+    {
+      "id": "home-robots-meta",
+      "section": "metadata",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "robots=index,follow"
+    },
+    {
+      "id": "home-canonical-present",
+      "section": "canonical",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev"
+    },
+    {
+      "id": "home-canonical-absolute",
+      "section": "canonical",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/"
+    },
+    {
+      "id": "home-canonical-path-match",
+      "section": "canonical",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/"
+    },
+    {
+      "id": "home-jsonld-valid",
+      "section": "structured-data",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "home-jsonld-required",
+      "section": "structured-data",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=1"
+    },
+    {
+      "id": "home-jsonld-has-types",
+      "section": "structured-data",
+      "target": "/",
+      "ok": true,
+      "statusCode": 200,
+      "note": "types=EntryPoint, Organization, SearchAction, WebPage, WebSite"
+    },
+    {
+      "id": "products-status",
+      "section": "metadata",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "products-content-type",
+      "section": "metadata",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "text/html; charset=UTF-8"
+    },
+    {
+      "id": "products-title",
+      "section": "metadata",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Title length=12"
+    },
+    {
+      "id": "products-description",
+      "section": "metadata",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Description length=65"
+    },
+    {
+      "id": "products-robots-meta",
+      "section": "metadata",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "robots=index,follow"
+    },
+    {
+      "id": "products-canonical-present",
+      "section": "canonical",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/products"
+    },
+    {
+      "id": "products-canonical-absolute",
+      "section": "canonical",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/products"
+    },
+    {
+      "id": "products-canonical-path-match",
+      "section": "canonical",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/products"
+    },
+    {
+      "id": "products-jsonld-valid",
+      "section": "structured-data",
+      "target": "/products",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "events-status",
+      "section": "metadata",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "events-content-type",
+      "section": "metadata",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "text/html; charset=UTF-8"
+    },
+    {
+      "id": "events-title",
+      "section": "metadata",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Title length=14"
+    },
+    {
+      "id": "events-description",
+      "section": "metadata",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Description length=67"
+    },
+    {
+      "id": "events-robots-meta",
+      "section": "metadata",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "robots=index,follow"
+    },
+    {
+      "id": "events-canonical-present",
+      "section": "canonical",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.io/events"
+    },
+    {
+      "id": "events-canonical-absolute",
+      "section": "canonical",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.io/events"
+    },
+    {
+      "id": "events-canonical-path-match",
+      "section": "canonical",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.io/events"
+    },
+    {
+      "id": "events-jsonld-valid",
+      "section": "structured-data",
+      "target": "/events",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "venues-status",
+      "section": "metadata",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "venues-content-type",
+      "section": "metadata",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "text/html; charset=UTF-8"
+    },
+    {
+      "id": "venues-title",
+      "section": "metadata",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Title length=14"
+    },
+    {
+      "id": "venues-description",
+      "section": "metadata",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Description length=76"
+    },
+    {
+      "id": "venues-robots-meta",
+      "section": "metadata",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "robots=index,follow"
+    },
+    {
+      "id": "venues-canonical-present",
+      "section": "canonical",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.io/venues"
+    },
+    {
+      "id": "venues-canonical-absolute",
+      "section": "canonical",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.io/venues"
+    },
+    {
+      "id": "venues-canonical-path-match",
+      "section": "canonical",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.io/venues"
+    },
+    {
+      "id": "venues-jsonld-valid",
+      "section": "structured-data",
+      "target": "/venues",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "product-detail-status",
+      "section": "metadata",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "product-detail-content-type",
+      "section": "metadata",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "text/html; charset=UTF-8"
+    },
+    {
+      "id": "product-detail-title",
+      "section": "metadata",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Title length=40"
+    },
+    {
+      "id": "product-detail-description",
+      "section": "metadata",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Description length=113"
+    },
+    {
+      "id": "product-detail-robots-meta",
+      "section": "metadata",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "robots=index,follow"
+    },
+    {
+      "id": "product-detail-canonical-present",
+      "section": "canonical",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/products/dog-beach-day-experience"
+    },
+    {
+      "id": "product-detail-canonical-absolute",
+      "section": "canonical",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/products/dog-beach-day-experience"
+    },
+    {
+      "id": "product-detail-canonical-path-match",
+      "section": "canonical",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/products/dog-beach-day-experience"
+    },
+    {
+      "id": "product-detail-jsonld-valid",
+      "section": "structured-data",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=2"
+    },
+    {
+      "id": "product-detail-jsonld-required",
+      "section": "structured-data",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=2"
+    },
+    {
+      "id": "product-detail-jsonld-has-types",
+      "section": "structured-data",
+      "target": "/products/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "types=BreadcrumbList, ListItem, Offer, Organization, Product"
+    },
+    {
+      "id": "event-detail-status",
+      "section": "metadata",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "event-detail-content-type",
+      "section": "metadata",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "text/html; charset=UTF-8"
+    },
+    {
+      "id": "event-detail-title",
+      "section": "metadata",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Title length=40"
+    },
+    {
+      "id": "event-detail-description",
+      "section": "metadata",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Description length=113"
+    },
+    {
+      "id": "event-detail-robots-meta",
+      "section": "metadata",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "robots=index,follow"
+    },
+    {
+      "id": "event-detail-canonical-present",
+      "section": "canonical",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/events/dog-beach-day-experience"
+    },
+    {
+      "id": "event-detail-canonical-absolute",
+      "section": "canonical",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/events/dog-beach-day-experience"
+    },
+    {
+      "id": "event-detail-canonical-path-match",
+      "section": "canonical",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/events/dog-beach-day-experience"
+    },
+    {
+      "id": "event-detail-jsonld-valid",
+      "section": "structured-data",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "payloads=1"
+    },
+    {
+      "id": "event-detail-jsonld-required",
+      "section": "structured-data",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "schemaPayloads=1"
+    },
+    {
+      "id": "event-detail-jsonld-has-types",
+      "section": "structured-data",
+      "target": "/events/dog-beach-day-experience",
+      "ok": true,
+      "statusCode": 200,
+      "note": "types=Answer, Event, FAQPage, Offer, Place, Question"
+    },
+    {
+      "id": "canonical-origin-consistency",
+      "section": "canonical",
+      "target": "all-pages",
+      "ok": true,
+      "statusCode": null,
+      "note": "Origins vary (https://petm8.luis-diaz-s.workers.dev, https://petm8.io); strict mode disabled"
+    }
+  ]
+}

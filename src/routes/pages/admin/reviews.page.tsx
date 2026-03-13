@@ -74,10 +74,16 @@ export const AdminReviewsPage: FC<AdminReviewsPageProps> = ({
       </div>
 
       {/* Filter Bar */}
-      <form method="get" class="flex flex-wrap items-end gap-3 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      <form
+        method="get"
+        class="flex flex-wrap items-end gap-3 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4"
+        data-persist-filters
+        data-persist-key="admin-reviews-filters"
+        data-persist-clear-selector="[data-clear-reviews-filters]"
+      >
         <div>
           <label class="text-xs font-medium text-gray-500 block mb-1">Status</label>
-          <select name="status" class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-300">
+          <select name="status" data-auto-submit="change" class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-300">
             <option value="">All statuses</option>
             {["approved", "pending", "flagged", "rejected"].map((s) => (
               <option value={s} selected={filters.status === s}>{s}</option>
@@ -85,7 +91,7 @@ export const AdminReviewsPage: FC<AdminReviewsPageProps> = ({
           </select>
         </div>
         <Button type="submit" variant="primary" size="sm">Filter</Button>
-        <a href="/admin/reviews" class="text-sm text-gray-500 hover:text-gray-700 py-2">Clear</a>
+        <a href="/admin/reviews" data-clear-reviews-filters class="text-sm text-gray-500 hover:text-gray-700 py-2">Clear</a>
       </form>
 
       {/* Reviews List */}
@@ -100,11 +106,18 @@ export const AdminReviewsPage: FC<AdminReviewsPageProps> = ({
           </div>
         ) : (
           reviews.map((review) => (
-            <div key={review.id} class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6" data-review-id={review.id}>
+            <div
+              key={review.id}
+              class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6"
+              data-review-card
+              data-review-id={review.id}
+              data-review-status-value={review.status}
+              data-has-response={review.responseText ? "true" : "false"}
+            >
               <div class="flex items-start justify-between mb-3">
                 <div class="flex items-center gap-3">
                   <StarRating rating={review.rating} />
-                  <span class={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[review.status] ?? "bg-gray-100 text-gray-800"}`}>
+                  <span data-review-status class={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[review.status] ?? "bg-gray-100 text-gray-800"}`}>
                     {review.status}
                   </span>
                   {review.isVerifiedPurchase && (
@@ -128,13 +141,13 @@ export const AdminReviewsPage: FC<AdminReviewsPageProps> = ({
               </div>
 
               {review.responseText && (
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-3">
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-3" data-review-response>
                   <p class="text-xs font-medium text-gray-500 mb-1">Store Response ({review.responseAt})</p>
                   <p class="text-sm text-gray-700 dark:text-gray-300">{review.responseText}</p>
                 </div>
               )}
 
-              <div class="flex gap-2">
+              <div class="flex gap-2" data-review-actions>
                 {review.status !== "approved" && (
                   <button type="button" class="approve-btn text-xs bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1.5 rounded-lg font-medium" data-review-id={review.id}>Approve</button>
                 )}
@@ -182,85 +195,212 @@ export const AdminReviewsPage: FC<AdminReviewsPageProps> = ({
       {html`
         <script>
           (function() {
-            function showReviewsError(message) {
+            var STATUS_COLORS = {
+              approved: 'bg-green-100 text-green-800',
+              pending: 'bg-yellow-100 text-yellow-800',
+              flagged: 'bg-red-100 text-red-800',
+              rejected: 'bg-gray-100 text-gray-700',
+            };
+
+            function showReviewsNotice(message, type) {
               if (window.showToast) {
-                window.showToast(message, 'error');
+                window.showToast(message, type || 'info');
                 return;
               }
               var banner = document.getElementById('admin-reviews-flash');
               if (!banner) {
                 banner = document.createElement('div');
                 banner.id = 'admin-reviews-flash';
-                banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-lg';
+                banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm font-medium shadow-lg';
                 document.body.appendChild(banner);
+              }
+              if (type === 'error') {
+                banner.classList.remove('border-emerald-200', 'bg-emerald-50', 'text-emerald-700');
+                banner.classList.add('border-red-200', 'bg-red-50', 'text-red-700');
+              } else {
+                banner.classList.remove('border-red-200', 'bg-red-50', 'text-red-700');
+                banner.classList.add('border-emerald-200', 'bg-emerald-50', 'text-emerald-700');
               }
               banner.textContent = message;
               banner.classList.remove('hidden');
               setTimeout(function() { banner.classList.add('hidden'); }, 4000);
             }
 
-            document.querySelectorAll('.approve-btn').forEach(function(btn) {
-              btn.addEventListener('click', async function() {
-                var id = this.getAttribute('data-review-id');
-                try {
-                  var res = await fetch('/api/reviews/' + id + '/moderate', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'approve' }),
-                  });
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to approve') : (data.error || data.message || 'Failed to approve'));
+            function showReviewsSuccess(message) {
+              showReviewsNotice(message, 'success');
+            }
+
+            function showReviewsError(message) {
+              showReviewsNotice(message, 'error');
+            }
+
+            function actionMarkup(id, status, hasResponse) {
+              var parts = [];
+              if (status !== 'approved') {
+                parts.push('<button type="button" class="approve-btn text-xs bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1.5 rounded-lg font-medium" data-review-id="' + id + '">Approve</button>');
+              }
+              if (status !== 'rejected') {
+                parts.push('<button type="button" class="reject-btn text-xs bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg font-medium" data-review-id="' + id + '">Reject</button>');
+              }
+              if (!hasResponse) {
+                parts.push('<button type="button" class="respond-btn text-xs bg-brand-100 text-brand-700 hover:bg-brand-200 px-3 py-1.5 rounded-lg font-medium" data-review-id="' + id + '">Reply</button>');
+              }
+              if (parts.length === 0) {
+                parts.push('<span class="text-xs text-gray-400">No actions available</span>');
+              }
+              return parts.join('');
+            }
+
+            function updateReviewCard(id, nextStatus) {
+              var card = document.querySelector('[data-review-card][data-review-id="' + id + '"]');
+              if (!card) return;
+
+              card.dataset.reviewStatusValue = nextStatus;
+              var badge = card.querySelector('[data-review-status]');
+              if (badge) {
+                badge.textContent = nextStatus;
+                badge.className = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + (STATUS_COLORS[nextStatus] || 'bg-gray-100 text-gray-800');
+              }
+
+              var hasResponse = card.dataset.hasResponse === 'true';
+              var actions = card.querySelector('[data-review-actions]');
+              if (actions) {
+                actions.innerHTML = actionMarkup(id, nextStatus, hasResponse);
+              }
+            }
+
+            function setActionLoading(button, loading) {
+              if (!button) return;
+              if (loading) {
+                button.dataset.originalLabel = button.textContent || '';
+                button.textContent = 'Saving...';
+                button.disabled = true;
+                button.classList.add('opacity-60', 'cursor-not-allowed');
+                return;
+              }
+              if (button.dataset.originalLabel) button.textContent = button.dataset.originalLabel;
+              button.disabled = false;
+              button.classList.remove('opacity-60', 'cursor-not-allowed');
+            }
+
+            async function confirmReject() {
+              if (window.petm8Ui && typeof window.petm8Ui.confirm === 'function') {
+                return window.petm8Ui.confirm('Reject this review?', {
+                  title: 'Reject review',
+                  confirmText: 'Reject',
+                  danger: true,
+                });
+              }
+              return confirm('Reject this review?');
+            }
+
+            async function moderateReview(id, action, button) {
+              setActionLoading(button, true);
+              try {
+                var res = await fetch('/api/reviews/' + id + '/moderate', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: action }),
+                });
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Review update failed') : (data.error || data.message || 'Review update failed'));
+                }
+
+                var nextStatus = action === 'approve' ? 'approved' : 'rejected';
+                updateReviewCard(id, nextStatus);
+                showReviewsSuccess(action === 'approve' ? 'Review approved.' : 'Review rejected.');
+              } catch (err) {
+                showReviewsError(err.message || 'Failed to update review');
+              } finally {
+                setActionLoading(button, false);
+              }
+            }
+
+            async function submitReply(id, button) {
+              var form = document.querySelector('.reply-form[data-review-id="' + id + '"]');
+              var input = form ? form.querySelector('.reply-input') : null;
+              var text = input ? input.value.trim() : '';
+              if (!text) return;
+
+              setActionLoading(button, true);
+              try {
+                var res = await fetch('/api/reviews/' + id + '/respond', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ responseText: text }),
+                });
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to send response') : (data.error || data.message || 'Failed to send response'));
+                }
+
+                var card = document.querySelector('[data-review-card][data-review-id="' + id + '"]');
+                if (card) {
+                  card.dataset.hasResponse = 'true';
+                  var existingResponse = card.querySelector('[data-review-response]');
+                  if (!existingResponse) {
+                    var responseBlock = document.createElement('div');
+                    responseBlock.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-3';
+                    responseBlock.setAttribute('data-review-response', '');
+                    var meta = document.createElement('p');
+                    meta.className = 'text-xs font-medium text-gray-500 mb-1';
+                    meta.textContent = 'Store Response (just now)';
+                    var body = document.createElement('p');
+                    body.className = 'text-sm text-gray-700 dark:text-gray-300';
+                    body.textContent = text;
+                    responseBlock.appendChild(meta);
+                    responseBlock.appendChild(body);
+                    var actions = card.querySelector('[data-review-actions]');
+                    card.insertBefore(responseBlock, actions);
                   }
-                  window.location.reload();
-                } catch (err) { showReviewsError(err.message || 'Failed to approve review'); }
-              });
-            });
-            document.querySelectorAll('.reject-btn').forEach(function(btn) {
-              btn.addEventListener('click', async function() {
-                if (!confirm('Reject this review?')) return;
-                var id = this.getAttribute('data-review-id');
-                try {
-                  var res = await fetch('/api/reviews/' + id + '/moderate', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'reject' }),
-                  });
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to reject') : (data.error || data.message || 'Failed to reject'));
-                  }
-                  window.location.reload();
-                } catch (err) { showReviewsError(err.message || 'Failed to reject review'); }
-              });
-            });
-            document.querySelectorAll('.respond-btn').forEach(function(btn) {
-              btn.addEventListener('click', function() {
-                var id = this.getAttribute('data-review-id');
-                var form = document.querySelector('.reply-form[data-review-id="' + id + '"]');
+
+                  var status = card.dataset.reviewStatusValue || 'pending';
+                  var actionsContainer = card.querySelector('[data-review-actions]');
+                  if (actionsContainer) actionsContainer.innerHTML = actionMarkup(id, status, true);
+                }
+
+                if (form) form.classList.add('hidden');
+                if (input) input.value = '';
+                showReviewsSuccess('Response sent.');
+              } catch (err) {
+                showReviewsError(err.message || 'Failed to send response');
+              } finally {
+                setActionLoading(button, false);
+              }
+            }
+
+            document.addEventListener('click', async function(event) {
+              var approveButton = event.target.closest('.approve-btn');
+              if (approveButton) {
+                var approveId = approveButton.getAttribute('data-review-id');
+                if (approveId) await moderateReview(approveId, 'approve', approveButton);
+                return;
+              }
+
+              var rejectButton = event.target.closest('.reject-btn');
+              if (rejectButton) {
+                var rejectId = rejectButton.getAttribute('data-review-id');
+                if (!rejectId) return;
+                var allowReject = await confirmReject();
+                if (!allowReject) return;
+                await moderateReview(rejectId, 'reject', rejectButton);
+                return;
+              }
+
+              var respondButton = event.target.closest('.respond-btn');
+              if (respondButton) {
+                var respondId = respondButton.getAttribute('data-review-id');
+                var form = respondId ? document.querySelector('.reply-form[data-review-id="' + respondId + '"]') : null;
                 if (form) form.classList.toggle('hidden');
-              });
-            });
-            document.querySelectorAll('.submit-reply').forEach(function(btn) {
-              btn.addEventListener('click', async function() {
-                var id = this.getAttribute('data-review-id');
-                var form = document.querySelector('.reply-form[data-review-id="' + id + '"]');
-                var input = form ? form.querySelector('.reply-input') : null;
-                var text = input ? input.value.trim() : '';
-                if (!text) return;
-                try {
-                  var res = await fetch('/api/reviews/' + id + '/respond', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ responseText: text }),
-                  });
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to send response') : (data.error || data.message || 'Failed to send response'));
-                  }
-                  window.location.reload();
-                } catch (err) { showReviewsError(err.message || 'Failed to send response'); }
-              });
+                return;
+              }
+
+              var submitReplyButton = event.target.closest('.submit-reply');
+              if (submitReplyButton) {
+                var submitId = submitReplyButton.getAttribute('data-review-id');
+                if (submitId) await submitReply(submitId, submitReplyButton);
+              }
             });
           })();
         </script>

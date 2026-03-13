@@ -83,7 +83,10 @@ export const IntegrationMarketplacePage: FC<IntegrationMarketplacePageProps> = (
                 <h3 class="text-base font-semibold text-gray-900">{app.name}</h3>
                 <p class="text-xs text-gray-500">by {app.vendor} · {app.kind === "first_party" ? "First-party" : "Partner"}</p>
               </div>
-              <span class={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClasses(app.status)}`}>
+              <span
+                data-marketplace-status-badge
+                class={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClasses(app.status)}`}
+              >
                 {app.status}
               </span>
             </div>
@@ -93,7 +96,7 @@ export const IntegrationMarketplacePage: FC<IntegrationMarketplacePageProps> = (
               Category: {app.category} · Setup: {app.setupComplexity} · Required keys: {app.requiredSecrets.join(", ")}
             </p>
 
-            <div class="mt-2 flex items-center gap-2 text-xs">
+            <div class="mt-2 flex items-center gap-2 text-xs" data-marketplace-meta>
               <span class={`rounded-full px-2 py-0.5 font-semibold ${app.installed ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}>
                 {app.installed ? (app.source === "platform" ? "platform default" : "installed") : "not installed"}
               </span>
@@ -101,10 +104,20 @@ export const IntegrationMarketplacePage: FC<IntegrationMarketplacePageProps> = (
               {app.hasSecretsConfigured && <span class="rounded-full bg-indigo-100 text-indigo-700 px-2 py-0.5 font-semibold">keys configured</span>}
             </div>
 
-            {app.statusMessage && <p class="mt-2 text-xs text-gray-500">{app.statusMessage}</p>}
-            {app.lastVerifiedAt && <p class="mt-1 text-xs text-gray-400">Verified: {app.lastVerifiedAt}</p>}
+            <p
+              data-marketplace-status-message
+              class={`mt-2 text-xs text-gray-500 ${app.statusMessage ? "" : "hidden"}`}
+            >
+              {app.statusMessage ?? ""}
+            </p>
+            <p
+              data-marketplace-last-verified
+              class={`mt-1 text-xs text-gray-400 ${app.lastVerifiedAt ? "" : "hidden"}`}
+            >
+              {app.lastVerifiedAt ? `Verified: ${app.lastVerifiedAt}` : ""}
+            </p>
 
-            <div class="mt-4 flex items-center gap-2 flex-wrap">
+            <div class="mt-4 flex items-center gap-2 flex-wrap" data-marketplace-actions>
               <a href={app.docsUrl} target="_blank" rel="noreferrer" class="rounded-md border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50">
                 Docs
               </a>
@@ -120,6 +133,17 @@ export const IntegrationMarketplacePage: FC<IntegrationMarketplacePageProps> = (
                   </button>
                   <button type="button" class="marketplace-uninstall-btn rounded-md border border-rose-300 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700" data-provider={app.provider}>
                     Uninstall
+                  </button>
+                </>
+              )}
+
+              {app.kind === "partner" && (
+                <>
+                  <button type="button" class="marketplace-onboard-btn rounded-md border border-cyan-300 bg-cyan-50 px-2 py-1 text-xs font-semibold text-cyan-700" data-provider={app.provider}>
+                    Partner Onboard
+                  </button>
+                  <button type="button" class="marketplace-contract-verify-btn rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700" data-provider={app.provider}>
+                    Contract Verify
                   </button>
                 </>
               )}

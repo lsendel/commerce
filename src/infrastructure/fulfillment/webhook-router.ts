@@ -28,21 +28,32 @@ export class FulfillmentWebhookRouter {
     private storeId: string,
   ) {}
 
-  async processEvent(event: WebhookEvent) {
+  async processEvent(
+    event: WebhookEvent,
+    options?: {
+      recordEvent?: boolean;
+      recordedEventId?: string | null;
+    },
+  ) {
     const requestRepo = new FulfillmentRequestRepository(this.db, this.storeId);
+    const shouldRecordEvent = options?.recordEvent !== false;
+    let eventId: string | null = options?.recordedEventId ?? null;
 
     // 1. Record the event (dedup via unique index)
-    const recorded = await requestRepo.insertProviderEvent({
-      provider: event.provider,
-      externalEventId: event.externalEventId,
-      externalOrderId: event.externalOrderId,
-      eventType: event.eventType,
-      payload: event.payload,
-    });
+    if (shouldRecordEvent) {
+      const recorded = await requestRepo.insertProviderEvent({
+        provider: event.provider,
+        externalEventId: event.externalEventId,
+        externalOrderId: event.externalOrderId,
+        eventType: event.eventType,
+        payload: event.payload,
+      });
 
-    if (!recorded) {
-      // Duplicate event — already processed
-      return { duplicate: true, eventId: null };
+      if (!recorded) {
+        // Duplicate event — already processed
+        return { duplicate: true, eventId: null };
+      }
+      eventId = recorded.id;
     }
 
     // 2. Find the fulfillment request by externalId
@@ -53,8 +64,10 @@ export class FulfillmentWebhookRouter {
 
     if (!request) {
       // No matching request — mark event as processed and return
-      await requestRepo.markEventProcessed(recorded.id);
-      return { duplicate: false, eventId: recorded.id, requestFound: false };
+      if (eventId) {
+        await requestRepo.markEventProcessed(eventId);
+      }
+      return { duplicate: false, eventId, requestFound: false };
     }
 
     // 3. Update fulfillment request status if a mapped status is provided
@@ -92,11 +105,13 @@ export class FulfillmentWebhookRouter {
     await this.aggregateOrderStatus(request.orderId);
 
     // 6. Mark event as processed
-    await requestRepo.markEventProcessed(recorded.id);
+    if (eventId) {
+      await requestRepo.markEventProcessed(eventId);
+    }
 
     return {
       duplicate: false,
-      eventId: recorded.id,
+      eventId,
       requestFound: true,
       requestId: request.id,
     };

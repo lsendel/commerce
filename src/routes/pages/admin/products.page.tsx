@@ -70,9 +70,10 @@ export const AdminProductsPage: FC<AdminProductsPageProps> = ({
 
       {/* Filter bar */}
       <div class="flex flex-wrap items-center gap-3 mb-6">
-        <form method="get" class="flex flex-wrap items-center gap-3 w-full">
+        <form method="get" class="flex flex-wrap items-center gap-3 w-full" data-persist-filters data-persist-key="admin-products-filters">
           <select
             name="status"
+            data-auto-submit="change"
             class="rounded-xl border border-gray-300 px-3 py-2 text-sm bg-white"
           >
             <option value="" selected={!filters.status}>All Status</option>
@@ -83,6 +84,7 @@ export const AdminProductsPage: FC<AdminProductsPageProps> = ({
 
           <select
             name="type"
+            data-auto-submit="change"
             class="rounded-xl border border-gray-300 px-3 py-2 text-sm bg-white"
           >
             <option value="" selected={!filters.type}>All Types</option>
@@ -106,6 +108,11 @@ export const AdminProductsPage: FC<AdminProductsPageProps> = ({
           >
             Filter
           </button>
+          {(filters.search || filters.status || filters.type) && (
+            <a href="/admin/products" class="rounded-xl px-3 py-2 text-sm text-gray-500 hover:text-gray-700">
+              Clear
+            </a>
+          )}
         </form>
       </div>
 

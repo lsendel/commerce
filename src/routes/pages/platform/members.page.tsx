@@ -66,11 +66,11 @@ export const MembersPage: FC<MembersProps> = ({ store, members, pendingInvitatio
 
       {/* Pending invitations */}
       {pendingInvitations.length > 0 && (
-        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-6 mb-6">
+        <div id="pending-invitations-section" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-6 mb-6">
           <h2 class="text-lg font-semibold mb-3 text-amber-800 dark:text-amber-200">Pending Invitations</h2>
-          <ul class="space-y-2">
+          <ul id="pending-invitations-list" class="space-y-2">
             {pendingInvitations.map((inv) => (
-              <li class="flex items-center justify-between py-2 border-b border-amber-200 dark:border-amber-700 last:border-0">
+              <li class="flex items-center justify-between py-2 border-b border-amber-200 dark:border-amber-700 last:border-0" data-invitation-id={inv.id}>
                 <div>
                   <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{inv.email}</span>
                   <span class="ml-2 text-xs bg-amber-100 dark:bg-amber-800 text-amber-700 dark:text-amber-200 px-2 py-0.5 rounded">{inv.role}</span>
@@ -101,9 +101,9 @@ export const MembersPage: FC<MembersProps> = ({ store, members, pendingInvitatio
               <th class="px-6 py-3" />
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody id="members-table-body" class="divide-y divide-gray-200 dark:divide-gray-700">
             {members.map((m) => (
-              <tr>
+              <tr data-member-row data-user-id={m.userId}>
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
                     {m.avatarUrl ? (

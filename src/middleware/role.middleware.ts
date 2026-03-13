@@ -13,7 +13,9 @@ export function requireRole(role: string | string[]) {
 
     const db = createDb(c.env.DATABASE_URL);
     const userRows = await db
-      .select()
+      .select({
+        platformRole: users.platformRole,
+      })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);

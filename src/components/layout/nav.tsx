@@ -17,7 +17,7 @@ export const navLinks: NavLink[] = [
   { label: "Studio", href: "/studio" },
   { label: "Account", href: "/account", auth: true },
   { label: "Admin", href: "/admin/products", auth: true, roles: ["owner", "admin", "store_owner"] },
-  { label: "Affiliates", href: "/affiliates/dashboard", auth: true, affiliate: true },
+  { label: "Affiliates", href: "/affiliates", auth: true, affiliate: true },
 ];
 
 interface NavProps {

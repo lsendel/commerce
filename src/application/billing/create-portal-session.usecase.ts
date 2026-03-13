@@ -18,6 +18,7 @@ export class CreatePortalSessionUseCase {
   async execute(
     userId: string,
     returnUrl: string,
+    options?: { idempotencyKey?: string },
   ): Promise<{ url: string }> {
     // 1. Get user's Stripe customer ID
     const user = await this.userRepo.findById(userId);
@@ -36,6 +37,7 @@ export class CreatePortalSessionUseCase {
       this.stripe,
       user.stripeCustomerId,
       returnUrl,
+      options?.idempotencyKey,
     );
 
     return { url };

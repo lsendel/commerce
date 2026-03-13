@@ -4,6 +4,10 @@ import { MessageAdapter } from "../infrastructure/notifications/message.adapter"
 import { createDb } from "../infrastructure/db/client";
 import { analyticsEvents, users } from "../infrastructure/db/schema";
 import { and, eq, isNotNull } from "drizzle-orm";
+import {
+  QUEUE_WORKFLOW_POLICIES,
+  withWorkflowTimeout,
+} from "./orchestration-policy";
 
 interface BookingReminderNotification {
   type: "booking_reminder";
@@ -98,6 +102,67 @@ type NotificationMessage =
   | BirthdayOfferNotification
   | EmailVerificationNotification;
 
+function resolveWorkflowSettings(env: Env) {
+  const base = QUEUE_WORKFLOW_POLICIES.notifications;
+  const timeoutOverride = Number(env.NOTIFICATION_WORKFLOW_TIMEOUT_MS ?? "");
+  const timeoutMs =
+    Number.isFinite(timeoutOverride) && timeoutOverride > 0
+      ? Math.floor(timeoutOverride)
+      : base.timeoutMs;
+
+  return {
+    ...base,
+    timeoutMs,
+  };
+}
+
+export async function compensateNotificationFailure(input: {
+  env: Env;
+  message: Message;
+  reason: string;
+  attempt?: number;
+}) {
+  const payload = input.message.body as Partial<CheckoutRecoveryNotification> & {
+    type?: string;
+    data?: Record<string, unknown>;
+  };
+
+  // The checkout-recovery path has store/user context, so we can persist a
+  // terminal compensation event for observability and follow-up actions.
+  if (payload.type === "checkout_recovery" && payload.data) {
+    const storeId = String(payload.data.storeId ?? "");
+    const userId = String(payload.data.userId ?? "");
+
+    if (storeId && userId) {
+      try {
+        const db = createDb(input.env.DATABASE_URL);
+        await db.insert(analyticsEvents).values({
+          storeId,
+          userId,
+          eventType: "checkout_recovery_delivery_failed",
+          properties: {
+            reason: input.reason,
+            attempt: input.attempt ?? null,
+            stage: payload.data.stage ?? null,
+            channel: payload.data.channel ?? null,
+            cartId: payload.data.cartId ?? null,
+            recoveryUrl: payload.data.recoveryUrl ?? null,
+          },
+        });
+      } catch (error) {
+        console.error(
+          "[notifications] Failed to write compensation analytics event:",
+          error,
+        );
+      }
+    }
+  }
+
+  console.error(
+    `[notifications] Terminal failure for type=${payload.type ?? "unknown"} reason=${input.reason}`,
+  );
+}
+
 async function canSendMarketingMessage(env: Env, userId: string): Promise<boolean> {
   if (!userId) return false;
   const db = createDb(env.DATABASE_URL);
@@ -119,6 +184,7 @@ export async function handleNotificationMessage(
   message: Message,
   env: Env,
 ): Promise<void> {
+  const workflowSettings = resolveWorkflowSettings(env);
   const payload = message.body as NotificationMessage;
   const emailAdapter = new EmailAdapter(env);
   const messageAdapter = new MessageAdapter(env);
@@ -128,13 +194,17 @@ export async function handleNotificationMessage(
       const { userEmail, userName, slotDate, slotTime, bookingId, productId } =
         payload.data;
 
-      await emailAdapter.sendBookingReminder(userEmail, {
-        userName,
-        bookingId,
-        productId,
-        slotDate,
-        slotTime,
-      });
+      await withWorkflowTimeout(
+        emailAdapter.sendBookingReminder(userEmail, {
+          userName,
+          bookingId,
+          productId,
+          slotDate,
+          slotTime,
+        }),
+        workflowSettings.timeoutMs,
+        "notifications.booking_reminder",
+      );
 
       console.log(
         `[notifications] Booking reminder sent to ${userEmail} for ${slotDate} ${slotTime}`,
@@ -145,12 +215,16 @@ export async function handleNotificationMessage(
     case "order_confirmation": {
       const { userEmail, userName, orderId, total, itemCount } = payload.data;
 
-      await emailAdapter.sendOrderConfirmation(userEmail, {
-        userName,
-        orderId,
-        total,
-        itemCount,
-      });
+      await withWorkflowTimeout(
+        emailAdapter.sendOrderConfirmation(userEmail, {
+          userName,
+          orderId,
+          total,
+          itemCount,
+        }),
+        workflowSettings.timeoutMs,
+        "notifications.order_confirmation",
+      );
 
       console.log(
         `[notifications] Order confirmation sent to ${userEmail} for order ${orderId}`,
@@ -169,14 +243,18 @@ export async function handleNotificationMessage(
         status,
       } = payload.data;
 
-      await emailAdapter.sendShipmentUpdate(userEmail, {
-        userName,
-        orderId,
-        carrier,
-        trackingNumber,
-        trackingUrl,
-        status,
-      });
+      await withWorkflowTimeout(
+        emailAdapter.sendShipmentUpdate(userEmail, {
+          userName,
+          orderId,
+          carrier,
+          trackingNumber,
+          trackingUrl,
+          status,
+        }),
+        workflowSettings.timeoutMs,
+        "notifications.shipment_update",
+      );
 
       console.log(
         `[notifications] Shipment update sent to ${userEmail} for order ${orderId} (${status})`,
@@ -194,11 +272,15 @@ export async function handleNotificationMessage(
         break;
       }
 
-      await emailAdapter.sendAbandonedCart(userEmail, {
-        userName,
-        cartId,
-        itemCount,
-      });
+      await withWorkflowTimeout(
+        emailAdapter.sendAbandonedCart(userEmail, {
+          userName,
+          cartId,
+          itemCount,
+        }),
+        workflowSettings.timeoutMs,
+        "notifications.abandoned_cart",
+      );
 
       console.log(
         `[notifications] Abandoned cart email sent to ${userEmail} for cart ${cartId}`,
@@ -234,37 +316,49 @@ export async function handleNotificationMessage(
       let skipReason: string | null = null;
 
       if (channel === "email") {
-        await emailAdapter.sendCheckoutRecovery(userEmail, {
-          stage,
-          userName,
-          cartId,
-          itemCount,
-          idleHours,
-          recoveryUrl,
-          incentiveCode: incentiveCode ?? null,
-        });
+        await withWorkflowTimeout(
+          emailAdapter.sendCheckoutRecovery(userEmail, {
+            stage,
+            userName,
+            cartId,
+            itemCount,
+            idleHours,
+            recoveryUrl,
+            incentiveCode: incentiveCode ?? null,
+          }),
+          workflowSettings.timeoutMs,
+          "notifications.checkout_recovery.email",
+        );
         sent = true;
       } else if (!userPhone) {
         skipReason = "missing_phone";
       } else if (channel === "sms") {
-        sent = await messageAdapter.sendCheckoutRecoverySms(userPhone, {
-          stage,
-          userName,
-          itemCount,
-          idleHours,
-          recoveryUrl,
-          incentiveCode: incentiveCode ?? null,
-        });
+        sent = await withWorkflowTimeout(
+          messageAdapter.sendCheckoutRecoverySms(userPhone, {
+            stage,
+            userName,
+            itemCount,
+            idleHours,
+            recoveryUrl,
+            incentiveCode: incentiveCode ?? null,
+          }),
+          workflowSettings.timeoutMs,
+          "notifications.checkout_recovery.sms",
+        );
         if (!sent) skipReason = "sms_not_configured_or_failed";
       } else if (channel === "whatsapp") {
-        sent = await messageAdapter.sendCheckoutRecoveryWhatsApp(userPhone, {
-          stage,
-          userName,
-          itemCount,
-          idleHours,
-          recoveryUrl,
-          incentiveCode: incentiveCode ?? null,
-        });
+        sent = await withWorkflowTimeout(
+          messageAdapter.sendCheckoutRecoveryWhatsApp(userPhone, {
+            stage,
+            userName,
+            itemCount,
+            idleHours,
+            recoveryUrl,
+            incentiveCode: incentiveCode ?? null,
+          }),
+          workflowSettings.timeoutMs,
+          "notifications.checkout_recovery.whatsapp",
+        );
         if (!sent) skipReason = "whatsapp_not_configured_or_failed";
       }
 
@@ -306,11 +400,15 @@ export async function handleNotificationMessage(
         break;
       }
 
-      await emailAdapter.sendBirthdayOffer(userEmail, {
-        userName,
-        petName,
-        offerCode,
-      });
+      await withWorkflowTimeout(
+        emailAdapter.sendBirthdayOffer(userEmail, {
+          userName,
+          petName,
+          offerCode,
+        }),
+        workflowSettings.timeoutMs,
+        "notifications.birthday_offer",
+      );
 
       console.log(
         `[notifications] Birthday offer sent to ${userEmail} for pet ${petName}`,
@@ -321,10 +419,14 @@ export async function handleNotificationMessage(
     case "email_verification": {
       const verificationUrl = `${(env.APP_URL ?? "https://petm8.io").replace(/\/$/, "")}/auth/verify-email?token=${encodeURIComponent(payload.token)}`;
       const userName = payload.email.split("@")[0] || "there";
-      await emailAdapter.sendEmailVerification(payload.email, {
-        userName,
-        verificationUrl,
-      });
+      await withWorkflowTimeout(
+        emailAdapter.sendEmailVerification(payload.email, {
+          userName,
+          verificationUrl,
+        }),
+        workflowSettings.timeoutMs,
+        "notifications.email_verification",
+      );
 
       console.log(
         `[notifications] Email verification sent to ${payload.email}`,

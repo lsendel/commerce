@@ -46,11 +46,11 @@ export const AdminAffiliatesPage: FC<AdminAffiliatesPageProps> = ({ affiliates }
         </div>
         <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
           <p class="text-sm text-gray-600">Pending</p>
-          <p class="text-2xl font-bold text-gray-900">{affiliates.filter((a) => a.status === "pending").length}</p>
+          <p class="text-2xl font-bold text-gray-900" data-aff-stat="pending">{affiliates.filter((a) => a.status === "pending").length}</p>
         </div>
         <div class="rounded-lg border border-green-200 bg-green-50 p-4">
           <p class="text-sm text-gray-600">Approved</p>
-          <p class="text-2xl font-bold text-gray-900">{affiliates.filter((a) => a.status === "approved").length}</p>
+          <p class="text-2xl font-bold text-gray-900" data-aff-stat="approved">{affiliates.filter((a) => a.status === "approved").length}</p>
         </div>
         <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
           <p class="text-sm text-gray-600">Total Earnings</p>
@@ -83,10 +83,10 @@ export const AdminAffiliatesPage: FC<AdminAffiliatesPageProps> = ({ affiliates }
                 </tr>
               ) : (
                 affiliates.map((aff) => (
-                  <tr key={aff.id} class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <tr key={aff.id} class="hover:bg-gray-50 dark:hover:bg-gray-700/50" data-aff-row={aff.id} data-aff-status={aff.status}>
                     <td class="px-4 py-3 text-sm font-mono font-medium">{aff.referralCode}</td>
                     <td class="px-4 py-3">
-                      <span class={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[aff.status] ?? "bg-gray-100 text-gray-800"}`}>
+                      <span data-aff-status-badge class={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[aff.status] ?? "bg-gray-100 text-gray-800"}`}>
                         {aff.status}
                       </span>
                     </td>
@@ -95,7 +95,7 @@ export const AdminAffiliatesPage: FC<AdminAffiliatesPageProps> = ({ affiliates }
                     <td class="px-4 py-3 text-sm text-gray-600">{aff.totalConversions}</td>
                     <td class="px-4 py-3 text-sm font-medium">${aff.totalEarnings}</td>
                     <td class="px-4 py-3 text-sm text-gray-500">{aff.createdAt}</td>
-                    <td class="px-4 py-3 flex gap-2">
+                    <td class="px-4 py-3 flex gap-2" data-aff-actions>
                       {aff.status === "pending" && (
                         <button type="button" class="approve-btn text-xs text-green-600 hover:text-green-700 font-medium" data-aff-id={aff.id}>Approve</button>
                       )}
@@ -117,51 +117,140 @@ export const AdminAffiliatesPage: FC<AdminAffiliatesPageProps> = ({ affiliates }
       {html`
         <script>
           (function() {
-            function showAffiliatesError(message) {
+            var STATUS_COLORS = {
+              pending: 'bg-yellow-100 text-yellow-800',
+              approved: 'bg-green-100 text-green-800',
+              suspended: 'bg-red-100 text-red-800',
+            };
+
+            function showAffiliatesNotice(message, type) {
               if (window.showToast) {
-                window.showToast(message, 'error');
+                window.showToast(message, type || 'info');
                 return;
               }
               var banner = document.getElementById('admin-affiliates-flash');
               if (!banner) {
                 banner = document.createElement('div');
                 banner.id = 'admin-affiliates-flash';
-                banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-lg';
+                banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm font-medium shadow-lg';
                 document.body.appendChild(banner);
+              }
+              if (type === 'error') {
+                banner.classList.remove('border-emerald-200', 'bg-emerald-50', 'text-emerald-700');
+                banner.classList.add('border-red-200', 'bg-red-50', 'text-red-700');
+              } else {
+                banner.classList.remove('border-red-200', 'bg-red-50', 'text-red-700');
+                banner.classList.add('border-emerald-200', 'bg-emerald-50', 'text-emerald-700');
               }
               banner.textContent = message;
               banner.classList.remove('hidden');
               setTimeout(function() { banner.classList.add('hidden'); }, 4000);
             }
 
-            document.querySelectorAll('.approve-btn').forEach(function(btn) {
-              btn.addEventListener('click', async function() {
-                var id = this.getAttribute('data-aff-id');
-                try {
-                  var res = await fetch('/api/affiliates/admin/' + id + '/approve', { method: 'PATCH' });
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to approve') : (data.error || data.message || 'Failed to approve'));
-                  }
-                  window.location.reload();
-                } catch (err) { showAffiliatesError(err.message || 'Failed to approve affiliate'); }
-              });
-            });
-            document.querySelectorAll('.suspend-btn').forEach(function(btn) {
-              btn.addEventListener('click', async function() {
-                if (!confirm('Suspend this affiliate?')) return;
-                var id = this.getAttribute('data-aff-id');
-                try {
-                  var res = await fetch('/api/affiliates/admin/' + id + '/suspend', {
-                    method: 'PATCH',
-                  });
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to suspend') : (data.error || data.message || 'Failed to suspend'));
-                  }
-                  window.location.reload();
-                } catch (err) { showAffiliatesError(err.message || 'Failed to suspend affiliate'); }
-              });
+            function setButtonLoading(btn, loading) {
+              if (!btn) return;
+              if (loading) {
+                btn.dataset.originalLabel = btn.textContent || '';
+                btn.textContent = 'Saving...';
+                btn.disabled = true;
+                btn.classList.add('opacity-60', 'cursor-not-allowed');
+                return;
+              }
+              if (btn.dataset.originalLabel) btn.textContent = btn.dataset.originalLabel;
+              btn.disabled = false;
+              btn.classList.remove('opacity-60', 'cursor-not-allowed');
+            }
+
+            function actionsMarkup(id, status) {
+              if (status === 'pending') {
+                return '<button type="button" class="approve-btn text-xs text-green-600 hover:text-green-700 font-medium" data-aff-id="' + id + '">Approve</button>';
+              }
+              if (status === 'approved') {
+                return '<button type="button" class="suspend-btn text-xs text-red-600 hover:text-red-700 font-medium" data-aff-id="' + id + '">Suspend</button>';
+              }
+              if (status === 'suspended') {
+                return '<button type="button" class="approve-btn text-xs text-green-600 hover:text-green-700 font-medium" data-aff-id="' + id + '">Reactivate</button>';
+              }
+              return '<span class="text-xs text-gray-400">No actions available</span>';
+            }
+
+            function updateStatusStat(status, delta) {
+              if (!status || !delta) return;
+              var el = document.querySelector('[data-aff-stat="' + status + '"]');
+              if (!el) return;
+              var current = parseInt(el.textContent || '0', 10) || 0;
+              var next = current + delta;
+              el.textContent = String(next < 0 ? 0 : next);
+            }
+
+            function updateAffiliateRow(id, nextStatus) {
+              var row = document.querySelector('[data-aff-row="' + id + '"]');
+              if (!row) return;
+
+              var previousStatus = row.dataset.affStatus || '';
+              row.dataset.affStatus = nextStatus;
+
+              var badge = row.querySelector('[data-aff-status-badge]');
+              if (badge) {
+                badge.textContent = nextStatus;
+                badge.className = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + (STATUS_COLORS[nextStatus] || 'bg-gray-100 text-gray-800');
+              }
+
+              var actions = row.querySelector('[data-aff-actions]');
+              if (actions) actions.innerHTML = actionsMarkup(id, nextStatus);
+
+              if (previousStatus && previousStatus !== nextStatus) {
+                updateStatusStat(previousStatus, -1);
+                updateStatusStat(nextStatus, 1);
+              }
+            }
+
+            async function confirmSuspend() {
+              if (window.petm8Ui && typeof window.petm8Ui.confirm === 'function') {
+                return window.petm8Ui.confirm('Suspend this affiliate?', {
+                  title: 'Suspend affiliate',
+                  confirmText: 'Suspend',
+                  danger: true,
+                });
+              }
+              return confirm('Suspend this affiliate?');
+            }
+
+            async function performAffiliateAction(id, action, button) {
+              var endpoint = action === 'approve' ? '/approve' : '/suspend';
+              var nextStatus = action === 'approve' ? 'approved' : 'suspended';
+              setButtonLoading(button, true);
+              try {
+                var res = await fetch('/api/affiliates/admin/' + id + endpoint, { method: 'PATCH' });
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Affiliate update failed') : (data.error || data.message || 'Affiliate update failed'));
+                }
+                updateAffiliateRow(id, nextStatus);
+                showAffiliatesNotice(action === 'approve' ? 'Affiliate approved.' : 'Affiliate suspended.', 'success');
+              } catch (err) {
+                showAffiliatesNotice(err.message || 'Affiliate update failed', 'error');
+              } finally {
+                setButtonLoading(button, false);
+              }
+            }
+
+            document.addEventListener('click', async function(event) {
+              var approveButton = event.target.closest('.approve-btn');
+              if (approveButton) {
+                var approveId = approveButton.getAttribute('data-aff-id');
+                if (approveId) await performAffiliateAction(approveId, 'approve', approveButton);
+                return;
+              }
+
+              var suspendButton = event.target.closest('.suspend-btn');
+              if (suspendButton) {
+                var suspendId = suspendButton.getAttribute('data-aff-id');
+                if (!suspendId) return;
+                var confirmed = await confirmSuspend();
+                if (!confirmed) return;
+                await performAffiliateAction(suspendId, 'suspend', suspendButton);
+              }
             });
           })();
         </script>

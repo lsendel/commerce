@@ -72,9 +72,9 @@ export const AffiliateLinksPage: FC<LinksProps> = ({
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody id="affiliate-links-body" class="divide-y divide-gray-200 dark:divide-gray-700">
             {links.map((l) => (
-              <tr>
+              <tr data-affiliate-link-row data-link-id={l.id}>
                 <td class="px-6 py-4 text-sm truncate max-w-xs text-gray-900 dark:text-gray-100">
                   {l.targetUrl}
                 </td>
@@ -91,11 +91,9 @@ export const AffiliateLinksPage: FC<LinksProps> = ({
             ))}
           </tbody>
         </table>
-        {links.length === 0 && (
-          <p class="text-center py-8 text-gray-500">
-            No links yet. Create one above.
-          </p>
-        )}
+        <p id="affiliate-links-empty" class={`text-center py-8 text-gray-500 ${links.length === 0 ? "" : "hidden"}`}>
+          No links yet. Create one above.
+        </p>
       </div>
 
       <script src="/scripts/affiliates.js" />

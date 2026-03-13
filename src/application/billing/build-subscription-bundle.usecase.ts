@@ -5,6 +5,11 @@ import type {
 } from "../../infrastructure/repositories/subscription.repository";
 import type { UserRepository } from "../../infrastructure/repositories/user.repository";
 import { StripePortalAdapter } from "../../infrastructure/stripe/portal.adapter";
+import {
+  buildStripeRequestOptions,
+  runStripeMutationWithRetry,
+} from "../../infrastructure/stripe/retry";
+import { composeIdempotencyKey } from "../../shared/idempotency";
 import { NotFoundError, ValidationError } from "../../shared/errors";
 
 const MAX_BUNDLE_LINES = 8;
@@ -83,7 +88,10 @@ export class BuildSubscriptionBundleUseCase {
     private stripe: Stripe,
   ) {}
 
-  private async ensureStripeCustomerId(userId: string): Promise<string> {
+  private async ensureStripeCustomerId(
+    userId: string,
+    idempotencyKey?: string,
+  ): Promise<string> {
     const user = await this.userRepo.findById(userId);
     if (!user) {
       throw new NotFoundError("User", userId);
@@ -93,11 +101,18 @@ export class BuildSubscriptionBundleUseCase {
       return user.stripeCustomerId;
     }
 
-    const customer = await this.stripe.customers.create({
-      email: user.email,
-      name: user.name,
-      metadata: { userId: user.id },
-    });
+    const customer = await runStripeMutationWithRetry(() =>
+      this.stripe.customers.create(
+        {
+          email: user.email,
+          name: user.name,
+          metadata: { userId: user.id },
+        },
+        buildStripeRequestOptions(
+          composeIdempotencyKey(idempotencyKey, "customer-create"),
+        ),
+      ),
+    );
 
     await this.userRepo.updateStripeCustomerId(userId, customer.id);
     return customer.id;
@@ -178,14 +193,18 @@ export class BuildSubscriptionBundleUseCase {
     userId: string,
     selections: BundleSelectionInput[],
     appUrl: string,
+    mutationOptions?: { idempotencyKey?: string },
   ): Promise<BundleCheckoutResult> {
     const normalizedSelections = normalizeSelections(selections);
-    const options = await this.subscriptionRepo.findBuilderPlanOptions();
-    const quote = this.buildQuoteFromSelections(normalizedSelections, options);
+    const planOptions = await this.subscriptionRepo.findBuilderPlanOptions();
+    const quote = this.buildQuoteFromSelections(normalizedSelections, planOptions);
 
-    const stripeCustomerId = await this.ensureStripeCustomerId(userId);
+    const stripeCustomerId = await this.ensureStripeCustomerId(
+      userId,
+      mutationOptions?.idempotencyKey,
+    );
 
-    const optionsByPlanId = new Map(options.map((option) => [option.id, option]));
+    const optionsByPlanId = new Map(planOptions.map((option) => [option.id, option]));
     const trialDaysSet = new Set<number>();
     for (const line of quote.lines) {
       const option = optionsByPlanId.get(line.planId);
@@ -220,6 +239,10 @@ export class BuildSubscriptionBundleUseCase {
         planId: anchorLine.planId,
         mixConfiguration: mixConfigurationJson,
       },
+      idempotencyKey: composeIdempotencyKey(
+        mutationOptions?.idempotencyKey,
+        "bundle-checkout-session",
+      ),
     });
 
     return {

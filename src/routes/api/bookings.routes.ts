@@ -19,6 +19,7 @@ import {
   paginationSchema,
 } from "../../shared/validators";
 import { requireAuth } from "../../middleware/auth.middleware";
+import { requireRole } from "../../middleware/role.middleware";
 import { rateLimit } from "../../middleware/rate-limit.middleware";
 
 const bookings = new Hono<{ Bindings: Env }>();
@@ -55,6 +56,7 @@ bookings.get(
 bookings.post(
   "/availability",
   requireAuth(),
+  requireRole("admin"),
   zValidator("json", createAvailabilitySchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
@@ -74,6 +76,7 @@ bookings.post(
 bookings.post(
   "/availability/bulk",
   requireAuth(),
+  requireRole("admin"),
   zValidator("json", bulkCreateAvailabilitySchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
@@ -139,6 +142,7 @@ bookings.post(
 bookings.post(
   "/:id/check-in",
   requireAuth(),
+  requireRole("admin"),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const bookingRepo = new BookingRepository(db, c.get("storeId") as string);
@@ -230,6 +234,7 @@ bookings.delete(
 bookings.post(
   "/:id/no-show",
   requireAuth(),
+  requireRole("admin"),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const bookingRepo = new BookingRepository(db, c.get("storeId") as string);

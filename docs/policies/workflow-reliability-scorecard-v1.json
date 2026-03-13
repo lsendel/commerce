@@ -1,0 +1,156 @@
+{
+  "version": "v1",
+  "owner": "commerce-workflow-platform",
+  "reviewCadenceDays": 14,
+  "lastReviewedOn": "2026-03-01",
+  "nextReviewBy": "2026-03-14",
+  "workflows": [
+    {
+      "id": "ai-generation-consumer",
+      "label": "AI image generation queue consumer",
+      "kind": "queue_consumer",
+      "queue": "ai-generation",
+      "sourcePaths": [
+        "src/queues/ai-generation.consumer.ts",
+        "src/queues/orchestration-policy.ts"
+      ],
+      "timeoutMs": 120000,
+      "maxAttempts": 2,
+      "compensationPlan": "Acknowledge message after bounded retries; pipeline persists failed job state.",
+      "retrySignals": ["timeout", "network", "rate_limit", "5xx"],
+      "requiredSnippets": [
+        "QUEUE_WORKFLOW_POLICIES[\"ai-generation\"]",
+        "for (let attempt = 1; attempt <= workflowSettings.maxAttempts; attempt++)",
+        "withWorkflowTimeout(",
+        "isRetryableWorkflowError(error)",
+        "message.ack();"
+      ],
+      "sloTargets": {
+        "successRatePercent": 99,
+        "errorBudgetPercent": 1,
+        "p95LatencyMs": 120000
+      }
+    },
+    {
+      "id": "order-fulfillment-consumer",
+      "label": "Order fulfillment submit queue consumer",
+      "kind": "queue_consumer",
+      "queue": "order-fulfillment",
+      "sourcePaths": [
+        "src/queues/order-fulfillment.consumer.ts",
+        "src/queues/orchestration-policy.ts"
+      ],
+      "timeoutMs": 45000,
+      "maxAttempts": 4,
+      "compensationPlan": "Mark fulfillment request failed with retry-exhaustion reason and stop requeue.",
+      "retrySignals": ["timeout", "network", "429", "5xx", "provider_transient"],
+      "requiredSnippets": [
+        "QUEUE_WORKFLOW_POLICIES[\"order-fulfillment\"]",
+        "withWorkflowTimeout(",
+        "if (attempt >= workflowSettings.maxAttempts)",
+        "compensateOrderFulfillmentFailure",
+        "message.retry();"
+      ],
+      "sloTargets": {
+        "successRatePercent": 99,
+        "errorBudgetPercent": 1,
+        "p95LatencyMs": 45000
+      }
+    },
+    {
+      "id": "notifications-consumer",
+      "label": "Notification delivery queue consumer",
+      "kind": "queue_consumer",
+      "queue": "notifications",
+      "sourcePaths": [
+        "src/queues/notification.consumer.ts",
+        "src/queues/orchestration-policy.ts"
+      ],
+      "timeoutMs": 20000,
+      "maxAttempts": 3,
+      "compensationPlan": "Persist checkout recovery terminal delivery failure event for operator follow-up.",
+      "retrySignals": ["timeout", "network", "provider_unavailable", "rate_limit"],
+      "requiredSnippets": [
+        "QUEUE_WORKFLOW_POLICIES.notifications",
+        "withWorkflowTimeout(",
+        "compensateNotificationFailure",
+        "eventType: \"checkout_recovery_delivery_failed\"",
+        "message.ack();"
+      ],
+      "sloTargets": {
+        "successRatePercent": 99,
+        "errorBudgetPercent": 1,
+        "p95LatencyMs": 20000
+      }
+    },
+    {
+      "id": "queue-handler-fallback",
+      "label": "Global queue handler retry and compensation gate",
+      "kind": "orchestration_runtime",
+      "queue": "all",
+      "sourcePaths": [
+        "src/queues/handler.ts",
+        "src/queues/orchestration-policy.ts"
+      ],
+      "timeoutMs": 0,
+      "maxAttempts": 0,
+      "compensationPlan": "Use queue policy retry budget and route terminal failures to queue-specific compensation hooks.",
+      "retrySignals": ["isRetryableWorkflowError", "attempt_budget"],
+      "requiredSnippets": [
+        "QUEUE_WORKFLOW_POLICIES",
+        "isRetryableWorkflowError(error)",
+        "if (retryable && attempt < policy.maxAttempts)",
+        "compensateNotificationFailure",
+        "compensateOrderFulfillmentFailure"
+      ],
+      "sloTargets": {
+        "successRatePercent": 99,
+        "errorBudgetPercent": 1,
+        "p95LatencyMs": 0
+      }
+    },
+    {
+      "id": "workflow-builder-dispatch",
+      "label": "Workflow builder async notification dispatch",
+      "kind": "orchestration_api",
+      "queue": "notifications",
+      "sourcePaths": [
+        "src/routes/api/workflows.routes.ts",
+        "src/application/ops/no-code-workflow-builder.usecase.ts"
+      ],
+      "timeoutMs": 0,
+      "maxAttempts": 0,
+      "compensationPlan": "Deduplicate and skip recovered/recently enqueued candidates before enqueue; analytics trail for dispatched notifications.",
+      "retrySignals": ["skipRecovered", "skipRecentlyEnqueued", "missingChannelAddress"],
+      "requiredSnippets": [
+        "c.env.NOTIFICATION_QUEUE.send({",
+        "eventType: \"checkout_recovery_enqueued\"",
+        "skippedRecentlyEnqueued",
+        "skippedMissingChannelAddress"
+      ],
+      "sloTargets": {
+        "successRatePercent": 99,
+        "errorBudgetPercent": 1,
+        "p95LatencyMs": 0
+      }
+    }
+  ],
+  "scorecardDimensions": [
+    {
+      "id": "timeout-coverage",
+      "description": "Queue consumers enforce deterministic operation timeout boundaries."
+    },
+    {
+      "id": "retry-budget-enforcement",
+      "description": "Retries are bounded by explicit attempt budgets with retryable-error classification."
+    },
+    {
+      "id": "compensation-path-coverage",
+      "description": "Terminal failure states trigger compensation actions instead of silent drops or infinite loops."
+    },
+    {
+      "id": "enqueue-dedup-guardrails",
+      "description": "Workflow dispatch protects against duplicate downstream notification enqueueing."
+    }
+  ]
+}

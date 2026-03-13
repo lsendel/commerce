@@ -1,0 +1,134 @@
+{
+  "version": "v1",
+  "owner": "commerce-data-platform",
+  "reviewCadenceDays": 14,
+  "lastReviewedOn": "2026-03-01",
+  "nextReviewBy": "2026-03-14",
+  "indexMigrationPath": "scripts/sql/add-week57-performance-indexes.sql",
+  "indexCatalog": [
+    "carts_store_session_idx",
+    "carts_store_user_idx",
+    "orders_store_user_created_idx",
+    "orders_store_status_created_idx",
+    "promotions_store_status_window_priority_idx",
+    "redemptions_promotion_customer_idx",
+    "customer_segments_store_created_idx",
+    "segment_memberships_segment_customer_idx"
+  ],
+  "hotPaths": [
+    {
+      "id": "hp-cart-find-or-create",
+      "label": "Cart session lookup",
+      "repositoryPath": "src/infrastructure/repositories/cart.repository.ts",
+      "methodName": "findOrCreateCart",
+      "requiredPredicates": [
+        "eq(carts.storeId, this.storeId)",
+        "eq(carts.sessionId, sessionId)"
+      ],
+      "requiredIndexes": [
+        "carts_store_session_idx"
+      ],
+      "targetP95Ms": 40,
+      "queryBudgetUnits": 2
+    },
+    {
+      "id": "hp-cart-merge",
+      "label": "Cart merge login path",
+      "repositoryPath": "src/infrastructure/repositories/cart.repository.ts",
+      "methodName": "mergeCart",
+      "requiredPredicates": [
+        "eq(carts.storeId, this.storeId)",
+        "eq(carts.userId, toUserId)"
+      ],
+      "requiredIndexes": [
+        "carts_store_session_idx",
+        "carts_store_user_idx"
+      ],
+      "targetP95Ms": 90,
+      "queryBudgetUnits": 5
+    },
+    {
+      "id": "hp-orders-by-store",
+      "label": "Admin order listing",
+      "repositoryPath": "src/infrastructure/repositories/order.repository.ts",
+      "methodName": "findByStore",
+      "requiredPredicates": [
+        "eq(orders.storeId, this.storeId)",
+        "desc(orders.createdAt)"
+      ],
+      "requiredIndexes": [
+        "orders_store_status_created_idx"
+      ],
+      "targetP95Ms": 120,
+      "queryBudgetUnits": 3
+    },
+    {
+      "id": "hp-orders-by-user",
+      "label": "Account order listing",
+      "repositoryPath": "src/infrastructure/repositories/order.repository.ts",
+      "methodName": "findByUserId",
+      "requiredPredicates": [
+        "eq(orders.userId, userId)",
+        "eq(orders.storeId, this.storeId)"
+      ],
+      "requiredIndexes": [
+        "orders_store_user_created_idx"
+      ],
+      "targetP95Ms": 90,
+      "queryBudgetUnits": 3
+    },
+    {
+      "id": "hp-active-promotions",
+      "label": "Active promotion resolution",
+      "repositoryPath": "src/infrastructure/repositories/promotion.repository.ts",
+      "methodName": "listActive",
+      "requiredPredicates": [
+        "eq(promotions.storeId, this.storeId)",
+        "eq(promotions.status, \"active\")",
+        "lte(promotions.startsAt, now)",
+        "gte(promotions.endsAt, now)"
+      ],
+      "requiredIndexes": [
+        "promotions_store_status_window_priority_idx"
+      ],
+      "targetP95Ms": 80,
+      "queryBudgetUnits": 2
+    },
+    {
+      "id": "hp-segment-freshness",
+      "label": "Segment freshness snapshot",
+      "repositoryPath": "src/infrastructure/repositories/promotion.repository.ts",
+      "methodName": "getSegmentFreshnessSnapshot",
+      "requiredPredicates": [
+        "eq(customerSegments.storeId, this.storeId)",
+        "eq(customerSegmentMemberships.segmentId, customerSegments.id)"
+      ],
+      "requiredIndexes": [
+        "customer_segments_store_created_idx",
+        "segment_memberships_segment_customer_idx"
+      ],
+      "targetP95Ms": 100,
+      "queryBudgetUnits": 3
+    }
+  ],
+  "cacheSurfaces": [
+    {
+      "id": "cache-products-list",
+      "sourcePath": "src/routes/api/products.routes.ts",
+      "requiredSnippet": "cacheResponse({ ttl: 300, tags: [\"products:list\"] })",
+      "targetHitRatePercent": 70
+    },
+    {
+      "id": "cache-product-detail",
+      "sourcePath": "src/routes/api/products.routes.ts",
+      "requiredSnippet": "ttl: 3600",
+      "targetHitRatePercent": 80
+    },
+    {
+      "id": "cache-collections-list",
+      "sourcePath": "src/routes/api/products.routes.ts",
+      "requiredSnippet": "cacheResponse({ ttl: 3600, tags: [\"collections:list\"] })",
+      "targetHitRatePercent": 75
+    }
+  ]
+}

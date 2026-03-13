@@ -1,0 +1,64 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "petm8" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: 🐾
+        - generic [ref=e6]: petm8
+      - generic [ref=e7]:
+        - navigation [ref=e8]:
+          - link "Shop" [ref=e9] [cursor=pointer]:
+            - /url: /shop
+          - link "Events" [ref=e10] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e11] [cursor=pointer]:
+            - /url: /studio
+        - link "Shopping cart" [ref=e12] [cursor=pointer]:
+          - /url: /cart
+          - img [ref=e13]
+        - link "Sign in" [ref=e15] [cursor=pointer]:
+          - /url: /login
+  - main [ref=e16]:
+    - generic [ref=e17]:
+      - generic [ref=e18]: 🐾
+      - heading "Page Not Found" [level=1] [ref=e19]
+      - paragraph [ref=e20]: Looks like this page wandered off. Let's get you back on track.
+      - link "Back to Home" [ref=e21] [cursor=pointer]:
+        - /url: /
+  - contentinfo [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - link "petm8" [ref=e26] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e27]: 🐾
+            - generic [ref=e28]: petm8
+          - paragraph [ref=e29]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e30]:
+          - heading "Shop" [level=4] [ref=e31]
+          - list [ref=e32]:
+            - listitem [ref=e33]:
+              - link "All Products" [ref=e34] [cursor=pointer]:
+                - /url: /shop
+            - listitem [ref=e35]:
+              - link "Collections" [ref=e36] [cursor=pointer]:
+                - /url: /shop/collections
+        - generic [ref=e37]:
+          - heading "Account" [level=4] [ref=e38]
+          - list [ref=e39]:
+            - listitem [ref=e40]:
+              - link "Orders" [ref=e41] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e42]:
+              - link "My Pets" [ref=e43] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e44]:
+          - heading "Company" [level=4] [ref=e45]
+          - list [ref=e46]:
+            - listitem [ref=e47]:
+              - link "About" [ref=e48] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e49]:
+              - link "Contact" [ref=e50] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e52]: © 2026 petm8. All rights reserved.

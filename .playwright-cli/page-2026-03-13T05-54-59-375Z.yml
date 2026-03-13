@@ -1,0 +1,130 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Account | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+          - link "Account" [ref=e15] [cursor=pointer]:
+            - /url: /account
+        - button "Switch to dark mode" [ref=e16] [cursor=pointer]:
+          - img [ref=e17]
+        - button "Shopping basket, empty" [ref=e19] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e23]:
+            - generic [ref=e24]: Basket
+            - generic [ref=e25]:
+              - generic [ref=e26]: Empty
+              - generic [ref=e27]: $0.00
+        - group [ref=e28]:
+          - generic "User menu" [ref=e29] [cursor=pointer]: "?"
+  - main [ref=e30]:
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - heading "Welcome back, Admin Smoke" [level=1] [ref=e34]
+          - paragraph [ref=e35]: Manage your account and view your activity.
+        - button "Sign Out" [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+          - text: Sign Out
+      - generic [ref=e39]:
+        - link "Orders View order history" [ref=e40] [cursor=pointer]:
+          - /url: /account/orders
+          - img [ref=e42]
+          - heading "Orders" [level=3] [ref=e44]
+          - paragraph [ref=e45]: View order history
+        - link "Addresses Manage shipping addresses" [ref=e46] [cursor=pointer]:
+          - /url: /account/addresses
+          - img [ref=e48]
+          - heading "Addresses" [level=3] [ref=e51]
+          - paragraph [ref=e52]: Manage shipping addresses
+        - link "Subscriptions Manage your plan" [ref=e53] [cursor=pointer]:
+          - /url: /account/subscriptions
+          - img [ref=e55]
+          - heading "Subscriptions" [level=3] [ref=e57]
+          - paragraph [ref=e58]: Manage your plan
+        - link "Pets Your pet profiles" [ref=e59] [cursor=pointer]:
+          - /url: /account/pets
+          - img [ref=e61]
+          - heading "Pets" [level=3] [ref=e63]
+          - paragraph [ref=e64]: Your pet profiles
+        - link "Artwork AI-generated art" [ref=e65] [cursor=pointer]:
+          - /url: /account/artwork
+          - img [ref=e67]
+          - heading "Artwork" [level=3] [ref=e69]
+          - paragraph [ref=e70]: AI-generated art
+        - link "Settings Profile & preferences" [ref=e71] [cursor=pointer]:
+          - /url: /account/settings
+          - img [ref=e73]
+          - heading "Settings" [level=3] [ref=e76]
+          - paragraph [ref=e77]: Profile & preferences
+      - generic [ref=e78]:
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - heading "Recent Orders" [level=2] [ref=e81]
+            - link "View all" [ref=e82] [cursor=pointer]:
+              - /url: /account/orders
+          - generic [ref=e83]:
+            - paragraph [ref=e84]: No orders yet.
+            - link "Start shopping" [ref=e85] [cursor=pointer]:
+              - /url: /products
+        - generic [ref=e87]:
+          - heading "Subscription" [level=2] [ref=e88]
+          - generic [ref=e89]:
+            - img [ref=e91]
+            - paragraph [ref=e93]: No active subscription
+            - link "Browse Plans" [ref=e94] [cursor=pointer]:
+              - /url: /products?type=subscription
+  - contentinfo [ref=e95]:
+    - generic [ref=e96]:
+      - generic [ref=e97]:
+        - generic [ref=e98]:
+          - link "petm8 home" [ref=e99] [cursor=pointer]:
+            - /url: /
+            - img [ref=e100]
+            - generic [ref=e102]: petm8
+          - paragraph [ref=e103]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e104]:
+          - heading "Shop" [level=4] [ref=e105]
+          - list [ref=e106]:
+            - listitem [ref=e107]:
+              - link "All Products" [ref=e108] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e109]:
+              - link "Collections" [ref=e110] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e111]:
+          - heading "Account" [level=4] [ref=e112]
+          - list [ref=e113]:
+            - listitem [ref=e114]:
+              - link "Orders" [ref=e115] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e116]:
+              - link "My Pets" [ref=e117] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e118]:
+          - heading "Company" [level=4] [ref=e119]
+          - list [ref=e120]:
+            - listitem [ref=e121]:
+              - link "About" [ref=e122] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e123]:
+              - link "Contact" [ref=e124] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e126]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e127]:
+    - generic [ref=e128]:
+      - heading "Your Cart" [level=2] [ref=e129]
+      - button "Close cart" [ref=e130] [cursor=pointer]:
+        - img [ref=e131]

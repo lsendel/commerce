@@ -1,0 +1,230 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Dog Beach Day Experience | Petm8 | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "Shopping cart" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - link "Sign in" [ref=e21] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - navigation "Breadcrumb" [ref=e24]:
+        - link "Events" [ref=e25] [cursor=pointer]:
+          - /url: /events
+        - img [ref=e26]
+        - generic [ref=e28]: Dog Beach Day Experience
+      - img "Dog Beach Day Experience" [ref=e30]
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - heading "Dog Beach Day Experience" [level=1] [ref=e34]
+            - generic [ref=e35]:
+              - generic [ref=e36]:
+                - img [ref=e37]
+                - text: 180 minutes
+              - generic [ref=e39]:
+                - img [ref=e40]
+                - text: Bondi Beach, Sydney NSW 2026, Australia
+          - paragraph [ref=e44]: Treat your pup to the ultimate beach day! A guided 3-hour group experience at Bondi Beach with professional dog handlers, water toys, agility games, and a gourmet puppy picnic. Includes professional photos of your dog having the time of their life. Suitable for dogs of all sizes and swimming abilities.
+          - generic [ref=e45]:
+            - generic [ref=e46]:
+              - heading "What's Included" [level=3] [ref=e47]:
+                - img [ref=e48]
+                - text: What's Included
+              - list [ref=e50]:
+                - listitem [ref=e51]:
+                  - img [ref=e52]
+                  - text: Professional dog handlers (1 per 4 dogs)
+                - listitem [ref=e54]:
+                  - img [ref=e55]
+                  - text: Water toys & agility equipment
+                - listitem [ref=e57]:
+                  - img [ref=e58]
+                  - text: Gourmet puppy picnic lunch
+                - listitem [ref=e60]:
+                  - img [ref=e61]
+                  - text: Fresh water stations
+                - listitem [ref=e63]:
+                  - img [ref=e64]
+                  - text: Professional photo package (10+ edited photos)
+                - listitem [ref=e66]:
+                  - img [ref=e67]
+                  - text: Doggy bandana souvenir
+            - generic [ref=e69]:
+              - heading "Not Included" [level=3] [ref=e70]:
+                - img [ref=e71]
+                - text: Not Included
+              - list [ref=e73]:
+                - listitem [ref=e74]:
+                  - img [ref=e75]
+                  - text: Transport to/from venue
+                - listitem [ref=e77]:
+                  - img [ref=e78]
+                  - text: Human food & beverages
+                - listitem [ref=e80]:
+                  - img [ref=e81]
+                  - text: Pet insurance
+          - generic [ref=e83]:
+            - heading "Itinerary" [level=2] [ref=e84]
+            - generic [ref=e85]:
+              - generic [ref=e88]:
+                - text: 09:00
+                - heading "Check-in & Welcome" [level=4] [ref=e89]
+                - paragraph [ref=e90]: Meet the handlers, temperament check, and off-leash warm-up.
+              - generic [ref=e93]:
+                - text: 09:30
+                - heading "Beach Free Play" [level=4] [ref=e94]
+                - paragraph [ref=e95]: Supervised off-leash play in the water and on the sand.
+              - generic [ref=e98]:
+                - text: 10:15
+                - heading "Agility Games" [level=4] [ref=e99]
+                - paragraph [ref=e100]: Fun obstacle course and fetch competitions on the beach.
+              - generic [ref=e103]:
+                - text: 11:00
+                - heading "Puppy Picnic" [level=4] [ref=e104]
+                - paragraph [ref=e105]: Gourmet dog-friendly treats and fresh water. Humans can relax!
+              - generic [ref=e108]:
+                - text: 11:30
+                - heading "Photo Session & Wrap-up" [level=4] [ref=e109]
+                - paragraph [ref=e110]: Professional photos, bandana distribution, and farewell.
+          - generic [ref=e111]:
+            - heading "Frequently Asked Questions" [level=2] [ref=e112]
+            - generic [ref=e113]:
+              - group [ref=e114]:
+                - generic "Is my dog suitable for this experience?" [ref=e115] [cursor=pointer]:
+                  - generic [ref=e116]: Is my dog suitable for this experience?
+                  - img [ref=e117]
+              - group [ref=e119]:
+                - generic "What if it rains?" [ref=e120] [cursor=pointer]:
+                  - generic [ref=e121]: What if it rains?
+                  - img [ref=e122]
+              - group [ref=e124]:
+                - generic "Can I stay and watch?" [ref=e125] [cursor=pointer]:
+                  - generic [ref=e126]: Can I stay and watch?
+                  - img [ref=e127]
+              - group [ref=e129]:
+                - generic "How do I receive the photos?" [ref=e130] [cursor=pointer]:
+                  - generic [ref=e131]: How do I receive the photos?
+                  - img [ref=e132]
+          - generic [ref=e134]:
+            - heading "Cancellation Policy" [level=3] [ref=e135]:
+              - img [ref=e136]
+              - text: Cancellation Policy
+            - paragraph [ref=e138]: Free cancellation up to 48 hours before the scheduled time. Cancellations within 48 hours receive a 50% refund. No-shows are non-refundable.
+          - generic [ref=e139]:
+            - heading "Reviews" [level=2] [ref=e140]
+            - paragraph [ref=e141]: No reviews yet. Be the first to share your experience.
+            - generic [ref=e142]:
+              - link "Sign in" [ref=e143] [cursor=pointer]:
+                - /url: /auth/login
+              - text: to leave a review.
+        - generic [ref=e146]:
+          - generic [ref=e147]:
+            - link "Previous month" [ref=e148] [cursor=pointer]:
+              - /url: /events/dog-beach-day-experience?year=2026&month=2
+              - img [ref=e149]
+            - heading "March 2026" [level=3] [ref=e151]
+            - link "Next month" [ref=e152] [cursor=pointer]:
+              - /url: /events/dog-beach-day-experience?year=2026&month=4
+              - img [ref=e153]
+          - generic [ref=e155]:
+            - generic [ref=e156]: Sun
+            - generic [ref=e157]: Mon
+            - generic [ref=e158]: Tue
+            - generic [ref=e159]: Wed
+            - generic [ref=e160]: Thu
+            - generic [ref=e161]: Fri
+            - generic [ref=e162]: Sat
+          - generic [ref=e163]:
+            - generic [ref=e164]: "1"
+            - generic [ref=e165]: "2"
+            - generic [ref=e166]: "3"
+            - generic [ref=e167]: "4"
+            - generic [ref=e168]: "5"
+            - generic [ref=e169]: "6"
+            - generic [ref=e170]: "7"
+            - generic [ref=e171]: "8"
+            - generic [ref=e172]: "9"
+            - generic [ref=e173]: "10"
+            - generic [ref=e174]: "11"
+            - generic [ref=e175]: "12"
+            - generic [ref=e176]: "13"
+            - generic [ref=e177]: "14"
+            - generic [ref=e178]: "15"
+            - generic [ref=e179]: "16"
+            - generic [ref=e180]: "17"
+            - generic [ref=e181]: "18"
+            - generic [ref=e182]: "19"
+            - generic [ref=e183]: "20"
+            - generic [ref=e184]: "21"
+            - generic [ref=e185]: "22"
+            - generic [ref=e186]: "23"
+            - generic [ref=e187]: "24"
+            - generic [ref=e188]: "25"
+            - generic [ref=e189]: "26"
+            - generic [ref=e190]: "27"
+            - generic [ref=e191]: "28"
+            - generic [ref=e192]: "29"
+            - generic [ref=e193]: "30"
+            - generic [ref=e194]: "31"
+          - generic [ref=e195]:
+            - generic [ref=e196]: Available
+            - generic [ref=e198]: No slots
+  - contentinfo [ref=e200]:
+    - generic [ref=e201]:
+      - generic [ref=e202]:
+        - generic [ref=e203]:
+          - link "petm8 home" [ref=e204] [cursor=pointer]:
+            - /url: /
+            - img [ref=e205]
+            - generic [ref=e207]: petm8
+          - paragraph [ref=e208]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e209]:
+          - heading "Shop" [level=4] [ref=e210]
+          - list [ref=e211]:
+            - listitem [ref=e212]:
+              - link "All Products" [ref=e213] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e214]:
+              - link "Collections" [ref=e215] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e216]:
+          - heading "Account" [level=4] [ref=e217]
+          - list [ref=e218]:
+            - listitem [ref=e219]:
+              - link "Orders" [ref=e220] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e221]:
+              - link "My Pets" [ref=e222] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e223]:
+          - heading "Company" [level=4] [ref=e224]
+          - list [ref=e225]:
+            - listitem [ref=e226]:
+              - link "About" [ref=e227] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e228]:
+              - link "Contact" [ref=e229] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e231]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e232]:
+    - generic [ref=e233]:
+      - heading "Your Cart" [level=2] [ref=e234]
+      - button "Close cart" [ref=e235] [cursor=pointer]:
+        - img [ref=e236]

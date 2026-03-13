@@ -65,22 +65,21 @@ export const CartSummary: FC<CartSummaryProps> = ({
 
         <div class="flex justify-between">
           <span class="text-gray-600 dark:text-gray-400">
-            Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})
+            Subtotal (<span data-cart-item-count>{itemCount}</span>{" "}
+            <span data-cart-item-label>{itemCount === 1 ? "item" : "items"}</span>)
           </span>
           <span class="font-medium text-gray-900 dark:text-gray-100" data-cart-subtotal>${subtotal.toFixed(2)}</span>
         </div>
 
-        {discount > 0 && (
-          <div class="flex justify-between text-emerald-600">
-            <span>Discount</span>
-            <span class="font-medium">-${discount.toFixed(2)}</span>
-          </div>
-        )}
+        <div id="cart-discount-row" class={`flex justify-between text-emerald-600 ${discount > 0 ? "" : "hidden"}`}>
+          <span>Discount</span>
+          <span class="font-medium" data-cart-discount>-${discount.toFixed(2)}</span>
+        </div>
 
         <div class="flex justify-between">
           <span class="text-gray-600 dark:text-gray-400">Shipping</span>
           {shippingEstimate !== undefined ? (
-            <span class="font-medium text-gray-900 dark:text-gray-100">
+            <span class="font-medium text-gray-900 dark:text-gray-100" data-cart-shipping>
               {shippingEstimate === 0 ? (
                 <span class="text-emerald-600">Free</span>
               ) : (
@@ -88,7 +87,7 @@ export const CartSummary: FC<CartSummaryProps> = ({
               )}
             </span>
           ) : (
-            <span class="text-gray-500 italic text-xs">Calculated at checkout</span>
+            <span class="text-gray-500 italic text-xs" data-cart-shipping>Calculated at checkout</span>
           )}
         </div>
 
@@ -111,12 +110,12 @@ export const CartSummary: FC<CartSummaryProps> = ({
           </div>
         )}
 
-        {taxEstimate !== undefined && taxEstimate > 0 && (
-          <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">Tax (est.)</span>
-            <span class="font-medium text-gray-900 dark:text-gray-100">${taxEstimate.toFixed(2)}</span>
-          </div>
-        )}
+        <div id="cart-tax-row" class={`flex justify-between ${taxEstimate !== undefined && taxEstimate > 0 ? "" : "hidden"}`}>
+          <span class="text-gray-600 dark:text-gray-400">Tax (est.)</span>
+          <span class="font-medium text-gray-900 dark:text-gray-100" data-cart-tax>
+            {taxEstimate !== undefined && taxEstimate > 0 ? `$${taxEstimate.toFixed(2)}` : "$0.00"}
+          </span>
+        </div>
 
         <div class="border-t border-gray-100 dark:border-gray-700 pt-3 flex justify-between">
           <span class="font-bold text-gray-900 dark:text-gray-100">Total</span>

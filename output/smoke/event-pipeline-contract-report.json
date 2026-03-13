@@ -1,0 +1,105 @@
+{
+  "startedAt": "2026-03-06T06:41:09.682Z",
+  "finishedAt": "2026-03-06T06:41:09.874Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "taxonomyVersion": "week-46-v1",
+  "metrics": {
+    "knownTaxonomyEvents": 62,
+    "discoveredLiteralEvents": 53,
+    "unknownLiteralEvents": 0
+  },
+  "checks": [
+    {
+      "id": "contract-track-eventname",
+      "status": "pass",
+      "note": "trackEvent contract accepts eventName alias payloads."
+    },
+    {
+      "id": "contract-track-payload-fallback",
+      "status": "pass",
+      "note": "trackEvent contract accepts payload fallback body."
+    },
+    {
+      "id": "contract-track-dedupe-key",
+      "status": "pass",
+      "note": "trackEvent contract accepts dedupe key field."
+    },
+    {
+      "id": "contract-response-201-delivery",
+      "status": "pass",
+      "note": "trackEvent 201 response includes delivery metadata."
+    },
+    {
+      "id": "contract-response-200-delivery",
+      "status": "pass",
+      "note": "trackEvent 200 dedupe response includes delivery metadata."
+    },
+    {
+      "id": "taxonomy-rejects-unknown",
+      "status": "pass",
+      "note": "taxonomy rejects unknown events."
+    },
+    {
+      "id": "taxonomy-discovered-literals",
+      "status": "pass",
+      "note": "all discovered literal event names are represented in taxonomy."
+    }
+  ],
+  "discoveredEvents": [
+    "add_to_cart",
+    "birthday_offer_sent",
+    "bundle_add_to_cart",
+    "checkout_preflight_blocked",
+    "checkout_preflight_warning",
+    "checkout_recovery_delivery_failed",
+    "checkout_recovery_enqueued",
+    "checkout_recovery_landing",
+    "checkout_started",
+    "collection_view",
+    "delivery_promise_checkout_window",
+    "fulfillment_exception_auto_resolve_executed",
+    "fulfillment_exception_scan_requested",
+    "fulfillment_sla_intervention_executed",
+    "fulfillment_sla_prediction_generated",
+    "headless_api_pack_created",
+    "headless_api_pack_revoked",
+    "incident_responder_triage_acknowledged",
+    "incident_responder_triage_generated",
+    "incident_responder_triage_requested",
+    "integration_marketplace_app_installed",
+    "integration_marketplace_app_uninstalled",
+    "integration_partner_onboarding_completed",
+    "login",
+    "notify_restock",
+    "page_view",
+    "pricing_experiment_proposal_generated",
+    "pricing_experiment_started",
+    "pricing_experiment_stopped",
+    "product_view",
+    "purchase",
+    "queue_dlq_auto_remediation_executed",
+    "queue_dlq_auto_remediation_failed",
+    "queue_dlq_candidate_recorded",
+    "remove_from_cart",
+    "reorder_to_cart",
+    "search",
+    "signup",
+    "store_template_clone_created",
+    "store_template_created",
+    "store_template_deleted",
+    "studio_pipeline_draft_generated",
+    "studio_pipeline_product_created",
+    "support_deflection_feedback",
+    "support_deflection_requested",
+    "unknown",
+    "workflow_builder_preview_requested",
+    "workflow_builder_run_executed",
+    "workflow_builder_workflow_created",
+    "workflow_builder_workflow_deleted",
+    "workflow_builder_workflow_toggled",
+    "workflow_builder_workflow_updated",
+    "workshop"
+  ],
+  "unknownEvents": []
+}

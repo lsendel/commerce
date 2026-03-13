@@ -1,0 +1,44 @@
+{
+  "startedAt": "2026-03-06T06:41:11.862Z",
+  "finishedAt": "2026-03-06T06:41:11.863Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "modelVersion": "wk48-ranking-v1",
+  "checks": [
+    {
+      "id": "related-priority",
+      "status": "pass",
+      "note": "Related signal should outrank plain catalog fallback when price fit is similar."
+    },
+    {
+      "id": "reason-co-purchase",
+      "status": "pass",
+      "note": "Top recommendation should preserve co_purchase_signal reason."
+    },
+    {
+      "id": "inventory-penalty",
+      "status": "pass",
+      "note": "In-stock candidate should outrank low-stock risk candidate."
+    },
+    {
+      "id": "price-fit-priority",
+      "status": "pass",
+      "note": "Price-fit candidate should outrank extreme price outlier candidate."
+    },
+    {
+      "id": "fallback-reason",
+      "status": "pass",
+      "note": "Fallback candidate must include catalog_fallback reason."
+    },
+    {
+      "id": "model-version-tag",
+      "status": "pass",
+      "note": "Ranked output must include model version reason tag for traceability."
+    }
+  ],
+  "metrics": {
+    "totalChecks": 6,
+    "failedChecks": 0,
+    "fallbackCoverageChecks": 1
+  }
+}

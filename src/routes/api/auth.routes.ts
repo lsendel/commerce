@@ -90,9 +90,30 @@ async function resolveOrCreateOAuthUser(args: {
         : await userRepo.findByMetaSub(providerSub);
 
   let isNew = false;
+  let emailMatchedUser: Awaited<ReturnType<UserRepository["findById"]>> | null = null;
 
   if (!user && normalizedEmail) {
-    user = await userRepo.findByEmail(normalizedEmail);
+    const emailCandidates = await userRepo.findEmailCandidates(normalizedEmail, 3);
+    if (emailCandidates.length > 1) {
+      throw new AuthError(
+        "Multiple accounts were found for this email. Contact support to resolve identity mapping.",
+      );
+    }
+    emailMatchedUser = emailCandidates[0] ?? null;
+    user = emailMatchedUser;
+  } else if (user && normalizedEmail) {
+    const emailCandidates = await userRepo.findEmailCandidates(normalizedEmail, 3);
+    if (emailCandidates.length > 1) {
+      throw new AuthError(
+        "Multiple accounts were found for this email. Contact support to resolve identity mapping.",
+      );
+    }
+    emailMatchedUser = emailCandidates[0] ?? null;
+    if (emailMatchedUser && emailMatchedUser.id !== user.id) {
+      throw new AuthError(
+        "Identity mapping conflict detected between provider account and email account.",
+      );
+    }
   }
 
   if (!user) {
@@ -373,7 +394,11 @@ auth.post("/login", zValidator("json", loginSchema), async (c) => {
   }
 
   const maxAge = user.expiresInHours * 60 * 60;
-  const token = await signJwt({ sub: user.id, email: user.email, name: user.name }, c.env.JWT_SECRET);
+  const token = await signJwt(
+    { sub: user.id, email: user.email, name: user.name },
+    c.env.JWT_SECRET,
+    { ttlSeconds: maxAge },
+  );
   setCookie(c, AUTH_COOKIE_NAME, token, {
     httpOnly: true,
     secure: true,
@@ -467,6 +492,7 @@ auth.post("/request-verification", requireAuth(), async (c) => {
     return c.json({ success: true, message: "Email already verified" });
   }
 
+  await userRepo.invalidateActiveEmailVerificationTokens(user.id);
   const token = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
   await userRepo.createEmailVerificationToken(user.id, token, expiresAt);

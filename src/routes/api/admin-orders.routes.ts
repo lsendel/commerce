@@ -42,7 +42,7 @@ adminOrders.get("/orders/:id", requireAuth(), async (c) => {
   const orderRepo = new OrderRepository(db, storeId);
   const orderId = c.req.param("id");
 
-  const order = await orderRepo.findById(orderId);
+  const order = await orderRepo.findAdminDetail(orderId);
   if (!order) {
     return c.json({ error: "Order not found" }, 404);
   }

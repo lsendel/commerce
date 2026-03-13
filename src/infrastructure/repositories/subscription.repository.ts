@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   subscriptionPlans,
@@ -51,10 +51,85 @@ function toCents(amount: string | null | undefined): number {
 }
 
 export class SubscriptionRepository {
+  private mixConfigurationColumnAvailable: boolean | null = null;
+
   constructor(
     private db: Database,
     private storeId: string,
   ) {}
+
+  private async hasMixConfigurationColumn() {
+    if (this.mixConfigurationColumnAvailable !== null) {
+      return this.mixConfigurationColumnAvailable;
+    }
+
+    try {
+      const result = await this.db.execute(sql`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'subscriptions'
+            AND column_name = 'mix_configuration'
+        ) AS exists
+      `);
+      const row = result.rows[0] as { exists?: boolean | string | number } | undefined;
+      this.mixConfigurationColumnAvailable =
+        row?.exists === true ||
+        row?.exists === "true" ||
+        row?.exists === "t" ||
+        row?.exists === 1 ||
+        row?.exists === "1";
+    } catch {
+      this.mixConfigurationColumnAvailable = true;
+    }
+
+    return this.mixConfigurationColumnAvailable;
+  }
+
+  private async getSubscriptionSelectionWithProduct() {
+    const mixConfiguration = (await this.hasMixConfigurationColumn())
+      ? subscriptions.mixConfiguration
+      : sql<Record<string, unknown> | null>`NULL`.as("mixConfiguration");
+
+    return {
+      id: subscriptions.id,
+      userId: subscriptions.userId,
+      planId: subscriptions.planId,
+      stripeSubscriptionId: subscriptions.stripeSubscriptionId,
+      stripeCustomerId: subscriptions.stripeCustomerId,
+      status: subscriptions.status,
+      currentPeriodStart: subscriptions.currentPeriodStart,
+      currentPeriodEnd: subscriptions.currentPeriodEnd,
+      cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+      mixConfiguration,
+      createdAt: subscriptions.createdAt,
+      updatedAt: subscriptions.updatedAt,
+      planName: products.name,
+      billingPeriod: subscriptionPlans.billingPeriod,
+    } as const;
+  }
+
+  private async getSubscriptionSelection() {
+    const mixConfiguration = (await this.hasMixConfigurationColumn())
+      ? subscriptions.mixConfiguration
+      : sql<Record<string, unknown> | null>`NULL`.as("mixConfiguration");
+
+    return {
+      id: subscriptions.id,
+      userId: subscriptions.userId,
+      planId: subscriptions.planId,
+      stripeSubscriptionId: subscriptions.stripeSubscriptionId,
+      stripeCustomerId: subscriptions.stripeCustomerId,
+      status: subscriptions.status,
+      currentPeriodStart: subscriptions.currentPeriodStart,
+      currentPeriodEnd: subscriptions.currentPeriodEnd,
+      cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+      mixConfiguration,
+      createdAt: subscriptions.createdAt,
+      updatedAt: subscriptions.updatedAt,
+    } as const;
+  }
 
   /**
    * Get a subscription plan by ID, joined with product info.
@@ -229,21 +304,30 @@ export class SubscriptionRepository {
    * Insert a new subscription record.
    */
   async createSubscription(data: CreateSubscriptionData) {
-    const rows = await this.db
-      .insert(subscriptions)
-      .values({
-        storeId: this.storeId,
-        userId: data.userId,
-        planId: data.planId,
-        stripeSubscriptionId: data.stripeSubscriptionId,
-        stripeCustomerId: data.stripeCustomerId,
-        status: data.status ?? "active",
-        currentPeriodStart: data.currentPeriodStart ?? null,
-        currentPeriodEnd: data.currentPeriodEnd ?? null,
-        cancelAtPeriodEnd: data.cancelAtPeriodEnd ?? false,
-        mixConfiguration: data.mixConfiguration ?? null,
-      })
-      .returning();
+    const baseValues = {
+      storeId: this.storeId,
+      userId: data.userId,
+      planId: data.planId,
+      stripeSubscriptionId: data.stripeSubscriptionId,
+      stripeCustomerId: data.stripeCustomerId,
+      status: data.status ?? "active",
+      currentPeriodStart: data.currentPeriodStart ?? null,
+      currentPeriodEnd: data.currentPeriodEnd ?? null,
+      cancelAtPeriodEnd: data.cancelAtPeriodEnd ?? false,
+    };
+
+    const rows = await ((await this.hasMixConfigurationColumn())
+      ? this.db
+          .insert(subscriptions)
+          .values({
+            ...baseValues,
+            mixConfiguration: data.mixConfiguration ?? null,
+          })
+          .returning(await this.getSubscriptionSelection())
+      : this.db
+          .insert(subscriptions)
+          .values(baseValues)
+          .returning(await this.getSubscriptionSelection()));
 
     return rows[0];
   }
@@ -253,22 +337,7 @@ export class SubscriptionRepository {
    */
   async findByUserId(userId: string) {
     return this.db
-      .select({
-        id: subscriptions.id,
-        userId: subscriptions.userId,
-        planId: subscriptions.planId,
-        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
-        stripeCustomerId: subscriptions.stripeCustomerId,
-        status: subscriptions.status,
-        currentPeriodStart: subscriptions.currentPeriodStart,
-        currentPeriodEnd: subscriptions.currentPeriodEnd,
-        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
-        mixConfiguration: subscriptions.mixConfiguration,
-        createdAt: subscriptions.createdAt,
-        updatedAt: subscriptions.updatedAt,
-        planName: products.name,
-        billingPeriod: subscriptionPlans.billingPeriod,
-      })
+      .select(await this.getSubscriptionSelectionWithProduct())
       .from(subscriptions)
       .innerJoin(
         subscriptionPlans,
@@ -288,22 +357,7 @@ export class SubscriptionRepository {
     }
 
     const rows = await this.db
-      .select({
-        id: subscriptions.id,
-        userId: subscriptions.userId,
-        planId: subscriptions.planId,
-        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
-        stripeCustomerId: subscriptions.stripeCustomerId,
-        status: subscriptions.status,
-        currentPeriodStart: subscriptions.currentPeriodStart,
-        currentPeriodEnd: subscriptions.currentPeriodEnd,
-        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
-        mixConfiguration: subscriptions.mixConfiguration,
-        createdAt: subscriptions.createdAt,
-        updatedAt: subscriptions.updatedAt,
-        planName: products.name,
-        billingPeriod: subscriptionPlans.billingPeriod,
-      })
+      .select(await this.getSubscriptionSelectionWithProduct())
       .from(subscriptions)
       .innerJoin(
         subscriptionPlans,
@@ -321,20 +375,7 @@ export class SubscriptionRepository {
    */
   async findByStripeId(stripeSubscriptionId: string) {
     const rows = await this.db
-      .select({
-        id: subscriptions.id,
-        userId: subscriptions.userId,
-        planId: subscriptions.planId,
-        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
-        stripeCustomerId: subscriptions.stripeCustomerId,
-        status: subscriptions.status,
-        currentPeriodStart: subscriptions.currentPeriodStart,
-        currentPeriodEnd: subscriptions.currentPeriodEnd,
-        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
-        mixConfiguration: subscriptions.mixConfiguration,
-        createdAt: subscriptions.createdAt,
-        updatedAt: subscriptions.updatedAt,
-      })
+      .select(await this.getSubscriptionSelection())
       .from(subscriptions)
       .where(and(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId), eq(subscriptions.storeId, this.storeId)))
       .limit(1);
@@ -366,7 +407,7 @@ export class SubscriptionRepository {
     if (data.cancelAtPeriodEnd !== undefined) {
       updateValues.cancelAtPeriodEnd = data.cancelAtPeriodEnd;
     }
-    if (data.mixConfiguration !== undefined) {
+    if (data.mixConfiguration !== undefined && await this.hasMixConfigurationColumn()) {
       updateValues.mixConfiguration = data.mixConfiguration;
     }
 
@@ -374,7 +415,7 @@ export class SubscriptionRepository {
       .update(subscriptions)
       .set(updateValues)
       .where(and(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId), eq(subscriptions.storeId, this.storeId)))
-      .returning();
+      .returning(await this.getSubscriptionSelection());
 
     return rows[0] ?? null;
   }
@@ -387,7 +428,7 @@ export class SubscriptionRepository {
       .update(subscriptions)
       .set({ planId: newPlanId, updatedAt: new Date() })
       .where(and(eq(subscriptions.id, id), eq(subscriptions.storeId, this.storeId)))
-      .returning();
+      .returning(await this.getSubscriptionSelection());
 
     return rows[0] ?? null;
   }
@@ -399,7 +440,7 @@ export class SubscriptionRepository {
     const rows = await this.db
       .delete(subscriptions)
       .where(and(eq(subscriptions.id, id), eq(subscriptions.storeId, this.storeId)))
-      .returning();
+      .returning(await this.getSubscriptionSelection());
 
     return rows[0] ?? null;
   }

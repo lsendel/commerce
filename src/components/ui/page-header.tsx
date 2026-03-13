@@ -32,11 +32,18 @@ export const PageHeader: FC<PageHeaderProps> = ({
       )}
       <div class="flex items-center justify-between gap-4">
         <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">{title}</h1>
-        {actions && (
-          <div class="flex items-center gap-3 shrink-0">
-            {actions}
-          </div>
-        )}
+        <div class="flex items-center gap-3 shrink-0">
+          <button
+            type="button"
+            data-admin-quick-actions-btn
+            class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Open quick actions"
+          >
+            Quick Actions
+            <span class="hidden sm:inline text-[11px] text-gray-400">Ctrl/Cmd+K</span>
+          </button>
+          {actions}
+        </div>
       </div>
     </div>
   );

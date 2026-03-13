@@ -1,0 +1,572 @@
+{
+  "startedAt": "2026-03-06T06:41:16.083Z",
+  "finishedAt": "2026-03-06T06:41:16.094Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "policyPath": "docs/policies/cache-policy-matrix-v1.json",
+  "checks": [
+    {
+      "id": "policy-owner-present",
+      "status": "pass",
+      "note": "Policy owner must be defined."
+    },
+    {
+      "id": "surfaces-present",
+      "status": "pass",
+      "note": "Policy must define at least one cache surface."
+    },
+    {
+      "id": "triggers-present",
+      "status": "pass",
+      "note": "Policy must define at least one invalidation trigger."
+    },
+    {
+      "id": "resource-type-coverage",
+      "status": "pass",
+      "note": "resourceTypeCoverage must include all supported resource types: product, collection, event, currency_rates, products_listing, collections_listing, events_listing"
+    },
+    {
+      "id": "webhook-path-valid",
+      "status": "pass",
+      "note": "webhookPath must include /api/ and cache-invalidate path semantics."
+    },
+    {
+      "id": "review-cadence-valid",
+      "status": "pass",
+      "note": "reviewCadenceDays must be a positive number."
+    },
+    {
+      "id": "review-dates-format",
+      "status": "pass",
+      "note": "lastReviewedOn and nextReviewBy must use YYYY-MM-DD format."
+    },
+    {
+      "id": "review-next-after-last",
+      "status": "pass",
+      "note": "nextReviewBy must be on or after lastReviewedOn."
+    },
+    {
+      "id": "review-window-valid",
+      "status": "pass",
+      "note": "nextReviewBy must stay within reviewCadenceDays window."
+    },
+    {
+      "id": "review-not-overdue",
+      "status": "pass",
+      "note": "Cache policy review date must not be overdue."
+    },
+    {
+      "id": "surface-products-list-route-path-valid",
+      "status": "pass",
+      "note": "Surface routePath must start with /: /api/products"
+    },
+    {
+      "id": "surface-products-list-ttl-valid",
+      "status": "pass",
+      "note": "Surface ttlSeconds must be positive: 300"
+    },
+    {
+      "id": "surface-products-list-tags-present",
+      "status": "pass",
+      "note": "Surface tags must be a non-empty array."
+    },
+    {
+      "id": "surface-products-list-target-hit-rate-valid",
+      "status": "pass",
+      "note": "targetHitRatePercent must be in range (0, 100]: 70"
+    },
+    {
+      "id": "surface-products-list-resource-types-valid",
+      "status": "pass",
+      "note": "Surface invalidationResourceTypes must use supported resource types only: product, products_listing, collection, collections_listing"
+    },
+    {
+      "id": "surface-products-list-source-path-exists",
+      "status": "pass",
+      "note": "Surface source path must exist: src/routes/api/products.routes.ts"
+    },
+    {
+      "id": "surface-products-list-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/products.routes.ts: cacheResponse({ ttl: 300, tags: [\"products:list\"] })"
+    },
+    {
+      "id": "surface-product-detail-route-path-valid",
+      "status": "pass",
+      "note": "Surface routePath must start with /: /api/products/:slug"
+    },
+    {
+      "id": "surface-product-detail-ttl-valid",
+      "status": "pass",
+      "note": "Surface ttlSeconds must be positive: 3600"
+    },
+    {
+      "id": "surface-product-detail-tags-present",
+      "status": "pass",
+      "note": "Surface tags must be a non-empty array."
+    },
+    {
+      "id": "surface-product-detail-target-hit-rate-valid",
+      "status": "pass",
+      "note": "targetHitRatePercent must be in range (0, 100]: 80"
+    },
+    {
+      "id": "surface-product-detail-resource-types-valid",
+      "status": "pass",
+      "note": "Surface invalidationResourceTypes must use supported resource types only: product"
+    },
+    {
+      "id": "surface-product-detail-source-path-exists",
+      "status": "pass",
+      "note": "Surface source path must exist: src/routes/api/products.routes.ts"
+    },
+    {
+      "id": "surface-product-detail-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/products.routes.ts: tags: [\"products:detail\"],"
+    },
+    {
+      "id": "surface-product-detail-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/products.routes.ts: dynamicTags: (c) => [`product:${c.req.param(\"slug\")}`]"
+    },
+    {
+      "id": "surface-collections-list-route-path-valid",
+      "status": "pass",
+      "note": "Surface routePath must start with /: /api/collections"
+    },
+    {
+      "id": "surface-collections-list-ttl-valid",
+      "status": "pass",
+      "note": "Surface ttlSeconds must be positive: 3600"
+    },
+    {
+      "id": "surface-collections-list-tags-present",
+      "status": "pass",
+      "note": "Surface tags must be a non-empty array."
+    },
+    {
+      "id": "surface-collections-list-target-hit-rate-valid",
+      "status": "pass",
+      "note": "targetHitRatePercent must be in range (0, 100]: 75"
+    },
+    {
+      "id": "surface-collections-list-resource-types-valid",
+      "status": "pass",
+      "note": "Surface invalidationResourceTypes must use supported resource types only: collection, collections_listing"
+    },
+    {
+      "id": "surface-collections-list-source-path-exists",
+      "status": "pass",
+      "note": "Surface source path must exist: src/routes/api/products.routes.ts"
+    },
+    {
+      "id": "surface-collections-list-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/products.routes.ts: cacheResponse({ ttl: 3600, tags: [\"collections:list\"] })"
+    },
+    {
+      "id": "surface-collections-legacy-list-route-path-valid",
+      "status": "pass",
+      "note": "Surface routePath must start with /: /api/products/collections"
+    },
+    {
+      "id": "surface-collections-legacy-list-ttl-valid",
+      "status": "pass",
+      "note": "Surface ttlSeconds must be positive: 3600"
+    },
+    {
+      "id": "surface-collections-legacy-list-tags-present",
+      "status": "pass",
+      "note": "Surface tags must be a non-empty array."
+    },
+    {
+      "id": "surface-collections-legacy-list-target-hit-rate-valid",
+      "status": "pass",
+      "note": "targetHitRatePercent must be in range (0, 100]: 65"
+    },
+    {
+      "id": "surface-collections-legacy-list-resource-types-valid",
+      "status": "pass",
+      "note": "Surface invalidationResourceTypes must use supported resource types only: collection, collections_listing"
+    },
+    {
+      "id": "surface-collections-legacy-list-source-path-exists",
+      "status": "pass",
+      "note": "Surface source path must exist: src/routes/api/products.routes.ts"
+    },
+    {
+      "id": "surface-collections-legacy-list-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/products.routes.ts: \"/products/collections\""
+    },
+    {
+      "id": "surface-collections-legacy-list-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/products.routes.ts: cacheResponse({ ttl: 3600, tags: [\"collections:list\"] })"
+    },
+    {
+      "id": "surface-collection-detail-route-path-valid",
+      "status": "pass",
+      "note": "Surface routePath must start with /: /api/collections/:slug"
+    },
+    {
+      "id": "surface-collection-detail-ttl-valid",
+      "status": "pass",
+      "note": "Surface ttlSeconds must be positive: 3600"
+    },
+    {
+      "id": "surface-collection-detail-tags-present",
+      "status": "pass",
+      "note": "Surface tags must be a non-empty array."
+    },
+    {
+      "id": "surface-collection-detail-target-hit-rate-valid",
+      "status": "pass",
+      "note": "targetHitRatePercent must be in range (0, 100]: 75"
+    },
+    {
+      "id": "surface-collection-detail-resource-types-valid",
+      "status": "pass",
+      "note": "Surface invalidationResourceTypes must use supported resource types only: collection"
+    },
+    {
+      "id": "surface-collection-detail-source-path-exists",
+      "status": "pass",
+      "note": "Surface source path must exist: src/routes/api/products.routes.ts"
+    },
+    {
+      "id": "surface-collection-detail-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/products.routes.ts: dynamicTags: (c) => [`collection:${c.req.param(\"slug\")}`]"
+    },
+    {
+      "id": "surface-events-list-route-path-valid",
+      "status": "pass",
+      "note": "Surface routePath must start with /: /api/events"
+    },
+    {
+      "id": "surface-events-list-ttl-valid",
+      "status": "pass",
+      "note": "Surface ttlSeconds must be positive: 180"
+    },
+    {
+      "id": "surface-events-list-tags-present",
+      "status": "pass",
+      "note": "Surface tags must be a non-empty array."
+    },
+    {
+      "id": "surface-events-list-target-hit-rate-valid",
+      "status": "pass",
+      "note": "targetHitRatePercent must be in range (0, 100]: 70"
+    },
+    {
+      "id": "surface-events-list-resource-types-valid",
+      "status": "pass",
+      "note": "Surface invalidationResourceTypes must use supported resource types only: event, events_listing"
+    },
+    {
+      "id": "surface-events-list-source-path-exists",
+      "status": "pass",
+      "note": "Surface source path must exist: src/routes/api/events.routes.ts"
+    },
+    {
+      "id": "surface-events-list-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/events.routes.ts: cacheResponse({ ttl: 180, tags: [\"events:list\"] })"
+    },
+    {
+      "id": "surface-event-detail-route-path-valid",
+      "status": "pass",
+      "note": "Surface routePath must start with /: /api/events/:slug"
+    },
+    {
+      "id": "surface-event-detail-ttl-valid",
+      "status": "pass",
+      "note": "Surface ttlSeconds must be positive: 300"
+    },
+    {
+      "id": "surface-event-detail-tags-present",
+      "status": "pass",
+      "note": "Surface tags must be a non-empty array."
+    },
+    {
+      "id": "surface-event-detail-target-hit-rate-valid",
+      "status": "pass",
+      "note": "targetHitRatePercent must be in range (0, 100]: 78"
+    },
+    {
+      "id": "surface-event-detail-resource-types-valid",
+      "status": "pass",
+      "note": "Surface invalidationResourceTypes must use supported resource types only: event"
+    },
+    {
+      "id": "surface-event-detail-source-path-exists",
+      "status": "pass",
+      "note": "Surface source path must exist: src/routes/api/events.routes.ts"
+    },
+    {
+      "id": "surface-event-detail-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/events.routes.ts: tags: [\"events:detail\"],"
+    },
+    {
+      "id": "surface-event-detail-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/events.routes.ts: return slug ? [`event:${slug}`] : [];"
+    },
+    {
+      "id": "surface-currency-rates-route-path-valid",
+      "status": "pass",
+      "note": "Surface routePath must start with /: /api/currency/rates"
+    },
+    {
+      "id": "surface-currency-rates-ttl-valid",
+      "status": "pass",
+      "note": "Surface ttlSeconds must be positive: 3600"
+    },
+    {
+      "id": "surface-currency-rates-tags-present",
+      "status": "pass",
+      "note": "Surface tags must be a non-empty array."
+    },
+    {
+      "id": "surface-currency-rates-target-hit-rate-valid",
+      "status": "pass",
+      "note": "targetHitRatePercent must be in range (0, 100]: 85"
+    },
+    {
+      "id": "surface-currency-rates-resource-types-valid",
+      "status": "pass",
+      "note": "Surface invalidationResourceTypes must use supported resource types only: currency_rates"
+    },
+    {
+      "id": "surface-currency-rates-source-path-exists",
+      "status": "pass",
+      "note": "Surface source path must exist: src/routes/api/currency.routes.ts"
+    },
+    {
+      "id": "surface-currency-rates-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/currency.routes.ts: cacheResponse({ ttl: 3600, tags: [\"currency:rates\"] })"
+    },
+    {
+      "id": "trigger-cache-webhook-resource-types-valid",
+      "status": "pass",
+      "note": "Trigger resourceTypes must use supported resource types only: product, collection, event, currency_rates, products_listing, collections_listing, events_listing"
+    },
+    {
+      "id": "trigger-cache-webhook-source-path-exists",
+      "status": "pass",
+      "note": "Trigger source path must exist: src/routes/api/cache.routes.ts"
+    },
+    {
+      "id": "trigger-cache-webhook-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/cache.routes.ts: \"/webhooks/cache-invalidate\""
+    },
+    {
+      "id": "trigger-cache-webhook-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/cache.routes.ts: const parsedBody = cacheInvalidationBodySchema.safeParse(rawBody);"
+    },
+    {
+      "id": "trigger-cache-webhook-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/cache.routes.ts: const execution = await executeCacheInvalidation({"
+    },
+    {
+      "id": "trigger-admin-product-mutations-resource-types-valid",
+      "status": "pass",
+      "note": "Trigger resourceTypes must use supported resource types only: product, event"
+    },
+    {
+      "id": "trigger-admin-product-mutations-source-path-exists",
+      "status": "pass",
+      "note": "Trigger source path must exist: src/routes/api/admin-products.routes.ts"
+    },
+    {
+      "id": "trigger-admin-product-mutations-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/admin-products.routes.ts: async function invalidateProductCache"
+    },
+    {
+      "id": "trigger-admin-product-mutations-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/admin-products.routes.ts: type: \"event\""
+    },
+    {
+      "id": "trigger-admin-product-mutations-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/admin-products.routes.ts: await invalidateProductCache({"
+    },
+    {
+      "id": "trigger-admin-collection-mutations-resource-types-valid",
+      "status": "pass",
+      "note": "Trigger resourceTypes must use supported resource types only: collection"
+    },
+    {
+      "id": "trigger-admin-collection-mutations-source-path-exists",
+      "status": "pass",
+      "note": "Trigger source path must exist: src/routes/api/admin-collections.routes.ts"
+    },
+    {
+      "id": "trigger-admin-collection-mutations-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/admin-collections.routes.ts: async function invalidateCollectionCache"
+    },
+    {
+      "id": "trigger-admin-collection-mutations-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/admin-collections.routes.ts: await invalidateCollectionCache({"
+    },
+    {
+      "id": "trigger-currency-config-update-resource-types-valid",
+      "status": "pass",
+      "note": "Trigger resourceTypes must use supported resource types only: currency_rates"
+    },
+    {
+      "id": "trigger-currency-config-update-source-path-exists",
+      "status": "pass",
+      "note": "Trigger source path must exist: src/routes/api/currency.routes.ts"
+    },
+    {
+      "id": "trigger-currency-config-update-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/routes/api/currency.routes.ts: await invalidateByTags([\"currency:rates\"]);"
+    },
+    {
+      "id": "trigger-plan-executor-resource-types-valid",
+      "status": "pass",
+      "note": "Trigger resourceTypes must use supported resource types only: product, collection, event, currency_rates, products_listing, collections_listing, events_listing"
+    },
+    {
+      "id": "trigger-plan-executor-source-path-exists",
+      "status": "pass",
+      "note": "Trigger source path must exist: src/infrastructure/cache/invalidation-executor.ts"
+    },
+    {
+      "id": "trigger-plan-executor-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present in src/infrastructure/cache/invalidation-executor.ts: buildCacheInvalidationPlan"
+    },
+    {
+      "id": "trigger-plan-executor-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present in src/infrastructure/cache/invalidation-executor.ts: await invalidateByTags(plan.tags);"
+    },
+    {
+      "id": "trigger-plan-executor-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present in src/infrastructure/cache/invalidation-executor.ts: directKeysPurged"
+    },
+    {
+      "id": "plan-plan-product-slug",
+      "status": "pass",
+      "note": "Plan case plan-product-slug must satisfy expected tags/keys/unresolved/touched surfaces."
+    },
+    {
+      "id": "plan-plan-collection-slug",
+      "status": "pass",
+      "note": "Plan case plan-collection-slug must satisfy expected tags/keys/unresolved/touched surfaces."
+    },
+    {
+      "id": "plan-plan-event-slug",
+      "status": "pass",
+      "note": "Plan case plan-event-slug must satisfy expected tags/keys/unresolved/touched surfaces."
+    },
+    {
+      "id": "plan-plan-currency-rates",
+      "status": "pass",
+      "note": "Plan case plan-currency-rates must satisfy expected tags/keys/unresolved/touched surfaces."
+    },
+    {
+      "id": "plan-plan-listing-broadcast",
+      "status": "pass",
+      "note": "Plan case plan-listing-broadcast must satisfy expected tags/keys/unresolved/touched surfaces."
+    },
+    {
+      "id": "plan-plan-unresolved-product-id",
+      "status": "pass",
+      "note": "Plan case plan-unresolved-product-id must satisfy expected tags/keys/unresolved/touched surfaces."
+    },
+    {
+      "id": "plan-plan-resolver-id-coverage",
+      "status": "pass",
+      "note": "Plan case plan-resolver-id-coverage must satisfy expected tags/keys/unresolved/touched surfaces."
+    }
+  ],
+  "planEvaluations": [
+    {
+      "id": "plan-product-slug",
+      "status": "pass",
+      "tagsOk": true,
+      "directKeysOk": true,
+      "unresolvedOk": true,
+      "touchedSurfacesOk": true,
+      "note": "all expected outputs present"
+    },
+    {
+      "id": "plan-collection-slug",
+      "status": "pass",
+      "tagsOk": true,
+      "directKeysOk": true,
+      "unresolvedOk": true,
+      "touchedSurfacesOk": true,
+      "note": "all expected outputs present"
+    },
+    {
+      "id": "plan-event-slug",
+      "status": "pass",
+      "tagsOk": true,
+      "directKeysOk": true,
+      "unresolvedOk": true,
+      "touchedSurfacesOk": true,
+      "note": "all expected outputs present"
+    },
+    {
+      "id": "plan-currency-rates",
+      "status": "pass",
+      "tagsOk": true,
+      "directKeysOk": true,
+      "unresolvedOk": true,
+      "touchedSurfacesOk": true,
+      "note": "all expected outputs present"
+    },
+    {
+      "id": "plan-listing-broadcast",
+      "status": "pass",
+      "tagsOk": true,
+      "directKeysOk": true,
+      "unresolvedOk": true,
+      "touchedSurfacesOk": true,
+      "note": "all expected outputs present"
+    },
+    {
+      "id": "plan-unresolved-product-id",
+      "status": "pass",
+      "tagsOk": true,
+      "directKeysOk": true,
+      "unresolvedOk": true,
+      "touchedSurfacesOk": true,
+      "note": "all expected outputs present"
+    },
+    {
+      "id": "plan-resolver-id-coverage",
+      "status": "pass",
+      "tagsOk": true,
+      "directKeysOk": true,
+      "unresolvedOk": true,
+      "touchedSurfacesOk": true,
+      "note": "all expected outputs present"
+    }
+  ],
+  "metrics": {
+    "totalChecks": 98,
+    "failedChecks": 0,
+    "surfaceCount": 8,
+    "triggerCount": 5,
+    "planCases": 7,
+    "planCasesPassing": 7
+  }
+}

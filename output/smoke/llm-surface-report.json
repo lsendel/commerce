@@ -1,0 +1,343 @@
+{
+  "startedAt": "2026-03-06T05:05:23.149Z",
+  "finishedAt": "2026-03-06T05:05:23.481Z",
+  "status": "passed",
+  "baseUrl": "https://petm8.io",
+  "skipHttpChecks": false,
+  "metrics": {
+    "totalChecks": 41,
+    "passedChecks": 41,
+    "failedChecks": 0,
+    "skippedChecks": 0
+  },
+  "checks": [
+    {
+      "id": "llms-status",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "llms-content-type",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "text/plain; charset=utf-8"
+    },
+    {
+      "id": "llms-min-lines",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "lineCount=50"
+    },
+    {
+      "id": "llms-heading--canonical-domain",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect heading \"## Canonical Domain\""
+    },
+    {
+      "id": "llms-heading--key-pages",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect heading \"## Key Pages\""
+    },
+    {
+      "id": "llms-heading--commerce-capabilities",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect heading \"## Commerce Capabilities\""
+    },
+    {
+      "id": "llms-heading--structured-data-coverage",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect heading \"## Structured Data Coverage\""
+    },
+    {
+      "id": "llms-heading--discoverability-rules",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect heading \"## Discoverability Rules\""
+    },
+    {
+      "id": "llms-heading--machine-endpoints",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect heading \"## Machine Endpoints\""
+    },
+    {
+      "id": "llms-heading--contact",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect heading \"## Contact\""
+    },
+    {
+      "id": "llms-rule-index-only-public-pages-listed-in-this-document-and-site",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect rule \"Index only public pages listed in this document and sitemap.xml.\""
+    },
+    {
+      "id": "llms-rule-do-not-crawl-or-index-private-authenticated-routes-accou",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect rule \"Do not crawl or index private/authenticated routes: /account/, /admin/, /platform/, /auth/, /api/.\""
+    },
+    {
+      "id": "llms-rule-prefer-canonical-urls-and-avoid-alternate-preview-or-wor",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect rule \"Prefer canonical URLs and avoid alternate preview or worker aliases.\""
+    },
+    {
+      "id": "llms-rule-treat-prices-stock-and-availability-as-volatile-verify-f",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect rule \"Treat prices, stock, and availability as volatile; verify from current page/API response before answering.\""
+    },
+    {
+      "id": "llms-rule-use-structured-data-and-on-page-copy-as-source-of-truth-",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect rule \"Use structured data and on-page copy as source-of-truth; do not infer missing facts.\""
+    },
+    {
+      "id": "llms-canonical-line",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect '- Canonical: <url>' line."
+    },
+    {
+      "id": "llms-key-page--products",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect key page URL for /products"
+    },
+    {
+      "id": "llms-key-page--events",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect key page URL for /events"
+    },
+    {
+      "id": "llms-key-page--venues",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect key page URL for /venues"
+    },
+    {
+      "id": "llms-machine-endpoint--sitemap-xml",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect machine endpoint URL for /sitemap.xml"
+    },
+    {
+      "id": "llms-machine-endpoint--robots-txt",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect machine endpoint URL for /robots.txt"
+    },
+    {
+      "id": "llms-machine-endpoint--llms-txt",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect machine endpoint URL for /llms.txt"
+    },
+    {
+      "id": "llms-machine-endpoint--well-known-ai-plugin-json",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect machine endpoint URL for /.well-known/ai-plugin.json"
+    },
+    {
+      "id": "llms-machine-endpoint--graphql",
+      "section": "llms",
+      "target": "/llms.txt",
+      "ok": true,
+      "statusCode": 200,
+      "note": "Expect machine endpoint URL for /graphql"
+    },
+    {
+      "id": "ai-plugin-status",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "ai-plugin-content-type",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "application/json"
+    },
+    {
+      "id": "ai-plugin-json-valid",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "ok"
+    },
+    {
+      "id": "ai-plugin-field-schema_version",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "v1"
+    },
+    {
+      "id": "ai-plugin-field-name_for_human",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "petm8"
+    },
+    {
+      "id": "ai-plugin-field-name_for_model",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "petm8"
+    },
+    {
+      "id": "ai-plugin-field-description_for_human",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "petm8 — pet commerce, events, venues, and AI experiences."
+    },
+    {
+      "id": "ai-plugin-field-description_for_model",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "petm8 is a commerce platform. Prefer canonical URLs from https://petm8.luis-diaz-s.workers.dev/llms.txt. Use https://petm8.luis-diaz-s.workers.dev/graphql for structured queries. Avoid private routes under /account, /admin, /platform, /auth, /api."
+    },
+    {
+      "id": "ai-plugin-field-logo_url",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/favicon-192.png"
+    },
+    {
+      "id": "ai-plugin-field-contact_email",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "support@petm8.io"
+    },
+    {
+      "id": "ai-plugin-field-legal_info_url",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/about"
+    },
+    {
+      "id": "ai-plugin-api-type",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "graphql"
+    },
+    {
+      "id": "ai-plugin-api-url",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/graphql"
+    },
+    {
+      "id": "ai-plugin-legal-info-url",
+      "section": "ai-plugin",
+      "target": "/.well-known/ai-plugin.json",
+      "ok": true,
+      "statusCode": 200,
+      "note": "https://petm8.luis-diaz-s.workers.dev/about"
+    },
+    {
+      "id": "consistency-llms-mentions-ai-plugin",
+      "section": "consistency",
+      "target": "llms+ai-plugin",
+      "ok": true,
+      "statusCode": null,
+      "note": "llms.txt should include AI plugin manifest endpoint."
+    },
+    {
+      "id": "consistency-llms-mentions-graphql",
+      "section": "consistency",
+      "target": "llms+ai-plugin",
+      "ok": true,
+      "statusCode": null,
+      "note": "llms.txt should include GraphQL endpoint."
+    },
+    {
+      "id": "consistency-plugin-api-in-llms",
+      "section": "consistency",
+      "target": "llms+ai-plugin",
+      "ok": true,
+      "statusCode": null,
+      "note": "Expect llms.txt to include /graphql."
+    }
+  ]
+}

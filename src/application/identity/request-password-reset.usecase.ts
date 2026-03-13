@@ -19,6 +19,7 @@ export class RequestPasswordResetUseCase {
     const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
+    await this.userRepo.invalidateActivePasswordResetTokens(user.id);
     await this.userRepo.createPasswordResetToken(user.id, token, expiresAt);
 
     // Queue email notification

@@ -15,6 +15,7 @@ interface CheckoutSuccessPageProps {
     id: string;
     status?: string | null;
     subtotal: string;
+    discount?: string;
     tax: string;
     shippingCost: string;
     total: string;
@@ -99,6 +100,12 @@ export const CheckoutSuccessPage: FC<CheckoutSuccessPageProps> = ({ order }) => 
             <span class="text-gray-600">Subtotal</span>
             <span class="font-medium text-gray-900">${parseFloat(order.subtotal).toFixed(2)}</span>
           </div>
+          {parseFloat(order.discount || "0") > 0 && (
+            <div class="flex justify-between text-sm text-emerald-700">
+              <span>Discount</span>
+              <span class="font-medium">-${parseFloat(order.discount || "0").toFixed(2)}</span>
+            </div>
+          )}
           {parseFloat(order.shippingCost) > 0 && (
             <div class="flex justify-between text-sm">
               <span class="text-gray-600">Shipping</span>

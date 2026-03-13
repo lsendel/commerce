@@ -87,16 +87,16 @@ export const PromotionCodesPage: FC<PromotionCodesPageProps> = ({ codes, promoti
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody id="codes-tbody" class="divide-y divide-gray-200 dark:divide-gray-700">
               {codes.length === 0 ? (
-                <tr>
+                <tr id="codes-empty-row">
                   <td colspan={5} class="px-4 py-8 text-center text-sm text-gray-500">
                     No coupon codes yet. Generate one to get started.
                   </td>
                 </tr>
               ) : (
                 codes.map((code) => (
-                  <tr key={code.id} class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <tr key={code.id} class="hover:bg-gray-50 dark:hover:bg-gray-700/50" data-code-row data-code-id={code.id}>
                     <td class="px-4 py-3 text-sm font-mono font-medium text-gray-900 dark:text-gray-100">{code.code}</td>
                     <td class="px-4 py-3 text-sm text-gray-600">{code.promotionName}</td>
                     <td class="px-4 py-3 text-sm text-gray-600">
@@ -134,6 +134,62 @@ export const PromotionCodesPage: FC<PromotionCodesPageProps> = ({ codes, promoti
 
             var formSection = document.getElementById('code-form-section');
             var form = document.getElementById('code-form');
+            var saveBtn = document.getElementById('code-save-btn');
+            var codesBody = document.getElementById('codes-tbody');
+
+            function setButtonLoading(button, loading, loadingLabel, idleLabel) {
+              if (!button) return;
+              if (loading) {
+                if (!button.dataset.originalLabel) button.dataset.originalLabel = button.textContent || '';
+                button.textContent = loadingLabel;
+                button.setAttribute('disabled', 'true');
+                return;
+              }
+              button.textContent = idleLabel || button.dataset.originalLabel || button.textContent;
+              button.removeAttribute('disabled');
+            }
+
+            function escapeHtml(value) {
+              return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            }
+
+            function formatCreatedAt(value) {
+              var date = new Date(value || Date.now());
+              if (Number.isNaN(date.getTime())) return 'Now';
+              return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+              });
+            }
+
+            function renderCodeRow(code) {
+              var redemptions = Number(code.redemptionCount || 0);
+              var maxRedemptions = code.maxRedemptions != null && code.maxRedemptions !== '' ? Number(code.maxRedemptions) : null;
+              var codeText = code.code ? String(code.code).toUpperCase() : '';
+              return '' +
+                '<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50" data-code-row data-code-id="' + escapeHtml(code.id || '') + '">' +
+                  '<td class="px-4 py-3 text-sm font-mono font-medium text-gray-900 dark:text-gray-100">' + escapeHtml(codeText) + '</td>' +
+                  '<td class="px-4 py-3 text-sm text-gray-600">' + escapeHtml(code.promotionName || '') + '</td>' +
+                  '<td class="px-4 py-3 text-sm text-gray-600">' + redemptions + (maxRedemptions ? ' / ' + maxRedemptions : '') + '</td>' +
+                  '<td class="px-4 py-3 text-sm text-gray-500">' + (code.singleUsePerCustomer ? 'Yes' : 'No') + '</td>' +
+                  '<td class="px-4 py-3 text-sm text-gray-500">' + escapeHtml(formatCreatedAt(code.createdAt)) + '</td>' +
+                '</tr>';
+            }
+
+            function prependCodeRow(code) {
+              if (!codesBody) return;
+              var emptyRow = document.getElementById('codes-empty-row');
+              if (emptyRow) emptyRow.remove();
+              codesBody.insertAdjacentHTML('afterbegin', renderCodeRow(code));
+            }
+
             document.getElementById('btn-add-code').addEventListener('click', function() {
               formSection.classList.remove('hidden');
             });
@@ -145,22 +201,47 @@ export const PromotionCodesPage: FC<PromotionCodesPageProps> = ({ codes, promoti
               e.preventDefault();
               var fd = new FormData(this);
               var promotionId = fd.get('promotionId');
+              var promotionName = '';
+              var promotionSelect = form.querySelector('[name="promotionId"]');
+              if (promotionSelect) {
+                var selectedOption = promotionSelect.options[promotionSelect.selectedIndex];
+                promotionName = selectedOption ? selectedOption.text : '';
+              }
               var body = {
                 code: fd.get('code'),
                 maxRedemptions: fd.get('maxRedemptions') ? parseInt(fd.get('maxRedemptions'), 10) : undefined,
               };
               try {
+                setButtonLoading(saveBtn, true, 'Creating...', 'Create Code');
                 var res = await fetch('/api/promotions/' + promotionId + '/codes', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(body),
                 });
+                var data = await res.json().catch(function() { return {}; });
                 if (!res.ok) {
-                  var data = await res.json().catch(function() { return {}; });
                   throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to create code') : (data.error || data.message || 'Failed to create code'));
                 }
-                window.location.reload();
-              } catch (err) { showPromotionCodesError(err.message || 'Failed to create code'); }
+                var coupon = data && data.coupon && typeof data.coupon === 'object' ? data.coupon : null;
+                if (coupon) {
+                  prependCodeRow({
+                    id: coupon.id || '',
+                    code: coupon.code || body.code || '',
+                    promotionName: promotionName,
+                    redemptionCount: coupon.redemptionCount || 0,
+                    maxRedemptions: coupon.maxRedemptions != null ? coupon.maxRedemptions : body.maxRedemptions,
+                    singleUsePerCustomer: Boolean(coupon.singleUsePerCustomer),
+                    createdAt: coupon.createdAt || new Date().toISOString(),
+                  });
+                }
+                formSection.classList.add('hidden');
+                form.reset();
+                if (window.showToast) window.showToast('Coupon code created.', 'success');
+              } catch (err) {
+                showPromotionCodesError(err.message || 'Failed to create code');
+              } finally {
+                setButtonLoading(saveBtn, false, null, 'Create Code');
+              }
             });
           })();
         </script>

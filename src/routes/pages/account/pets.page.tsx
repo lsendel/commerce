@@ -32,7 +32,7 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
       </div>
 
       {/* Pet Cards Grid */}
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+      <div id="pets-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
         {pets.map((pet) => (
           <div
             class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 text-center"
@@ -40,6 +40,7 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
             data-name={pet.name}
             data-species={pet.species}
             data-breed={pet.breed || ""}
+            data-photo-url={pet.photoUrl || ""}
           >
             {/* Avatar */}
             <div class="w-20 h-20 rounded-full mx-auto mb-4 overflow-hidden bg-brand-50 flex items-center justify-center ring-4 ring-brand-100/50">
@@ -244,6 +245,7 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
       {html`
         <script>
           (function() {
+            var petsGrid = document.getElementById('pets-grid');
             var formSection = document.getElementById('pet-form-section');
             var form = document.getElementById('pet-form');
             var formTitle = document.getElementById('pet-form-title');
@@ -260,6 +262,79 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
               formError.textContent = message;
               formError.classList.remove('hidden');
               if (window.showToast) window.showToast(message, 'error');
+            }
+
+            function escapeHtml(value) {
+              return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            }
+
+            function normalizePet(raw) {
+              if (!raw || typeof raw !== 'object') return null;
+              var id = raw.id ? String(raw.id) : '';
+              if (!id) return null;
+              return {
+                id: id,
+                name: raw.name ? String(raw.name) : 'Untitled pet',
+                species: raw.species ? String(raw.species) : 'other',
+                breed: raw.breed ? String(raw.breed) : '',
+                photoUrl: raw.photoUrl ? String(raw.photoUrl) : '',
+              };
+            }
+
+            function renderPetCard(pet) {
+              var avatar = pet.photoUrl
+                ? '<img src="' + escapeHtml(pet.photoUrl) + '" alt="' + escapeHtml(pet.name) + '" class="w-full h-full object-cover" />'
+                : '<svg class="w-10 h-10 text-brand-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+              var breedLabel = pet.breed ? ' · ' + escapeHtml(pet.breed) : '';
+              return '' +
+                '<div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 text-center" data-pet-card="' + escapeHtml(pet.id) + '" data-name="' + escapeHtml(pet.name) + '" data-species="' + escapeHtml(pet.species) + '" data-breed="' + escapeHtml(pet.breed) + '" data-photo-url="' + escapeHtml(pet.photoUrl) + '">' +
+                  '<div class="w-20 h-20 rounded-full mx-auto mb-4 overflow-hidden bg-brand-50 flex items-center justify-center ring-4 ring-brand-100/50">' + avatar + '</div>' +
+                  '<h3 class="font-semibold text-gray-900 text-lg">' + escapeHtml(pet.name) + '</h3>' +
+                  '<p class="text-sm text-gray-500 mt-0.5 capitalize">' + escapeHtml(pet.species) + breedLabel + '</p>' +
+                  '<div class="flex items-center justify-center gap-2 mt-4">' +
+                    '<button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors" data-upload-photo="' + escapeHtml(pet.id) + '">' +
+                      '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>' +
+                      'Photo' +
+                    '</button>' +
+                    '<button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors" data-edit-pet="' + escapeHtml(pet.id) + '">' +
+                      '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>' +
+                      'Edit' +
+                    '</button>' +
+                    '<button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors" data-delete-pet="' + escapeHtml(pet.id) + '">' +
+                      '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>' +
+                      'Delete' +
+                    '</button>' +
+                  '</div>' +
+                '</div>';
+            }
+
+            function renderPetCards(pets) {
+              if (!petsGrid) return;
+              petsGrid.querySelectorAll('[data-pet-card]').forEach(function(card) { card.remove(); });
+              var addTrigger = document.getElementById('add-pet-trigger');
+              (Array.isArray(pets) ? pets : []).forEach(function(pet) {
+                var html = renderPetCard(pet);
+                if (addTrigger && addTrigger.parentElement === petsGrid) {
+                  addTrigger.insertAdjacentHTML('beforebegin', html);
+                } else {
+                  petsGrid.insertAdjacentHTML('beforeend', html);
+                }
+              });
+            }
+
+            async function refreshPets() {
+              var res = await fetch('/api/studio/pets', { credentials: 'same-origin' });
+              var data = await res.json().catch(function() { return []; });
+              if (!res.ok) {
+                throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to refresh pets') : (data.error || data.message || 'Failed to refresh pets'));
+              }
+              var normalized = Array.isArray(data) ? data.map(normalizePet).filter(Boolean) : [];
+              renderPetCards(normalized);
             }
 
             function resetPreview() {
@@ -309,21 +384,52 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
             document.getElementById('pet-form-close').addEventListener('click', hideForm);
             document.getElementById('pet-cancel-btn').addEventListener('click', hideForm);
 
-            document.querySelectorAll('[data-edit-pet]').forEach(function(btn) {
-              btn.addEventListener('click', function() {
-                var id = this.getAttribute('data-edit-pet');
-                form.querySelector('[name="petId"]').value = id;
-                var card = document.querySelector('[data-pet-card="' + id + '"]');
-                if (card) populateForm(card);
+            document.addEventListener('click', function(event) {
+              var editBtn = event.target && event.target.closest ? event.target.closest('[data-edit-pet]') : null;
+              if (editBtn) {
+                var editId = editBtn.getAttribute('data-edit-pet');
+                form.querySelector('[name="petId"]').value = editId || '';
+                var editCard = document.querySelector('[data-pet-card="' + editId + '"]');
+                if (editCard) populateForm(editCard);
                 showForm('Edit Pet');
-              });
-            });
+                return;
+              }
 
-            document.querySelectorAll('[data-delete-pet]').forEach(function(btn) {
-              btn.addEventListener('click', function() {
-                pendingDeleteId = this.getAttribute('data-delete-pet');
+              var deleteBtn = event.target && event.target.closest ? event.target.closest('[data-delete-pet]') : null;
+              if (deleteBtn) {
+                pendingDeleteId = deleteBtn.getAttribute('data-delete-pet');
                 deleteConfirm.classList.remove('hidden');
-              });
+                return;
+              }
+
+              var uploadBtn = event.target && event.target.closest ? event.target.closest('[data-upload-photo]') : null;
+              if (!uploadBtn) return;
+              var id = uploadBtn.getAttribute('data-upload-photo');
+              var input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'image/jpeg,image/png,image/webp';
+              input.onchange = async function() {
+                if (!input.files[0]) return;
+                uploadBtn.textContent = 'Uploading...';
+                uploadBtn.disabled = true;
+                var fd = new FormData();
+                fd.append('photo', input.files[0]);
+                try {
+                  var res = await fetch('/api/studio/pets/' + id + '/photo', { method: 'POST', body: fd });
+                  var data = await res.json().catch(function() { return {}; });
+                  if (!res.ok) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Upload failed') : (data.error || data.message || 'Upload failed'));
+                  }
+                  await refreshPets();
+                  if (window.showToast) window.showToast('Photo updated.', 'success');
+                } catch (err) {
+                  showError(err, 'Upload failed');
+                } finally {
+                  uploadBtn.textContent = 'Photo';
+                  uploadBtn.disabled = false;
+                }
+              };
+              input.click();
             });
 
             document.getElementById('pet-delete-no').addEventListener('click', function() {
@@ -333,49 +439,23 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
 
             document.getElementById('pet-delete-yes').addEventListener('click', async function() {
               if (!pendingDeleteId) return;
+              var btn = this;
+              btn.setAttribute('disabled', 'true');
               try {
                 var res = await fetch('/api/studio/pets/' + pendingDeleteId, { method: 'DELETE' });
+                var data = await res.json().catch(function() { return {}; });
                 if (!res.ok) {
-                  var data = await res.json().catch(function() { return {}; });
                   throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to remove pet') : (data.error || data.message || 'Failed to remove pet'));
                 }
-                window.location.reload();
+                await refreshPets();
+                if (window.showToast) window.showToast('Pet removed.', 'success');
               } catch (err) {
                 showError(err, 'Failed to remove pet');
               } finally {
                 deleteConfirm.classList.add('hidden');
                 pendingDeleteId = null;
+                btn.removeAttribute('disabled');
               }
-            });
-
-            // Standalone photo upload via button on card
-            document.querySelectorAll('[data-upload-photo]').forEach(function(btn) {
-              btn.addEventListener('click', function() {
-                var id = this.getAttribute('data-upload-photo');
-                var input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/jpeg,image/png,image/webp';
-                input.onchange = async function() {
-                  if (!input.files[0]) return;
-                  btn.textContent = 'Uploading...';
-                  btn.disabled = true;
-                  var fd = new FormData();
-                  fd.append('photo', input.files[0]);
-                  try {
-                    var res = await fetch('/api/studio/pets/' + id + '/photo', { method: 'POST', body: fd });
-                    if (!res.ok) {
-                      var data = await res.json().catch(function() { return {}; });
-                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Upload failed') : (data.error || data.message || 'Upload failed'));
-                    }
-                    window.location.reload();
-                  } catch (err) {
-                    showError(err, 'Upload failed');
-                    btn.textContent = 'Photo';
-                    btn.disabled = false;
-                  }
-                };
-                input.click();
-              });
             });
 
             form.addEventListener('submit', async function(e) {
@@ -413,13 +493,19 @@ export const PetsPage: FC<PetsPageProps> = ({ pets }) => {
                 if (photoFile && savedPet.id) {
                   var photoFd = new FormData();
                   photoFd.append('photo', photoFile);
-                  await fetch('/api/studio/pets/' + savedPet.id + '/photo', { method: 'POST', body: photoFd });
+                  var uploadRes = await fetch('/api/studio/pets/' + savedPet.id + '/photo', { method: 'POST', body: photoFd });
+                  if (uploadRes.ok) {
+                    savedPet = await uploadRes.json().catch(function() { return savedPet; });
+                  }
                 }
 
-                window.location.reload();
+                await refreshPets();
+                hideForm();
+                if (window.showToast) window.showToast(petId ? 'Pet updated.' : 'Pet added.', 'success');
               } catch (err) {
                 formError.textContent = err.message;
                 formError.classList.remove('hidden');
+              } finally {
                 btn.disabled = false;
               }
             });

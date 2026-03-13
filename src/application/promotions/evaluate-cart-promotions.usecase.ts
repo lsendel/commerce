@@ -6,6 +6,7 @@ import {
   type DiscountBreakdown,
   type EvaluationContext,
 } from "../../domain/promotions/promotion-evaluator.service";
+import type { PromotionType } from "../../domain/promotions/promotion.entity";
 import { orders, collectionProducts } from "../../infrastructure/db/schema";
 import { eq, inArray } from "drizzle-orm";
 
@@ -23,10 +24,24 @@ export class EvaluateCartPromotionsUseCase {
       unitPrice: number;
     }>,
     customerId: string | null,
+    options?: {
+      allowedTypes?: PromotionType[];
+      includePromotionIds?: string[];
+    },
   ): Promise<DiscountBreakdown[]> {
     // 1. Get all active promotions for this store
     const activePromotions = await this.promoRepo.listActive();
     if (activePromotions.length === 0) return [];
+
+    const allowedTypes = options?.allowedTypes;
+    const includePromotionIds = new Set(options?.includePromotionIds ?? []);
+    const candidatePromotions = activePromotions.filter((promotion) => {
+      if (includePromotionIds.has(promotion.id)) return true;
+      if (!allowedTypes || allowedTypes.length === 0) return true;
+      return allowedTypes.includes(promotion.type as PromotionType);
+    });
+
+    if (candidatePromotions.length === 0) return [];
 
     // 2. Build cart for evaluation -- enrich with collection IDs
     const productIds = [...new Set(cartItems.map((i) => i.productId))];
@@ -75,6 +90,6 @@ export class EvaluateCartPromotionsUseCase {
     const ctx: EvaluationContext = { isFirstPurchase, customerSegmentIds };
 
     // 4. Evaluate and return applicable discounts
-    return evaluatePromotions(activePromotions as any, cart, ctx);
+    return evaluatePromotions(candidatePromotions as any, cart, ctx);
   }
 }

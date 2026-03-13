@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
 import type { Env } from "../../env";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { requireRole } from "../../middleware/role.middleware";
@@ -17,6 +16,8 @@ import {
   addMemberSchema,
   addDomainSchema,
   subscribePlanSchema,
+  inviteMemberSchema,
+  changeMemberRoleSchema,
 } from "../../contracts/platform.contract";
 
 const platform = new Hono<{ Bindings: Env }>();
@@ -256,15 +257,10 @@ platform.post("/stores/:id/logo", requireAuth(), async (c) => {
 
 // ── Invitations ─────────────────────────────────────────────────────────────
 
-const inviteSchema = z.object({
-  email: z.string().email(),
-  role: z.enum(["admin", "staff"]),
-});
-
 platform.post(
   "/stores/:id/invite",
   requireAuth(),
-  zValidator("json", inviteSchema),
+  zValidator("json", inviteMemberSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const repo = new StoreRepository(db);
@@ -295,14 +291,10 @@ platform.post(
   },
 );
 
-const changeRoleSchema = z.object({
-  role: z.enum(["admin", "staff"]),
-});
-
 platform.patch(
   "/stores/:id/members/:userId/role",
   requireAuth(),
-  zValidator("json", changeRoleSchema),
+  zValidator("json", changeMemberRoleSchema),
   async (c) => {
     const db = createDb(c.env.DATABASE_URL);
     const repo = new StoreRepository(db);

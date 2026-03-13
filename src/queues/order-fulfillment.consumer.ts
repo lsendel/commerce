@@ -14,6 +14,13 @@ import { IntegrationRepository, IntegrationSecretRepository } from "../infrastru
 import type { FulfillmentOrderItem } from "../infrastructure/fulfillment/fulfillment-provider.interface";
 import type { FulfillmentProviderType } from "../shared/types";
 import type { IntegrationProvider } from "../domain/platform/integration.entity";
+import {
+  QUEUE_WORKFLOW_POLICIES,
+  computeRetryBackoffMs,
+  isRetryableWorkflowError,
+  resolveQueueMessageAttempt,
+  withWorkflowTimeout,
+} from "./orchestration-policy";
 
 interface FulfillmentMessage {
   type: string;
@@ -24,10 +31,57 @@ interface FulfillmentMessage {
   orderId?: string;
 }
 
+function resolveWorkflowSettings(env: Env) {
+  const base = QUEUE_WORKFLOW_POLICIES["order-fulfillment"];
+
+  const timeoutOverride = Number(env.FULFILLMENT_WORKFLOW_TIMEOUT_MS ?? "");
+  const timeoutMs =
+    Number.isFinite(timeoutOverride) && timeoutOverride > 0
+      ? Math.floor(timeoutOverride)
+      : base.timeoutMs;
+
+  const maxAttemptsOverride = Number(env.FULFILLMENT_WORKFLOW_MAX_ATTEMPTS ?? "");
+  const maxAttempts =
+    Number.isFinite(maxAttemptsOverride) && maxAttemptsOverride > 0
+      ? Math.floor(maxAttemptsOverride)
+      : base.maxAttempts;
+
+  return {
+    ...base,
+    timeoutMs,
+    maxAttempts,
+  };
+}
+
+export async function compensateOrderFulfillmentFailure(input: {
+  env: Env;
+  storeId?: string;
+  fulfillmentRequestId?: string;
+  reason: string;
+}) {
+  const { env, storeId, fulfillmentRequestId, reason } = input;
+  if (!storeId || !fulfillmentRequestId) return;
+
+  try {
+    const db = createDb(env.DATABASE_URL);
+    const requestRepo = new FulfillmentRequestRepository(db, storeId);
+    await requestRepo.updateStatus(fulfillmentRequestId, "failed", {
+      errorMessage: reason,
+    });
+  } catch (error) {
+    console.error(
+      `[fulfillment] Compensation write failed for request ${fulfillmentRequestId}:`,
+      error,
+    );
+  }
+}
+
 export async function handleOrderFulfillmentMessage(
   message: Message,
   env: Env,
 ): Promise<void> {
+  const workflowSettings = resolveWorkflowSettings(env);
+  const attempt = resolveQueueMessageAttempt(message);
   const body = message.body as FulfillmentMessage;
 
   // Handle legacy { orderId } messages — ack and skip
@@ -185,10 +239,14 @@ export async function handleOrderFulfillmentMessage(
   };
 
   try {
-    const result = await fulfillmentProvider.createOrder(
-      request.orderId,
-      recipient,
-      items,
+    const result = await withWorkflowTimeout(
+      fulfillmentProvider.createOrder(
+        request.orderId,
+        recipient,
+        items,
+      ),
+      workflowSettings.timeoutMs,
+      "order-fulfillment.create-order",
     );
 
     // Write externalId + status = 'submitted' atomically
@@ -206,23 +264,50 @@ export async function handleOrderFulfillmentMessage(
     message.ack();
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    const statusCode = (error as any)?.status ?? (error as any)?.statusCode;
+    const candidate = error as { status?: number; statusCode?: number };
+    const statusCode = candidate.status ?? candidate.statusCode;
+    const retryableByStatus =
+      typeof statusCode === "number"
+        ? [408, 409, 425, 429].includes(statusCode) || statusCode >= 500
+        : null;
+    const retryable = retryableByStatus ?? isRetryableWorkflowError(err);
 
-    if (statusCode && statusCode >= 400 && statusCode < 500) {
+    if (!retryable) {
       // 4xx: client error, mark as failed and ack (no retry)
       console.error(
         `[fulfillment] 4xx error for request ${fulfillmentRequestId}: ${err.message}`,
       );
-      await requestRepo.updateStatus(fulfillmentRequestId, "failed", {
-        errorMessage: err.message,
+      await compensateOrderFulfillmentFailure({
+        env,
+        storeId,
+        fulfillmentRequestId,
+        reason: err.message,
       });
       message.ack();
-    } else {
-      // 5xx / network: retry
-      console.error(
-        `[fulfillment] Retriable error for request ${fulfillmentRequestId}: ${err.message}`,
-      );
-      message.retry();
+      return;
     }
+
+    if (attempt >= workflowSettings.maxAttempts) {
+      const finalReason =
+        `Retry exhaustion after ${attempt} attempt(s): ${err.message}`;
+      console.error(
+        `[fulfillment] Retry budget exhausted for request ${fulfillmentRequestId}. ${finalReason}`,
+      );
+      await compensateOrderFulfillmentFailure({
+        env,
+        storeId,
+        fulfillmentRequestId,
+        reason: finalReason,
+      });
+      message.ack();
+      return;
+    }
+
+    const recommendedBackoffMs = computeRetryBackoffMs(workflowSettings, attempt);
+    console.error(
+      `[fulfillment] Retriable error for request ${fulfillmentRequestId} (attempt ${attempt}/${workflowSettings.maxAttempts}, backoff~${recommendedBackoffMs}ms): ${err.message}`,
+    );
+    message.retry();
+    return;
   }
 }

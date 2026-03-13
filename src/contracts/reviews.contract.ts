@@ -28,6 +28,10 @@ export const moderateReviewSchema = z.object({
   action: z.enum(["approved", "rejected"]),
 });
 
+export const respondToReviewSchema = z.object({
+  responseText: z.string().min(1).max(2000),
+});
+
 export const reviewsContract = c.router({
   submit: {
     method: "POST",
@@ -70,6 +74,8 @@ export const reviewsContract = c.router({
         page: z.number(),
         limit: z.number(),
       }),
+      401: z.object({ error: z.string() }),
+      403: z.object({ error: z.string() }),
     },
   },
   moderate: {
@@ -80,6 +86,21 @@ export const reviewsContract = c.router({
     responses: {
       200: reviewSchema,
       400: z.object({ error: z.string() }),
+      401: z.object({ error: z.string() }),
+      403: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
+    },
+  },
+  respond: {
+    method: "POST",
+    path: "/api/reviews/:id/respond",
+    pathParams: idParamSchema,
+    body: respondToReviewSchema,
+    responses: {
+      200: reviewSchema,
+      400: z.object({ error: z.string() }),
+      401: z.object({ error: z.string() }),
+      403: z.object({ error: z.string() }),
       404: z.object({ error: z.string() }),
     },
   },

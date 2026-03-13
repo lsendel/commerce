@@ -1,0 +1,217 @@
+{
+  "startedAt": "2026-03-06T06:41:07.983Z",
+  "finishedAt": "2026-03-06T06:41:18.158Z",
+  "status": "passed",
+  "baseUrl": "https://petm8.io",
+  "skipHttpChecks": true,
+  "commands": [
+    {
+      "name": "pnpm smoke:admin-parity",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 467,
+      "summary": "> tsx scripts/smoke-policy-control-tower.ts | Contract metadata checks passed. | Live smoke skipped: set SMOKE_BASE_URL (and auth headers) to run HTTP checks."
+    },
+    {
+      "name": "pnpm smoke:storefront-browser",
+      "ran": false,
+      "status": "skipped",
+      "exitCode": null,
+      "durationMs": 0,
+      "summary": "Skipped via SMOKE_MATRIX_SKIP_HTTP"
+    },
+    {
+      "name": "pnpm smoke:seo",
+      "ran": false,
+      "status": "skipped",
+      "exitCode": null,
+      "durationMs": 0,
+      "summary": "Skipped via SMOKE_MATRIX_SKIP_HTTP"
+    },
+    {
+      "name": "pnpm smoke:llm-surface",
+      "ran": false,
+      "status": "skipped",
+      "exitCode": null,
+      "durationMs": 0,
+      "summary": "Skipped via SMOKE_MATRIX_SKIP_HTTP"
+    },
+    {
+      "name": "pnpm smoke:structured-data",
+      "ran": false,
+      "status": "skipped",
+      "exitCode": null,
+      "durationMs": 0,
+      "summary": "Skipped via SMOKE_MATRIX_SKIP_HTTP"
+    },
+    {
+      "name": "pnpm smoke:admin-analytics-automation",
+      "ran": false,
+      "status": "skipped",
+      "exitCode": null,
+      "durationMs": 0,
+      "summary": "Skipped via SMOKE_MATRIX_SKIP_HTTP"
+    },
+    {
+      "name": "pnpm smoke:landing-pages",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 409,
+      "summary": "> petm8@0.1.0 smoke:landing-pages /Users/lsendel/Projects/commerce | > tsx scripts/run-landing-page-pipeline.ts | Landing page pipeline passed."
+    },
+    {
+      "name": "pnpm smoke:growth-experiments",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 414,
+      "summary": "> petm8@0.1.0 smoke:growth-experiments /Users/lsendel/Projects/commerce | > tsx scripts/smoke-growth-experiment-os.ts | Growth experiment OS smoke passed with warnings: 1 experiment(s) warned."
+    },
+    {
+      "name": "pnpm smoke:event-pipeline",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 619,
+      "summary": "> petm8@0.1.0 smoke:event-pipeline /Users/lsendel/Projects/commerce | > tsx scripts/smoke-event-pipeline.ts | Event pipeline contract smoke passed."
+    },
+    {
+      "name": "pnpm smoke:segment-freshness",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 774,
+      "summary": "> petm8@0.1.0 smoke:segment-freshness /Users/lsendel/Projects/commerce | > tsx scripts/smoke-segment-freshness.ts | Segment freshness smoke passed with warnings."
+    },
+    {
+      "name": "pnpm smoke:identity-resolution",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 677,
+      "summary": "> petm8@0.1.0 smoke:identity-resolution /Users/lsendel/Projects/commerce | > tsx scripts/smoke-identity-resolution.ts | Identity resolution smoke passed with warnings."
+    },
+    {
+      "name": "pnpm smoke:recommendation-quality",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 534,
+      "summary": "> petm8@0.1.0 smoke:recommendation-quality /Users/lsendel/Projects/commerce | > tsx scripts/smoke-recommendation-quality.ts | Recommendation quality smoke passed."
+    },
+    {
+      "name": "pnpm smoke:pricing-policy-simulation",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 425,
+      "summary": "> petm8@0.1.0 smoke:pricing-policy-simulation /Users/lsendel/Projects/commerce | > tsx scripts/smoke-pricing-policy-simulation.ts | Pricing policy simulation smoke passed."
+    },
+    {
+      "name": "pnpm smoke:fulfillment-sla",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 649,
+      "summary": "> petm8@0.1.0 smoke:fulfillment-sla /Users/lsendel/Projects/commerce | > tsx scripts/smoke-fulfillment-sla.ts | Fulfillment SLA smoke passed."
+    },
+    {
+      "name": "pnpm smoke:compliance-controls",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 415,
+      "summary": "> petm8@0.1.0 smoke:compliance-controls /Users/lsendel/Projects/commerce | > tsx scripts/smoke-compliance-controls.ts | Compliance controls smoke passed."
+    },
+    {
+      "name": "pnpm smoke:audit-pii",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 502,
+      "summary": "> petm8@0.1.0 smoke:audit-pii /Users/lsendel/Projects/commerce | > tsx scripts/smoke-audit-pii.ts | Audit/PII smoke passed."
+    },
+    {
+      "name": "pnpm smoke:secrets-hygiene",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 456,
+      "summary": "> petm8@0.1.0 smoke:secrets-hygiene /Users/lsendel/Projects/commerce | > tsx scripts/smoke-secrets-hygiene.ts | Secrets hygiene smoke passed."
+    },
+    {
+      "name": "pnpm smoke:access-governance",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 440,
+      "summary": "> petm8@0.1.0 smoke:access-governance /Users/lsendel/Projects/commerce | > tsx scripts/smoke-access-governance.ts | Access governance smoke passed."
+    },
+    {
+      "name": "pnpm smoke:cost-observability",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 431,
+      "summary": "> petm8@0.1.0 smoke:cost-observability /Users/lsendel/Projects/commerce | > tsx scripts/smoke-cost-observability.ts | Cost observability smoke passed."
+    },
+    {
+      "name": "pnpm smoke:query-performance",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 442,
+      "summary": "> petm8@0.1.0 smoke:query-performance /Users/lsendel/Projects/commerce | > tsx scripts/smoke-query-performance.ts | Query performance smoke passed."
+    },
+    {
+      "name": "pnpm smoke:cache-invalidation",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 469,
+      "summary": "> petm8@0.1.0 smoke:cache-invalidation /Users/lsendel/Projects/commerce | > tsx scripts/smoke-cache-invalidation.ts | Cache invalidation smoke passed."
+    },
+    {
+      "name": "pnpm smoke:workflow-reliability",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 436,
+      "summary": "> petm8@0.1.0 smoke:workflow-reliability /Users/lsendel/Projects/commerce | > tsx scripts/smoke-workflow-reliability.ts | Workflow reliability smoke passed."
+    },
+    {
+      "name": "pnpm smoke:dlq-remediation",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 745,
+      "summary": "> petm8@0.1.0 smoke:dlq-remediation /Users/lsendel/Projects/commerce | > tsx scripts/smoke-dlq-remediation.ts | DLQ auto-remediation smoke passed."
+    },
+    {
+      "name": "pnpm smoke:api-versioning",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 413,
+      "summary": "> petm8@0.1.0 smoke:api-versioning /Users/lsendel/Projects/commerce | > tsx scripts/smoke-api-versioning.ts | API versioning smoke passed."
+    },
+    {
+      "name": "pnpm smoke:partner-onboarding",
+      "ran": true,
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 456,
+      "summary": "> petm8@0.1.0 smoke:partner-onboarding /Users/lsendel/Projects/commerce | > tsx scripts/smoke-partner-onboarding.ts | Partner onboarding smoke passed."
+    }
+  ],
+  "metrics": {
+    "totalChecks": 0,
+    "passedChecks": 0,
+    "failedChecks": 0,
+    "skippedChecks": 98
+  },
+  "sections": [],
+  "checks": []
+}

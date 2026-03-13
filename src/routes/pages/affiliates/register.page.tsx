@@ -55,31 +55,73 @@ export const AffiliateRegisterPage: FC<{
           </p>
         </div>
       ) : (
-        <form id="affiliate-register-form" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Custom Slug (optional)
-            </label>
-            <input
-              type="text"
-              name="customSlug"
-              pattern="[a-z0-9-]+"
-              minLength={2}
-              maxLength={50}
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
-              placeholder="my-brand"
-            />
-            <p class="text-xs text-gray-500 mt-1">
-              Used in your referral URL. Leave blank for auto-generated code.
-            </p>
-          </div>
-          <button
-            type="submit"
-            class="w-full bg-brand-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-700"
+        <>
+          <form id="affiliate-register-form" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Custom Slug (optional)
+              </label>
+              <input
+                type="text"
+                name="customSlug"
+                pattern="[a-z0-9-]+"
+                minLength={2}
+                maxLength={50}
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                placeholder="my-brand"
+              />
+              <p class="text-xs text-gray-500 mt-1">
+                Used in your referral URL. Leave blank for auto-generated code.
+              </p>
+            </div>
+            <button
+              type="submit"
+              class="w-full bg-brand-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-700"
+            >
+              Register as Affiliate
+            </button>
+          </form>
+
+          <div
+            id="affiliate-register-success"
+            class="hidden mt-6 rounded-lg border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 p-5"
           >
-            Register as Affiliate
-          </button>
-        </form>
+            <h2 class="text-lg font-semibold text-emerald-800 dark:text-emerald-200 mb-2">You are registered</h2>
+            <p class="text-sm text-emerald-700 dark:text-emerald-300">
+              Your referral code is{" "}
+              <code id="affiliate-register-code" class="px-1.5 py-0.5 rounded bg-white/70 dark:bg-black/30 text-xs">
+                --
+              </code>
+              .
+            </p>
+            <p id="affiliate-register-storefront-row" class="hidden mt-2 text-sm text-emerald-700 dark:text-emerald-300">
+              Creator storefront:{" "}
+              <a
+                id="affiliate-register-storefront-link"
+                href="/"
+                class="underline font-medium"
+              >
+                View profile page
+              </a>
+            </p>
+            <div class="mt-4 flex flex-wrap gap-3">
+              <a
+                id="affiliate-register-dashboard-link"
+                href="/affiliates"
+                class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              >
+                Open Dashboard
+              </a>
+              <a
+                id="affiliate-register-links-link"
+                href="/affiliates/links"
+                class="inline-flex items-center rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Create Tracking Links
+              </a>
+            </div>
+          </div>
+        </>
       )}
 
       <script src="/scripts/affiliates.js" />

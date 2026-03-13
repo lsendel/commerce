@@ -22,6 +22,7 @@ export class ResetPasswordUseCase {
     const passwordHash = await hashPassword(input.password);
     await this.userRepo.updatePassword(tokenRecord.userId, passwordHash);
     await this.userRepo.markPasswordResetTokenUsed(tokenRecord.id);
+    await this.userRepo.invalidateActivePasswordResetTokens(tokenRecord.userId);
 
     return { success: true };
   }

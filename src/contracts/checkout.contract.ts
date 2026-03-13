@@ -12,6 +12,11 @@ const deliveryPromiseSchema = z.object({
   source: z.enum(["production+shipping", "production-only"]),
 });
 
+const checkoutRecoverySchema = z.object({
+  retryable: z.boolean(),
+  suggestedAction: z.enum(["retry_checkout", "verify_cart", "contact_support"]),
+});
+
 export const checkoutContract = c.router({
   create: {
     method: "POST",
@@ -26,9 +31,16 @@ export const checkoutContract = c.router({
         tax: z.number(),
         total: z.number(),
         deliveryPromise: deliveryPromiseSchema.nullable(),
+        appliedCouponCode: z.string().nullable().optional(),
+        warnings: z.array(z.string()).optional(),
       }),
       400: z.object({ error: z.string() }),
       401: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
+      503: z.object({
+        error: z.string(),
+        recovery: checkoutRecoverySchema,
+      }),
     },
   },
   success: {
@@ -41,6 +53,10 @@ export const checkoutContract = c.router({
       200: z.object({
         orderId: z.string(),
         status: z.string(),
+        subtotal: z.number(),
+        discount: z.number(),
+        shipping: z.number(),
+        tax: z.number(),
         total: z.number(),
       }),
       400: z.object({ error: z.string() }),

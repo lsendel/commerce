@@ -1,0 +1,151 @@
+{
+  "version": "v1",
+  "owner": "commerce-integrations",
+  "reviewCadenceDays": 30,
+  "lastReviewedOn": "2026-03-01",
+  "nextReviewBy": "2026-03-31",
+  "requiredPartnerProviders": [
+    "printful",
+    "gooten",
+    "prodigi",
+    "shapeways"
+  ],
+  "requiredEventTypes": [
+    "integration_partner_onboarding_completed",
+    "integration_partner_contract_verified",
+    "integration_partner_contract_verification_failed"
+  ],
+  "sourcePaths": [
+    "src/application/platform/partner-onboarding.usecase.ts",
+    "src/routes/api/integration-marketplace.routes.ts",
+    "src/contracts/integration-marketplace.contract.ts",
+    "public/scripts/admin-integration-marketplace.js"
+  ],
+  "requiredSnippets": [
+    "/integration-marketplace/partners/:provider/onboarding/complete",
+    "/integration-marketplace/partners/:provider/contract-verify",
+    "completePartnerOnboarding",
+    "verifyPartnerContract",
+    "marketplace-onboard-btn",
+    "marketplace-contract-verify-btn",
+    "integration_partner_onboarding_completed"
+  ],
+  "simulationCases": [
+    {
+      "id": "ready-partner-connected",
+      "app": {
+        "provider": "printful",
+        "name": "Printful",
+        "vendor": "Printful",
+        "kind": "partner",
+        "category": "fulfillment",
+        "description": "Partner fulfillment",
+        "docsUrl": "https://www.printful.com/api",
+        "setupComplexity": "medium",
+        "requiredSecrets": [
+          "api_key",
+          "webhook_secret"
+        ],
+        "installed": true,
+        "source": "store_override",
+        "enabled": true,
+        "status": "connected",
+        "statusMessage": null,
+        "lastVerifiedAt": "2026-03-01T00:00:00.000Z",
+        "lastSyncAt": null,
+        "hasSecretsConfigured": true,
+        "configuredSecretKeys": [
+          "api_key",
+          "webhook_secret"
+        ],
+        "config": {
+          "onboarding": {
+            "contactEmail": "ops@example.com",
+            "termsAcceptedAt": "2026-03-01T00:00:00.000Z",
+            "requestedCapabilities": [
+              "catalog_sync",
+              "order_submission",
+              "order_tracking",
+              "webhook_events"
+            ],
+            "onboardingCompletedAt": "2026-03-01T00:00:00.000Z"
+          }
+        }
+      },
+      "expected": {
+        "verified": true,
+        "blockingFailures": 0,
+        "progressMinPercent": 75
+      }
+    },
+    {
+      "id": "partner-missing-secrets",
+      "app": {
+        "provider": "gooten",
+        "name": "Gooten",
+        "vendor": "Gooten",
+        "kind": "partner",
+        "category": "fulfillment",
+        "description": "Partner fulfillment",
+        "docsUrl": "https://www.gooten.com/api",
+        "setupComplexity": "high",
+        "requiredSecrets": [
+          "api_key"
+        ],
+        "installed": true,
+        "source": "store_override",
+        "enabled": false,
+        "status": "pending_verification",
+        "statusMessage": "Awaiting credentials.",
+        "lastVerifiedAt": null,
+        "lastSyncAt": null,
+        "hasSecretsConfigured": false,
+        "configuredSecretKeys": [],
+        "config": {
+          "onboarding": {
+            "contactEmail": "ops@example.com",
+            "requestedCapabilities": [
+              "order_submission"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "verified": false,
+        "blockingFailures": 3,
+        "progressMinPercent": 25
+      }
+    },
+    {
+      "id": "not-installed-partner",
+      "app": {
+        "provider": "prodigi",
+        "name": "Prodigi",
+        "vendor": "Prodigi",
+        "kind": "partner",
+        "category": "fulfillment",
+        "description": "Partner fulfillment",
+        "docsUrl": "https://www.prodigi.com/print-api/docs/",
+        "setupComplexity": "high",
+        "requiredSecrets": [
+          "api_key"
+        ],
+        "installed": false,
+        "source": "none",
+        "enabled": false,
+        "status": "not_installed",
+        "statusMessage": null,
+        "lastVerifiedAt": null,
+        "lastSyncAt": null,
+        "hasSecretsConfigured": false,
+        "configuredSecretKeys": [],
+        "config": {}
+      },
+      "expected": {
+        "verified": false,
+        "blockingFailures": 5,
+        "progressMinPercent": 0
+      }
+    }
+  ]
+}

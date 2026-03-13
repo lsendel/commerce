@@ -1,0 +1,93 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Events | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "Shopping cart" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - link "Sign in" [ref=e21] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - heading "Events & Experiences" [level=1] [ref=e25]
+        - paragraph [ref=e26]: Discover pet-friendly events and book unforgettable experiences.
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - generic [ref=e30]: Search
+          - textbox "Search events..." [ref=e31]
+        - generic [ref=e32]:
+          - generic [ref=e33]: From
+          - textbox [ref=e34]
+        - generic [ref=e35]:
+          - generic [ref=e36]: To
+          - textbox [ref=e37]
+        - button "Filter" [ref=e38] [cursor=pointer]
+      - link "Dog Beach Day Experience from $79 Dog Beach Day Experience 3-hour guided beach experience for dogs at Bondi Beach. Includes handlers, toys, picnic, and professional photos. Bondi Beach, Sydney NSW 2026, Australia" [ref=e40] [cursor=pointer]:
+        - /url: /events/dog-beach-day-experience
+        - generic [ref=e41]:
+          - img "Dog Beach Day Experience" [ref=e42]
+          - generic [ref=e43]: from $79
+        - generic [ref=e44]:
+          - heading "Dog Beach Day Experience" [level=3] [ref=e45]
+          - paragraph [ref=e46]: 3-hour guided beach experience for dogs at Bondi Beach. Includes handlers, toys, picnic, and professional photos.
+          - generic [ref=e48]:
+            - img [ref=e49]
+            - text: Bondi Beach, Sydney NSW 2026, Australia
+  - contentinfo [ref=e52]:
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - link "petm8 home" [ref=e56] [cursor=pointer]:
+            - /url: /
+            - img [ref=e57]
+            - generic [ref=e59]: petm8
+          - paragraph [ref=e60]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e61]:
+          - heading "Shop" [level=4] [ref=e62]
+          - list [ref=e63]:
+            - listitem [ref=e64]:
+              - link "All Products" [ref=e65] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e66]:
+              - link "Collections" [ref=e67] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e68]:
+          - heading "Account" [level=4] [ref=e69]
+          - list [ref=e70]:
+            - listitem [ref=e71]:
+              - link "Orders" [ref=e72] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e73]:
+              - link "My Pets" [ref=e74] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e75]:
+          - heading "Company" [level=4] [ref=e76]
+          - list [ref=e77]:
+            - listitem [ref=e78]:
+              - link "About" [ref=e79] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e80]:
+              - link "Contact" [ref=e81] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e83]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e84]:
+    - generic [ref=e85]:
+      - heading "Your Cart" [level=2] [ref=e86]
+      - button "Close cart" [ref=e87] [cursor=pointer]:
+        - img [ref=e88]

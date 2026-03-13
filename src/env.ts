@@ -52,6 +52,13 @@ export interface Env {
 
   // Cache invalidation
   CACHE_WEBHOOK_SECRET?: string;
+  FULFILLMENT_WORKFLOW_TIMEOUT_MS?: string;
+  FULFILLMENT_WORKFLOW_MAX_ATTEMPTS?: string;
+  AI_GENERATION_WORKFLOW_TIMEOUT_MS?: string;
+  AI_GENERATION_WORKFLOW_MAX_ATTEMPTS?: string;
+  NOTIFICATION_WORKFLOW_TIMEOUT_MS?: string;
+  DLQ_AUTO_REMEDIATE_ENABLED?: string;
+  DLQ_AUTO_REMEDIATE_MAX_REQUEUES?: string;
 
   // Cloudflare bindings
   IMAGES: R2Bucket;
@@ -71,8 +78,22 @@ const requiredEnvSchema = z.object({
   GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required"),
   APP_URL: z.string().url("APP_URL must be a valid URL"),
   APP_NAME: z.string().min(1, "APP_NAME is required"),
-  PLATFORM_DOMAINS: z.string().min(1, "PLATFORM_DOMAINS is required"),
-  DEFAULT_STORE_ID: z.string().uuid("DEFAULT_STORE_ID must be a valid UUID"),
+  PLATFORM_DOMAINS: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return undefined;
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : undefined;
+    },
+    z.string().optional(),
+  ),
+  DEFAULT_STORE_ID: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return undefined;
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : undefined;
+    },
+    z.string().uuid("DEFAULT_STORE_ID must be a valid UUID").optional(),
+  ),
 });
 
 let envValidated = false;

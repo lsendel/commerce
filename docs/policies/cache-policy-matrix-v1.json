@@ -1,0 +1,180 @@
+{
+  "version": "v1",
+  "owner": "commerce-edge-platform",
+  "reviewCadenceDays": 14,
+  "lastReviewedOn": "2026-03-01",
+  "nextReviewBy": "2026-03-14",
+  "webhookPath": "/api/webhooks/cache-invalidate",
+  "resourceTypeCoverage": [
+    "product",
+    "collection",
+    "event",
+    "currency_rates",
+    "products_listing",
+    "collections_listing",
+    "events_listing"
+  ],
+  "surfaces": [
+    {
+      "id": "products-list",
+      "label": "Catalog products listing",
+      "routePath": "/api/products",
+      "sourcePath": "src/routes/api/products.routes.ts",
+      "ttlSeconds": 300,
+      "tags": ["products:list"],
+      "requiredSnippets": [
+        "cacheResponse({ ttl: 300, tags: [\"products:list\"] })"
+      ],
+      "targetHitRatePercent": 70,
+      "invalidationResourceTypes": ["product", "products_listing", "collection", "collections_listing"]
+    },
+    {
+      "id": "product-detail",
+      "label": "Catalog product detail",
+      "routePath": "/api/products/:slug",
+      "sourcePath": "src/routes/api/products.routes.ts",
+      "ttlSeconds": 3600,
+      "tags": ["products:detail", "product:{slug}"],
+      "requiredSnippets": [
+        "tags: [\"products:detail\"],",
+        "dynamicTags: (c) => [`product:${c.req.param(\"slug\")}`]"
+      ],
+      "targetHitRatePercent": 80,
+      "invalidationResourceTypes": ["product"]
+    },
+    {
+      "id": "collections-list",
+      "label": "Catalog collections listing",
+      "routePath": "/api/collections",
+      "sourcePath": "src/routes/api/products.routes.ts",
+      "ttlSeconds": 3600,
+      "tags": ["collections:list"],
+      "requiredSnippets": [
+        "cacheResponse({ ttl: 3600, tags: [\"collections:list\"] })"
+      ],
+      "targetHitRatePercent": 75,
+      "invalidationResourceTypes": ["collection", "collections_listing"]
+    },
+    {
+      "id": "collections-legacy-list",
+      "label": "Legacy collections listing",
+      "routePath": "/api/products/collections",
+      "sourcePath": "src/routes/api/products.routes.ts",
+      "ttlSeconds": 3600,
+      "tags": ["collections:list"],
+      "requiredSnippets": [
+        "\"/products/collections\"",
+        "cacheResponse({ ttl: 3600, tags: [\"collections:list\"] })"
+      ],
+      "targetHitRatePercent": 65,
+      "invalidationResourceTypes": ["collection", "collections_listing"]
+    },
+    {
+      "id": "collection-detail",
+      "label": "Collection detail",
+      "routePath": "/api/collections/:slug",
+      "sourcePath": "src/routes/api/products.routes.ts",
+      "ttlSeconds": 3600,
+      "tags": ["collection:{slug}"],
+      "requiredSnippets": [
+        "dynamicTags: (c) => [`collection:${c.req.param(\"slug\")}`]"
+      ],
+      "targetHitRatePercent": 75,
+      "invalidationResourceTypes": ["collection"]
+    },
+    {
+      "id": "events-list",
+      "label": "Bookable event listing",
+      "routePath": "/api/events",
+      "sourcePath": "src/routes/api/events.routes.ts",
+      "ttlSeconds": 180,
+      "tags": ["events:list"],
+      "requiredSnippets": [
+        "cacheResponse({ ttl: 180, tags: [\"events:list\"] })"
+      ],
+      "targetHitRatePercent": 70,
+      "invalidationResourceTypes": ["event", "events_listing"]
+    },
+    {
+      "id": "event-detail",
+      "label": "Bookable event detail",
+      "routePath": "/api/events/:slug",
+      "sourcePath": "src/routes/api/events.routes.ts",
+      "ttlSeconds": 300,
+      "tags": ["events:detail", "event:{slug}"],
+      "requiredSnippets": [
+        "tags: [\"events:detail\"],",
+        "return slug ? [`event:${slug}`] : [];"
+      ],
+      "targetHitRatePercent": 78,
+      "invalidationResourceTypes": ["event"]
+    },
+    {
+      "id": "currency-rates",
+      "label": "Currency conversion rates",
+      "routePath": "/api/currency/rates",
+      "sourcePath": "src/routes/api/currency.routes.ts",
+      "ttlSeconds": 3600,
+      "tags": ["currency:rates"],
+      "requiredSnippets": [
+        "cacheResponse({ ttl: 3600, tags: [\"currency:rates\"] })"
+      ],
+      "targetHitRatePercent": 85,
+      "invalidationResourceTypes": ["currency_rates"]
+    }
+  ],
+  "invalidationTriggers": [
+    {
+      "id": "cache-webhook",
+      "label": "Webhook invalidation endpoint",
+      "sourcePath": "src/routes/api/cache.routes.ts",
+      "resourceTypes": ["product", "collection", "event", "currency_rates", "products_listing", "collections_listing", "events_listing"],
+      "requiredSnippets": [
+        "\"/webhooks/cache-invalidate\"",
+        "const parsedBody = cacheInvalidationBodySchema.safeParse(rawBody);",
+        "const execution = await executeCacheInvalidation({"
+      ]
+    },
+    {
+      "id": "admin-product-mutations",
+      "label": "Admin product mutation auto invalidation",
+      "sourcePath": "src/routes/api/admin-products.routes.ts",
+      "resourceTypes": ["product", "event"],
+      "requiredSnippets": [
+        "async function invalidateProductCache",
+        "type: \"event\"",
+        "await invalidateProductCache({"
+      ]
+    },
+    {
+      "id": "admin-collection-mutations",
+      "label": "Admin collection mutation auto invalidation",
+      "sourcePath": "src/routes/api/admin-collections.routes.ts",
+      "resourceTypes": ["collection"],
+      "requiredSnippets": [
+        "async function invalidateCollectionCache",
+        "await invalidateCollectionCache({"
+      ]
+    },
+    {
+      "id": "currency-config-update",
+      "label": "Currency config update invalidation",
+      "sourcePath": "src/routes/api/currency.routes.ts",
+      "resourceTypes": ["currency_rates"],
+      "requiredSnippets": [
+        "await invalidateByTags([\"currency:rates\"]);"
+      ]
+    },
+    {
+      "id": "plan-executor",
+      "label": "Central invalidation plan/executor",
+      "sourcePath": "src/infrastructure/cache/invalidation-executor.ts",
+      "resourceTypes": ["product", "collection", "event", "currency_rates", "products_listing", "collections_listing", "events_listing"],
+      "requiredSnippets": [
+        "buildCacheInvalidationPlan",
+        "await invalidateByTags(plan.tags);",
+        "directKeysPurged"
+      ]
+    }
+  ]
+}

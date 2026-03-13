@@ -122,6 +122,7 @@ export const FulfillmentDetailPage: FC<FulfillmentDetailPageProps> = ({
           </p>
         </div>
         <span
+          id="request-status-badge"
           class={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLORS[status] ?? "bg-gray-100 text-gray-800"}`}
         >
           {status}
@@ -442,7 +443,7 @@ export const FulfillmentDetailPage: FC<FulfillmentDetailPageProps> = ({
           {/* Actions */}
           <div class="bg-white rounded-lg border border-gray-200 p-5">
             <h2 class="font-semibold text-gray-900 mb-4">Actions</h2>
-            <div class="space-y-2">
+            <div class="space-y-2" id="fulfillment-actions-wrap">
               {isFailed && (
                 <button
                   type="button"
@@ -504,61 +505,136 @@ export const FulfillmentDetailPage: FC<FulfillmentDetailPageProps> = ({
               setTimeout(function() { banner.classList.add('hidden'); }, 4000);
             }
 
-            var retryBtn = document.getElementById('retry-btn');
-            if (retryBtn) {
-              retryBtn.addEventListener('click', async function() {
-                if (!confirm('Retry this fulfillment request?')) return;
-                this.disabled = true;
-                this.textContent = 'Retrying...';
+            function statusPillClass(status) {
+              if (status === 'pending') return 'bg-yellow-100 text-yellow-800';
+              if (status === 'submitted') return 'bg-blue-100 text-blue-800';
+              if (status === 'processing') return 'bg-indigo-100 text-indigo-800';
+              if (status === 'shipped') return 'bg-green-100 text-green-800';
+              if (status === 'delivered') return 'bg-emerald-100 text-emerald-800';
+              if (status === 'cancel_requested') return 'bg-orange-100 text-orange-800';
+              if (status === 'cancelled') return 'bg-gray-100 text-gray-800';
+              if (status === 'failed') return 'bg-red-100 text-red-800';
+              return 'bg-gray-100 text-gray-800';
+            }
 
+            function setButtonLoading(button, loading, loadingText, idleText) {
+              if (!button) return;
+              if (loading) {
+                if (!button.dataset.originalLabel) button.dataset.originalLabel = button.textContent || '';
+                button.textContent = loadingText;
+                button.setAttribute('disabled', 'true');
+                return;
+              }
+              button.textContent = idleText || button.dataset.originalLabel || button.textContent;
+              button.removeAttribute('disabled');
+            }
+
+            async function confirmDialog(message) {
+              if (window.petm8Ui && typeof window.petm8Ui.confirm === 'function') {
+                return window.petm8Ui.confirm({ message: message });
+              }
+              return window.confirm(message);
+            }
+
+            function renderActions(status, requestId) {
+              var isFailed = status === 'failed';
+              var isCancellable = status === 'pending' || status === 'submitted' || status === 'processing';
+              var html = '';
+
+              if (isFailed) {
+                html += '' +
+                  '<button type="button" id="retry-btn" data-request-id="' + requestId + '" class="w-full inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 transition-colors">' +
+                    '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>' +
+                    '</svg>' +
+                    'Retry Fulfillment' +
+                  '</button>';
+              }
+
+              if (isCancellable) {
+                html += '' +
+                  '<button type="button" id="cancel-btn" data-request-id="' + requestId + '" class="w-full inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors">' +
+                    '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>' +
+                    '</svg>' +
+                    'Cancel Fulfillment' +
+                  '</button>';
+              }
+
+              if (!isFailed && !isCancellable) {
+                html += '<p class="text-sm text-gray-400 text-center">No actions available.</p>';
+              }
+
+              html += '<a href="/admin/fulfillment" class="block text-center text-sm text-gray-500 hover:text-gray-700 mt-2">Back to Dashboard</a>';
+              return html;
+            }
+
+            function updateRequestUi(status) {
+              var statusBadge = document.getElementById('request-status-badge');
+              if (statusBadge) {
+                statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ' + statusPillClass(status);
+                statusBadge.textContent = status;
+              }
+              var actionsWrap = document.getElementById('fulfillment-actions-wrap');
+              if (!actionsWrap) return;
+              var requestIdEl = document.querySelector('#retry-btn,[data-request-id],#cancel-btn');
+              var requestId = requestIdEl && requestIdEl.getAttribute ? requestIdEl.getAttribute('data-request-id') : null;
+              if (!requestId) {
+                var segments = window.location.pathname.split('/');
+                requestId = segments[segments.length - 1] || '';
+              }
+              actionsWrap.innerHTML = renderActions(status, requestId || '');
+            }
+
+            document.addEventListener('click', async function(event) {
+              var retryBtn = event.target && event.target.closest ? event.target.closest('#retry-btn') : null;
+              if (retryBtn) {
+                var retryOk = await confirmDialog('Retry this fulfillment request?');
+                if (!retryOk) return;
+                setButtonLoading(retryBtn, true, 'Retrying...', 'Retry Fulfillment');
                 try {
-                  var requestId = this.getAttribute('data-request-id');
-                  var res = await fetch('/api/admin/fulfillment/' + requestId + '/retry', {
+                  var retryRequestId = retryBtn.getAttribute('data-request-id');
+                  var retryRes = await fetch('/api/admin/fulfillment/' + retryRequestId + '/retry', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({}),
                   });
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Retry failed') : (data.error || data.message || 'Retry failed'));
+                  var retryData = await retryRes.json().catch(function() { return {}; });
+                  if (!retryRes.ok) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(retryData, 'Retry failed') : (retryData.error || retryData.message || 'Retry failed'));
                   }
-                  if (window.showToast) window.showToast('Retry queued successfully', 'success');
-                  window.location.reload();
+                  updateRequestUi('pending');
+                  if (window.showToast) window.showToast(retryData.message || 'Retry queued successfully', 'success');
                 } catch (err) {
                   showFulfillmentDetailError(err.message || 'Retry failed');
-                  this.disabled = false;
-                  this.textContent = 'Retry Fulfillment';
+                  setButtonLoading(retryBtn, false, null, 'Retry Fulfillment');
                 }
-              });
-            }
+                return;
+              }
 
-            var cancelBtn = document.getElementById('cancel-btn');
-            if (cancelBtn) {
-              cancelBtn.addEventListener('click', async function() {
-                if (!confirm('Cancel this fulfillment request? This cannot be undone.')) return;
-                this.disabled = true;
-                this.textContent = 'Cancelling...';
-
-                try {
-                  var requestId = this.getAttribute('data-request-id');
-                  var res = await fetch('/api/admin/fulfillment/' + requestId + '/cancel', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({}),
-                  });
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Cancellation failed') : (data.error || data.message || 'Cancellation failed'));
-                  }
-                  if (window.showToast) window.showToast('Fulfillment cancelled', 'success');
-                  window.location.reload();
-                } catch (err) {
-                  showFulfillmentDetailError(err.message || 'Cancellation failed');
-                  this.disabled = false;
-                  this.textContent = 'Cancel Fulfillment';
+              var cancelBtn = event.target && event.target.closest ? event.target.closest('#cancel-btn') : null;
+              if (!cancelBtn) return;
+              var cancelOk = await confirmDialog('Cancel this fulfillment request? This cannot be undone.');
+              if (!cancelOk) return;
+              setButtonLoading(cancelBtn, true, 'Cancelling...', 'Cancel Fulfillment');
+              try {
+                var cancelRequestId = cancelBtn.getAttribute('data-request-id');
+                var cancelRes = await fetch('/api/admin/fulfillment/' + cancelRequestId + '/cancel', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({}),
+                });
+                var cancelData = await cancelRes.json().catch(function() { return {}; });
+                if (!cancelRes.ok) {
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(cancelData, 'Cancellation failed') : (cancelData.error || cancelData.message || 'Cancellation failed'));
                 }
-              });
-            }
+                updateRequestUi(cancelData.status || 'cancel_requested');
+                if (window.showToast) window.showToast(cancelData.message || 'Fulfillment updated', 'success');
+              } catch (err) {
+                showFulfillmentDetailError(err.message || 'Cancellation failed');
+                setButtonLoading(cancelBtn, false, null, 'Cancel Fulfillment');
+              }
+            });
           })();
         </script>
       `}

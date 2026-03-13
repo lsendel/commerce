@@ -1,0 +1,19 @@
+{
+  "startedAt": "2026-03-13T04:44:15.704Z",
+  "finishedAt": "2026-03-13T04:44:41.476Z",
+  "status": "failed",
+  "baseUrl": "http://localhost:58613",
+  "authenticatedEmail": null,
+  "screenshotPath": "output/smoke/storefront-browser-failure.png",
+  "steps": [
+    {
+      "id": "auth",
+      "label": "Authenticate Smoke User",
+      "status": "failed",
+      "durationMs": 267,
+      "detail": "Register failed with status 500: {\"error\":\"Internal server error\",\"message\":\"Internal server error\"}"
+    }
+  ],
+  "consoleErrors": [],
+  "requestFailures": []
+}

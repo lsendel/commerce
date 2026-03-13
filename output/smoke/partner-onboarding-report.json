@@ -1,0 +1,217 @@
+{
+  "startedAt": "2026-03-06T06:41:18.140Z",
+  "finishedAt": "2026-03-06T06:41:18.144Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "policyPath": "docs/policies/partner-onboarding-contract-v1.json",
+  "checks": [
+    {
+      "id": "policy-owner-present",
+      "status": "pass",
+      "note": "Policy owner must be defined."
+    },
+    {
+      "id": "required-partner-providers-covered",
+      "status": "pass",
+      "note": "Policy must match required partner providers: printful, gooten, prodigi, shapeways"
+    },
+    {
+      "id": "required-event-types-covered",
+      "status": "pass",
+      "note": "Required analytics event types must exist in taxonomy."
+    },
+    {
+      "id": "review-cadence-valid",
+      "status": "pass",
+      "note": "reviewCadenceDays must be a positive number."
+    },
+    {
+      "id": "review-dates-format",
+      "status": "pass",
+      "note": "lastReviewedOn and nextReviewBy must use YYYY-MM-DD format."
+    },
+    {
+      "id": "review-next-after-last",
+      "status": "pass",
+      "note": "nextReviewBy must be on or after lastReviewedOn."
+    },
+    {
+      "id": "review-window-valid",
+      "status": "pass",
+      "note": "nextReviewBy must stay within reviewCadenceDays window."
+    },
+    {
+      "id": "review-not-overdue",
+      "status": "pass",
+      "note": "Partner onboarding policy review date must not be overdue."
+    },
+    {
+      "id": "source-path-1",
+      "status": "pass",
+      "note": "Source path must exist: src/application/platform/partner-onboarding.usecase.ts"
+    },
+    {
+      "id": "source-path-2",
+      "status": "pass",
+      "note": "Source path must exist: src/routes/api/integration-marketplace.routes.ts"
+    },
+    {
+      "id": "source-path-3",
+      "status": "pass",
+      "note": "Source path must exist: src/contracts/integration-marketplace.contract.ts"
+    },
+    {
+      "id": "source-path-4",
+      "status": "pass",
+      "note": "Source path must exist: public/scripts/admin-integration-marketplace.js"
+    },
+    {
+      "id": "required-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present: /integration-marketplace/partners/:provider/onboarding/complete"
+    },
+    {
+      "id": "required-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present: /integration-marketplace/partners/:provider/contract-verify"
+    },
+    {
+      "id": "required-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present: completePartnerOnboarding"
+    },
+    {
+      "id": "required-snippet-4",
+      "status": "pass",
+      "note": "Required snippet must be present: verifyPartnerContract"
+    },
+    {
+      "id": "required-snippet-5",
+      "status": "pass",
+      "note": "Required snippet must be present: marketplace-onboard-btn"
+    },
+    {
+      "id": "required-snippet-6",
+      "status": "pass",
+      "note": "Required snippet must be present: marketplace-contract-verify-btn"
+    },
+    {
+      "id": "required-snippet-7",
+      "status": "pass",
+      "note": "Required snippet must be present: integration_partner_onboarding_completed"
+    },
+    {
+      "id": "contract-route-list-onboarding",
+      "status": "pass",
+      "note": "Contract listPartnerOnboarding must match method/path."
+    },
+    {
+      "id": "contract-route-get-onboarding",
+      "status": "pass",
+      "note": "Contract getPartnerOnboarding must match method/path."
+    },
+    {
+      "id": "contract-route-complete-onboarding",
+      "status": "pass",
+      "note": "Contract completePartnerOnboarding must match method/path."
+    },
+    {
+      "id": "contract-route-verify-partner-contract",
+      "status": "pass",
+      "note": "Contract verifyPartnerContract must match method/path."
+    },
+    {
+      "id": "policy-md-exists",
+      "status": "pass",
+      "note": "Policy markdown must exist: docs/policies/partner-onboarding-contract-v1.md"
+    },
+    {
+      "id": "runbook-exists",
+      "status": "pass",
+      "note": "Runbook must exist: docs/runbooks/partner-onboarding-self-serve.md"
+    },
+    {
+      "id": "simulation-ready-partner-connected-verified",
+      "status": "pass",
+      "note": "Expected verified=true, got true"
+    },
+    {
+      "id": "simulation-ready-partner-connected-blocking-failures",
+      "status": "pass",
+      "note": "Expected blockingFailures=0, got 0"
+    },
+    {
+      "id": "simulation-ready-partner-connected-progress-min",
+      "status": "pass",
+      "note": "Expected progress >= 75, got 100"
+    },
+    {
+      "id": "simulation-partner-missing-secrets-verified",
+      "status": "pass",
+      "note": "Expected verified=false, got false"
+    },
+    {
+      "id": "simulation-partner-missing-secrets-blocking-failures",
+      "status": "pass",
+      "note": "Expected blockingFailures=3, got 3"
+    },
+    {
+      "id": "simulation-partner-missing-secrets-progress-min",
+      "status": "pass",
+      "note": "Expected progress >= 25, got 25"
+    },
+    {
+      "id": "simulation-not-installed-partner-verified",
+      "status": "pass",
+      "note": "Expected verified=false, got false"
+    },
+    {
+      "id": "simulation-not-installed-partner-blocking-failures",
+      "status": "pass",
+      "note": "Expected blockingFailures=5, got 5"
+    },
+    {
+      "id": "simulation-not-installed-partner-progress-min",
+      "status": "pass",
+      "note": "Expected progress >= 0, got 0"
+    }
+  ],
+  "simulationResults": [
+    {
+      "id": "ready-partner-connected",
+      "expectedVerified": true,
+      "actualVerified": true,
+      "expectedBlockingFailures": 0,
+      "actualBlockingFailures": 0,
+      "expectedProgressMinPercent": 75,
+      "actualProgressPercent": 100,
+      "status": "pass"
+    },
+    {
+      "id": "partner-missing-secrets",
+      "expectedVerified": false,
+      "actualVerified": false,
+      "expectedBlockingFailures": 3,
+      "actualBlockingFailures": 3,
+      "expectedProgressMinPercent": 25,
+      "actualProgressPercent": 25,
+      "status": "pass"
+    },
+    {
+      "id": "not-installed-partner",
+      "expectedVerified": false,
+      "actualVerified": false,
+      "expectedBlockingFailures": 5,
+      "actualBlockingFailures": 5,
+      "expectedProgressMinPercent": 0,
+      "actualProgressPercent": 0,
+      "status": "pass"
+    }
+  ],
+  "metrics": {
+    "totalChecks": 34,
+    "failedChecks": 0,
+    "simulationCount": 3,
+    "simulationPassing": 3
+  }
+}

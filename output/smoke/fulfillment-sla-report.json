@@ -1,0 +1,37 @@
+{
+  "startedAt": "2026-03-06T06:41:12.934Z",
+  "finishedAt": "2026-03-06T06:41:12.935Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "checks": [
+    {
+      "id": "failed-transient-auto-retry",
+      "status": "pass",
+      "note": "Failed transient fulfillment requests are auto-retry high risk."
+    },
+    {
+      "id": "submitted-missing-external-id",
+      "status": "pass",
+      "note": "Submitted requests without provider external id are intervention candidates."
+    },
+    {
+      "id": "return-submitted-review-action",
+      "status": "pass",
+      "note": "Aged submitted returns are classified for prioritized review."
+    },
+    {
+      "id": "return-approved-completion-action",
+      "status": "pass",
+      "note": "Aged approved returns are classified for prioritized completion."
+    },
+    {
+      "id": "summary-at-risk-coverage",
+      "status": "pass",
+      "note": "Dashboard summary reflects at-risk load and auto-action eligibility."
+    }
+  ],
+  "metrics": {
+    "totalChecks": 5,
+    "failedChecks": 0
+  }
+}

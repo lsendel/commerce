@@ -682,7 +682,10 @@ export const carts = pgTable("carts", {
   couponCodeId: uuid("coupon_code_id").references(() => couponCodes.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  storeSessionIdx: index("carts_store_session_idx").on(table.storeId, table.sessionId),
+  storeUserIdx: index("carts_store_user_idx").on(table.storeId, table.userId, table.updatedAt),
+}));
 
 export const cartsRelations = relations(carts, ({ one, many }) => ({
   user: one(users, {
@@ -766,7 +769,9 @@ export const orders = pgTable(
   (table) => ({
     userIdx: index("orders_user_idx").on(table.userId),
     storeUserIdx: index("orders_store_user_idx").on(table.storeId, table.userId),
+    storeUserCreatedIdx: index("orders_store_user_created_idx").on(table.storeId, table.userId, table.createdAt),
     storeStatusIdx: index("orders_store_status_idx").on(table.storeId, table.status),
+    storeStatusCreatedIdx: index("orders_store_status_created_idx").on(table.storeId, table.status, table.createdAt),
     stripeSessionIdx: index("orders_stripe_session_idx").on(table.stripeCheckoutSessionId),
     stripePaymentIdx: index("orders_stripe_payment_idx").on(table.stripePaymentIntentId),
   }),
@@ -2292,6 +2297,13 @@ export const promotions = pgTable(
       table.storeId,
       table.status,
     ),
+    storeStatusWindowPriorityIdx: index("promotions_store_status_window_priority_idx").on(
+      table.storeId,
+      table.status,
+      table.startsAt,
+      table.endsAt,
+      table.priority,
+    ),
   }),
 );
 
@@ -2351,6 +2363,7 @@ export const promotionRedemptions = pgTable("promotion_redemptions", {
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   promotionIdx: index("redemptions_promotion_idx").on(table.promotionId),
+  promotionCustomerIdx: index("redemptions_promotion_customer_idx").on(table.promotionId, table.customerId),
   orderIdx: index("redemptions_order_idx").on(table.orderId),
 }));
 
@@ -2387,7 +2400,9 @@ export const customerSegments = pgTable("customer_segments", {
   memberCount: integer("member_count").default(0),
   lastRefreshedAt: timestamp("last_refreshed_at"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  storeCreatedIdx: index("customer_segments_store_created_idx").on(table.storeId, table.createdAt),
+}));
 
 export const customerSegmentsRelations = relations(
   customerSegments,
@@ -2413,6 +2428,7 @@ export const customerSegmentMemberships = pgTable(
   },
   (table) => ({
     pk: primaryKey({ columns: [table.customerId, table.segmentId] }),
+    segmentCustomerIdx: index("segment_memberships_segment_customer_idx").on(table.segmentId, table.customerId),
   }),
 );
 

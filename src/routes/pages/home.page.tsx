@@ -43,28 +43,28 @@ export const HomePage: FC<HomePageProps> = ({
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36">
           <div class="max-w-2xl">
             <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 mb-6 transition-transform hover:scale-105">
-              Welcome to petm8.io
+              Personalized pet gifts with auto-fulfilled delivery
             </span>
             <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-gray-100 leading-tight tracking-tight">
               {user ? (
                 <>Welcome back, <span class="text-brand-500">{user.name.split(' ')[0]}</span>!</>
               ) : (
-                <>Everything for your <span class="text-brand-500">furry friend</span></>
+                <>Turn your pet photos into <span class="text-brand-500">gift-ready products</span></>
               )}
             </h1>
             <p class="mt-6 text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-lg">
               {userPets && userPets.length > 0 && userPets[0] ? (
-                `We have everything ${userPets[0].name} needs to thrive. From premium supplies to custom AI pet portraits and grooming bookings.`
+                `Create premium portraits, keepsakes, and everyday gifts for ${userPets[0].name} with polished storefront ordering and reliable fulfillment.`
               ) : (
-                "From premium supplies and custom AI pet portraits to grooming bookings and subscription boxes -- we have everything your pet needs to thrive."
+                "Create premium pet portraits, wall art, and gift-ready merchandise with AI-assisted design, clear checkout, and dependable delivery."
               )}
             </p>
             <div class="mt-8 flex flex-wrap gap-4">
               <Button variant="primary" size="lg" href="/products">
-                Shop Now
+                Shop Bestsellers
               </Button>
-              <Button variant="outline" size="lg" href="/products">
-                Browse Collections
+              <Button variant="outline" size="lg" href="/studio">
+                Create from Photo
               </Button>
             </div>
           </div>
@@ -177,11 +177,11 @@ export const HomePage: FC<HomePageProps> = ({
               AI-Powered
             </span>
             <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
-              Turn Your Pet Into Art
+              Turn Pet Photos Into Gift-Ready Artwork
             </h2>
             <p class="mt-4 text-white/80 text-base sm:text-lg leading-relaxed">
-              Upload a photo of your pet and our AI will create stunning custom artwork.
-              Choose from dozens of styles -- from renaissance portraits to pop art.
+              Upload a photo, generate polished artwork, and use it across premium prints, decor,
+              and personalized products with a smoother publish-to-store flow.
             </p>
             <div class="mt-6">
               <Button

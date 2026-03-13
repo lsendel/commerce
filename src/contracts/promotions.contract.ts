@@ -75,6 +75,35 @@ export const updateSegmentSchema = z.object({
   rules: z.record(z.unknown()).optional(),
 });
 
+export const segmentFreshnessQuerySchema = z.object({
+  thresholdHours: z.coerce.number().int().min(1).max(168).optional(),
+});
+
+const segmentFreshnessItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  memberCount: z.number(),
+  membershipCount: z.number(),
+  membershipDelta: z.number(),
+  lastRefreshedAt: z.string().nullable(),
+  ageHours: z.number().nullable(),
+  freshnessStatus: z.enum(["fresh", "stale", "never_refreshed", "drift"]),
+});
+
+const segmentFreshnessResponseSchema = z.object({
+  thresholdHours: z.number(),
+  generatedAt: z.string(),
+  summary: z.object({
+    totalSegments: z.number(),
+    freshSegments: z.number(),
+    staleSegments: z.number(),
+    neverRefreshedSegments: z.number(),
+    driftSegments: z.number(),
+  }),
+  segments: z.array(segmentFreshnessItemSchema),
+});
+
 export const promotionCopilotSchema = z.object({
   brief: z.string().min(10).max(1400),
   promotionType: z.enum(["coupon", "automatic", "flash_sale"]),
@@ -247,6 +276,15 @@ export const promotionsContract = c.router({
     path: "/api/promotions/segments",
     responses: {
       200: c.type<{ segments: any[] }>(),
+      403: featureDisabledSchema,
+    },
+  },
+  listSegmentFreshness: {
+    method: "GET",
+    path: "/api/promotions/segments/freshness",
+    query: segmentFreshnessQuerySchema,
+    responses: {
+      200: segmentFreshnessResponseSchema,
       403: featureDisabledSchema,
     },
   },

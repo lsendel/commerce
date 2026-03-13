@@ -23,6 +23,7 @@ import {
   createCouponCodeSchema,
   applyCouponSchema,
   createSegmentSchema,
+  segmentFreshnessQuerySchema,
   updateSegmentSchema,
 } from "../../contracts/promotions.contract";
 
@@ -314,6 +315,69 @@ promotionRoutes.get("/segments", requireAuth(), async (c) => {
   const segments = await useCase.listSegments();
   return c.json({ segments });
 });
+
+// GET /api/promotions/segments/freshness — segment freshness monitor (admin)
+promotionRoutes.get(
+  "/segments/freshness",
+  requireAuth(),
+  zValidator("query", segmentFreshnessQuerySchema),
+  async (c) => {
+    const featureError = checkSegmentFeature(c);
+    if (featureError) return featureError;
+
+    const { thresholdHours } = c.req.valid("query");
+    const freshnessThresholdHours = thresholdHours ?? 8;
+    const now = Date.now();
+    const storeId = c.get("storeId");
+    const db = createDb(c.env.DATABASE_URL);
+    const repo = new PromotionRepository(db, storeId);
+    const rows = await repo.getSegmentFreshnessSnapshot();
+
+    const segments = rows.map((row) => {
+      const refreshedAtMs = row.lastRefreshedAt ? new Date(row.lastRefreshedAt).getTime() : null;
+      const ageHours = refreshedAtMs !== null
+        ? Math.max(0, Math.round(((now - refreshedAtMs) / 36e5) * 100) / 100)
+        : null;
+      const membershipDelta = row.membershipCount - row.memberCount;
+
+      let freshnessStatus: "fresh" | "stale" | "never_refreshed" | "drift" = "fresh";
+      if (row.lastRefreshedAt === null) {
+        freshnessStatus = "never_refreshed";
+      } else if (membershipDelta !== 0) {
+        freshnessStatus = "drift";
+      } else if (ageHours !== null && ageHours > freshnessThresholdHours) {
+        freshnessStatus = "stale";
+      }
+
+      return {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        memberCount: row.memberCount,
+        membershipCount: row.membershipCount,
+        membershipDelta,
+        lastRefreshedAt: row.lastRefreshedAt ? new Date(row.lastRefreshedAt).toISOString() : null,
+        ageHours,
+        freshnessStatus,
+      };
+    });
+
+    const summary = {
+      totalSegments: segments.length,
+      freshSegments: segments.filter((segment) => segment.freshnessStatus === "fresh").length,
+      staleSegments: segments.filter((segment) => segment.freshnessStatus === "stale").length,
+      neverRefreshedSegments: segments.filter((segment) => segment.freshnessStatus === "never_refreshed").length,
+      driftSegments: segments.filter((segment) => segment.freshnessStatus === "drift").length,
+    };
+
+    return c.json({
+      thresholdHours: freshnessThresholdHours,
+      generatedAt: new Date().toISOString(),
+      summary,
+      segments,
+    }, 200);
+  },
+);
 
 // POST /api/promotions/segments — create segment (admin)
 promotionRoutes.post(

@@ -1,0 +1,144 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Events Calendar | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "Shopping cart" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - link "Sign in" [ref=e21] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - heading "Event Calendar" [level=1] [ref=e26]
+          - paragraph [ref=e27]: Browse all upcoming pet events at a glance.
+        - link "List View" [ref=e28] [cursor=pointer]:
+          - /url: /events
+      - generic [ref=e29]:
+        - generic [ref=e31]:
+          - generic [ref=e32]:
+            - link "Previous month" [ref=e33] [cursor=pointer]:
+              - /url: /events/calendar?year=2026&month=1
+              - img [ref=e34]
+            - generic [ref=e36]:
+              - combobox "Select month" [ref=e37] [cursor=pointer]:
+                - option "January"
+                - option "February" [selected]
+                - option "March"
+                - option "April"
+                - option "May"
+                - option "June"
+                - option "July"
+                - option "August"
+                - option "September"
+                - option "October"
+                - option "November"
+                - option "December"
+              - combobox "Select year" [ref=e38] [cursor=pointer]:
+                - option "2025"
+                - option "2026" [selected]
+                - option "2027"
+                - option "2028"
+            - link "Next month" [ref=e39] [cursor=pointer]:
+              - /url: /events/calendar?year=2026&month=3
+              - img [ref=e40]
+          - generic [ref=e42]:
+            - generic [ref=e43]: Sun
+            - generic [ref=e44]: Mon
+            - generic [ref=e45]: Tue
+            - generic [ref=e46]: Wed
+            - generic [ref=e47]: Thu
+            - generic [ref=e48]: Fri
+            - generic [ref=e49]: Sat
+          - generic [ref=e50]:
+            - generic [ref=e51]: "1"
+            - generic [ref=e52]: "2"
+            - generic [ref=e53]: "3"
+            - generic [ref=e54]: "4"
+            - generic [ref=e55]: "5"
+            - generic [ref=e56]: "6"
+            - generic [ref=e57]: "7"
+            - generic [ref=e58]: "8"
+            - generic [ref=e59]: "9"
+            - generic [ref=e60]: "10"
+            - generic [ref=e61]: "11"
+            - generic [ref=e62]: "12"
+            - generic [ref=e63]: "13"
+            - generic [ref=e64]: "14"
+            - generic [ref=e65]: "15"
+            - generic [ref=e66]: "16"
+            - generic [ref=e67]: "17"
+            - generic [ref=e68]: "18"
+            - generic [ref=e69]: "19"
+            - generic [ref=e70]: "20"
+            - generic [ref=e71]: "21"
+            - generic [ref=e72]: "22"
+            - generic [ref=e73]: "23"
+            - generic [ref=e74]: "24"
+            - generic [ref=e75]: "25"
+            - generic [ref=e76]: "26"
+            - generic [ref=e77]: "27"
+            - generic [ref=e79]: "28"
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - heading "Event Types" [level=3] [ref=e82]
+            - generic [ref=e86]: Workshop
+          - paragraph [ref=e88]: Click a day with events to see details.
+  - contentinfo [ref=e89]:
+    - generic [ref=e90]:
+      - generic [ref=e91]:
+        - generic [ref=e92]:
+          - link "petm8 home" [ref=e93] [cursor=pointer]:
+            - /url: /
+            - img [ref=e94]
+            - generic [ref=e96]: petm8
+          - paragraph [ref=e97]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e98]:
+          - heading "Shop" [level=4] [ref=e99]
+          - list [ref=e100]:
+            - listitem [ref=e101]:
+              - link "All Products" [ref=e102] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e103]:
+              - link "Collections" [ref=e104] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e105]:
+          - heading "Account" [level=4] [ref=e106]
+          - list [ref=e107]:
+            - listitem [ref=e108]:
+              - link "Orders" [ref=e109] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e110]:
+              - link "My Pets" [ref=e111] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e112]:
+          - heading "Company" [level=4] [ref=e113]
+          - list [ref=e114]:
+            - listitem [ref=e115]:
+              - link "About" [ref=e116] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e117]:
+              - link "Contact" [ref=e118] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e120]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e121]:
+    - generic [ref=e122]:
+      - heading "Your Cart" [level=2] [ref=e123]
+      - button "Close cart" [ref=e124] [cursor=pointer]:
+        - img [ref=e125]

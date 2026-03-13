@@ -1,0 +1,108 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "petm8" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: 🐾
+        - generic [ref=e6]: petm8
+      - generic [ref=e7]:
+        - navigation [ref=e8]:
+          - link "Shop" [ref=e9] [cursor=pointer]:
+            - /url: /shop
+          - link "Events" [ref=e10] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e11] [cursor=pointer]:
+            - /url: /studio
+        - link "Shopping cart" [ref=e12] [cursor=pointer]:
+          - /url: /cart
+          - img [ref=e13]
+          - generic [ref=e15]: "1"
+        - link "Sign in" [ref=e16] [cursor=pointer]:
+          - /url: /login
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - heading "Shopping Cart" [level=1] [ref=e20]
+        - paragraph [ref=e21]: 1 item in your cart
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - link "Pet Portrait Mug" [ref=e25] [cursor=pointer]:
+              - /url: /products/pet-portrait-mug
+              - img "Pet Portrait Mug" [ref=e26]
+            - generic [ref=e27]:
+              - generic [ref=e28]:
+                - generic [ref=e29]:
+                  - link "Pet Portrait Mug" [ref=e30] [cursor=pointer]:
+                    - /url: /products/pet-portrait-mug
+                  - paragraph [ref=e31]: White / 11oz
+                - button "Remove item" [ref=e32] [cursor=pointer]:
+                  - img [ref=e33]
+              - generic [ref=e35]:
+                - generic [ref=e36]:
+                  - button "-" [ref=e37] [cursor=pointer]
+                  - spinbutton [ref=e38]: "1"
+                  - button "+" [active] [ref=e39] [cursor=pointer]
+                - generic [ref=e40]: $18.99
+          - link "Continue Shopping" [ref=e42] [cursor=pointer]:
+            - /url: /products
+            - img [ref=e43]
+            - text: Continue Shopping
+        - generic [ref=e46]:
+          - heading "Order Summary" [level=2] [ref=e47]
+          - generic [ref=e48]:
+            - generic [ref=e49]:
+              - generic [ref=e50]: Subtotal (1 item)
+              - generic [ref=e51]: $18.99
+            - generic [ref=e52]:
+              - generic [ref=e53]: Shipping
+              - generic [ref=e54]: Calculated at checkout
+            - generic [ref=e55]:
+              - generic [ref=e56]: Total
+              - generic [ref=e57]: $18.99
+          - generic [ref=e58]:
+            - button "Secure Checkout" [ref=e59] [cursor=pointer]:
+              - img [ref=e60]
+              - text: Secure Checkout
+            - link "Continue Shopping" [ref=e62] [cursor=pointer]:
+              - /url: /products
+          - generic [ref=e64]:
+            - img [ref=e65]
+            - generic [ref=e67]: SSL encrypted & secure payment
+  - contentinfo [ref=e68]:
+    - generic [ref=e69]:
+      - generic [ref=e70]:
+        - generic [ref=e71]:
+          - link "petm8" [ref=e72] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e73]: 🐾
+            - generic [ref=e74]: petm8
+          - paragraph [ref=e75]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e76]:
+          - heading "Shop" [level=4] [ref=e77]
+          - list [ref=e78]:
+            - listitem [ref=e79]:
+              - link "All Products" [ref=e80] [cursor=pointer]:
+                - /url: /shop
+            - listitem [ref=e81]:
+              - link "Collections" [ref=e82] [cursor=pointer]:
+                - /url: /shop/collections
+        - generic [ref=e83]:
+          - heading "Account" [level=4] [ref=e84]
+          - list [ref=e85]:
+            - listitem [ref=e86]:
+              - link "Orders" [ref=e87] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e88]:
+              - link "My Pets" [ref=e89] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e90]:
+          - heading "Company" [level=4] [ref=e91]
+          - list [ref=e92]:
+            - listitem [ref=e93]:
+              - link "About" [ref=e94] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e95]:
+              - link "Contact" [ref=e96] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e98]: © 2026 petm8. All rights reserved.

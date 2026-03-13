@@ -11,6 +11,17 @@
     else console.log(message);
   }
 
+  function handleInlineCartNavigation() {
+    if (typeof window.updateCartBadge === "function") {
+      Promise.resolve(window.updateCartBadge()).catch(function () {});
+    }
+    if (typeof window.openCartDrawer === "function") {
+      window.openCartDrawer();
+      return true;
+    }
+    return false;
+  }
+
   document.addEventListener("click", function (e) {
     var btn = e.target.closest(".reorder-btn");
     if (!btn) return;
@@ -67,7 +78,15 @@
               : "Added " + added + " line(s) to cart.",
             skipped > 0 ? "warning" : "success",
           );
-          window.location.href = "/cart";
+          var stayedInline = handleInlineCartNavigation();
+          if (!stayedInline) {
+            notify("Cart updated. Use the cart icon to review items.", "info");
+          }
+          btn.textContent = "Added";
+          btn.disabled = false;
+          setTimeout(function () {
+            btn.textContent = idleText;
+          }, 1400);
           return;
         }
 

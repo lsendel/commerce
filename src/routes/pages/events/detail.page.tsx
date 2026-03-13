@@ -37,6 +37,25 @@ interface PersonType {
   max?: number;
 }
 
+interface Review {
+  id: string;
+  rating: number;
+  title?: string | null;
+  content?: string | null;
+  authorName: string;
+  verified: boolean;
+  helpfulCount?: number;
+  isTopHelpful?: boolean;
+  storeResponse?: string | null;
+  createdAt: string;
+}
+
+interface ReviewSummary {
+  averageRating: number;
+  totalCount: number;
+  distribution: Record<number, number>;
+}
+
 interface EventDetailPageProps {
   id: string;
   variantId: string;
@@ -66,6 +85,10 @@ interface EventDetailPageProps {
   waitlistEnabled?: boolean;
   /** Cancellation policy window in hours */
   cancellationPolicyHours?: number;
+  reviews?: Review[];
+  reviewSummary?: ReviewSummary | null;
+  isAuthenticated?: boolean;
+  isReviewIntelligenceEnabled?: boolean;
 }
 
 export const EventDetailPage: FC<EventDetailPageProps> = ({
@@ -91,6 +114,10 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
   personTypes,
   waitlistEnabled,
   cancellationPolicyHours,
+  reviews = [],
+  reviewSummary = null,
+  isAuthenticated = false,
+  isReviewIntelligenceEnabled = false,
 }) => {
   const selectedSlot = slots?.find((s) => s.id === selectedSlotId);
   const baseUrl = `/events/${slug}`;
@@ -266,23 +293,176 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
             </div>
           )}
 
-          {/* Reviews placeholder */}
-          <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+          {/* Reviews */}
+          <section id="event-reviews" class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
             <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Reviews</h2>
-            <div class="text-center py-8">
-              <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-300 flex items-center justify-center mx-auto mb-3">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                  />
-                </svg>
+
+            {reviewSummary && reviewSummary.totalCount > 0 && (
+              <div class="grid gap-4 md:grid-cols-2 mb-6">
+                <div class="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-4">
+                  <div class="flex items-end gap-3">
+                    <span class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                      {reviewSummary.averageRating.toFixed(1)}
+                    </span>
+                    <span class="text-sm text-gray-500 mb-1">out of 5</span>
+                  </div>
+                  <div class="mt-2 flex items-center gap-1.5 text-yellow-400">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg key={star} class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    Based on {reviewSummary.totalCount} review{reviewSummary.totalCount === 1 ? "" : "s"}
+                  </p>
+                </div>
+
+                <div class="space-y-2">
+                  {[5, 4, 3, 2, 1].map((stars) => {
+                    const count = reviewSummary.distribution[stars] ?? 0;
+                    const width = reviewSummary.totalCount > 0
+                      ? Math.round((count / reviewSummary.totalCount) * 100)
+                      : 0;
+                    return (
+                      <div key={stars} class="flex items-center gap-2 text-sm">
+                        <span class="w-8 text-gray-500 dark:text-gray-400">{stars}★</span>
+                        <div class="h-2 flex-1 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                          <div class="h-full bg-yellow-400 rounded-full" style={`width:${width}%`} />
+                        </div>
+                        <span class="w-8 text-right text-gray-500 dark:text-gray-400">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <p class="text-sm text-gray-400">No reviews yet. Be the first to share your experience!</p>
-            </div>
-          </div>
+            )}
+
+            {reviews.length === 0 ? (
+              <p class="text-sm text-gray-500 dark:text-gray-400">No reviews yet. Be the first to share your experience.</p>
+            ) : (
+              <div class="space-y-4 mb-6">
+                {reviews.map((review) => (
+                  <article key={review.id} class="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 p-4">
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-0.5 text-yellow-400">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <svg key={star} class={`w-4 h-4 ${star <= review.rating ? "text-yellow-400" : "text-gray-300"}`} fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{review.authorName}</span>
+                        {review.verified && (
+                          <span class="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Verified
+                          </span>
+                        )}
+                        {isReviewIntelligenceEnabled && review.isTopHelpful && (
+                          <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700">
+                            Most Helpful
+                          </span>
+                        )}
+                      </div>
+                      <time class="text-xs text-gray-400">{review.createdAt}</time>
+                    </div>
+                    {review.title && <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">{review.title}</h3>}
+                    {review.content && <p class="text-sm text-gray-600 dark:text-gray-400">{review.content}</p>}
+                    {isReviewIntelligenceEnabled && (
+                      <div class="mt-3 flex items-center gap-2">
+                        <button
+                          type="button"
+                          data-event-review-helpful
+                          data-review-id={review.id}
+                          class="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
+                          Helpful
+                          <span data-event-helpful-count data-review-id={review.id}>
+                            ({review.helpfulCount ?? 0})
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          data-event-review-report
+                          data-review-id={review.id}
+                          class="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
+                          Report
+                        </button>
+                      </div>
+                    )}
+                    {review.storeResponse && (
+                      <div class="mt-3 pl-4 border-l-2 border-brand-300">
+                        <p class="text-xs font-semibold text-brand-600 mb-1">Store Response</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">{review.storeResponse}</p>
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+
+            {isAuthenticated ? (
+              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Write a review</h3>
+                <div id="event-review-success" class="hidden mb-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm px-4 py-3" role="status" />
+                <div id="event-review-error" class="hidden mb-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3" role="alert" />
+                <form id="event-review-form" class="space-y-3">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rating</label>
+                    <div id="event-star-rating" class="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          data-event-star={star}
+                          class="event-star-btn text-gray-300 hover:text-yellow-400 transition-colors"
+                          aria-label={`Rate ${star} star${star === 1 ? "" : "s"}`}
+                        >
+                          <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </button>
+                      ))}
+                    </div>
+                    <input type="hidden" name="rating" id="event-rating-input" value="0" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title (optional)</label>
+                    <input
+                      type="text"
+                      name="title"
+                      maxlength={100}
+                      class="w-full rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Review</label>
+                    <textarea
+                      name="content"
+                      rows={4}
+                      maxlength={2000}
+                      class="w-full rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    class="inline-flex items-center justify-center rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 transition-colors"
+                  >
+                    Submit review
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4 text-sm text-gray-600 dark:text-gray-400">
+                <a href="/auth/login" class="text-brand-600 dark:text-brand-400 hover:underline font-medium">Sign in</a> to leave a review.
+              </div>
+            )}
+          </section>
         </div>
 
         {/* Right sidebar - Calendar & Booking */}
@@ -409,6 +589,159 @@ export const EventDetailPage: FC<EventDetailPageProps> = ({
             btn.disabled = false;
             btn.textContent = 'Join Waitlist';
           }
+        });
+
+        const eventStarButtons = document.querySelectorAll('.event-star-btn');
+        const eventRatingInput = document.getElementById('event-rating-input');
+        let selectedEventRating = 0;
+
+        eventStarButtons.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            selectedEventRating = parseInt(btn.dataset.eventStar || '0', 10);
+            if (eventRatingInput) {
+              eventRatingInput.value = String(selectedEventRating);
+            }
+            eventStarButtons.forEach((starBtn) => {
+              const starValue = parseInt(starBtn.dataset.eventStar || '0', 10);
+              starBtn.classList.toggle('text-yellow-400', starValue <= selectedEventRating);
+              starBtn.classList.toggle('text-gray-300', starValue > selectedEventRating);
+            });
+          });
+        });
+
+        const eventReviewForm = document.getElementById('event-review-form');
+        if (eventReviewForm) {
+          eventReviewForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const successEl = document.getElementById('event-review-success');
+            const errorEl = document.getElementById('event-review-error');
+            if (successEl) successEl.classList.add('hidden');
+            if (errorEl) errorEl.classList.add('hidden');
+
+            const formData = new FormData(eventReviewForm);
+            const rating = parseInt(String(formData.get('rating') || '0'), 10);
+            if (!rating || rating < 1) {
+              if (errorEl) {
+                errorEl.textContent = 'Please select a rating.';
+                errorEl.classList.remove('hidden');
+              }
+              return;
+            }
+
+            const body = { rating };
+            const title = formData.get('title');
+            const content = formData.get('content');
+            if (title) body.title = title;
+            if (content) body.content = content;
+
+            try {
+              const res = await fetch('/api/products/${slug}/reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+              });
+              if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(
+                  window.petm8GetApiErrorMessage
+                    ? window.petm8GetApiErrorMessage(data, 'Failed to submit review')
+                    : (data.error || data.message || 'Failed to submit review')
+                );
+              }
+
+              eventReviewForm.reset();
+              selectedEventRating = 0;
+              if (eventRatingInput) {
+                eventRatingInput.value = '0';
+              }
+              eventStarButtons.forEach((starBtn) => {
+                starBtn.classList.remove('text-yellow-400');
+                starBtn.classList.add('text-gray-300');
+              });
+              if (successEl) {
+                successEl.textContent = 'Review submitted! It may appear after moderation.';
+                successEl.classList.remove('hidden');
+              }
+            } catch (err) {
+              if (errorEl) {
+                errorEl.textContent = err && err.message ? err.message : 'Failed to submit review';
+                errorEl.classList.remove('hidden');
+              }
+            }
+          });
+        }
+
+        function markReviewActionDone(action, reviewId) {
+          try {
+            sessionStorage.setItem('petm8-event-review-action:' + action + ':' + reviewId, '1');
+          } catch (_) {}
+        }
+
+        function hasReviewActionDone(action, reviewId) {
+          try {
+            return sessionStorage.getItem('petm8-event-review-action:' + action + ':' + reviewId) === '1';
+          } catch (_) {
+            return false;
+          }
+        }
+
+        const helpfulButtons = Array.prototype.slice.call(document.querySelectorAll('[data-event-review-helpful]'));
+        helpfulButtons.forEach((btn) => {
+          const reviewId = btn.getAttribute('data-review-id');
+          if (reviewId && hasReviewActionDone('helpful', reviewId)) {
+            btn.setAttribute('disabled', 'true');
+          }
+          btn.addEventListener('click', async () => {
+            const reviewId = btn.getAttribute('data-review-id');
+            if (!reviewId || hasReviewActionDone('helpful', reviewId)) return;
+            try {
+              const res = await fetch('/api/reviews/' + reviewId + '/helpful', { method: 'POST' });
+              if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(
+                  window.petm8GetApiErrorMessage
+                    ? window.petm8GetApiErrorMessage(data, 'Failed to mark helpful')
+                    : (data.error || data.message || 'Failed to mark helpful')
+                );
+              }
+              const data = await res.json();
+              const countEl = document.querySelector('[data-event-helpful-count][data-review-id="' + reviewId + '"]');
+              if (countEl) countEl.textContent = '(' + String(data.helpfulCount ?? 0) + ')';
+              btn.setAttribute('disabled', 'true');
+              markReviewActionDone('helpful', reviewId);
+            } catch (err) {
+              notify(err && err.message ? err.message : 'Failed to mark helpful', 'error');
+            }
+          });
+        });
+
+        const reportButtons = Array.prototype.slice.call(document.querySelectorAll('[data-event-review-report]'));
+        reportButtons.forEach((btn) => {
+          const reviewId = btn.getAttribute('data-review-id');
+          if (reviewId && hasReviewActionDone('report', reviewId)) {
+            btn.textContent = 'Reported';
+            btn.setAttribute('disabled', 'true');
+          }
+          btn.addEventListener('click', async () => {
+            const reviewId = btn.getAttribute('data-review-id');
+            if (!reviewId || hasReviewActionDone('report', reviewId)) return;
+            try {
+              const res = await fetch('/api/reviews/' + reviewId + '/report', { method: 'POST' });
+              if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(
+                  window.petm8GetApiErrorMessage
+                    ? window.petm8GetApiErrorMessage(data, 'Failed to report review')
+                    : (data.error || data.message || 'Failed to report review')
+                );
+              }
+              btn.textContent = 'Reported';
+              btn.setAttribute('disabled', 'true');
+              markReviewActionDone('report', reviewId);
+            } catch (err) {
+              notify(err && err.message ? err.message : 'Failed to report review', 'error');
+            }
+          });
         });
       </script>`}
     </div>

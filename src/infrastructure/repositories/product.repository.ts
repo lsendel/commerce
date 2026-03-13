@@ -625,6 +625,21 @@ export class ProductRepository {
   }
 
   async findRelatedProducts(productId: string, limit = 4) {
+    const baseRows = await this.db
+      .select({
+        id: products.id,
+        type: products.type,
+      })
+      .from(products)
+      .where(
+        and(
+          eq(products.id, productId),
+          eq(products.storeId, this.storeId),
+        ),
+      )
+      .limit(1);
+    const baseProduct = baseRows[0] ?? null;
+
     // 1. Find collections this product belongs to
     const cpRows = await this.db
       .select({ collectionId: collectionProducts.collectionId })
@@ -646,7 +661,27 @@ export class ProductRepository {
         .filter((id) => id !== productId);
     }
 
-    // 2. Fallback: recently added products if no collection match
+    // 2. Fallback: same type products if no collection match
+    if (relatedProductIds.length === 0 && baseProduct) {
+      const sameTypeRows = await this.db
+        .select({ id: products.id })
+        .from(products)
+        .where(
+          and(
+            eq(products.storeId, this.storeId),
+            eq(products.type, baseProduct.type),
+            eq(products.availableForSale, true),
+          ),
+        )
+        .orderBy(desc(products.createdAt))
+        .limit(limit + 1);
+
+      relatedProductIds = sameTypeRows
+        .map((row) => row.id)
+        .filter((id) => id !== productId);
+    }
+
+    // 3. Fallback: recently added products if no collection/same-type match
     if (relatedProductIds.length === 0) {
       const recentRows = await this.db
         .select({ id: products.id })
@@ -670,7 +705,7 @@ export class ProductRepository {
 
     if (relatedProductIds.length === 0) return [];
 
-    // 3. Fetch full product data
+    // 4. Fetch full product data
     const productRows = await this.db
       .select()
       .from(products)
@@ -684,6 +719,14 @@ export class ProductRepository {
       .limit(limit);
 
     if (productRows.length === 0) return [];
+    const orderIndex = new Map(
+      relatedProductIds.map((id, index) => [id, index]),
+    );
+    productRows.sort(
+      (a, b) =>
+        (orderIndex.get(a.id) ?? Number.MAX_SAFE_INTEGER)
+        - (orderIndex.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+    );
 
     const ids = productRows.map((p) => p.id);
 
@@ -704,6 +747,7 @@ export class ProductRepository {
         id: v.id,
         price: Number(v.price),
         compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
+        inventoryQuantity: v.inventoryQuantity ?? 0,
       }));
 
       return {
@@ -712,6 +756,7 @@ export class ProductRepository {
         slug: p.slug,
         type: p.type,
         featuredImageUrl: p.featuredImageUrl ?? null,
+        createdAt: p.createdAt ?? null,
         variants: pvs,
       };
     });

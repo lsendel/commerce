@@ -1,0 +1,154 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Pet Portrait Mug | Petm8 | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "Shopping cart" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - link "Sign in" [ref=e21] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - navigation "Breadcrumb" [ref=e24]:
+        - list [ref=e25]:
+          - listitem [ref=e26]:
+            - link "Home" [ref=e27] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=e28]: /
+          - listitem [ref=e29]:
+            - link "Products" [ref=e30] [cursor=pointer]:
+              - /url: /products
+          - listitem [ref=e31]: /
+          - listitem [ref=e32]: Pet Portrait Mug
+      - generic [ref=e33]:
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - img "Generated mockup 1" [ref=e37]
+            - button "Previous image" [ref=e38] [cursor=pointer]:
+              - img [ref=e39]
+            - button "Next image" [ref=e41] [cursor=pointer]:
+              - img [ref=e42]
+            - generic [ref=e44]: 1 / 9
+          - generic [ref=e45]:
+            - button "View image 1" [ref=e46] [cursor=pointer]:
+              - img "Generated mockup 1" [ref=e47]
+            - button "View image 2" [ref=e48] [cursor=pointer]:
+              - img "Generated mockup 2" [ref=e49]
+            - button "View image 3" [ref=e50] [cursor=pointer]:
+              - img "Generated mockup 3" [ref=e51]
+            - button "View image 4" [ref=e52] [cursor=pointer]:
+              - img "Generated mockup 4" [ref=e53]
+            - button "View image 5" [ref=e54] [cursor=pointer]:
+              - img "Generated mockup 5" [ref=e55]
+            - button "View image 6" [ref=e56] [cursor=pointer]:
+              - img "Generated mockup 6" [ref=e57]
+            - button "View image 7" [ref=e58] [cursor=pointer]:
+              - img "Generated mockup 7" [ref=e59]
+            - button "View image 8" [ref=e60] [cursor=pointer]:
+              - img "Generated mockup 8" [ref=e61]
+            - button "View image 9" [ref=e62] [cursor=pointer]:
+              - img "Generated mockup 9" [ref=e63]
+        - generic [ref=e64]:
+          - heading "Pet Portrait Mug" [level=1] [ref=e65]
+          - generic [ref=e67]:
+            - img [ref=e68]
+            - text: In stock
+          - generic [ref=e71]:
+            - generic [ref=e72]:
+              - generic [ref=e73]: Select Option
+              - generic [ref=e74]:
+                - generic [ref=e75] [cursor=pointer]:
+                  - radio "White / 11oz$18.99" [checked] [ref=e76]
+                  - generic [ref=e77]: White / 11oz$18.99
+                - generic [ref=e78] [cursor=pointer]:
+                  - radio "White / 15oz$22.99" [ref=e79]
+                  - generic [ref=e80]: White / 15oz$22.99
+            - generic [ref=e83]: $18.99
+            - generic [ref=e84]:
+              - generic [ref=e85]: Quantity
+              - group "Quantity selector" [ref=e86]:
+                - button "Decrease quantity" [ref=e87] [cursor=pointer]: "-"
+                - spinbutton "Product quantity" [ref=e88]: "1"
+                - button "Increase quantity" [ref=e89] [cursor=pointer]: +
+            - button "Add to Cart" [ref=e90] [cursor=pointer]:
+              - img [ref=e91]
+              - text: Add to Cart
+          - generic [ref=e93]:
+            - heading "Description" [level=3] [ref=e94]
+            - generic [ref=e95]:
+              - paragraph [ref=e96]: Start your morning with your best friend! This ceramic mug features a charming watercolor-style pet portrait.
+              - list [ref=e97]:
+                - listitem [ref=e98]: Premium white ceramic
+                - listitem [ref=e99]: 11oz or 15oz capacity
+                - listitem [ref=e100]: Dishwasher & microwave safe
+                - listitem [ref=e101]: Comfortable C-handle
+          - button "Share" [ref=e103] [cursor=pointer]:
+            - img [ref=e104]
+            - text: Share
+      - generic [ref=e106]:
+        - heading "You May Also Like" [level=2] [ref=e107]
+        - link "Paw Print Tote Bag - $24.99" [ref=e109] [cursor=pointer]:
+          - /url: /products/paw-print-tote-bag
+          - generic [ref=e110]:
+            - img "Paw Print Tote Bag" [ref=e111]
+            - generic [ref=e112]: Sale
+          - generic [ref=e113]:
+            - heading "Paw Print Tote Bag" [level=3] [ref=e114]
+            - generic [ref=e116]: From $24.99
+  - contentinfo [ref=e117]:
+    - generic [ref=e118]:
+      - generic [ref=e119]:
+        - generic [ref=e120]:
+          - link "petm8 home" [ref=e121] [cursor=pointer]:
+            - /url: /
+            - img [ref=e122]
+            - generic [ref=e124]: petm8
+          - paragraph [ref=e125]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e126]:
+          - heading "Shop" [level=4] [ref=e127]
+          - list [ref=e128]:
+            - listitem [ref=e129]:
+              - link "All Products" [ref=e130] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e131]:
+              - link "Collections" [ref=e132] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e133]:
+          - heading "Account" [level=4] [ref=e134]
+          - list [ref=e135]:
+            - listitem [ref=e136]:
+              - link "Orders" [ref=e137] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e138]:
+              - link "My Pets" [ref=e139] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e140]:
+          - heading "Company" [level=4] [ref=e141]
+          - list [ref=e142]:
+            - listitem [ref=e143]:
+              - link "About" [ref=e144] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e145]:
+              - link "Contact" [ref=e146] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e148]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e149]:
+    - generic [ref=e150]:
+      - heading "Your Cart" [level=2] [ref=e151]
+      - button "Close cart" [ref=e152] [cursor=pointer]:
+        - img [ref=e153]

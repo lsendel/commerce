@@ -1,0 +1,439 @@
+{
+  "startedAt": "2026-03-13T04:41:36.759Z",
+  "finishedAt": "2026-03-13T04:41:36.778Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "policyPath": "docs/policies/query-performance-budget-v1.json",
+  "checks": [
+    {
+      "id": "policy-owner-present",
+      "status": "pass",
+      "note": "Policy owner must be defined."
+    },
+    {
+      "id": "hotpaths-present",
+      "status": "pass",
+      "note": "Policy must define at least one hot path budget."
+    },
+    {
+      "id": "cache-surfaces-present",
+      "status": "pass",
+      "note": "Policy must define at least one cache surface budget."
+    },
+    {
+      "id": "index-catalog-present",
+      "status": "pass",
+      "note": "Policy must define at least one index name in indexCatalog."
+    },
+    {
+      "id": "index-migration-path-exists",
+      "status": "pass",
+      "note": "Index migration script must exist: scripts/sql/add-week57-performance-indexes.sql"
+    },
+    {
+      "id": "index-schema-carts_store_session_idx",
+      "status": "pass",
+      "note": "Schema must define index name carts_store_session_idx."
+    },
+    {
+      "id": "index-sql-carts_store_session_idx",
+      "status": "pass",
+      "note": "SQL migration must include index name carts_store_session_idx."
+    },
+    {
+      "id": "index-schema-carts_store_user_idx",
+      "status": "pass",
+      "note": "Schema must define index name carts_store_user_idx."
+    },
+    {
+      "id": "index-sql-carts_store_user_idx",
+      "status": "pass",
+      "note": "SQL migration must include index name carts_store_user_idx."
+    },
+    {
+      "id": "index-schema-orders_store_user_created_idx",
+      "status": "pass",
+      "note": "Schema must define index name orders_store_user_created_idx."
+    },
+    {
+      "id": "index-sql-orders_store_user_created_idx",
+      "status": "pass",
+      "note": "SQL migration must include index name orders_store_user_created_idx."
+    },
+    {
+      "id": "index-schema-orders_store_status_created_idx",
+      "status": "pass",
+      "note": "Schema must define index name orders_store_status_created_idx."
+    },
+    {
+      "id": "index-sql-orders_store_status_created_idx",
+      "status": "pass",
+      "note": "SQL migration must include index name orders_store_status_created_idx."
+    },
+    {
+      "id": "index-schema-promotions_store_status_window_priority_idx",
+      "status": "pass",
+      "note": "Schema must define index name promotions_store_status_window_priority_idx."
+    },
+    {
+      "id": "index-sql-promotions_store_status_window_priority_idx",
+      "status": "pass",
+      "note": "SQL migration must include index name promotions_store_status_window_priority_idx."
+    },
+    {
+      "id": "index-schema-redemptions_promotion_customer_idx",
+      "status": "pass",
+      "note": "Schema must define index name redemptions_promotion_customer_idx."
+    },
+    {
+      "id": "index-sql-redemptions_promotion_customer_idx",
+      "status": "pass",
+      "note": "SQL migration must include index name redemptions_promotion_customer_idx."
+    },
+    {
+      "id": "index-schema-customer_segments_store_created_idx",
+      "status": "pass",
+      "note": "Schema must define index name customer_segments_store_created_idx."
+    },
+    {
+      "id": "index-sql-customer_segments_store_created_idx",
+      "status": "pass",
+      "note": "SQL migration must include index name customer_segments_store_created_idx."
+    },
+    {
+      "id": "index-schema-segment_memberships_segment_customer_idx",
+      "status": "pass",
+      "note": "Schema must define index name segment_memberships_segment_customer_idx."
+    },
+    {
+      "id": "index-sql-segment_memberships_segment_customer_idx",
+      "status": "pass",
+      "note": "SQL migration must include index name segment_memberships_segment_customer_idx."
+    },
+    {
+      "id": "hotpath-hp-cart-find-or-create-file-exists",
+      "status": "pass",
+      "note": "Repository file must exist: src/infrastructure/repositories/cart.repository.ts"
+    },
+    {
+      "id": "hotpath-hp-cart-find-or-create-method-present",
+      "status": "pass",
+      "note": "Method findOrCreateCart must exist in src/infrastructure/repositories/cart.repository.ts."
+    },
+    {
+      "id": "hotpath-hp-cart-find-or-create-predicates",
+      "status": "pass",
+      "note": "Hot path hp-cart-find-or-create must contain all required predicates."
+    },
+    {
+      "id": "hotpath-hp-cart-find-or-create-index-catalog-coverage",
+      "status": "pass",
+      "note": "Hot path hp-cart-find-or-create missing indexCatalog entries: none."
+    },
+    {
+      "id": "hotpath-hp-cart-find-or-create-budget-valid",
+      "status": "pass",
+      "note": "Hot path hp-cart-find-or-create must define positive targetP95Ms and queryBudgetUnits."
+    },
+    {
+      "id": "hotpath-hp-cart-merge-file-exists",
+      "status": "pass",
+      "note": "Repository file must exist: src/infrastructure/repositories/cart.repository.ts"
+    },
+    {
+      "id": "hotpath-hp-cart-merge-method-present",
+      "status": "pass",
+      "note": "Method mergeCart must exist in src/infrastructure/repositories/cart.repository.ts."
+    },
+    {
+      "id": "hotpath-hp-cart-merge-predicates",
+      "status": "pass",
+      "note": "Hot path hp-cart-merge must contain all required predicates."
+    },
+    {
+      "id": "hotpath-hp-cart-merge-index-catalog-coverage",
+      "status": "pass",
+      "note": "Hot path hp-cart-merge missing indexCatalog entries: none."
+    },
+    {
+      "id": "hotpath-hp-cart-merge-budget-valid",
+      "status": "pass",
+      "note": "Hot path hp-cart-merge must define positive targetP95Ms and queryBudgetUnits."
+    },
+    {
+      "id": "hotpath-hp-orders-by-store-file-exists",
+      "status": "pass",
+      "note": "Repository file must exist: src/infrastructure/repositories/order.repository.ts"
+    },
+    {
+      "id": "hotpath-hp-orders-by-store-method-present",
+      "status": "pass",
+      "note": "Method findByStore must exist in src/infrastructure/repositories/order.repository.ts."
+    },
+    {
+      "id": "hotpath-hp-orders-by-store-predicates",
+      "status": "pass",
+      "note": "Hot path hp-orders-by-store must contain all required predicates."
+    },
+    {
+      "id": "hotpath-hp-orders-by-store-index-catalog-coverage",
+      "status": "pass",
+      "note": "Hot path hp-orders-by-store missing indexCatalog entries: none."
+    },
+    {
+      "id": "hotpath-hp-orders-by-store-budget-valid",
+      "status": "pass",
+      "note": "Hot path hp-orders-by-store must define positive targetP95Ms and queryBudgetUnits."
+    },
+    {
+      "id": "hotpath-hp-orders-by-user-file-exists",
+      "status": "pass",
+      "note": "Repository file must exist: src/infrastructure/repositories/order.repository.ts"
+    },
+    {
+      "id": "hotpath-hp-orders-by-user-method-present",
+      "status": "pass",
+      "note": "Method findByUserId must exist in src/infrastructure/repositories/order.repository.ts."
+    },
+    {
+      "id": "hotpath-hp-orders-by-user-predicates",
+      "status": "pass",
+      "note": "Hot path hp-orders-by-user must contain all required predicates."
+    },
+    {
+      "id": "hotpath-hp-orders-by-user-index-catalog-coverage",
+      "status": "pass",
+      "note": "Hot path hp-orders-by-user missing indexCatalog entries: none."
+    },
+    {
+      "id": "hotpath-hp-orders-by-user-budget-valid",
+      "status": "pass",
+      "note": "Hot path hp-orders-by-user must define positive targetP95Ms and queryBudgetUnits."
+    },
+    {
+      "id": "hotpath-hp-active-promotions-file-exists",
+      "status": "pass",
+      "note": "Repository file must exist: src/infrastructure/repositories/promotion.repository.ts"
+    },
+    {
+      "id": "hotpath-hp-active-promotions-method-present",
+      "status": "pass",
+      "note": "Method listActive must exist in src/infrastructure/repositories/promotion.repository.ts."
+    },
+    {
+      "id": "hotpath-hp-active-promotions-predicates",
+      "status": "pass",
+      "note": "Hot path hp-active-promotions must contain all required predicates."
+    },
+    {
+      "id": "hotpath-hp-active-promotions-index-catalog-coverage",
+      "status": "pass",
+      "note": "Hot path hp-active-promotions missing indexCatalog entries: none."
+    },
+    {
+      "id": "hotpath-hp-active-promotions-budget-valid",
+      "status": "pass",
+      "note": "Hot path hp-active-promotions must define positive targetP95Ms and queryBudgetUnits."
+    },
+    {
+      "id": "hotpath-hp-segment-freshness-file-exists",
+      "status": "pass",
+      "note": "Repository file must exist: src/infrastructure/repositories/promotion.repository.ts"
+    },
+    {
+      "id": "hotpath-hp-segment-freshness-method-present",
+      "status": "pass",
+      "note": "Method getSegmentFreshnessSnapshot must exist in src/infrastructure/repositories/promotion.repository.ts."
+    },
+    {
+      "id": "hotpath-hp-segment-freshness-predicates",
+      "status": "pass",
+      "note": "Hot path hp-segment-freshness must contain all required predicates."
+    },
+    {
+      "id": "hotpath-hp-segment-freshness-index-catalog-coverage",
+      "status": "pass",
+      "note": "Hot path hp-segment-freshness missing indexCatalog entries: none."
+    },
+    {
+      "id": "hotpath-hp-segment-freshness-budget-valid",
+      "status": "pass",
+      "note": "Hot path hp-segment-freshness must define positive targetP95Ms and queryBudgetUnits."
+    },
+    {
+      "id": "cache-cache-products-list-file-exists",
+      "status": "pass",
+      "note": "Cache surface source path must exist: src/routes/api/products.routes.ts"
+    },
+    {
+      "id": "cache-cache-products-list-snippet",
+      "status": "pass",
+      "note": "Cache surface cache-products-list must include required snippet."
+    },
+    {
+      "id": "cache-cache-products-list-target-valid",
+      "status": "pass",
+      "note": "Cache surface cache-products-list targetHitRatePercent must be in range (0, 100]."
+    },
+    {
+      "id": "cache-cache-product-detail-file-exists",
+      "status": "pass",
+      "note": "Cache surface source path must exist: src/routes/api/products.routes.ts"
+    },
+    {
+      "id": "cache-cache-product-detail-snippet",
+      "status": "pass",
+      "note": "Cache surface cache-product-detail must include required snippet."
+    },
+    {
+      "id": "cache-cache-product-detail-target-valid",
+      "status": "pass",
+      "note": "Cache surface cache-product-detail targetHitRatePercent must be in range (0, 100]."
+    },
+    {
+      "id": "cache-cache-collections-list-file-exists",
+      "status": "pass",
+      "note": "Cache surface source path must exist: src/routes/api/products.routes.ts"
+    },
+    {
+      "id": "cache-cache-collections-list-snippet",
+      "status": "pass",
+      "note": "Cache surface cache-collections-list must include required snippet."
+    },
+    {
+      "id": "cache-cache-collections-list-target-valid",
+      "status": "pass",
+      "note": "Cache surface cache-collections-list targetHitRatePercent must be in range (0, 100]."
+    },
+    {
+      "id": "review-cadence-valid",
+      "status": "pass",
+      "note": "reviewCadenceDays must be a positive number."
+    },
+    {
+      "id": "review-dates-format",
+      "status": "pass",
+      "note": "lastReviewedOn and nextReviewBy must use YYYY-MM-DD format."
+    },
+    {
+      "id": "review-next-after-last",
+      "status": "pass",
+      "note": "nextReviewBy must be on or after lastReviewedOn."
+    },
+    {
+      "id": "review-window-valid",
+      "status": "pass",
+      "note": "nextReviewBy must stay within reviewCadenceDays window."
+    },
+    {
+      "id": "review-not-overdue",
+      "status": "pass",
+      "note": "Query performance policy review date must not be overdue."
+    },
+    {
+      "id": "runbook-exists",
+      "status": "pass",
+      "note": "Runbook must exist: docs/runbooks/query-performance-budget-wave1.md"
+    }
+  ],
+  "hotPathEvaluations": [
+    {
+      "id": "hp-cart-find-or-create",
+      "label": "Cart session lookup",
+      "repositoryPath": "src/infrastructure/repositories/cart.repository.ts",
+      "methodName": "findOrCreateCart",
+      "targetP95Ms": 40,
+      "queryBudgetUnits": 2,
+      "predicatesSatisfied": true,
+      "indexCoverageSatisfied": true,
+      "status": "pass"
+    },
+    {
+      "id": "hp-cart-merge",
+      "label": "Cart merge login path",
+      "repositoryPath": "src/infrastructure/repositories/cart.repository.ts",
+      "methodName": "mergeCart",
+      "targetP95Ms": 90,
+      "queryBudgetUnits": 5,
+      "predicatesSatisfied": true,
+      "indexCoverageSatisfied": true,
+      "status": "pass"
+    },
+    {
+      "id": "hp-orders-by-store",
+      "label": "Admin order listing",
+      "repositoryPath": "src/infrastructure/repositories/order.repository.ts",
+      "methodName": "findByStore",
+      "targetP95Ms": 120,
+      "queryBudgetUnits": 3,
+      "predicatesSatisfied": true,
+      "indexCoverageSatisfied": true,
+      "status": "pass"
+    },
+    {
+      "id": "hp-orders-by-user",
+      "label": "Account order listing",
+      "repositoryPath": "src/infrastructure/repositories/order.repository.ts",
+      "methodName": "findByUserId",
+      "targetP95Ms": 90,
+      "queryBudgetUnits": 3,
+      "predicatesSatisfied": true,
+      "indexCoverageSatisfied": true,
+      "status": "pass"
+    },
+    {
+      "id": "hp-active-promotions",
+      "label": "Active promotion resolution",
+      "repositoryPath": "src/infrastructure/repositories/promotion.repository.ts",
+      "methodName": "listActive",
+      "targetP95Ms": 80,
+      "queryBudgetUnits": 2,
+      "predicatesSatisfied": true,
+      "indexCoverageSatisfied": true,
+      "status": "pass"
+    },
+    {
+      "id": "hp-segment-freshness",
+      "label": "Segment freshness snapshot",
+      "repositoryPath": "src/infrastructure/repositories/promotion.repository.ts",
+      "methodName": "getSegmentFreshnessSnapshot",
+      "targetP95Ms": 100,
+      "queryBudgetUnits": 3,
+      "predicatesSatisfied": true,
+      "indexCoverageSatisfied": true,
+      "status": "pass"
+    }
+  ],
+  "cacheSurfaceEvaluations": [
+    {
+      "id": "cache-products-list",
+      "sourcePath": "src/routes/api/products.routes.ts",
+      "targetHitRatePercent": 70,
+      "snippetPresent": true,
+      "status": "pass"
+    },
+    {
+      "id": "cache-product-detail",
+      "sourcePath": "src/routes/api/products.routes.ts",
+      "targetHitRatePercent": 80,
+      "snippetPresent": true,
+      "status": "pass"
+    },
+    {
+      "id": "cache-collections-list",
+      "sourcePath": "src/routes/api/products.routes.ts",
+      "targetHitRatePercent": 75,
+      "snippetPresent": true,
+      "status": "pass"
+    }
+  ],
+  "metrics": {
+    "totalChecks": 66,
+    "failedChecks": 0,
+    "hotPaths": 6,
+    "hotPathsPassing": 6,
+    "cacheSurfaces": 3,
+    "cacheSurfacesPassing": 3,
+    "indexCatalogSize": 8
+  }
+}

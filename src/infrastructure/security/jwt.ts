@@ -29,15 +29,17 @@ async function getSigningKey(secret: string): Promise<CryptoKey> {
 
 export async function signJwt(
   payload: { sub: string; email: string; name: string },
-  secret: string
+  secret: string,
+  options?: { ttlSeconds?: number },
 ): Promise<string> {
   const header = { alg: "HS256", typ: "JWT" };
   const now = Math.floor(Date.now() / 1000);
+  const ttlSeconds = Math.max(1, options?.ttlSeconds ?? AUTH_COOKIE_MAX_AGE);
 
   const fullPayload: JwtPayload = {
     ...payload,
     iat: now,
-    exp: now + AUTH_COOKIE_MAX_AGE,
+    exp: now + ttlSeconds,
   };
 
   const encodedHeader = base64UrlEncode(JSON.stringify(header));

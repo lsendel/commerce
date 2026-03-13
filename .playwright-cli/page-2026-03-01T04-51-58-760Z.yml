@@ -1,0 +1,76 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Not Found | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "Shopping cart" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - link "Sign in" [ref=e21] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - img [ref=e25]
+        - img [ref=e32]
+      - generic [ref=e34]: "404"
+      - heading "Page Not Found" [level=1] [ref=e35]
+      - paragraph [ref=e36]: Looks like this page wandered off. Let's get you back on track.
+      - link "Back to Home" [ref=e38] [cursor=pointer]:
+        - /url: /
+  - contentinfo [ref=e39]:
+    - generic [ref=e40]:
+      - generic [ref=e41]:
+        - generic [ref=e42]:
+          - link "petm8 home" [ref=e43] [cursor=pointer]:
+            - /url: /
+            - img [ref=e44]
+            - generic [ref=e46]: petm8
+          - paragraph [ref=e47]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e48]:
+          - heading "Shop" [level=4] [ref=e49]
+          - list [ref=e50]:
+            - listitem [ref=e51]:
+              - link "All Products" [ref=e52] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e53]:
+              - link "Collections" [ref=e54] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e55]:
+          - heading "Account" [level=4] [ref=e56]
+          - list [ref=e57]:
+            - listitem [ref=e58]:
+              - link "Orders" [ref=e59] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e60]:
+              - link "My Pets" [ref=e61] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e62]:
+          - heading "Company" [level=4] [ref=e63]
+          - list [ref=e64]:
+            - listitem [ref=e65]:
+              - link "About" [ref=e66] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e67]:
+              - link "Contact" [ref=e68] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e70]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e71]:
+    - generic [ref=e72]:
+      - heading "Your Cart" [level=2] [ref=e73]
+      - button "Close cart" [ref=e74] [cursor=pointer]:
+        - img [ref=e75]

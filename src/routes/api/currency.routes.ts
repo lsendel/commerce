@@ -6,6 +6,7 @@ import { createDb } from "../../infrastructure/db/client";
 import { CurrencyRepository } from "../../infrastructure/repositories/currency.repository";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { cacheResponse } from "../../middleware/cache.middleware";
+import { invalidateByTags } from "../../infrastructure/cache/cache";
 
 const currency = new Hono<{ Bindings: Env }>();
 
@@ -72,6 +73,8 @@ currency.patch(
     if (!config) {
       return c.json({ error: "Failed to update currency configuration" }, 500);
     }
+
+    await invalidateByTags(["currency:rates"]);
 
     return c.json(
       {

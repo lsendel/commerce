@@ -62,6 +62,32 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
         </a>
       </div>
 
+      <div
+        id="account-deleted-success"
+        class="hidden mb-6 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-4"
+      >
+        <p class="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+          Your account was deleted successfully.
+        </p>
+        <p class="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
+          You are signed out. Choose where to go next.
+        </p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <a
+            href="/"
+            class="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+          >
+            Go to homepage
+          </a>
+          <a
+            href="/auth/register"
+            class="inline-flex items-center rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+          >
+            Create new account
+          </a>
+        </div>
+      </div>
+
       {/* Profile Section */}
       <section class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 mb-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-5">Profile</h2>
@@ -72,17 +98,32 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
         <form id="profile-form" class="space-y-5">
           {/* Avatar */}
           <div class="flex items-center gap-4">
-            <div class="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center overflow-hidden ring-2 ring-brand-100">
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} class="w-full h-full object-cover" />
-              ) : (
-                <span class="text-2xl font-bold text-brand-500">
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
-              )}
+            <div id="settings-avatar-display" class="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center overflow-hidden ring-2 ring-brand-100">
+              <img
+                id="settings-avatar-img"
+                src={user.avatarUrl || ""}
+                alt={user.name}
+                class={user.avatarUrl ? "w-full h-full object-cover" : "hidden w-full h-full object-cover"}
+              />
+              <span
+                id="settings-avatar-initial"
+                class={user.avatarUrl ? "hidden text-2xl font-bold text-brand-500" : "text-2xl font-bold text-brand-500"}
+              >
+                {user.name.charAt(0).toUpperCase()}
+              </span>
             </div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">
-              Avatar changes coming soon
+            <div class="flex-1">
+              <Input
+                label="Avatar image URL"
+                name="avatarUrl"
+                type="url"
+                value={user.avatarUrl || ""}
+                placeholder="https://images.example.com/avatar.jpg"
+                autocomplete="photo"
+              />
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Use a public image URL. Leave empty to use initials.
+              </p>
             </div>
           </div>
 
@@ -266,17 +307,43 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
 
                 var fd = new FormData(this);
                 try {
+                  var avatarUrlRaw = String(fd.get('avatarUrl') || '').trim();
+                  if (avatarUrlRaw) {
+                    try {
+                      new URL(avatarUrlRaw);
+                    } catch (_) {
+                      throw new Error('Avatar URL must be a valid absolute URL.');
+                    }
+                  }
+
                   var res = await fetch('/api/auth/profile', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       name: fd.get('name'),
                       phone: fd.get('phone') || null,
+                      avatarUrl: avatarUrlRaw || null,
                     }),
                   });
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
                     throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to update profile') : (data.error || data.message || 'Failed to update profile'));
+                  }
+                  var payload = await res.json().catch(function() { return {}; });
+                  var avatarImg = document.getElementById('settings-avatar-img');
+                  var avatarInitial = document.getElementById('settings-avatar-initial');
+                  if (avatarImg && avatarInitial) {
+                    var savedAvatarUrl = (payload && payload.avatarUrl ? String(payload.avatarUrl) : avatarUrlRaw).trim();
+                    if (savedAvatarUrl) {
+                      avatarImg.setAttribute('src', savedAvatarUrl);
+                      avatarImg.classList.remove('hidden');
+                      avatarInitial.classList.add('hidden');
+                    } else {
+                      avatarImg.classList.add('hidden');
+                      avatarInitial.classList.remove('hidden');
+                      var nameRaw = String(fd.get('name') || '').trim();
+                      avatarInitial.textContent = nameRaw ? nameRaw.charAt(0).toUpperCase() : '?';
+                    }
                   }
                   successEl.textContent = 'Profile updated successfully.';
                   successEl.classList.remove('hidden');
@@ -394,7 +461,28 @@ export const SettingsPage: FC<SettingsPageProps> = ({ user }) => {
                     var data = await res.json().catch(function() { return {}; });
                     throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to delete account') : (data.error || data.message || 'Failed to delete account'));
                   }
-                  window.location.href = '/';
+                  var modalApi = window['modal_delete-account-modal'];
+                  if (modalApi && typeof modalApi.close === 'function') {
+                    modalApi.close();
+                  }
+
+                  var successPanel = document.getElementById('account-deleted-success');
+                  if (successPanel) successPanel.classList.remove('hidden');
+
+                  var modalOpenBtn = document.querySelector('[data-modal-open="delete-account-modal"]');
+                  if (modalOpenBtn) modalOpenBtn.classList.add('hidden');
+
+                  deleteInput.value = '';
+                  deleteInput.disabled = true;
+                  this.textContent = 'Account Deleted';
+
+                  ['profile-form', 'prefs-form', 'password-form'].forEach(function(formId) {
+                    var form = document.getElementById(formId);
+                    if (!form) return;
+                    form.querySelectorAll('input, select, textarea, button').forEach(function(field) {
+                      if (field && field.id !== 'verify-email-btn') field.disabled = true;
+                    });
+                  });
                 } catch (err) {
                   notifyError(err, 'Failed to delete account');
                   this.disabled = false;

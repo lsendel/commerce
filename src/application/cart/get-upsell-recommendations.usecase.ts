@@ -2,7 +2,11 @@ import { inArray } from "drizzle-orm";
 import type { CartRepository } from "../../infrastructure/repositories/cart.repository";
 import type { ProductRepository } from "../../infrastructure/repositories/product.repository";
 import type { Database } from "../../infrastructure/db/client";
-import { productVariants } from "../../infrastructure/db/schema";
+import { productVariants, products } from "../../infrastructure/db/schema";
+import {
+  rankUpsellCandidates,
+  type RecommendationCandidate,
+} from "../../infrastructure/marketing/recommendation-ranking";
 
 export interface UpsellRecommendation {
   productId: string;
@@ -22,7 +26,12 @@ interface UpsellCandidate {
   imageUrl: string | null;
   variantId: string;
   price: number;
-  score: number;
+  source: "related" | "catalog";
+  compareAtPrice: number | null;
+  inventoryQuantity: number | null;
+  createdAt: Date | null;
+  sharedCollectionCount: number;
+  baseScore: number;
   reasons: Set<string>;
 }
 
@@ -71,6 +80,14 @@ export class GetUpsellRecommendationsUseCase {
 
     const cartAveragePrice = this.calculateCartAveragePrice(cartItems);
     const candidates = new Map<string, UpsellCandidate>();
+    const cartProductTypeRows = await this.db
+      .select({
+        id: products.id,
+        type: products.type,
+      })
+      .from(products)
+      .where(inArray(products.id, [...cartProductIds]));
+    const preferredType = this.resolvePreferredType(cartProductTypeRows.map((row) => row.type));
 
     for (const cartProductId of cartProductIds) {
       const relatedProducts = await this.productRepo.findRelatedProducts(
@@ -86,29 +103,29 @@ export class GetUpsellRecommendationsUseCase {
 
         const candidatePrice = Number(primaryVariant.price ?? 0);
         if (!Number.isFinite(candidatePrice) || candidatePrice < 0) continue;
-
-        const priceFitScore =
-          cartAveragePrice > 0 && candidatePrice <= cartAveragePrice * 1.2 ? 1 : 0;
-        const increment = 2 + priceFitScore;
+        const inventoryQuantity =
+          typeof primaryVariant.inventoryQuantity === "number"
+            ? primaryVariant.inventoryQuantity
+            : null;
 
         const existing = candidates.get(product.id);
         if (existing) {
-          existing.score += increment;
+          existing.baseScore += 1.25;
+          existing.sharedCollectionCount += 1;
           existing.reasons.add("co_purchase_signal");
-          if (priceFitScore > 0) {
-            existing.reasons.add("price_fit");
-          }
           if (candidatePrice < existing.price) {
             existing.price = candidatePrice;
             existing.variantId = primaryVariant.id;
+            existing.compareAtPrice =
+              typeof primaryVariant.compareAtPrice === "number"
+                ? primaryVariant.compareAtPrice
+                : existing.compareAtPrice;
+            existing.inventoryQuantity = inventoryQuantity;
           }
           continue;
         }
 
         const reasons = new Set<string>(["co_purchase_signal"]);
-        if (priceFitScore > 0) {
-          reasons.add("price_fit");
-        }
 
         candidates.set(product.id, {
           productId: product.id,
@@ -116,9 +133,58 @@ export class GetUpsellRecommendationsUseCase {
           slug: product.slug,
           imageUrl: product.featuredImageUrl ?? null,
           variantId: primaryVariant.id,
+          source: "related",
           price: candidatePrice,
-          score: increment,
+          compareAtPrice:
+            typeof primaryVariant.compareAtPrice === "number"
+              ? primaryVariant.compareAtPrice
+              : null,
+          inventoryQuantity,
+          createdAt: product.createdAt ?? null,
+          sharedCollectionCount: 1,
+          baseScore: 1.5,
           reasons,
+        });
+      }
+    }
+
+    if (candidates.size === 0) {
+      const typeFallback = preferredType
+        ? await this.productRepo.findAll({
+            page: 1,
+            limit: Math.max(limit * 2, 8),
+            status: "active",
+            available: true,
+            type: preferredType,
+            sort: "newest",
+          })
+        : { products: [] as Array<any> };
+
+      for (const product of typeFallback.products) {
+        if (cartProductIds.has(product.id)) continue;
+        const primaryVariant = product.variants?.[0];
+        if (!primaryVariant?.id) continue;
+
+        candidates.set(product.id, {
+          productId: product.id,
+          name: product.name,
+          slug: product.slug,
+          imageUrl: product.featuredImageUrl ?? product.images?.[0]?.url ?? null,
+          variantId: primaryVariant.id,
+          source: "catalog",
+          price: Number(primaryVariant.price ?? product.priceRange?.min ?? 0),
+          compareAtPrice:
+            typeof primaryVariant.compareAtPrice === "number"
+              ? primaryVariant.compareAtPrice
+              : null,
+          inventoryQuantity:
+            typeof primaryVariant.inventoryQuantity === "number"
+              ? primaryVariant.inventoryQuantity
+              : null,
+          createdAt: null,
+          sharedCollectionCount: 0,
+          baseScore: 0.8,
+          reasons: new Set(["same_type_fallback"]),
         });
       }
     }
@@ -143,29 +209,56 @@ export class GetUpsellRecommendationsUseCase {
           slug: product.slug,
           imageUrl: product.featuredImageUrl ?? product.images?.[0]?.url ?? null,
           variantId: primaryVariant.id,
+          source: "catalog",
           price: Number(primaryVariant.price ?? product.priceRange?.min ?? 0),
-          score: 1,
+          compareAtPrice:
+            typeof primaryVariant.compareAtPrice === "number"
+              ? primaryVariant.compareAtPrice
+              : null,
+          inventoryQuantity:
+            typeof primaryVariant.inventoryQuantity === "number"
+              ? primaryVariant.inventoryQuantity
+              : null,
+          createdAt: null,
+          sharedCollectionCount: 0,
+          baseScore: 0.6,
           reasons: new Set(["catalog_fallback"]),
         });
       }
     }
 
-    return [...candidates.values()]
-      .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        return a.price - b.price;
-      })
-      .slice(0, limit)
-      .map((candidate) => ({
+    const rankingInput: RecommendationCandidate[] = [...candidates.values()].map((candidate) => ({
+      productId: candidate.productId,
+      source: candidate.source,
+      price: candidate.price,
+      compareAtPrice: candidate.compareAtPrice,
+      inventoryQuantity: candidate.inventoryQuantity,
+      createdAt: candidate.createdAt,
+      sharedCollectionCount: candidate.sharedCollectionCount,
+      baseScore: candidate.baseScore,
+      reasons: candidate.reasons,
+    }));
+    const ranked = rankUpsellCandidates(rankingInput, {
+      cartAveragePrice,
+      limit,
+    });
+
+    return ranked.map((rankedCandidate) => {
+      const candidate = candidates.get(rankedCandidate.productId);
+      if (!candidate) {
+        throw new Error("Ranked recommendation missing candidate payload");
+      }
+      return {
         productId: candidate.productId,
         name: candidate.name,
         slug: candidate.slug,
         imageUrl: candidate.imageUrl,
         variantId: candidate.variantId,
         price: candidate.price,
-        score: candidate.score,
-        reasons: [...candidate.reasons],
-      }));
+        score: rankedCandidate.score,
+        reasons: rankedCandidate.reasons,
+      };
+    });
   }
 
   private calculateCartAveragePrice(
@@ -187,5 +280,15 @@ export class GetUpsellRecommendationsUseCase {
 
     if (totalQuantity === 0) return 0;
     return weightedTotal / totalQuantity;
+  }
+
+  private resolvePreferredType(types: Array<string | null | undefined>): string | undefined {
+    const scoreByType = new Map<string, number>();
+    for (const rawType of types) {
+      if (!rawType) continue;
+      scoreByType.set(rawType, (scoreByType.get(rawType) ?? 0) + 1);
+    }
+    const sorted = [...scoreByType.entries()].sort((a, b) => b[1] - a[1]);
+    return sorted[0]?.[0];
   }
 }

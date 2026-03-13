@@ -1,0 +1,166 @@
+{
+  "version": "v1",
+  "owner": "commerce-workflow-platform",
+  "reviewCadenceDays": 14,
+  "lastReviewedOn": "2026-03-01",
+  "nextReviewBy": "2026-03-14",
+  "requiredEventTypes": [
+    "queue_dlq_candidate_recorded",
+    "queue_dlq_auto_remediation_executed",
+    "queue_dlq_auto_remediation_skipped",
+    "queue_dlq_auto_remediation_failed",
+    "queue_dlq_manual_review_required"
+  ],
+  "queues": [
+    {
+      "id": "dlq-ai-generation",
+      "queue": "ai-generation",
+      "maxAutoRequeues": 0,
+      "allowedActions": ["manual_review"],
+      "sourcePaths": [
+        "src/queues/dlq-remediation.ts",
+        "src/queues/handler.ts",
+        "src/queues/ai-generation.consumer.ts"
+      ],
+      "requiredSnippets": [
+        "queue: \"ai-generation\"",
+        "action: \"manual_review\"",
+        "processDeadLetterCandidate({"
+      ],
+      "metricTargets": {
+        "autoRemediationRateMinPercent": 0,
+        "manualReviewRateMaxPercent": 100
+      }
+    },
+    {
+      "id": "dlq-order-fulfillment",
+      "queue": "order-fulfillment",
+      "maxAutoRequeues": 1,
+      "allowedActions": [
+        "requeue_original_once",
+        "mark_failed_and_drop"
+      ],
+      "sourcePaths": [
+        "src/queues/dlq-remediation.ts",
+        "src/queues/handler.ts",
+        "src/queues/order-fulfillment.consumer.ts"
+      ],
+      "requiredSnippets": [
+        "action: \"requeue_original_once\"",
+        "queue_dlq_auto_remediation_executed",
+        "compensateOrderFulfillmentFailure"
+      ],
+      "metricTargets": {
+        "autoRemediationRateMinPercent": 50,
+        "manualReviewRateMaxPercent": 50
+      }
+    },
+    {
+      "id": "dlq-notifications",
+      "queue": "notifications",
+      "maxAutoRequeues": 1,
+      "allowedActions": [
+        "reroute_notification_email_once",
+        "manual_review"
+      ],
+      "sourcePaths": [
+        "src/queues/dlq-remediation.ts",
+        "src/queues/handler.ts",
+        "src/queues/notification.consumer.ts"
+      ],
+      "requiredSnippets": [
+        "action: \"reroute_notification_email_once\"",
+        "channel: \"email\"",
+        "compensateNotificationFailure"
+      ],
+      "metricTargets": {
+        "autoRemediationRateMinPercent": 50,
+        "manualReviewRateMaxPercent": 50
+      }
+    }
+  ],
+  "simulationCases": [
+    {
+      "id": "of-retryable-first",
+      "queue": "order-fulfillment",
+      "retryable": true,
+      "reason": "timeout while calling provider",
+      "payload": {
+        "type": "fulfillment.submit",
+        "fulfillmentRequestId": "req-1",
+        "storeId": "store-1",
+        "provider": "printful"
+      },
+      "expectedAction": "requeue_original_once",
+      "expectedAutoRemediate": true
+    },
+    {
+      "id": "of-non-retryable",
+      "queue": "order-fulfillment",
+      "retryable": false,
+      "reason": "invalid address",
+      "payload": {
+        "type": "fulfillment.submit",
+        "fulfillmentRequestId": "req-2",
+        "storeId": "store-1",
+        "provider": "printful"
+      },
+      "expectedAction": "mark_failed_and_drop",
+      "expectedAutoRemediate": false
+    },
+    {
+      "id": "notif-sms-fallback",
+      "queue": "notifications",
+      "retryable": true,
+      "reason": "sms provider timeout",
+      "payload": {
+        "type": "checkout_recovery",
+        "data": {
+          "storeId": "store-1",
+          "userId": "user-1",
+          "userEmail": "ops@example.com",
+          "channel": "sms",
+          "stage": "recovery_24h",
+          "cartId": "cart-1",
+          "recoveryUrl": "https://petm8.io/cart?cart_id=cart-1"
+        }
+      },
+      "expectedAction": "reroute_notification_email_once",
+      "expectedAutoRemediate": true
+    },
+    {
+      "id": "notif-email-manual",
+      "queue": "notifications",
+      "retryable": false,
+      "reason": "template validation failed",
+      "payload": {
+        "type": "checkout_recovery",
+        "data": {
+          "storeId": "store-1",
+          "userId": "user-1",
+          "userEmail": "ops@example.com",
+          "channel": "email",
+          "stage": "recovery_24h",
+          "cartId": "cart-2",
+          "recoveryUrl": "https://petm8.io/cart?cart_id=cart-2"
+        }
+      },
+      "expectedAction": "manual_review",
+      "expectedAutoRemediate": false
+    },
+    {
+      "id": "ai-manual",
+      "queue": "ai-generation",
+      "retryable": false,
+      "reason": "prompt validation error",
+      "payload": {
+        "jobId": "job-1",
+        "inputImageUrl": null,
+        "stylePrompt": "minimalist portrait",
+        "petName": "Milo"
+      },
+      "expectedAction": "manual_review",
+      "expectedAutoRemediate": false
+    }
+  ]
+}

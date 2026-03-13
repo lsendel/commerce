@@ -35,9 +35,11 @@ interface LayoutProps {
   breadcrumbs?: { name: string; url: string }[];
   /** Pagination links for rel=prev/next */
   paginationLinks?: { prev?: string; next?: string };
+  /** Optional robots directive override */
+  robots?: string;
 }
 
-const alwaysLoadScripts = ["darkmode.js", "toast.js", "cart.js", "auth.js", "analytics.js"];
+const alwaysLoadScripts = ["darkmode.js", "toast.js", "ui.js", "cart.js", "auth.js", "analytics.js"];
 
 export const Layout: FC<LayoutProps> = ({
   title,
@@ -63,14 +65,30 @@ export const Layout: FC<LayoutProps> = ({
   isAffiliate,
   breadcrumbs,
   paginationLinks,
-}) => (
+  robots,
+}) => {
+  const privatePrefixes = ["/account", "/admin", "/platform", "/auth"];
+  const inferredPath = (() => {
+    if (url) {
+      try {
+        return new URL(url).pathname;
+      } catch {
+        return activePath || "";
+      }
+    }
+    return activePath || "";
+  })();
+  const isPrivatePath = privatePrefixes.some((prefix) => inferredPath === prefix || inferredPath.startsWith(`${prefix}/`))
+    || inferredPath === "/checkout/success";
+  const robotsContent = robots ?? (isPrivatePath ? "noindex,nofollow" : "index,follow");
+  return (
   <html lang="en">
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>{title ? `${title} | ${storeName}` : `${storeName} — Commerce`}</title>
       {description && <meta name="description" content={description} />}
-      <meta name="robots" content="index,follow" />
+      <meta name="robots" content={robotsContent} />
       {url && <link rel="canonical" href={url} />}
       <link rel="icon" href="/favicon.ico" sizes="any" />
       <link rel="apple-touch-icon" href="/favicon-192.png" />
@@ -123,21 +141,12 @@ export const Layout: FC<LayoutProps> = ({
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
       <link
-        rel="preload"
-        href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hjQ.woff2"
-        as="font"
-        type="font/woff2"
-        crossorigin=""
-      />
-      <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet"
       />
 
       {/* E3: Critical CSS inlined for instant first paint */}
       <style dangerouslySetInnerHTML={{ __html: [
-        "/* font-display: swap ensures text stays visible while fonts load (E2) */",
-        "@font-face{font-family:'Inter';font-style:normal;font-display:swap;src:url(https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hjQ.woff2) format('woff2');}",
         "/* Critical-path layout */",
         "*,*::before,*::after{box-sizing:border-box;margin:0;}",
         "html{line-height:1.5;-webkit-text-size-adjust:100%;font-family:'Inter',ui-sans-serif,system-ui,sans-serif;}",
@@ -378,4 +387,5 @@ export const Layout: FC<LayoutProps> = ({
       ))}
     </body>
   </html>
-);
+  );
+};

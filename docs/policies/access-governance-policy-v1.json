@@ -1,0 +1,91 @@
+{
+  "version": "v1",
+  "roleModel": {
+    "platformRoles": ["super_admin", "group_admin", "user"],
+    "storeMemberRoles": ["owner", "admin", "staff"],
+    "adminAliasResolvesTo": ["super_admin", "group_admin"]
+  },
+  "roleBindings": [
+    {
+      "id": "platform-admin-alias",
+      "description": "Admin alias in middleware resolves to platform admin roles.",
+      "sourceFile": "src/middleware/role.middleware.ts",
+      "expectedSourceSnippets": [
+        "r === \"admin\" ? [\"super_admin\", \"group_admin\"] : [r]",
+        "normalizedRoles.includes(user.platformRole ?? \"\")"
+      ]
+    },
+    {
+      "id": "admin-api-global-guard",
+      "description": "All /api/admin routes are globally guarded by auth + admin role middleware.",
+      "sourceFile": "src/index.tsx",
+      "expectedSourceSnippets": [
+        "app.use(\"/api/admin/*\", requireAuth(), requireRole(\"admin\"));"
+      ]
+    },
+    {
+      "id": "admin-page-global-guard",
+      "description": "All /admin pages are globally guarded by platform admin role checks.",
+      "sourceFile": "src/index.tsx",
+      "expectedSourceSnippets": [
+        "app.use(\"/admin/*\", async (c, next) => {",
+        "if (!isAdminPlatformRole(dbUser?.platformRole))"
+      ]
+    },
+    {
+      "id": "super-admin-platform-scope",
+      "description": "Platform store listing remains super-admin scoped.",
+      "sourceFile": "src/routes/api/platform.routes.ts",
+      "expectedSourceSnippets": [
+        "platform.get(\"/stores\", requireAuth(), requireRole(\"super_admin\"), async (c) => {"
+      ]
+    }
+  ],
+  "guardAssertions": [
+    {
+      "id": "admin-page-fence",
+      "sourceFile": "src/index.tsx",
+      "mustContain": [
+        "function isAdminPlatformRole(role: string | null | undefined)",
+        "return role === \"super_admin\" || role === \"group_admin\";"
+      ]
+    },
+    {
+      "id": "admin-api-fence",
+      "sourceFile": "src/index.tsx",
+      "mustContain": [
+        "app.use(\"/api/admin/*\", requireAuth(), requireRole(\"admin\"));"
+      ]
+    },
+    {
+      "id": "role-middleware-enforcement",
+      "sourceFile": "src/middleware/role.middleware.ts",
+      "mustContain": [
+        "return c.json({ error: \"Insufficient permissions\", message: \"Insufficient permissions\" }, 403);"
+      ]
+    }
+  ],
+  "breakGlass": {
+    "owner": "commerce-sre",
+    "escalationChannel": "pagerduty:commerce-oncall",
+    "approversRequired": 2,
+    "maxWindowMinutes": 120,
+    "drillCadenceDays": 30,
+    "lastDrillOn": "2026-02-26",
+    "nextDrillBy": "2026-03-28",
+    "scenarios": [
+      {
+        "id": "bg-admin-api-emergency",
+        "name": "Emergency admin API access restore",
+        "targetSurface": "/api/admin/*",
+        "expectedOutcome": "Temporary elevation requires dual approval and bounded 120-minute window."
+      },
+      {
+        "id": "bg-admin-page-emergency",
+        "name": "Emergency admin page access restore",
+        "targetSurface": "/admin/*",
+        "expectedOutcome": "Temporary elevation is revoked after incident closure and logged in audit trail."
+      }
+    ]
+  }
+}

@@ -1,0 +1,177 @@
+{
+  "startedAt": "2026-03-06T06:41:15.179Z",
+  "finishedAt": "2026-03-06T06:41:15.184Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "policyPath": "docs/policies/cost-observability-unit-economics-v1.json",
+  "checks": [
+    {
+      "id": "policy-owner-present",
+      "status": "pass",
+      "note": "Policy owner must be defined."
+    },
+    {
+      "id": "dimensions-required-coverage",
+      "status": "pass",
+      "note": "Required dimensions must include feature/team/tenant."
+    },
+    {
+      "id": "feature-models-present",
+      "status": "pass",
+      "note": "Feature dimension must define at least 3 models."
+    },
+    {
+      "id": "team-models-present",
+      "status": "pass",
+      "note": "Team dimension must define at least 3 models."
+    },
+    {
+      "id": "tenant-models-present",
+      "status": "pass",
+      "note": "Tenant dimension must define at least one model."
+    },
+    {
+      "id": "feature-owner-team-coverage",
+      "status": "pass",
+      "note": "Every feature model ownerTeam must map to a team model."
+    },
+    {
+      "id": "telemetry-metric-catalog",
+      "status": "pass",
+      "note": "Telemetry metric catalog must include at least 5 metrics."
+    },
+    {
+      "id": "telemetry-required-metrics",
+      "status": "pass",
+      "note": "Telemetry catalog must include required cost and unit-economics metrics."
+    },
+    {
+      "id": "dashboard-sections-coverage",
+      "status": "pass",
+      "note": "Dashboard sections must include summary, feature/team/tenant dimensions, and optimization backlog."
+    },
+    {
+      "id": "optimization-backlog-present",
+      "status": "pass",
+      "note": "Optimization backlog must include at least 3 items."
+    },
+    {
+      "id": "backlog-cost-opt-001-status-valid",
+      "status": "pass",
+      "note": "Backlog status must be candidate|planned|in_progress (cost-opt-001)."
+    },
+    {
+      "id": "backlog-cost-opt-001-priority-valid",
+      "status": "pass",
+      "note": "Backlog priority must be p0|p1|p2 (cost-opt-001)."
+    },
+    {
+      "id": "backlog-cost-opt-001-date-format",
+      "status": "pass",
+      "note": "Backlog targetDate must use YYYY-MM-DD (cost-opt-001)."
+    },
+    {
+      "id": "backlog-cost-opt-002-status-valid",
+      "status": "pass",
+      "note": "Backlog status must be candidate|planned|in_progress (cost-opt-002)."
+    },
+    {
+      "id": "backlog-cost-opt-002-priority-valid",
+      "status": "pass",
+      "note": "Backlog priority must be p0|p1|p2 (cost-opt-002)."
+    },
+    {
+      "id": "backlog-cost-opt-002-date-format",
+      "status": "pass",
+      "note": "Backlog targetDate must use YYYY-MM-DD (cost-opt-002)."
+    },
+    {
+      "id": "backlog-cost-opt-003-status-valid",
+      "status": "pass",
+      "note": "Backlog status must be candidate|planned|in_progress (cost-opt-003)."
+    },
+    {
+      "id": "backlog-cost-opt-003-priority-valid",
+      "status": "pass",
+      "note": "Backlog priority must be p0|p1|p2 (cost-opt-003)."
+    },
+    {
+      "id": "backlog-cost-opt-003-date-format",
+      "status": "pass",
+      "note": "Backlog targetDate must use YYYY-MM-DD (cost-opt-003)."
+    },
+    {
+      "id": "review-cadence-valid",
+      "status": "pass",
+      "note": "reviewCadenceDays must be a positive number."
+    },
+    {
+      "id": "review-dates-format",
+      "status": "pass",
+      "note": "lastReviewedOn and nextReviewBy must use YYYY-MM-DD format."
+    },
+    {
+      "id": "review-next-after-last",
+      "status": "pass",
+      "note": "nextReviewBy must be on or after lastReviewedOn."
+    },
+    {
+      "id": "review-window-valid",
+      "status": "pass",
+      "note": "nextReviewBy must stay inside reviewCadenceDays window."
+    },
+    {
+      "id": "review-not-overdue",
+      "status": "pass",
+      "note": "Cost observability policy review date must not be overdue."
+    },
+    {
+      "id": "runbook-exists",
+      "status": "pass",
+      "note": "Runbook must exist: docs/runbooks/cost-observability-unit-economics.md"
+    },
+    {
+      "id": "contract-route-present",
+      "status": "pass",
+      "note": "Analytics contract must define getCostObservability route."
+    },
+    {
+      "id": "contract-route-method",
+      "status": "pass",
+      "note": "Cost observability contract route method must be GET."
+    },
+    {
+      "id": "contract-route-path",
+      "status": "pass",
+      "note": "Cost observability contract route path must match backend route."
+    },
+    {
+      "id": "contract-response-shape",
+      "status": "pass",
+      "note": "Sample cost observability payload must satisfy analytics contract response schema."
+    },
+    {
+      "id": "api-route-snippet",
+      "status": "pass",
+      "note": "Analytics API route must gate and serve /analytics/cost-observability."
+    },
+    {
+      "id": "admin-page-section",
+      "status": "pass",
+      "note": "Admin analytics page must render Cost Observability section."
+    },
+    {
+      "id": "admin-page-data-wiring",
+      "status": "pass",
+      "note": "Admin analytics route and CSV export must wire cost observability data."
+    }
+  ],
+  "metrics": {
+    "totalChecks": 32,
+    "failedChecks": 0,
+    "featureModels": 4,
+    "teamModels": 4,
+    "tenantModels": 2,
+    "backlogItems": 3
+  }
+}

@@ -168,56 +168,14 @@ export const ProductDetailPage: FC<ProductDetailPageProps> = ({
     : null;
 
   const productUrl = siteUrl ? `${siteUrl}/products/${product.slug}` : `/products/${product.slug}`;
-  const lowestPrice = variants.length > 0 ? Math.min(...variants.map((v) => parseFloat(v.price))) : 0;
   const primaryVariant = variants.find((variant) => variant.availableForSale !== false) ?? variants[0];
   const stockConfidence = getStockConfidence(
     primaryVariant?.inventoryQuantity,
     primaryVariant?.estimatedProductionDays,
   );
 
-  // Breadcrumb JSON-LD
-  const breadcrumbJsonLd = JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl || "/" },
-      { "@type": "ListItem", position: 2, name: "Products", item: `${siteUrl}/products` },
-      { "@type": "ListItem", position: 3, name },
-    ],
-  });
-
-  // Product JSON-LD with optional AggregateRating
-  const productJsonLdObj: Record<string, unknown> = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name,
-    description: description ?? undefined,
-    image: featuredImageUrl ?? undefined,
-    url: productUrl,
-    offers: {
-      "@type": "Offer",
-      price: lowestPrice.toFixed(2),
-      priceCurrency: currencyCode,
-      availability: product.availableForSale !== false
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-    },
-  };
-  if (reviewSummary && reviewSummary.totalCount > 0) {
-    productJsonLdObj.aggregateRating = {
-      "@type": "AggregateRating",
-      ratingValue: reviewSummary.averageRating.toFixed(1),
-      reviewCount: reviewSummary.totalCount,
-    };
-  }
-  const productJsonLd = JSON.stringify(productJsonLdObj);
-
   return (
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Structured data — server-generated from trusted admin content, safe for raw rendering */}
-      {html`<script type="application/ld+json">${breadcrumbJsonLd}</script>`}
-      {html`<script type="application/ld+json">${productJsonLd}</script>`}
-
       {/* Breadcrumb */}
       <nav class="mb-6 text-sm" aria-label="Breadcrumb">
         <ol class="flex items-center gap-2 text-gray-500 dark:text-gray-400">

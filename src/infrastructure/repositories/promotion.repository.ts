@@ -1,4 +1,4 @@
-import { eq, and, or, lte, gte, sql, isNull } from "drizzle-orm";
+import { eq, and, or, lte, gte, sql, isNull, desc } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   promotions,
@@ -122,6 +122,26 @@ export class PromotionRepository {
         ),
       )
       .limit(1);
+    return rows[0] ?? null;
+  }
+
+  async findCouponById(couponId: string) {
+    const rows = await this.db
+      .select({
+        coupon: couponCodes,
+        promotion: promotions,
+      })
+      .from(couponCodes)
+      .innerJoin(promotions, eq(couponCodes.promotionId, promotions.id))
+      .where(
+        and(
+          eq(couponCodes.id, couponId),
+          eq(promotions.storeId, this.storeId),
+          eq(promotions.status, "active"),
+        ),
+      )
+      .limit(1);
+
     return rows[0] ?? null;
   }
 
@@ -285,6 +305,41 @@ export class PromotionRepository {
       .returning();
 
     return updated[0] ?? null;
+  }
+
+  async getSegmentFreshnessSnapshot() {
+    const membershipCountExpr = sql<number>`count(${customerSegmentMemberships.customerId})`;
+    const rows = await this.db
+      .select({
+        id: customerSegments.id,
+        name: customerSegments.name,
+        description: customerSegments.description,
+        memberCount: customerSegments.memberCount,
+        membershipCount: membershipCountExpr,
+        lastRefreshedAt: customerSegments.lastRefreshedAt,
+        createdAt: customerSegments.createdAt,
+      })
+      .from(customerSegments)
+      .leftJoin(
+        customerSegmentMemberships,
+        eq(customerSegmentMemberships.segmentId, customerSegments.id),
+      )
+      .where(eq(customerSegments.storeId, this.storeId))
+      .groupBy(
+        customerSegments.id,
+        customerSegments.name,
+        customerSegments.description,
+        customerSegments.memberCount,
+        customerSegments.lastRefreshedAt,
+        customerSegments.createdAt,
+      )
+      .orderBy(desc(customerSegments.createdAt));
+
+    return rows.map((row) => ({
+      ...row,
+      memberCount: Number(row.memberCount ?? 0),
+      membershipCount: Number(row.membershipCount ?? 0),
+    }));
   }
 
   async getRedemptionAnalytics() {

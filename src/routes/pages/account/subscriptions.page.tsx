@@ -80,19 +80,23 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
             <div class="p-6">
               <div class="flex items-start justify-between mb-4">
                 <div>
-                  <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">{subscription.planName}</h2>
-                  <div class="flex items-center gap-2 mt-1">
-                    <Badge variant={statusVariant[subscription.status] || "neutral"}>
-                      {statusLabel[subscription.status] || subscription.status}
-                    </Badge>
+                  <h2 id="subscription-plan-name" class="text-lg font-bold text-gray-900 dark:text-gray-100">{subscription.planName}</h2>
+                  <div id="subscription-status-row" class="flex items-center gap-2 mt-1">
+                    <span id="subscription-status-badge">
+                      <Badge variant={statusVariant[subscription.status] || "neutral"}>
+                        {statusLabel[subscription.status] || subscription.status}
+                      </Badge>
+                    </span>
                     {subscription.cancelAtPeriodEnd && (
-                      <Badge variant="warning">Cancels at period end</Badge>
+                      <span id="subscription-cancel-badge">
+                        <Badge variant="warning">Cancels at period end</Badge>
+                      </span>
                     )}
                   </div>
                 </div>
                 <div class="text-right">
-                  <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">${subscription.amount}</p>
-                  <p class="text-xs text-gray-400">
+                  <p id="subscription-amount" class="text-2xl font-bold text-gray-900 dark:text-gray-100">${subscription.amount}</p>
+                  <p id="subscription-interval" class="text-xs text-gray-400">
                     per {subscription.interval}
                   </p>
                 </div>
@@ -104,7 +108,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
                   <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">
                     Current Period Ends
                   </p>
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1">
+                  <p id="subscription-current-period-end" class="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1">
                     {subscription.currentPeriodEnd}
                   </p>
                 </div>
@@ -112,7 +116,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
                   <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">
                     Next Billing Date
                   </p>
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1">
+                  <p id="subscription-next-billing" class="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1">
                     {subscription.cancelAtPeriodEnd
                       ? "No further billing"
                       : subscription.nextBillingDate}
@@ -121,11 +125,11 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
               </div>
 
               {Array.isArray(subscription.mixConfiguration?.items) && subscription.mixConfiguration.items.length > 0 && (
-                <div class="mb-5 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                <div id="subscription-bundle-wrap" class="mb-5 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
                   <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
                     Bundle Composition
                   </p>
-                  <ul class="space-y-1">
+                  <ul id="subscription-bundle-list" class="space-y-1">
                     {subscription.mixConfiguration.items.map((item) => (
                       <li class="text-sm text-gray-600 dark:text-gray-300">
                         {item.planName || "Plan"} x{item.quantity}
@@ -136,7 +140,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
               )}
 
               {/* Actions */}
-              <div class="flex flex-wrap items-center gap-3">
+              <div id="subscription-actions" class="flex flex-wrap items-center gap-3">
                 <Button
                   type="button"
                   variant="primary"
@@ -182,7 +186,11 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
                 {availablePlans.map((plan) => {
                   const isCurrent = subscription?.planName === plan.name;
                   return (
-                    <div class={`p-6 ${isCurrent ? "bg-brand-50/50 dark:bg-brand-900/10" : ""}`}>
+                    <div
+                      class={`p-6 ${isCurrent ? "bg-brand-50/50 dark:bg-brand-900/10" : ""}`}
+                      data-plan-card={plan.id}
+                      data-plan-name={plan.name}
+                    >
                       <h3 class="font-semibold text-gray-900 dark:text-gray-100">{plan.name}</h3>
                       <p class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                         ${plan.price}<span class="text-sm font-normal text-gray-400">/{plan.interval}</span>
@@ -200,7 +208,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
                       </ul>
                       <div class="mt-4">
                         {isCurrent ? (
-                          <Badge variant="info">Current Plan</Badge>
+                          <Badge variant="info" data-current-plan-badge={plan.id}>Current Plan</Badge>
                         ) : (
                           <Button
                             type="button"
@@ -364,6 +372,53 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
                 else console.error(message);
               }
 
+              function createMutationIdempotencyKey(action, payload) {
+                var entropy = (window.crypto && window.crypto.randomUUID)
+                  ? window.crypto.randomUUID()
+                  : (Math.random().toString(36).slice(2) + '-' + Date.now());
+                var payloadLength = 0;
+                try {
+                  payloadLength = JSON.stringify(payload || {}).length;
+                } catch (_) {
+                  payloadLength = 0;
+                }
+                return (action + '-' + payloadLength + '-' + entropy).slice(0, 255);
+              }
+
+              function mutationHeaders(action, payload, includeJsonContentType) {
+                var headers = {
+                  'Idempotency-Key': createMutationIdempotencyKey(action, payload),
+                };
+                if (includeJsonContentType) {
+                  headers['Content-Type'] = 'application/json';
+                }
+                return headers;
+              }
+
+              function sleep(ms) {
+                return new Promise(function(resolve) { setTimeout(resolve, ms); });
+              }
+
+              async function fetchMutation(url, options, retries) {
+                var maxRetries = Number.isFinite(retries) ? retries : 1;
+                var attempt = 0;
+                while (true) {
+                  try {
+                    var res = await fetch(url, options);
+                    if (res.status >= 500 && attempt < maxRetries) {
+                      attempt += 1;
+                      await sleep(250 * attempt);
+                      continue;
+                    }
+                    return res;
+                  } catch (err) {
+                    if (attempt >= maxRetries) throw err;
+                    attempt += 1;
+                    await sleep(250 * attempt);
+                  }
+                }
+              }
+
               function requireSecondClick(btn, confirmText, idleText, timeoutMs) {
                 if (btn.dataset.confirming === 'true') return true;
                 btn.dataset.confirming = 'true';
@@ -380,17 +435,132 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
 
               var manageBtn = document.getElementById('manage-subscription-btn');
               var cancelBtn = document.getElementById('cancel-subscription-btn');
+              var resumeBtn = document.getElementById('resume-subscription-btn');
               var cancelConfirm = document.getElementById('cancel-confirm');
+
+              function statusLabelText(status) {
+                if (status === 'active') return 'Active';
+                if (status === 'trialing') return 'Trial';
+                if (status === 'past_due') return 'Past Due';
+                if (status === 'paused') return 'Paused';
+                if (status === 'cancelled') return 'Cancelled';
+                return status || 'Unknown';
+              }
+
+              function statusBadgeClass(status) {
+                var base = 'inline-flex items-center rounded-full font-medium px-2.5 py-0.5 text-xs';
+                if (status === 'active') return base + ' bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400';
+                if (status === 'trialing') return base + ' bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400';
+                if (status === 'past_due' || status === 'paused') return base + ' bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400';
+                if (status === 'cancelled') return base + ' bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400';
+                return base + ' bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+              }
+
+              function formatDateLabel(value) {
+                if (!value) return 'N/A';
+                var parsed = new Date(value);
+                if (Number.isNaN(parsed.getTime())) return String(value);
+                return parsed.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                });
+              }
+
+              function getActiveSubscriptionId() {
+                var cancelAction = document.getElementById('cancel-subscription-btn');
+                var resumeAction = document.getElementById('resume-subscription-btn');
+                return (cancelAction && cancelAction.getAttribute('data-subscription-id'))
+                  || (resumeAction && resumeAction.getAttribute('data-subscription-id'))
+                  || null;
+              }
+
+              function renderActionButton(label, id, variantClass, extraClass) {
+                return '<button type="button" id="' + id + '" data-subscription-id="' + (getActiveSubscriptionId() || '') + '" class="inline-flex items-center justify-center font-semibold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none gap-2 px-5 py-2.5 text-sm rounded-xl ' + variantClass + (extraClass ? ' ' + extraClass : '') + '">' + label + '</button>';
+              }
+
+              function updatePlanCards(currentPlanName) {
+                if (!currentPlanName) return;
+                document.querySelectorAll('[data-plan-card]').forEach(function(card) {
+                  var planName = card.getAttribute('data-plan-name') || '';
+                  var planId = card.getAttribute('data-plan-card') || '';
+                  var actionWrap = card.querySelector('.mt-4');
+                  if (!actionWrap) return;
+                  var isCurrent = planName === currentPlanName;
+                  card.classList.toggle('bg-brand-50/50', isCurrent);
+                  card.classList.toggle('dark:bg-brand-900/10', isCurrent);
+                  if (isCurrent) {
+                    actionWrap.innerHTML = '<span class="inline-flex items-center rounded-full font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2.5 py-0.5 text-xs" data-current-plan-badge="' + planId + '">Current Plan</span>';
+                  } else {
+                    actionWrap.innerHTML = '' +
+                      '<button type="button" class="change-plan-btn inline-flex items-center justify-center font-semibold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none gap-2 border-2 border-brand-500 text-brand-600 dark:text-brand-400 bg-transparent hover:bg-brand-50 dark:hover:bg-brand-900/20 focus-visible:ring-brand-500/30 px-3 py-1.5 text-sm rounded-lg w-full" data-plan-id="' + planId + '" data-plan-name="' + planName + '">Switch to ' + planName + '</button>';
+                  }
+                });
+              }
+
+              function applySubscriptionView(nextSubscription, planNameOverride) {
+                if (!nextSubscription || typeof nextSubscription !== 'object') return;
+                var status = nextSubscription.status || 'active';
+                var cancelAtPeriodEnd = !!nextSubscription.cancelAtPeriodEnd;
+                var subscriptionId = nextSubscription.id || getActiveSubscriptionId() || '';
+
+                var planNameEl = document.getElementById('subscription-plan-name');
+                if (planNameEl && planNameOverride) planNameEl.textContent = planNameOverride;
+
+                var statusBadgeWrap = document.getElementById('subscription-status-badge');
+                var statusBadge = statusBadgeWrap && statusBadgeWrap.firstElementChild
+                  ? statusBadgeWrap.firstElementChild
+                  : statusBadgeWrap;
+                if (statusBadge) {
+                  statusBadge.className = statusBadgeClass(status);
+                  statusBadge.textContent = statusLabelText(status);
+                }
+
+                var statusRow = document.getElementById('subscription-status-row');
+                var cancelBadge = document.getElementById('subscription-cancel-badge');
+                if (cancelAtPeriodEnd && status !== 'cancelled') {
+                  if (!cancelBadge && statusRow) {
+                    statusRow.insertAdjacentHTML('beforeend', '<span id="subscription-cancel-badge"><span class="inline-flex items-center rounded-full font-medium bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 px-2.5 py-0.5 text-xs">Cancels at period end</span></span>');
+                  }
+                } else if (cancelBadge) {
+                  cancelBadge.remove();
+                }
+
+                var periodEnd = document.getElementById('subscription-current-period-end');
+                if (periodEnd && nextSubscription.currentPeriodEnd) {
+                  periodEnd.textContent = formatDateLabel(nextSubscription.currentPeriodEnd);
+                }
+
+                var nextBilling = document.getElementById('subscription-next-billing');
+                if (nextBilling) {
+                  nextBilling.textContent = (cancelAtPeriodEnd && status !== 'cancelled')
+                    ? 'No further billing'
+                    : formatDateLabel(nextSubscription.currentPeriodEnd);
+                }
+
+                var cancelAction = document.getElementById('cancel-subscription-btn');
+                var resumeAction = document.getElementById('resume-subscription-btn');
+                if (cancelAction) {
+                  cancelAction.setAttribute('data-subscription-id', subscriptionId);
+                  cancelAction.classList.toggle('hidden', status === 'cancelled' || cancelAtPeriodEnd);
+                }
+                if (resumeAction) {
+                  resumeAction.setAttribute('data-subscription-id', subscriptionId);
+                  resumeAction.classList.toggle('hidden', !(cancelAtPeriodEnd && status !== 'cancelled'));
+                }
+              }
 
               if (manageBtn) {
                 manageBtn.addEventListener('click', async function() {
                   manageBtn.disabled = true;
                   manageBtn.textContent = 'Redirecting...';
                   try {
-                    var res = await fetch('/api/subscriptions/portal', {
+                    var portalBody = {};
+                    var res = await fetchMutation('/api/subscriptions/portal', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                    });
+                      headers: mutationHeaders('subscriptions.portal', portalBody, true),
+                      body: JSON.stringify(portalBody),
+                    }, 1);
                     if (!res.ok) {
                       var data = await res.json().catch(function() { return {}; });
                       throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to open billing portal') : (data.error || data.message || 'Failed to open billing portal'));
@@ -417,7 +587,7 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
 
               document.getElementById('cancel-yes-btn').addEventListener('click', async function() {
                 var btn = this;
-                var subscriptionId = cancelBtn ? cancelBtn.getAttribute('data-subscription-id') : null;
+                var subscriptionId = getActiveSubscriptionId();
                 if (!subscriptionId) {
                   showError('Subscription not found');
                   cancelConfirm.classList.add('hidden');
@@ -426,14 +596,20 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
                 btn.disabled = true;
                 btn.textContent = 'Cancelling...';
                 try {
-                  var res = await fetch('/api/subscriptions/' + subscriptionId, {
+                  var res = await fetchMutation('/api/subscriptions/' + subscriptionId, {
                     method: 'DELETE',
-                  });
+                    headers: mutationHeaders('subscriptions.cancel', { subscriptionId: subscriptionId }, false),
+                  }, 1);
                   if (!res.ok) {
                     var data = await res.json().catch(function() { return {}; });
                     throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to cancel subscription') : (data.error || data.message || 'Failed to cancel subscription'));
                   }
-                  window.location.reload();
+                  var payload = await res.json().catch(function() { return {}; });
+                  if (payload.subscription) applySubscriptionView(payload.subscription);
+                  if (window.showToast) window.showToast('Subscription updated.', 'success');
+                  cancelConfirm.classList.add('hidden');
+                  btn.disabled = false;
+                  btn.textContent = 'Yes, Cancel';
                 } catch (err) {
                   showError(err, 'Failed to cancel subscription');
                   btn.disabled = false;
@@ -443,24 +619,27 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
               });
 
               // Resume subscription handler
-              var resumeBtn = document.getElementById('resume-subscription-btn');
               if (resumeBtn) {
                 resumeBtn.addEventListener('click', async function() {
                   var subscriptionId = this.getAttribute('data-subscription-id');
                   this.disabled = true;
                   this.textContent = 'Resuming...';
                   try {
-                    var res = await fetch('/api/subscriptions/' + subscriptionId + '/resume', {
+                    var resumeBody = {};
+                    var res = await fetchMutation('/api/subscriptions/' + subscriptionId + '/resume', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                    });
+                      headers: mutationHeaders('subscriptions.resume', { subscriptionId: subscriptionId }, true),
+                      body: JSON.stringify(resumeBody),
+                    }, 1);
+                    var data = await res.json().catch(function() { return {}; });
                     if (!res.ok) {
-                      var data = await res.json().catch(function() { return {}; });
                       throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to resume subscription') : (data.error || data.message || 'Failed to resume subscription'));
                     }
-                    window.location.reload();
+                    if (data.subscription) applySubscriptionView(data.subscription);
+                    if (window.showToast) window.showToast('Subscription resumed.', 'success');
                   } catch (err) {
                     showError(err, 'Failed to resume subscription');
+                  } finally {
                     this.disabled = false;
                     this.textContent = 'Resume Subscription';
                   }
@@ -468,36 +647,37 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
               }
 
               // Change plan handlers
-              document.querySelectorAll('.change-plan-btn').forEach(function(btn) {
-                btn.addEventListener('click', async function() {
-                  var planId = this.getAttribute('data-plan-id');
-                  var planName = this.getAttribute('data-plan-name');
-                  if (!requireSecondClick(this, 'Confirm Switch', 'Switch to ' + planName, 5000)) return;
-                  this.dataset.confirming = 'false';
-                  if (this._confirmTimer) clearTimeout(this._confirmTimer);
-                  var subscriptionId = (cancelBtn || resumeBtn)
-                    ? (cancelBtn || resumeBtn).getAttribute('data-subscription-id')
-                    : null;
-                  if (!subscriptionId) { showError('No active subscription found'); return; }
-                  this.disabled = true;
-                  this.textContent = 'Switching...';
-                  try {
-                    var res = await fetch('/api/subscriptions/' + subscriptionId + '/change-plan', {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ newPlanId: planId }),
-                    });
-                    if (!res.ok) {
-                      var data = await res.json().catch(function() { return {}; });
-                      throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to change plan') : (data.error || data.message || 'Failed to change plan'));
-                    }
-                    window.location.reload();
-                  } catch (err) {
-                    showError(err, 'Failed to change plan');
-                    this.disabled = false;
-                    this.textContent = 'Switch to ' + planName;
+              document.addEventListener('click', async function(event) {
+                var btn = event.target && event.target.closest ? event.target.closest('.change-plan-btn') : null;
+                if (!btn) return;
+                var planId = btn.getAttribute('data-plan-id');
+                var planName = btn.getAttribute('data-plan-name');
+                if (!requireSecondClick(btn, 'Confirm Switch', 'Switch to ' + planName, 5000)) return;
+                btn.dataset.confirming = 'false';
+                if (btn._confirmTimer) clearTimeout(btn._confirmTimer);
+                var subscriptionId = getActiveSubscriptionId();
+                if (!subscriptionId) { showError('No active subscription found'); return; }
+                btn.disabled = true;
+                btn.textContent = 'Switching...';
+                try {
+                  var payload = { newPlanId: planId };
+                  var res = await fetchMutation('/api/subscriptions/' + subscriptionId + '/change-plan', {
+                    method: 'PATCH',
+                    headers: mutationHeaders('subscriptions.change-plan', { subscriptionId: subscriptionId, newPlanId: planId }, true),
+                    body: JSON.stringify(payload),
+                  }, 1);
+                  var data = await res.json().catch(function() { return {}; });
+                  if (!res.ok) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to change plan') : (data.error || data.message || 'Failed to change plan'));
                   }
-                });
+                  if (data.subscription) applySubscriptionView(data.subscription, planName);
+                  updatePlanCards(planName);
+                  if (window.showToast) window.showToast('Plan switched.', 'success');
+                } catch (err) {
+                  showError(err, 'Failed to change plan');
+                  btn.disabled = false;
+                  btn.textContent = 'Switch to ' + planName;
+                }
               });
 
               function formatCurrencyFromCents(cents) {
@@ -589,11 +769,12 @@ export const SubscriptionsPage: FC<SubscriptionsPageProps> = ({
                   bundleCheckoutBtn.disabled = true;
                   bundleCheckoutBtn.textContent = 'Redirecting...';
                   try {
-                    var checkoutRes = await fetch('/api/subscriptions/builder/checkout', {
+                    var checkoutPayload = { selections: selections };
+                    var checkoutRes = await fetchMutation('/api/subscriptions/builder/checkout', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ selections: selections }),
-                    });
+                      headers: mutationHeaders('subscriptions.builder.checkout', checkoutPayload, true),
+                      body: JSON.stringify(checkoutPayload),
+                    }, 1);
                     if (!checkoutRes.ok) {
                       var checkoutErr = await checkoutRes.json().catch(function() { return {}; });
                       throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(checkoutErr, 'Failed to create bundle checkout') : (checkoutErr.error || checkoutErr.message || 'Failed to create bundle checkout'));

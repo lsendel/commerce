@@ -1,0 +1,68 @@
+{
+  "slug": "local-pet-events-demand-capture",
+  "campaignName": "Local Events Demand Capture",
+  "urlPath": "/lp/local-pet-events-demand-capture",
+  "seoTitle": "Local Events Demand Capture | pet events landing page Landing...",
+  "seoDescription": "Local Events Demand Capture by petm8: a focused pet events landing page landing page for growth marketers and community managers with proven messaging, trust...",
+  "heroTitle": "pet events landing page That Converts for growth marketers and community managers",
+  "heroSubtitle": "petm8 helps growth marketers and community managers launch faster with consistent creative, clear offers, and a conversion-first structure. Built for event booking, local venue discovery, community growth outcomes. This campaign aligns around pet families, premium pet products, local events.",
+  "ctaLabel": "Start Event Campaign",
+  "ctaUrl": "/events",
+  "heroImageUrl": "https://petm8.io/og-image.jpg",
+  "sections": [
+    {
+      "id": "hero",
+      "heading": "Why This Campaign Wins",
+      "body": "This page was generated to target pet events landing page intent and guide growth marketers and community managers to one clear next step with minimal friction."
+    },
+    {
+      "id": "value-props",
+      "heading": "What You Get",
+      "body": "Every module aligns to trust, clarity, actionability and emphasizes action over noise.",
+      "bullets": [
+        "Event-focused messaging with booking-first CTA path",
+        "Venue and schedule proof blocks to reduce friction",
+        "FAQ coverage for common booking concerns"
+      ]
+    },
+    {
+      "id": "proof",
+      "heading": "Proof and Confidence Signals",
+      "body": "Decision-makers need certainty before they click. These proof points reduce hesitation.",
+      "bullets": [
+        "Aligns with event schema and discovery surfaces already in platform",
+        "Built to support paid traffic and organic search landing intent",
+        "Reinforces trust with practical conversion guidance"
+      ]
+    },
+    {
+      "id": "faq",
+      "heading": "Questions Marketers Ask Before Launch",
+      "body": "These answers handle common objections and keep conversion intent high.",
+      "bullets": [
+        "Can this page support multiple event types? — Yes. The template supports workshops, sessions, and seasonal campaign variants.",
+        "How do we keep messaging on-brand? — Quality gates validate required language and block off-brand phrasing.",
+        "Will this help with local discoverability? — Yes. The content structure is designed for local intent and clear venue/event relevance."
+      ]
+    },
+    {
+      "id": "cta",
+      "heading": "Ready to Launch",
+      "body": "Use this page as a publish-ready foundation, then adapt campaign details without breaking brand voice."
+    }
+  ],
+  "faq": [
+    {
+      "question": "Can this page support multiple event types?",
+      "answer": "Yes. The template supports workshops, sessions, and seasonal campaign variants."
+    },
+    {
+      "question": "How do we keep messaging on-brand?",
+      "answer": "Quality gates validate required language and block off-brand phrasing."
+    },
+    {
+      "question": "Will this help with local discoverability?",
+      "answer": "Yes. The content structure is designed for local intent and clear venue/event relevance."
+    }
+  ]
+}

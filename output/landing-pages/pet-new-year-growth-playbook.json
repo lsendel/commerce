@@ -1,0 +1,68 @@
+{
+  "slug": "pet-new-year-growth-playbook",
+  "campaignName": "New Year Growth Playbook",
+  "urlPath": "/lp/pet-new-year-growth-playbook",
+  "seoTitle": "New Year Growth Playbook | pet ecommerce marketing strategy La...",
+  "seoDescription": "New Year Growth Playbook by petm8: a focused pet ecommerce marketing strategy landing page for pet commerce teams with proven messaging, trust signals, and a...",
+  "heroTitle": "pet ecommerce marketing strategy That Converts for pet commerce teams",
+  "heroSubtitle": "petm8 helps pet commerce teams launch faster with consistent creative, clear offers, and a conversion-first structure. Built for retention campaigns, seasonal offers, conversion optimization outcomes. This campaign aligns around pet families, premium pet products, local events.",
+  "ctaLabel": "Launch This Campaign",
+  "ctaUrl": "/platform/create-store",
+  "heroImageUrl": "https://petm8.io/og-image.jpg",
+  "sections": [
+    {
+      "id": "hero",
+      "heading": "Why This Campaign Wins",
+      "body": "This page was generated to target pet ecommerce marketing strategy intent and guide pet commerce teams to one clear next step with minimal friction."
+    },
+    {
+      "id": "value-props",
+      "heading": "What You Get",
+      "body": "Every module aligns to trust, clarity, actionability and emphasizes action over noise.",
+      "bullets": [
+        "Campaign-ready hero, proof, FAQ, and CTA blocks",
+        "Built-in messaging for catalog, events, and venue offers",
+        "Copy that aligns with storefront and SEO intent"
+      ]
+    },
+    {
+      "id": "proof",
+      "heading": "Proof and Confidence Signals",
+      "body": "Decision-makers need certainty before they click. These proof points reduce hesitation.",
+      "bullets": [
+        "Uses the same structured-data and discoverability foundations as the core storefront",
+        "Supports marketer-first edits without breaking brand voice",
+        "Designed for fast launch cycles with repeatable QA checks"
+      ]
+    },
+    {
+      "id": "faq",
+      "heading": "Questions Marketers Ask Before Launch",
+      "body": "These answers handle common objections and keep conversion intent high.",
+      "bullets": [
+        "How quickly can we launch this landing page? — Teams can publish the generated draft immediately, then adjust campaign specifics in minutes.",
+        "Does this match our storefront voice? — Yes. Brand guardrails enforce tone words, required phrases, and banned language.",
+        "Can we reuse this for other campaigns? — Yes. Inputs are template-driven so you can generate additional campaign pages consistently."
+      ]
+    },
+    {
+      "id": "cta",
+      "heading": "Ready to Launch",
+      "body": "Use this page as a publish-ready foundation, then adapt campaign details without breaking brand voice."
+    }
+  ],
+  "faq": [
+    {
+      "question": "How quickly can we launch this landing page?",
+      "answer": "Teams can publish the generated draft immediately, then adjust campaign specifics in minutes."
+    },
+    {
+      "question": "Does this match our storefront voice?",
+      "answer": "Yes. Brand guardrails enforce tone words, required phrases, and banned language."
+    },
+    {
+      "question": "Can we reuse this for other campaigns?",
+      "answer": "Yes. Inputs are template-driven so you can generate additional campaign pages consistently."
+    }
+  ]
+}

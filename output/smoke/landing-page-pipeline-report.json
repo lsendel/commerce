@@ -1,0 +1,197 @@
+{
+  "startedAt": "2026-03-06T06:41:08.842Z",
+  "finishedAt": "2026-03-06T06:41:08.848Z",
+  "status": "passed",
+  "pagesGenerated": 2,
+  "pagesPassed": 2,
+  "pagesFailed": 0,
+  "reportVersion": "v1",
+  "pageResults": [
+    {
+      "slug": "pet-new-year-growth-playbook",
+      "status": "passed",
+      "outputJsonPath": "output/landing-pages/pet-new-year-growth-playbook.json",
+      "outputMarkdownPath": "output/landing-pages/pet-new-year-growth-playbook.md",
+      "checks": [
+        {
+          "id": "seo-title-length",
+          "ok": true,
+          "note": "length=65"
+        },
+        {
+          "id": "seo-description-length",
+          "ok": true,
+          "note": "length=160"
+        },
+        {
+          "id": "keyword-in-hero",
+          "ok": true,
+          "note": "heroTitle=\"pet ecommerce marketing strategy That Converts for pet commerce teams\""
+        },
+        {
+          "id": "keyword-in-body",
+          "ok": true,
+          "note": "primaryKeyword=\"pet ecommerce marketing strategy\""
+        },
+        {
+          "id": "required-sections",
+          "ok": true,
+          "note": "sections=hero,value-props,proof,faq,cta"
+        },
+        {
+          "id": "faq-min-count",
+          "ok": true,
+          "note": "faqCount=3"
+        },
+        {
+          "id": "cta-shape",
+          "ok": true,
+          "note": "ctaLabel=\"Launch This Campaign\" ctaUrl=\"/platform/create-store\""
+        },
+        {
+          "id": "readability-average-sentence-length",
+          "ok": true,
+          "note": "avgSentenceLength=14.84"
+        },
+        {
+          "id": "required-phrase-pet-families",
+          "ok": true,
+          "note": "requiredPhrase=\"pet families\""
+        },
+        {
+          "id": "required-phrase-premium-pet-products",
+          "ok": true,
+          "note": "requiredPhrase=\"premium pet products\""
+        },
+        {
+          "id": "required-phrase-local-events",
+          "ok": true,
+          "note": "requiredPhrase=\"local events\""
+        },
+        {
+          "id": "banned-phrase-cheap",
+          "ok": true,
+          "note": "bannedPhrase=\"cheap\""
+        },
+        {
+          "id": "banned-phrase-guaranteed-1-overnight",
+          "ok": true,
+          "note": "bannedPhrase=\"guaranteed #1 overnight\""
+        },
+        {
+          "id": "banned-phrase-hacky",
+          "ok": true,
+          "note": "bannedPhrase=\"hacky\""
+        },
+        {
+          "id": "voice-pillar-trust",
+          "ok": true,
+          "note": "voicePillar=\"trust\""
+        },
+        {
+          "id": "voice-pillar-clarity",
+          "ok": true,
+          "note": "voicePillar=\"clarity\""
+        },
+        {
+          "id": "voice-pillar-actionability",
+          "ok": true,
+          "note": "voicePillar=\"actionability\""
+        }
+      ]
+    },
+    {
+      "slug": "local-pet-events-demand-capture",
+      "status": "passed",
+      "outputJsonPath": "output/landing-pages/local-pet-events-demand-capture.json",
+      "outputMarkdownPath": "output/landing-pages/local-pet-events-demand-capture.md",
+      "checks": [
+        {
+          "id": "seo-title-length",
+          "ok": true,
+          "note": "length=64"
+        },
+        {
+          "id": "seo-description-length",
+          "ok": true,
+          "note": "length=160"
+        },
+        {
+          "id": "keyword-in-hero",
+          "ok": true,
+          "note": "heroTitle=\"pet events landing page That Converts for growth marketers and community managers\""
+        },
+        {
+          "id": "keyword-in-body",
+          "ok": true,
+          "note": "primaryKeyword=\"pet events landing page\""
+        },
+        {
+          "id": "required-sections",
+          "ok": true,
+          "note": "sections=hero,value-props,proof,faq,cta"
+        },
+        {
+          "id": "faq-min-count",
+          "ok": true,
+          "note": "faqCount=3"
+        },
+        {
+          "id": "cta-shape",
+          "ok": true,
+          "note": "ctaLabel=\"Start Event Campaign\" ctaUrl=\"/events\""
+        },
+        {
+          "id": "readability-average-sentence-length",
+          "ok": true,
+          "note": "avgSentenceLength=14.63"
+        },
+        {
+          "id": "required-phrase-pet-families",
+          "ok": true,
+          "note": "requiredPhrase=\"pet families\""
+        },
+        {
+          "id": "required-phrase-premium-pet-products",
+          "ok": true,
+          "note": "requiredPhrase=\"premium pet products\""
+        },
+        {
+          "id": "required-phrase-local-events",
+          "ok": true,
+          "note": "requiredPhrase=\"local events\""
+        },
+        {
+          "id": "banned-phrase-cheap",
+          "ok": true,
+          "note": "bannedPhrase=\"cheap\""
+        },
+        {
+          "id": "banned-phrase-guaranteed-1-overnight",
+          "ok": true,
+          "note": "bannedPhrase=\"guaranteed #1 overnight\""
+        },
+        {
+          "id": "banned-phrase-hacky",
+          "ok": true,
+          "note": "bannedPhrase=\"hacky\""
+        },
+        {
+          "id": "voice-pillar-trust",
+          "ok": true,
+          "note": "voicePillar=\"trust\""
+        },
+        {
+          "id": "voice-pillar-clarity",
+          "ok": true,
+          "note": "voicePillar=\"clarity\""
+        },
+        {
+          "id": "voice-pillar-actionability",
+          "ok": true,
+          "note": "voicePillar=\"actionability\""
+        }
+      ]
+    }
+  ]
+}

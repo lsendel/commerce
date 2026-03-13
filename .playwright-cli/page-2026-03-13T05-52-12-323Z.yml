@@ -1,0 +1,214 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Products – Admin | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+          - link "Account" [ref=e15] [cursor=pointer]:
+            - /url: /account
+        - button "Switch to dark mode" [ref=e16] [cursor=pointer]:
+          - img [ref=e17]
+        - button "Shopping basket, empty, total $0.00" [ref=e19] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e23]:
+            - generic [ref=e24]: Basket
+            - generic [ref=e25]:
+              - generic [ref=e26]: Empty
+              - generic [ref=e27]: $0.00
+        - group [ref=e28]:
+          - generic "User menu" [ref=e29] [cursor=pointer]: "?"
+  - main [ref=e30]:
+    - generic [ref=e31]:
+      - generic [ref=e33]:
+        - heading "Products (5)" [level=1] [ref=e34]
+        - generic [ref=e35]:
+          - button "Open quick actions" [ref=e36] [cursor=pointer]:
+            - text: Quick Actions
+            - generic [ref=e37]: Ctrl/Cmd+K
+          - link "Add Product" [ref=e38] [cursor=pointer]:
+            - /url: /admin/products/new
+            - img [ref=e39]
+            - text: Add Product
+      - generic [ref=e42]:
+        - combobox [ref=e43]:
+          - option "All Status" [selected]
+          - option "Active"
+          - option "Draft"
+          - option "Archived"
+        - combobox [ref=e44]:
+          - option "All Types" [selected]
+          - option "Physical"
+          - option "Digital"
+          - option "Subscription"
+          - option "Bookable"
+        - textbox "Search products..." [ref=e45]
+        - button "Filter" [ref=e46] [cursor=pointer]
+      - table [ref=e48]:
+        - rowgroup [ref=e49]:
+          - row "Product Status Type Price Inventory Actions" [ref=e50]:
+            - columnheader "Product" [ref=e51]
+            - columnheader "Status" [ref=e52]
+            - columnheader "Type" [ref=e53]
+            - columnheader "Price" [ref=e54]
+            - columnheader "Inventory" [ref=e55]
+            - columnheader "Actions" [ref=e56]
+        - rowgroup [ref=e57]:
+          - row "Dog Beach Day Experience Dog Beach Day Experience 1 variant Active Bookable $79.00 9999" [ref=e58]:
+            - cell "Dog Beach Day Experience Dog Beach Day Experience 1 variant" [ref=e59]:
+              - generic [ref=e60]:
+                - img "Dog Beach Day Experience" [ref=e62]
+                - generic [ref=e63]:
+                  - link "Dog Beach Day Experience" [ref=e64] [cursor=pointer]:
+                    - /url: /admin/products/f6abe813-c001-41a5-9fec-a5566a72b532
+                  - paragraph [ref=e65]: 1 variant
+            - cell "Active" [ref=e66]:
+              - generic [ref=e67]: Active
+            - cell "Bookable" [ref=e68]
+            - cell "$79.00" [ref=e69]
+            - cell "9999" [ref=e70]
+            - cell [ref=e71]:
+              - generic [ref=e72]:
+                - link "Edit" [ref=e73] [cursor=pointer]:
+                  - /url: /admin/products/f6abe813-c001-41a5-9fec-a5566a72b532
+                  - img [ref=e74]
+                - link "View" [ref=e76] [cursor=pointer]:
+                  - /url: /products/dog-beach-day-experience
+                  - img [ref=e77]
+          - row "Petm8 Premium Monthly Petm8 Premium Monthly 1 variant Active Subscription $9.99 9999" [ref=e79]:
+            - cell "Petm8 Premium Monthly Petm8 Premium Monthly 1 variant" [ref=e80]:
+              - generic [ref=e81]:
+                - img "Petm8 Premium Monthly" [ref=e83]
+                - generic [ref=e84]:
+                  - link "Petm8 Premium Monthly" [ref=e85] [cursor=pointer]:
+                    - /url: /admin/products/098e955d-7cc4-4030-8494-fb71c6e13054
+                  - paragraph [ref=e86]: 1 variant
+            - cell "Active" [ref=e87]:
+              - generic [ref=e88]: Active
+            - cell "Subscription" [ref=e89]
+            - cell "$9.99" [ref=e90]
+            - cell "9999" [ref=e91]
+            - cell [ref=e92]:
+              - generic [ref=e93]:
+                - link "Edit" [ref=e94] [cursor=pointer]:
+                  - /url: /admin/products/098e955d-7cc4-4030-8494-fb71c6e13054
+                  - img [ref=e95]
+                - link "View" [ref=e97] [cursor=pointer]:
+                  - /url: /products/petm8-premium-monthly
+                  - img [ref=e98]
+          - row "Pet Care Ultimate Guide Pet Care Ultimate Guide 1 variant Active Digital $14.99 9999" [ref=e100]:
+            - cell "Pet Care Ultimate Guide Pet Care Ultimate Guide 1 variant" [ref=e101]:
+              - generic [ref=e102]:
+                - img "Pet Care Ultimate Guide" [ref=e104]
+                - generic [ref=e105]:
+                  - link "Pet Care Ultimate Guide" [ref=e106] [cursor=pointer]:
+                    - /url: /admin/products/b7c288b6-d2f5-4cb2-a039-55764548812e
+                  - paragraph [ref=e107]: 1 variant
+            - cell "Active" [ref=e108]:
+              - generic [ref=e109]: Active
+            - cell "Digital" [ref=e110]
+            - cell "$14.99" [ref=e111]
+            - cell "9999" [ref=e112]
+            - cell [ref=e113]:
+              - generic [ref=e114]:
+                - link "Edit" [ref=e115] [cursor=pointer]:
+                  - /url: /admin/products/b7c288b6-d2f5-4cb2-a039-55764548812e
+                  - img [ref=e116]
+                - link "View" [ref=e118] [cursor=pointer]:
+                  - /url: /products/pet-care-ultimate-guide
+                  - img [ref=e119]
+          - row "Pet Portrait Mug Pet Portrait Mug 2 variants Active Physical $18.99 – $22.99 300" [ref=e121]:
+            - cell "Pet Portrait Mug Pet Portrait Mug 2 variants" [ref=e122]:
+              - generic [ref=e123]:
+                - img "Pet Portrait Mug" [ref=e125]
+                - generic [ref=e126]:
+                  - link "Pet Portrait Mug" [ref=e127] [cursor=pointer]:
+                    - /url: /admin/products/c955bbf0-ced0-4679-b8c4-434e948f8abd
+                  - paragraph [ref=e128]: 2 variants
+            - cell "Active" [ref=e129]:
+              - generic [ref=e130]: Active
+            - cell "Physical" [ref=e131]
+            - cell "$18.99 – $22.99" [ref=e132]
+            - cell "300" [ref=e133]
+            - cell [ref=e134]:
+              - generic [ref=e135]:
+                - link "Edit" [ref=e136] [cursor=pointer]:
+                  - /url: /admin/products/c955bbf0-ced0-4679-b8c4-434e948f8abd
+                  - img [ref=e137]
+                - link "View" [ref=e139] [cursor=pointer]:
+                  - /url: /products/pet-portrait-mug
+                  - img [ref=e140]
+          - row "Paw Print Tote Bag Paw Print Tote Bag 3 variants Active Physical $24.99 – $29.99 350" [ref=e142]:
+            - cell "Paw Print Tote Bag Paw Print Tote Bag 3 variants" [ref=e143]:
+              - generic [ref=e144]:
+                - img "Paw Print Tote Bag" [ref=e146]
+                - generic [ref=e147]:
+                  - link "Paw Print Tote Bag" [ref=e148] [cursor=pointer]:
+                    - /url: /admin/products/77ecaf8d-6d1a-4d1c-8fb6-764e3bd0ffca
+                  - paragraph [ref=e149]: 3 variants
+            - cell "Active" [ref=e150]:
+              - generic [ref=e151]: Active
+            - cell "Physical" [ref=e152]
+            - cell "$24.99 – $29.99" [ref=e153]
+            - cell "350" [ref=e154]
+            - cell [ref=e155]:
+              - generic [ref=e156]:
+                - link "Edit" [ref=e157] [cursor=pointer]:
+                  - /url: /admin/products/77ecaf8d-6d1a-4d1c-8fb6-764e3bd0ffca
+                  - img [ref=e158]
+                - link "View" [ref=e160] [cursor=pointer]:
+                  - /url: /products/paw-print-tote-bag
+                  - img [ref=e161]
+  - contentinfo [ref=e163]:
+    - generic [ref=e164]:
+      - generic [ref=e165]:
+        - generic [ref=e166]:
+          - link "petm8 home" [ref=e167] [cursor=pointer]:
+            - /url: /
+            - img [ref=e168]
+            - generic [ref=e170]: petm8
+          - paragraph [ref=e171]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e172]:
+          - heading "Shop" [level=4] [ref=e173]
+          - list [ref=e174]:
+            - listitem [ref=e175]:
+              - link "All Products" [ref=e176] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e177]:
+              - link "Collections" [ref=e178] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e179]:
+          - heading "Account" [level=4] [ref=e180]
+          - list [ref=e181]:
+            - listitem [ref=e182]:
+              - link "Orders" [ref=e183] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e184]:
+              - link "My Pets" [ref=e185] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e186]:
+          - heading "Company" [level=4] [ref=e187]
+          - list [ref=e188]:
+            - listitem [ref=e189]:
+              - link "About" [ref=e190] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e191]:
+              - link "Contact" [ref=e192] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e194]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e195]:
+    - generic [ref=e196]:
+      - heading "Your Cart" [level=2] [ref=e197]
+      - button "Close cart" [ref=e198] [cursor=pointer]:
+        - img [ref=e199]

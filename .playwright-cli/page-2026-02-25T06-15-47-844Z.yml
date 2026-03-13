@@ -1,0 +1,91 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "petm8" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: 🐾
+        - generic [ref=e6]: petm8
+      - generic [ref=e7]:
+        - navigation [ref=e8]:
+          - link "Shop" [ref=e9] [cursor=pointer]:
+            - /url: /shop
+          - link "Events" [ref=e10] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e11] [cursor=pointer]:
+            - /url: /studio
+        - link "Shopping cart" [ref=e12] [cursor=pointer]:
+          - /url: /cart
+          - img [ref=e13]
+        - link "Sign in" [ref=e15] [cursor=pointer]:
+          - /url: /login
+  - main [ref=e16]:
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - generic [ref=e20]: p8
+        - heading "Create your account" [level=1] [ref=e21]
+        - paragraph [ref=e22]: Join the petm8 community
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - generic [ref=e26]: Full name*
+            - textbox "Full name*" [ref=e27]:
+              - /placeholder: Jane Smith
+          - generic [ref=e28]:
+            - generic [ref=e29]: Email address*
+            - textbox "Email address*" [ref=e30]:
+              - /placeholder: you@example.com
+          - generic [ref=e31]:
+            - generic [ref=e32]:
+              - generic [ref=e33]: Password*
+              - textbox "Password*" [ref=e34]:
+                - /placeholder: Create a password
+            - list [ref=e35]:
+              - listitem [ref=e36]: At least 8 characters
+              - listitem [ref=e38]: One uppercase letter
+              - listitem [ref=e40]: One number
+          - generic [ref=e42]:
+            - generic [ref=e43]: Confirm password*
+            - textbox "Confirm password*" [ref=e44]:
+              - /placeholder: Confirm your password
+          - button "Create Account" [ref=e45] [cursor=pointer]
+        - paragraph [ref=e47]:
+          - text: Already have an account?
+          - link "Sign In" [ref=e48] [cursor=pointer]:
+            - /url: /auth/login
+  - contentinfo [ref=e49]:
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - link "petm8" [ref=e53] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e54]: 🐾
+            - generic [ref=e55]: petm8
+          - paragraph [ref=e56]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e57]:
+          - heading "Shop" [level=4] [ref=e58]
+          - list [ref=e59]:
+            - listitem [ref=e60]:
+              - link "All Products" [ref=e61] [cursor=pointer]:
+                - /url: /shop
+            - listitem [ref=e62]:
+              - link "Collections" [ref=e63] [cursor=pointer]:
+                - /url: /shop/collections
+        - generic [ref=e64]:
+          - heading "Account" [level=4] [ref=e65]
+          - list [ref=e66]:
+            - listitem [ref=e67]:
+              - link "Orders" [ref=e68] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e69]:
+              - link "My Pets" [ref=e70] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e71]:
+          - heading "Company" [level=4] [ref=e72]
+          - list [ref=e73]:
+            - listitem [ref=e74]:
+              - link "About" [ref=e75] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e76]:
+              - link "Contact" [ref=e77] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e79]: © 2026 petm8. All rights reserved.

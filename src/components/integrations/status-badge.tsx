@@ -20,13 +20,19 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export const StatusBadge: FC<StatusBadgeProps> = ({ status, message }) => (
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-2" data-status-badge>
     <span
+      data-status-dot
       class={`w-2 h-2 rounded-full ${STATUS_STYLES[status] ?? "bg-gray-400"}`}
     />
-    <span class="text-sm font-medium dark:text-gray-200">
+    <span class="text-sm font-medium dark:text-gray-200" data-status-label>
       {STATUS_LABELS[status] ?? status}
     </span>
-    {message && <span class="text-xs text-red-600 dark:text-red-400">({message})</span>}
+    <span
+      data-status-message
+      class={`text-xs text-red-600 dark:text-red-400 ${message ? "" : "hidden"}`}
+    >
+      {message ? `(${message})` : ""}
+    </span>
   </div>
 );

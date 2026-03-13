@@ -1,0 +1,101 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Sign In | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "Shopping cart" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - link "Sign in" [ref=e21] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e22]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]: p8
+        - heading "Welcome back" [level=1] [ref=e27]
+        - paragraph [ref=e28]: Sign in to your petm8 account
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - generic [ref=e32]: Email address*
+            - textbox "Email address" [ref=e33]:
+              - /placeholder: you@example.com
+          - generic [ref=e34]:
+            - generic [ref=e35]: Password*
+            - textbox "Password" [ref=e36]:
+              - /placeholder: Enter your password
+          - generic [ref=e37]:
+            - generic [ref=e38] [cursor=pointer]:
+              - checkbox "Remember me" [ref=e39]
+              - text: Remember me
+            - link "Forgot password?" [ref=e40] [cursor=pointer]:
+              - /url: /auth/forgot-password
+          - button "Sign In" [ref=e41] [cursor=pointer]
+        - generic [ref=e44]: Or continue with
+        - generic [ref=e46]:
+          - link "Continue with Google" [ref=e47] [cursor=pointer]:
+            - /url: /api/auth/oauth/google/start?source=login
+          - link "Continue with Apple" [ref=e48] [cursor=pointer]:
+            - /url: /api/auth/oauth/apple/start?source=login
+          - link "Continue with Meta" [ref=e49] [cursor=pointer]:
+            - /url: /api/auth/oauth/meta/start?source=login
+        - paragraph [ref=e51]:
+          - text: Don't have an account?
+          - link "Register" [ref=e52] [cursor=pointer]:
+            - /url: /auth/register
+  - contentinfo [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - link "petm8 home" [ref=e57] [cursor=pointer]:
+            - /url: /
+            - img [ref=e58]
+            - generic [ref=e60]: petm8
+          - paragraph [ref=e61]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e62]:
+          - heading "Shop" [level=4] [ref=e63]
+          - list [ref=e64]:
+            - listitem [ref=e65]:
+              - link "All Products" [ref=e66] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e67]:
+              - link "Collections" [ref=e68] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e69]:
+          - heading "Account" [level=4] [ref=e70]
+          - list [ref=e71]:
+            - listitem [ref=e72]:
+              - link "Orders" [ref=e73] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e74]:
+              - link "My Pets" [ref=e75] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e76]:
+          - heading "Company" [level=4] [ref=e77]
+          - list [ref=e78]:
+            - listitem [ref=e79]:
+              - link "About" [ref=e80] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e81]:
+              - link "Contact" [ref=e82] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e84]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e85]:
+    - generic [ref=e86]:
+      - heading "Your Cart" [level=2] [ref=e87]
+      - button "Close cart" [ref=e88] [cursor=pointer]:
+        - img [ref=e89]

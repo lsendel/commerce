@@ -1,0 +1,394 @@
+{
+  "startedAt": "2026-03-06T06:41:17.265Z",
+  "finishedAt": "2026-03-06T06:41:17.271Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "policyPath": "docs/policies/dlq-auto-remediation-v1.json",
+  "checks": [
+    {
+      "id": "policy-owner-present",
+      "status": "pass",
+      "note": "Policy owner must be defined."
+    },
+    {
+      "id": "queues-present",
+      "status": "pass",
+      "note": "Policy must define at least one queue policy."
+    },
+    {
+      "id": "simulation-cases-present",
+      "status": "pass",
+      "note": "Policy must define simulation cases."
+    },
+    {
+      "id": "required-queue-coverage",
+      "status": "pass",
+      "note": "Policy must cover required queues: ai-generation, order-fulfillment, notifications"
+    },
+    {
+      "id": "required-event-types-covered",
+      "status": "pass",
+      "note": "Required DLQ event types must exist in analytics taxonomy."
+    },
+    {
+      "id": "review-cadence-valid",
+      "status": "pass",
+      "note": "reviewCadenceDays must be a positive number."
+    },
+    {
+      "id": "review-dates-format",
+      "status": "pass",
+      "note": "lastReviewedOn and nextReviewBy must use YYYY-MM-DD format."
+    },
+    {
+      "id": "review-next-after-last",
+      "status": "pass",
+      "note": "nextReviewBy must be on or after lastReviewedOn."
+    },
+    {
+      "id": "review-window-valid",
+      "status": "pass",
+      "note": "nextReviewBy must stay within reviewCadenceDays window."
+    },
+    {
+      "id": "review-not-overdue",
+      "status": "pass",
+      "note": "DLQ policy review date must not be overdue."
+    },
+    {
+      "id": "queue-ai-generation-allowed-actions-present",
+      "status": "pass",
+      "note": "Queue policy must declare allowedActions."
+    },
+    {
+      "id": "queue-ai-generation-source-paths-present",
+      "status": "pass",
+      "note": "Queue policy must declare sourcePaths."
+    },
+    {
+      "id": "queue-ai-generation-required-snippets-present",
+      "status": "pass",
+      "note": "Queue policy must declare requiredSnippets."
+    },
+    {
+      "id": "queue-ai-generation-max-auto-requeues-valid",
+      "status": "pass",
+      "note": "Queue maxAutoRequeues must be non-negative."
+    },
+    {
+      "id": "queue-ai-generation-metric-targets-valid",
+      "status": "pass",
+      "note": "Queue metricTargets must be numeric."
+    },
+    {
+      "id": "queue-ai-generation-source-1",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/dlq-remediation.ts"
+    },
+    {
+      "id": "queue-ai-generation-source-2",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/handler.ts"
+    },
+    {
+      "id": "queue-ai-generation-source-3",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/ai-generation.consumer.ts"
+    },
+    {
+      "id": "queue-ai-generation-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present for queue ai-generation: queue: \"ai-generation\""
+    },
+    {
+      "id": "queue-ai-generation-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present for queue ai-generation: action: \"manual_review\""
+    },
+    {
+      "id": "queue-ai-generation-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present for queue ai-generation: processDeadLetterCandidate({"
+    },
+    {
+      "id": "queue-order-fulfillment-allowed-actions-present",
+      "status": "pass",
+      "note": "Queue policy must declare allowedActions."
+    },
+    {
+      "id": "queue-order-fulfillment-source-paths-present",
+      "status": "pass",
+      "note": "Queue policy must declare sourcePaths."
+    },
+    {
+      "id": "queue-order-fulfillment-required-snippets-present",
+      "status": "pass",
+      "note": "Queue policy must declare requiredSnippets."
+    },
+    {
+      "id": "queue-order-fulfillment-max-auto-requeues-valid",
+      "status": "pass",
+      "note": "Queue maxAutoRequeues must be non-negative."
+    },
+    {
+      "id": "queue-order-fulfillment-metric-targets-valid",
+      "status": "pass",
+      "note": "Queue metricTargets must be numeric."
+    },
+    {
+      "id": "queue-order-fulfillment-source-1",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/dlq-remediation.ts"
+    },
+    {
+      "id": "queue-order-fulfillment-source-2",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/handler.ts"
+    },
+    {
+      "id": "queue-order-fulfillment-source-3",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/order-fulfillment.consumer.ts"
+    },
+    {
+      "id": "queue-order-fulfillment-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present for queue order-fulfillment: action: \"requeue_original_once\""
+    },
+    {
+      "id": "queue-order-fulfillment-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present for queue order-fulfillment: queue_dlq_auto_remediation_executed"
+    },
+    {
+      "id": "queue-order-fulfillment-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present for queue order-fulfillment: compensateOrderFulfillmentFailure"
+    },
+    {
+      "id": "queue-notifications-allowed-actions-present",
+      "status": "pass",
+      "note": "Queue policy must declare allowedActions."
+    },
+    {
+      "id": "queue-notifications-source-paths-present",
+      "status": "pass",
+      "note": "Queue policy must declare sourcePaths."
+    },
+    {
+      "id": "queue-notifications-required-snippets-present",
+      "status": "pass",
+      "note": "Queue policy must declare requiredSnippets."
+    },
+    {
+      "id": "queue-notifications-max-auto-requeues-valid",
+      "status": "pass",
+      "note": "Queue maxAutoRequeues must be non-negative."
+    },
+    {
+      "id": "queue-notifications-metric-targets-valid",
+      "status": "pass",
+      "note": "Queue metricTargets must be numeric."
+    },
+    {
+      "id": "queue-notifications-source-1",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/dlq-remediation.ts"
+    },
+    {
+      "id": "queue-notifications-source-2",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/handler.ts"
+    },
+    {
+      "id": "queue-notifications-source-3",
+      "status": "pass",
+      "note": "Source path must exist: src/queues/notification.consumer.ts"
+    },
+    {
+      "id": "queue-notifications-snippet-1",
+      "status": "pass",
+      "note": "Required snippet must be present for queue notifications: action: \"reroute_notification_email_once\""
+    },
+    {
+      "id": "queue-notifications-snippet-2",
+      "status": "pass",
+      "note": "Required snippet must be present for queue notifications: channel: \"email\""
+    },
+    {
+      "id": "queue-notifications-snippet-3",
+      "status": "pass",
+      "note": "Required snippet must be present for queue notifications: compensateNotificationFailure"
+    },
+    {
+      "id": "simulation-of-retryable-first-action",
+      "status": "pass",
+      "note": "Expected action requeue_original_once, got requeue_original_once"
+    },
+    {
+      "id": "simulation-of-retryable-first-auto-remediate",
+      "status": "pass",
+      "note": "Expected autoRemediate=true, got true"
+    },
+    {
+      "id": "simulation-of-non-retryable-action",
+      "status": "pass",
+      "note": "Expected action mark_failed_and_drop, got mark_failed_and_drop"
+    },
+    {
+      "id": "simulation-of-non-retryable-auto-remediate",
+      "status": "pass",
+      "note": "Expected autoRemediate=false, got false"
+    },
+    {
+      "id": "simulation-notif-sms-fallback-action",
+      "status": "pass",
+      "note": "Expected action reroute_notification_email_once, got reroute_notification_email_once"
+    },
+    {
+      "id": "simulation-notif-sms-fallback-auto-remediate",
+      "status": "pass",
+      "note": "Expected autoRemediate=true, got true"
+    },
+    {
+      "id": "simulation-notif-email-manual-action",
+      "status": "pass",
+      "note": "Expected action manual_review, got manual_review"
+    },
+    {
+      "id": "simulation-notif-email-manual-auto-remediate",
+      "status": "pass",
+      "note": "Expected autoRemediate=false, got false"
+    },
+    {
+      "id": "simulation-ai-manual-action",
+      "status": "pass",
+      "note": "Expected action manual_review, got manual_review"
+    },
+    {
+      "id": "simulation-ai-manual-auto-remediate",
+      "status": "pass",
+      "note": "Expected autoRemediate=false, got false"
+    },
+    {
+      "id": "metrics-ai-generation-auto-rate-min",
+      "status": "pass",
+      "note": "Auto-remediation rate 0% must be >= 0%"
+    },
+    {
+      "id": "metrics-ai-generation-manual-rate-max",
+      "status": "pass",
+      "note": "Manual-review rate 100% must be <= 100%"
+    },
+    {
+      "id": "metrics-order-fulfillment-auto-rate-min",
+      "status": "pass",
+      "note": "Auto-remediation rate 50% must be >= 50%"
+    },
+    {
+      "id": "metrics-order-fulfillment-manual-rate-max",
+      "status": "pass",
+      "note": "Manual-review rate 0% must be <= 50%"
+    },
+    {
+      "id": "metrics-notifications-auto-rate-min",
+      "status": "pass",
+      "note": "Auto-remediation rate 50% must be >= 50%"
+    },
+    {
+      "id": "metrics-notifications-manual-rate-max",
+      "status": "pass",
+      "note": "Manual-review rate 50% must be <= 50%"
+    },
+    {
+      "id": "runbook-exists",
+      "status": "pass",
+      "note": "Runbook must exist: docs/runbooks/dlq-auto-remediation-playbook.md"
+    },
+    {
+      "id": "policy-md-exists",
+      "status": "pass",
+      "note": "Policy markdown must exist: docs/policies/dlq-auto-remediation-v1.md"
+    }
+  ],
+  "simulationResults": [
+    {
+      "id": "of-retryable-first",
+      "queue": "order-fulfillment",
+      "expectedAction": "requeue_original_once",
+      "actualAction": "requeue_original_once",
+      "expectedAutoRemediate": true,
+      "actualAutoRemediate": true,
+      "status": "pass"
+    },
+    {
+      "id": "of-non-retryable",
+      "queue": "order-fulfillment",
+      "expectedAction": "mark_failed_and_drop",
+      "actualAction": "mark_failed_and_drop",
+      "expectedAutoRemediate": false,
+      "actualAutoRemediate": false,
+      "status": "pass"
+    },
+    {
+      "id": "notif-sms-fallback",
+      "queue": "notifications",
+      "expectedAction": "reroute_notification_email_once",
+      "actualAction": "reroute_notification_email_once",
+      "expectedAutoRemediate": true,
+      "actualAutoRemediate": true,
+      "status": "pass"
+    },
+    {
+      "id": "notif-email-manual",
+      "queue": "notifications",
+      "expectedAction": "manual_review",
+      "actualAction": "manual_review",
+      "expectedAutoRemediate": false,
+      "actualAutoRemediate": false,
+      "status": "pass"
+    },
+    {
+      "id": "ai-manual",
+      "queue": "ai-generation",
+      "expectedAction": "manual_review",
+      "actualAction": "manual_review",
+      "expectedAutoRemediate": false,
+      "actualAutoRemediate": false,
+      "status": "pass"
+    }
+  ],
+  "queueMetrics": [
+    {
+      "queue": "ai-generation",
+      "totalCases": 1,
+      "autoRemediationCases": 0,
+      "manualReviewCases": 1,
+      "autoRemediationRatePercent": 0,
+      "manualReviewRatePercent": 100
+    },
+    {
+      "queue": "order-fulfillment",
+      "totalCases": 2,
+      "autoRemediationCases": 1,
+      "manualReviewCases": 0,
+      "autoRemediationRatePercent": 50,
+      "manualReviewRatePercent": 0
+    },
+    {
+      "queue": "notifications",
+      "totalCases": 2,
+      "autoRemediationCases": 1,
+      "manualReviewCases": 1,
+      "autoRemediationRatePercent": 50,
+      "manualReviewRatePercent": 50
+    }
+  ],
+  "metrics": {
+    "totalChecks": 61,
+    "failedChecks": 0,
+    "queueCount": 3,
+    "simulationCount": 5,
+    "simulationPassing": 5
+  }
+}

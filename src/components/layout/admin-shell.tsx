@@ -97,6 +97,7 @@ export const AdminShell: FC<AdminShellProps> = ({
 
       <script src="/scripts/darkmode.js" defer />
       <script src="/scripts/toast.js" defer />
+      <script src="/scripts/ui.js" defer />
       <script src="/scripts/auth.js" defer />
       <script src="/scripts/admin-shell.js" defer />
       {scripts.map((s) => (

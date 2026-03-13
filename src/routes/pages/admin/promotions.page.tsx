@@ -72,10 +72,16 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
       </div>
 
       {/* Filter Bar */}
-      <form method="get" class="flex flex-wrap items-end gap-3 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      <form
+        method="get"
+        class="flex flex-wrap items-end gap-3 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4"
+        data-persist-filters
+        data-persist-key="admin-promotions-filters"
+        data-persist-clear-selector="[data-clear-promotions-filters]"
+      >
         <div>
           <label class="text-xs font-medium text-gray-500 block mb-1">Status</label>
-          <select name="status" class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-300">
+          <select name="status" data-auto-submit="change" class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-300">
             <option value="">All statuses</option>
             {["active", "scheduled", "expired", "disabled"].map((s) => (
               <option value={s} selected={filters.status === s}>{s}</option>
@@ -84,7 +90,7 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
         </div>
         <div>
           <label class="text-xs font-medium text-gray-500 block mb-1">Type</label>
-          <select name="type" class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-300">
+          <select name="type" data-auto-submit="change" class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-300">
             <option value="">All types</option>
             {["coupon", "automatic", "flash_sale"].map((t) => (
               <option value={t} selected={filters.type === t}>{TYPE_LABELS[t] ?? t}</option>
@@ -92,7 +98,7 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
           </select>
         </div>
         <Button type="submit" variant="primary" size="sm">Filter</Button>
-        <a href="/admin/promotions" class="text-sm text-gray-500 hover:text-gray-700 py-2">Clear</a>
+        <a href="/admin/promotions" data-clear-promotions-filters class="text-sm text-gray-500 hover:text-gray-700 py-2">Clear</a>
       </form>
 
       {/* Promotion Copilot */}
@@ -157,7 +163,7 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
       {/* Add Promotion Form */}
       <div id="promo-form-section" class="hidden mb-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
         <h2 id="promo-form-title" class="text-lg font-semibold text-gray-900 mb-4">Create Promotion</h2>
-        <form id="promo-form" onsubmit="return false;" class="space-y-4">
+        <form id="promo-form" onsubmit="return false;" class="space-y-4" data-auto-draft data-auto-draft-key="admin-promotions-editor">
           <input type="hidden" name="promoId" value="" />
           <div class="grid sm:grid-cols-2 gap-4">
             <div>
@@ -219,7 +225,7 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
       <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            All Promotions ({promotions.length})
+            All Promotions (<span id="promotions-count">{promotions.length}</span>)
           </h2>
           <button
             type="button"
@@ -245,31 +251,37 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700" id="promotions-tbody">
               {promotions.length === 0 ? (
-                <tr>
+                <tr id="promotions-empty-row">
                   <td colspan={7} class="px-4 py-8 text-center text-sm text-gray-500">
                     No promotions match your filters.
                   </td>
                 </tr>
               ) : (
                 promotions.map((promo) => (
-                  <tr key={promo.id} class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{promo.name}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600">{TYPE_LABELS[promo.type] ?? promo.type}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600">{STRATEGY_LABELS[promo.strategyType] ?? promo.strategyType}</td>
+                  <tr
+                    key={promo.id}
+                    class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    data-promo-row
+                    data-promo-id={promo.id}
+                    data-promo-status={promo.status}
+                  >
+                    <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100" data-promo-name>{promo.name}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600" data-promo-type>{TYPE_LABELS[promo.type] ?? promo.type}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600" data-promo-strategy>{STRATEGY_LABELS[promo.strategyType] ?? promo.strategyType}</td>
                     <td class="px-4 py-3">
-                      <span class={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[promo.status] ?? "bg-gray-100 text-gray-800"}`}>
+                      <span data-promo-status-badge class={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[promo.status] ?? "bg-gray-100 text-gray-800"}`}>
                         {promo.status}
                       </span>
                     </td>
-                    <td class="px-4 py-3 text-sm text-gray-600">
+                    <td class="px-4 py-3 text-sm text-gray-600" data-promo-usage>
                       {promo.usageCount}{promo.usageLimit ? ` / ${promo.usageLimit}` : ""}
                     </td>
-                    <td class="px-4 py-3 text-sm text-gray-500">
+                    <td class="px-4 py-3 text-sm text-gray-500" data-promo-schedule>
                       {promo.startsAt ? promo.startsAt : "—"} → {promo.endsAt ? promo.endsAt : "∞"}
                     </td>
-                    <td class="px-4 py-3 flex gap-2">
+                    <td class="px-4 py-3 flex gap-2" data-promo-actions>
                       {promo.status === "active" && (
                         <button type="button" class="disable-btn text-xs text-red-600 hover:text-red-700 font-medium" data-promo-id={promo.id}>Disable</button>
                       )}
@@ -291,6 +303,29 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
             var isPromotionCopilotEnabled = ${isPromotionCopilotEnabled ? "true" : "false"};
             var latestPromotionCopilotPatch = null;
             var flashTimer = null;
+            var promotionsBody = document.getElementById('promotions-tbody');
+            var promotionsCountEl = document.getElementById('promotions-count');
+
+            var STATUS_COLOR_MAP = {
+              active: 'bg-green-100 text-green-800',
+              scheduled: 'bg-blue-100 text-blue-800',
+              expired: 'bg-gray-100 text-gray-700',
+              disabled: 'bg-red-100 text-red-800',
+            };
+            var TYPE_LABEL_MAP = {
+              coupon: 'Coupon',
+              automatic: 'Automatic',
+              flash_sale: 'Flash Sale',
+            };
+            var STRATEGY_LABEL_MAP = {
+              percentage_off: '% Off',
+              fixed_amount: '$ Off',
+              buy_x_get_y: 'BOGO',
+              free_shipping: 'Free Ship',
+              tiered: 'Tiered',
+              bundle: 'Bundle',
+            };
+
             function showFlash(message, type) {
               var banner = document.getElementById('admin-promotions-flash');
               if (!banner) {
@@ -314,6 +349,125 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
               flashTimer = setTimeout(function() {
                 banner.classList.add('hidden');
               }, 4000);
+            }
+
+            function escapeHtml(value) {
+              return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            }
+
+            function setButtonLoading(btn, loading, loadingText, idleText) {
+              if (!btn) return;
+              if (loading) {
+                btn.dataset.idleLabel = idleText || btn.textContent || '';
+                btn.disabled = true;
+                btn.textContent = loadingText || 'Saving...';
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+                return;
+              }
+              btn.disabled = false;
+              btn.textContent = btn.dataset.idleLabel || idleText || btn.textContent || '';
+              btn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+
+            async function confirmAction(message, options) {
+              if (window.petm8Ui && typeof window.petm8Ui.confirm === 'function') {
+                return window.petm8Ui.confirm(message, options || {});
+              }
+              return confirm(message);
+            }
+
+            function normalizePromotion(record) {
+              if (!record || typeof record !== 'object') return null;
+              return {
+                id: String(record.id || ''),
+                name: String(record.name || 'Untitled Promotion'),
+                type: String(record.type || 'automatic'),
+                status: String(record.status || 'disabled'),
+                strategyType: String(record.strategyType || ''),
+                usageCount: Number(record.usageCount || 0),
+                usageLimit: record.usageLimit == null ? null : Number(record.usageLimit),
+                startsAt: record.startsAt ? String(record.startsAt) : null,
+                endsAt: record.endsAt ? String(record.endsAt) : null,
+              };
+            }
+
+            function formatSchedule(promo) {
+              return (promo.startsAt ? promo.startsAt : '\u2014') + ' \u2192 ' + (promo.endsAt ? promo.endsAt : '\u221e');
+            }
+
+            function renderStatusBadge(status) {
+              var classes = STATUS_COLOR_MAP[status] || 'bg-gray-100 text-gray-800';
+              return '<span data-promo-status-badge class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + classes + '">' + escapeHtml(status) + '</span>';
+            }
+
+            function renderActions(status, promoId) {
+              if (status === 'active') {
+                return '<button type="button" class="disable-btn text-xs text-red-600 hover:text-red-700 font-medium" data-promo-id="' + escapeHtml(promoId) + '">Disable</button>';
+              }
+              if (status === 'disabled') {
+                return '<button type="button" class="enable-btn text-xs text-green-600 hover:text-green-700 font-medium" data-promo-id="' + escapeHtml(promoId) + '">Enable</button>';
+              }
+              return '<span class="text-xs text-gray-400">No actions</span>';
+            }
+
+            function buildPromotionRow(promo) {
+              var tr = document.createElement('tr');
+              tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-700/50';
+              tr.setAttribute('data-promo-row', '');
+              tr.setAttribute('data-promo-id', promo.id);
+              tr.setAttribute('data-promo-status', promo.status);
+              tr.innerHTML = [
+                '<td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100" data-promo-name>' + escapeHtml(promo.name) + '</td>',
+                '<td class="px-4 py-3 text-sm text-gray-600" data-promo-type>' + escapeHtml(TYPE_LABEL_MAP[promo.type] || promo.type) + '</td>',
+                '<td class="px-4 py-3 text-sm text-gray-600" data-promo-strategy>' + escapeHtml(STRATEGY_LABEL_MAP[promo.strategyType] || promo.strategyType) + '</td>',
+                '<td class="px-4 py-3">' + renderStatusBadge(promo.status) + '</td>',
+                '<td class="px-4 py-3 text-sm text-gray-600" data-promo-usage>' + escapeHtml(String(promo.usageCount)) + (promo.usageLimit ? ' / ' + escapeHtml(String(promo.usageLimit)) : '') + '</td>',
+                '<td class="px-4 py-3 text-sm text-gray-500" data-promo-schedule>' + escapeHtml(formatSchedule(promo)) + '</td>',
+                '<td class="px-4 py-3 flex gap-2" data-promo-actions>' + renderActions(promo.status, promo.id) + '</td>',
+              ].join('');
+              return tr;
+            }
+
+            function setPromotionsCount() {
+              if (!promotionsCountEl || !promotionsBody) return;
+              var count = promotionsBody.querySelectorAll('[data-promo-row]').length;
+              promotionsCountEl.textContent = String(count);
+            }
+
+            function upsertPromotionRow(rawPromotion) {
+              if (!promotionsBody) return;
+              var promo = normalizePromotion(rawPromotion);
+              if (!promo || !promo.id) return;
+
+              var existing = promotionsBody.querySelector('[data-promo-row][data-promo-id="' + promo.id + '"]');
+              var emptyRow = document.getElementById('promotions-empty-row');
+              if (emptyRow) emptyRow.remove();
+
+              if (existing) {
+                existing.setAttribute('data-promo-status', promo.status);
+                var nameEl = existing.querySelector('[data-promo-name]');
+                var typeEl = existing.querySelector('[data-promo-type]');
+                var strategyEl = existing.querySelector('[data-promo-strategy]');
+                var usageEl = existing.querySelector('[data-promo-usage]');
+                var scheduleEl = existing.querySelector('[data-promo-schedule]');
+                var actionsEl = existing.querySelector('[data-promo-actions]');
+                var statusCell = existing.children[3];
+                if (nameEl) nameEl.textContent = promo.name;
+                if (typeEl) typeEl.textContent = TYPE_LABEL_MAP[promo.type] || promo.type;
+                if (strategyEl) strategyEl.textContent = STRATEGY_LABEL_MAP[promo.strategyType] || promo.strategyType;
+                if (usageEl) usageEl.textContent = String(promo.usageCount) + (promo.usageLimit ? ' / ' + String(promo.usageLimit) : '');
+                if (scheduleEl) scheduleEl.textContent = formatSchedule(promo);
+                if (statusCell) statusCell.innerHTML = renderStatusBadge(promo.status);
+                if (actionsEl) actionsEl.innerHTML = renderActions(promo.status, promo.id);
+              } else {
+                promotionsBody.prepend(buildPromotionRow(promo));
+              }
+              setPromotionsCount();
             }
 
             function setCopilotStatus(message, isError) {
@@ -430,7 +584,7 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
               var form = document.getElementById('promo-form');
               if (!form) return;
               var createBtn = document.getElementById('promo-copilot-create-btn');
-              if (createBtn) createBtn.disabled = true;
+              setButtonLoading(createBtn, true, 'Creating...', 'Create With Copilot');
               setCopilotStatus('Creating promotion...', false);
 
               try {
@@ -460,12 +614,18 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
                 if (!res.ok) {
                   throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to create promotion from copilot') : (data.error || data.message || 'Failed to create promotion from copilot'));
                 }
+                if (data && data.promotion) {
+                  upsertPromotionRow(data.promotion);
+                }
                 setCopilotStatus('Promotion created from copilot suggestion.', false);
-                window.location.reload();
+                showFlash('Promotion created from copilot suggestion.', 'success');
+                form.reset();
+                var formSection = document.getElementById('promo-form-section');
+                if (formSection) formSection.classList.add('hidden');
               } catch (err) {
                 setCopilotStatus(err && err.message ? err.message : 'Failed to create promotion from copilot.', true);
               } finally {
-                if (createBtn) createBtn.disabled = false;
+                setButtonLoading(createBtn, false, 'Creating...', 'Create With Copilot');
               }
             }
 
@@ -502,6 +662,7 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
             form.addEventListener('submit', async function(e) {
               e.preventDefault();
               var fd = new FormData(this);
+              var saveBtn = document.getElementById('promo-save-btn');
               var body = {
                 name: fd.get('name'),
                 description: fd.get('description') || undefined,
@@ -517,49 +678,86 @@ export const PromotionsPage: FC<PromotionsPageProps> = ({
                 endsAt: fd.get('endsAt') || undefined,
                 usageLimit: fd.get('usageLimit') ? parseInt(fd.get('usageLimit'), 10) : undefined,
               };
+              setButtonLoading(saveBtn, true, 'Saving...', 'Save Promotion');
               try {
                 var res = await fetch('/api/promotions', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(body),
                 });
+                var data = await res.json().catch(function() { return {}; });
                 if (!res.ok) {
-                  var data = await res.json().catch(function() { return {}; });
                   throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to create promotion') : (data.error || data.message || 'Failed to create promotion'));
                 }
-                window.location.reload();
-              } catch (err) { showFlash(err.message || 'Failed to create promotion'); }
+                if (data && data.promotion) {
+                  upsertPromotionRow(data.promotion);
+                }
+                formSection.classList.add('hidden');
+                form.reset();
+                latestPromotionCopilotPatch = null;
+                showFlash('Promotion created.', 'success');
+              } catch (err) {
+                showFlash(err.message || 'Failed to create promotion');
+              } finally {
+                setButtonLoading(saveBtn, false, 'Saving...', 'Save Promotion');
+              }
             });
-            document.querySelectorAll('.disable-btn').forEach(function(btn) {
-              btn.addEventListener('click', async function() {
-                if (!confirm('Disable this promotion?')) return;
-                var id = this.getAttribute('data-promo-id');
+
+            document.addEventListener('click', async function(event) {
+              var disableBtn = event.target.closest('.disable-btn');
+              if (disableBtn) {
+                var disableId = disableBtn.getAttribute('data-promo-id');
+                if (!disableId) return;
+                var allowDisable = await confirmAction('Disable this promotion?', {
+                  title: 'Disable promotion',
+                  confirmText: 'Disable',
+                  danger: true,
+                });
+                if (!allowDisable) return;
+                setButtonLoading(disableBtn, true, 'Disabling...', 'Disable');
                 try {
-                  var res = await fetch('/api/promotions/' + id, { method: 'DELETE' });
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to disable') : (data.error || data.message || 'Failed to disable'));
+                  var disableRes = await fetch('/api/promotions/' + disableId, { method: 'DELETE' });
+                  var disableData = await disableRes.json().catch(function() { return {}; });
+                  if (!disableRes.ok) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(disableData, 'Failed to disable') : (disableData.error || disableData.message || 'Failed to disable'));
                   }
-                  window.location.reload();
-                } catch (err) { showFlash(err.message || 'Failed to disable promotion'); }
-              });
-            });
-            document.querySelectorAll('.enable-btn').forEach(function(btn) {
-              btn.addEventListener('click', async function() {
-                var id = this.getAttribute('data-promo-id');
+                  if (disableData && disableData.promotion) {
+                    upsertPromotionRow(disableData.promotion);
+                  }
+                  showFlash('Promotion disabled.', 'success');
+                } catch (err) {
+                  showFlash(err.message || 'Failed to disable promotion');
+                } finally {
+                  setButtonLoading(disableBtn, false, 'Disabling...', 'Disable');
+                }
+                return;
+              }
+
+              var enableBtn = event.target.closest('.enable-btn');
+              if (enableBtn) {
+                var enableId = enableBtn.getAttribute('data-promo-id');
+                if (!enableId) return;
+                setButtonLoading(enableBtn, true, 'Enabling...', 'Enable');
                 try {
-                  var res = await fetch('/api/promotions/' + id, {
+                  var enableRes = await fetch('/api/promotions/' + enableId, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: 'active' }),
                   });
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to enable') : (data.error || data.message || 'Failed to enable'));
+                  var enableData = await enableRes.json().catch(function() { return {}; });
+                  if (!enableRes.ok) {
+                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(enableData, 'Failed to enable') : (enableData.error || enableData.message || 'Failed to enable'));
                   }
-                  window.location.reload();
-                } catch (err) { showFlash(err.message || 'Failed to enable promotion'); }
-              });
+                  if (enableData && enableData.promotion) {
+                    upsertPromotionRow(enableData.promotion);
+                  }
+                  showFlash('Promotion enabled.', 'success');
+                } catch (err) {
+                  showFlash(err.message || 'Failed to enable promotion');
+                } finally {
+                  setButtonLoading(enableBtn, false, 'Enabling...', 'Enable');
+                }
+              }
             });
           })();
         </script>

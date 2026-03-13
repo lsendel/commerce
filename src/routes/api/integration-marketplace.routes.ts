@@ -15,6 +15,7 @@ import { IntegrationMarketplaceUseCase } from "../../application/platform/integr
 import { TrackEventUseCase } from "../../application/analytics/track-event.usecase";
 import { AnalyticsRepository } from "../../infrastructure/repositories/analytics.repository";
 import { VerifyIntegrationUseCase } from "../../application/platform/verify-integration.usecase";
+import { PartnerOnboardingUseCase } from "../../application/platform/partner-onboarding.usecase";
 
 const integrationMarketplaceRoutes = new Hono<{ Bindings: Env }>();
 
@@ -28,6 +29,25 @@ const providerSchema = z.object({
     "gemini",
     "resend",
   ]),
+});
+
+const partnerProviderSchema = z.object({
+  provider: z.enum(["printful", "gooten", "prodigi", "shapeways"]),
+});
+
+const completePartnerOnboardingSchema = z.object({
+  enabled: z.boolean().default(true),
+  contactEmail: z.string().email(),
+  callbackUrl: z.string().url().optional().nullable(),
+  webhookUrl: z.string().url().optional().nullable(),
+  requestedCapabilities: z
+    .array(
+      z.enum(["catalog_sync", "order_submission", "order_tracking", "webhook_events"]),
+    )
+    .optional()
+    .default(["catalog_sync", "order_submission", "order_tracking", "webhook_events"]),
+  secrets: z.record(z.string().min(1)).default({}),
+  notes: z.string().max(500).optional(),
 });
 
 function checkMarketplaceFeature(c: any) {
@@ -57,6 +77,7 @@ function buildDependencies(c: any) {
     listUseCase,
   );
   const verifyUseCase = new VerifyIntegrationUseCase(integrationRepo, secretRepo);
+  const partnerOnboardingUseCase = new PartnerOnboardingUseCase(integrationRepo, secretRepo);
 
   const analyticsRepo = new AnalyticsRepository(db, storeId);
   const trackEvent = new TrackEventUseCase(analyticsRepo);
@@ -65,6 +86,7 @@ function buildDependencies(c: any) {
     storeId,
     marketplaceUseCase,
     verifyUseCase,
+    partnerOnboardingUseCase,
     trackEvent,
   };
 }
@@ -85,6 +107,22 @@ integrationMarketplaceRoutes.use(
 integrationMarketplaceRoutes.use(
   "/integration-marketplace/apps/:provider/verify",
   rateLimit({ windowMs: 60_000, max: 30 }),
+);
+integrationMarketplaceRoutes.use(
+  "/integration-marketplace/partners/onboarding",
+  rateLimit({ windowMs: 60_000, max: 80 }),
+);
+integrationMarketplaceRoutes.use(
+  "/integration-marketplace/partners/:provider/onboarding",
+  rateLimit({ windowMs: 60_000, max: 60 }),
+);
+integrationMarketplaceRoutes.use(
+  "/integration-marketplace/partners/:provider/onboarding/complete",
+  rateLimit({ windowMs: 60_000, max: 30 }),
+);
+integrationMarketplaceRoutes.use(
+  "/integration-marketplace/partners/:provider/contract-verify",
+  rateLimit({ windowMs: 60_000, max: 40 }),
 );
 
 integrationMarketplaceRoutes.get("/integration-marketplace/apps", async (c) => {
@@ -191,6 +229,124 @@ integrationMarketplaceRoutes.post(
       details: result.details ?? null,
       app,
     }, 200);
+  },
+);
+
+integrationMarketplaceRoutes.get(
+  "/integration-marketplace/partners/onboarding",
+  async (c) => {
+    const featureError = checkMarketplaceFeature(c);
+    if (featureError) return featureError;
+
+    const { storeId, partnerOnboardingUseCase } = buildDependencies(c);
+    const partners = await partnerOnboardingUseCase.listPartnerOnboarding(storeId);
+    return c.json({ partners }, 200);
+  },
+);
+
+integrationMarketplaceRoutes.get(
+  "/integration-marketplace/partners/:provider/onboarding",
+  zValidator("param", partnerProviderSchema),
+  async (c) => {
+    const featureError = checkMarketplaceFeature(c);
+    if (featureError) return featureError;
+
+    const { provider } = c.req.valid("param");
+    const { storeId, partnerOnboardingUseCase } = buildDependencies(c);
+    const partner = await partnerOnboardingUseCase.getPartnerOnboarding(storeId, provider);
+    return c.json({ partner }, 200);
+  },
+);
+
+integrationMarketplaceRoutes.post(
+  "/integration-marketplace/partners/:provider/onboarding/complete",
+  zValidator("param", partnerProviderSchema),
+  zValidator("json", completePartnerOnboardingSchema),
+  async (c) => {
+    const featureError = checkMarketplaceFeature(c);
+    if (featureError) return featureError;
+
+    const { provider } = c.req.valid("param");
+    const payload = c.req.valid("json");
+    const userId = c.get("userId") as string;
+    const { storeId, partnerOnboardingUseCase, trackEvent } = buildDependencies(c);
+
+    const hasAtLeastOneSecret = Object.values(payload.secrets ?? {}).some(
+      (value) => typeof value === "string" && value.trim().length > 0,
+    );
+    if (!hasAtLeastOneSecret) {
+      return c.json({ error: "At least one credential value is required." }, 400);
+    }
+
+    const result = await partnerOnboardingUseCase.completePartnerOnboarding(
+      {
+        storeId,
+        provider,
+        enabled: payload.enabled,
+        contactEmail: payload.contactEmail,
+        callbackUrl: payload.callbackUrl ?? null,
+        webhookUrl: payload.webhookUrl ?? null,
+        requestedCapabilities: payload.requestedCapabilities,
+        secrets: payload.secrets,
+        notes: payload.notes,
+      },
+      c.env,
+    );
+
+    await trackEvent.execute({
+      eventType: "integration_partner_onboarding_completed",
+      userId,
+      properties: {
+        provider,
+        storeId,
+        contractVerified: result.onboarding.contractVerification.verified,
+        scorePercent: result.onboarding.contractVerification.scorePercent,
+        verificationSuccess: result.verification.success,
+      },
+      pageUrl: c.req.url,
+      userAgent: c.req.header("user-agent") ?? null,
+      ip: c.req.header("cf-connecting-ip") ?? undefined,
+    });
+
+    return c.json(result, 200);
+  },
+);
+
+integrationMarketplaceRoutes.post(
+  "/integration-marketplace/partners/:provider/contract-verify",
+  zValidator("param", partnerProviderSchema),
+  async (c) => {
+    const featureError = checkMarketplaceFeature(c);
+    if (featureError) return featureError;
+
+    const { provider } = c.req.valid("param");
+    const userId = c.get("userId") as string;
+    const { storeId, partnerOnboardingUseCase, trackEvent } = buildDependencies(c);
+
+    const contractVerification = await partnerOnboardingUseCase.verifyPartnerContract(
+      storeId,
+      provider,
+    );
+
+    await trackEvent.execute({
+      eventType: contractVerification.verified
+        ? "integration_partner_contract_verified"
+        : "integration_partner_contract_verification_failed",
+      userId,
+      properties: {
+        provider,
+        storeId,
+        scorePercent: contractVerification.scorePercent,
+        failingChecks: contractVerification.checks
+          .filter((check) => check.severity === "error" && !check.passed)
+          .map((check) => check.id),
+      },
+      pageUrl: c.req.url,
+      userAgent: c.req.header("user-agent") ?? null,
+      ip: c.req.header("cf-connecting-ip") ?? undefined,
+    });
+
+    return c.json({ contractVerification }, 200);
   },
 );
 

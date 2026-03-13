@@ -1,0 +1,402 @@
+{
+  "startedAt": "2026-03-06T06:41:13.830Z",
+  "finishedAt": "2026-03-06T06:41:13.856Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "checks": [
+    {
+      "id": "audit-middleware-registered",
+      "status": "pass",
+      "note": "Audit middleware must be mounted on /api/* in src/index.tsx."
+    },
+    {
+      "id": "route-discovery-has-endpoints",
+      "status": "pass",
+      "note": "API coverage discovery must identify route files and endpoints."
+    },
+    {
+      "id": "audit-coverage-all-endpoints",
+      "status": "pass",
+      "note": "Global middleware coverage requires /api/* auditing for all discovered endpoints (287)."
+    },
+    {
+      "id": "audit-coverage-mutation-endpoints",
+      "status": "pass",
+      "note": "Mutation coverage requires /api/* auditing for discovered mutation endpoints (162)."
+    },
+    {
+      "id": "pii-redaction-sensitive-keys",
+      "status": "pass",
+      "note": "PII keys (email/phone/password) must be replaced with [REDACTED]."
+    },
+    {
+      "id": "pii-redaction-nested-secrets",
+      "status": "pass",
+      "note": "Nested authorization and token fields must be redacted."
+    },
+    {
+      "id": "pii-redaction-freeform-string",
+      "status": "pass",
+      "note": "Freeform log strings containing bearer/email/token markers must be redacted."
+    },
+    {
+      "id": "audit-integrity-hash-shape",
+      "status": "pass",
+      "note": "Audit integrity hash must be a 64-char lowercase SHA-256 hex digest."
+    },
+    {
+      "id": "error-handler-redaction-hook",
+      "status": "pass",
+      "note": "Error handler must redact structured log entries before emitting."
+    },
+    {
+      "id": "audit-middleware-redaction-and-integrity",
+      "status": "pass",
+      "note": "Audit middleware must redact log payloads and include integrity hash generation."
+    }
+  ],
+  "metrics": {
+    "totalChecks": 10,
+    "failedChecks": 0,
+    "routeFilesAnalyzed": 41,
+    "totalEndpoints": 287,
+    "mutationEndpoints": 162,
+    "auditCoveredEndpoints": 287,
+    "auditCoveredMutationEndpoints": 162,
+    "coveragePercent": 100,
+    "mutationCoveragePercent": 100
+  },
+  "coverage": {
+    "auditMiddlewareRegistered": true,
+    "fileBreakdown": [
+      {
+        "filePath": "src/routes/api/account.routes.ts",
+        "mountPrefixes": [
+          "/api/account"
+        ],
+        "totalEndpoints": 18,
+        "mutationEndpoints": 4
+      },
+      {
+        "filePath": "src/routes/api/admin-collections.routes.ts",
+        "mountPrefixes": [
+          "/api/admin/collections"
+        ],
+        "totalEndpoints": 12,
+        "mutationEndpoints": 5
+      },
+      {
+        "filePath": "src/routes/api/admin-orders.routes.ts",
+        "mountPrefixes": [
+          "/api/admin"
+        ],
+        "totalEndpoints": 9,
+        "mutationEndpoints": 2
+      },
+      {
+        "filePath": "src/routes/api/admin-products.routes.ts",
+        "mountPrefixes": [
+          "/api/admin"
+        ],
+        "totalEndpoints": 27,
+        "mutationEndpoints": 12
+      },
+      {
+        "filePath": "src/routes/api/affiliate.routes.ts",
+        "mountPrefixes": [
+          "/api/affiliates"
+        ],
+        "totalEndpoints": 32,
+        "mutationEndpoints": 5
+      },
+      {
+        "filePath": "src/routes/api/ai-studio.routes.ts",
+        "mountPrefixes": [
+          "/api/studio"
+        ],
+        "totalEndpoints": 32,
+        "mutationEndpoints": 7
+      },
+      {
+        "filePath": "src/routes/api/analytics.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 19,
+        "mutationEndpoints": 2
+      },
+      {
+        "filePath": "src/routes/api/api-versioning.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 2,
+        "mutationEndpoints": 0
+      },
+      {
+        "filePath": "src/routes/api/auth.routes.ts",
+        "mountPrefixes": [
+          "/api/auth"
+        ],
+        "totalEndpoints": 32,
+        "mutationEndpoints": 14
+      },
+      {
+        "filePath": "src/routes/api/bookings.routes.ts",
+        "mountPrefixes": [
+          "/api/bookings"
+        ],
+        "totalEndpoints": 30,
+        "mutationEndpoints": 8
+      },
+      {
+        "filePath": "src/routes/api/cache.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 2,
+        "mutationEndpoints": 1
+      },
+      {
+        "filePath": "src/routes/api/cancellations.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 3,
+        "mutationEndpoints": 1
+      },
+      {
+        "filePath": "src/routes/api/cart.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 34,
+        "mutationEndpoints": 6
+      },
+      {
+        "filePath": "src/routes/api/checkout.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 8,
+        "mutationEndpoints": 1
+      },
+      {
+        "filePath": "src/routes/api/control-tower.routes.ts",
+        "mountPrefixes": [
+          "/api/admin"
+        ],
+        "totalEndpoints": 2,
+        "mutationEndpoints": 0
+      },
+      {
+        "filePath": "src/routes/api/currency.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 4,
+        "mutationEndpoints": 1
+      },
+      {
+        "filePath": "src/routes/api/downloads.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 5,
+        "mutationEndpoints": 1
+      },
+      {
+        "filePath": "src/routes/api/events.routes.ts",
+        "mountPrefixes": [
+          "/api/events"
+        ],
+        "totalEndpoints": 4,
+        "mutationEndpoints": 0
+      },
+      {
+        "filePath": "src/routes/api/fulfillment-exceptions.routes.ts",
+        "mountPrefixes": [
+          "/api/admin"
+        ],
+        "totalEndpoints": 12,
+        "mutationEndpoints": 2
+      },
+      {
+        "filePath": "src/routes/api/fulfillment.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 10,
+        "mutationEndpoints": 4
+      },
+      {
+        "filePath": "src/routes/api/headless-api-packs.routes.ts",
+        "mountPrefixes": [
+          "/api/admin"
+        ],
+        "totalEndpoints": 6,
+        "mutationEndpoints": 2
+      },
+      {
+        "filePath": "src/routes/api/headless-channel.routes.ts",
+        "mountPrefixes": [
+          "/api/headless"
+        ],
+        "totalEndpoints": 4,
+        "mutationEndpoints": 0
+      },
+      {
+        "filePath": "src/routes/api/incident-responder.routes.ts",
+        "mountPrefixes": [
+          "/api/admin"
+        ],
+        "totalEndpoints": 9,
+        "mutationEndpoints": 2
+      },
+      {
+        "filePath": "src/routes/api/integration-marketplace.routes.ts",
+        "mountPrefixes": [
+          "/api/admin"
+        ],
+        "totalEndpoints": 14,
+        "mutationEndpoints": 5
+      },
+      {
+        "filePath": "src/routes/api/integrations.routes.ts",
+        "mountPrefixes": [
+          "/api/integrations"
+        ],
+        "totalEndpoints": 9,
+        "mutationEndpoints": 6
+      },
+      {
+        "filePath": "src/routes/api/loyalty.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 6,
+        "mutationEndpoints": 1
+      },
+      {
+        "filePath": "src/routes/api/orders.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 23,
+        "mutationEndpoints": 2
+      },
+      {
+        "filePath": "src/routes/api/platform.routes.ts",
+        "mountPrefixes": [
+          "/api/platform"
+        ],
+        "totalEndpoints": 24,
+        "mutationEndpoints": 12
+      },
+      {
+        "filePath": "src/routes/api/policies.routes.ts",
+        "mountPrefixes": [
+          "/api/admin"
+        ],
+        "totalEndpoints": 5,
+        "mutationEndpoints": 1
+      },
+      {
+        "filePath": "src/routes/api/pricing-experiments.routes.ts",
+        "mountPrefixes": [
+          "/api/admin"
+        ],
+        "totalEndpoints": 15,
+        "mutationEndpoints": 4
+      },
+      {
+        "filePath": "src/routes/api/products.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 11,
+        "mutationEndpoints": 0
+      },
+      {
+        "filePath": "src/routes/api/promotions.routes.ts",
+        "mountPrefixes": [
+          "/api/promotions"
+        ],
+        "totalEndpoints": 31,
+        "mutationEndpoints": 10
+      },
+      {
+        "filePath": "src/routes/api/reviews.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 15,
+        "mutationEndpoints": 5
+      },
+      {
+        "filePath": "src/routes/api/shipping-zones.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 21,
+        "mutationEndpoints": 7
+      },
+      {
+        "filePath": "src/routes/api/store-templates.routes.ts",
+        "mountPrefixes": [
+          "/api/admin"
+        ],
+        "totalEndpoints": 8,
+        "mutationEndpoints": 3
+      },
+      {
+        "filePath": "src/routes/api/subscriptions.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 24,
+        "mutationEndpoints": 7
+      },
+      {
+        "filePath": "src/routes/api/support.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 7,
+        "mutationEndpoints": 2
+      },
+      {
+        "filePath": "src/routes/api/tax.routes.ts",
+        "mountPrefixes": [
+          "/api/tax"
+        ],
+        "totalEndpoints": 18,
+        "mutationEndpoints": 7
+      },
+      {
+        "filePath": "src/routes/api/venue.routes.ts",
+        "mountPrefixes": [
+          "/api/venues"
+        ],
+        "totalEndpoints": 12,
+        "mutationEndpoints": 3
+      },
+      {
+        "filePath": "src/routes/api/webhooks.routes.ts",
+        "mountPrefixes": [
+          "/api"
+        ],
+        "totalEndpoints": 5,
+        "mutationEndpoints": 1
+      },
+      {
+        "filePath": "src/routes/api/workflows.routes.ts",
+        "mountPrefixes": [
+          "/api/admin"
+        ],
+        "totalEndpoints": 15,
+        "mutationEndpoints": 6
+      }
+    ]
+  }
+}

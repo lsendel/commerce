@@ -5,10 +5,12 @@
   var statusEl = document.getElementById("pricing-status");
   var errorEl = document.getElementById("pricing-form-error");
   var proposalEl = document.getElementById("pricing-proposal");
+  var preflightEl = document.getElementById("pricing-preflight");
   var experimentsEl = document.getElementById("pricing-experiments");
   var performanceEl = document.getElementById("pricing-performance");
 
   var proposeBtn = document.getElementById("pricing-propose-btn");
+  var preflightBtn = document.getElementById("pricing-preflight-btn");
   var startBtn = document.getElementById("pricing-start-btn");
   var refreshBtn = document.getElementById("pricing-refresh-btn");
   var clearProposalBtn = document.getElementById("pricing-clear-proposal");
@@ -73,7 +75,10 @@
     });
 
     if (!response.ok) {
-      throw new Error(parseError(payload, "Request failed."));
+      var err = new Error(parseError(payload, "Request failed."));
+      err.payload = payload;
+      err.status = response.status;
+      throw err;
     }
 
     return payload;
@@ -95,6 +100,13 @@
     var minDeltaPercent = Math.max(-20, Math.min(0, toNumber(fd.get("minDeltaPercent"), -10)));
     var maxDeltaPercent = Math.max(0, Math.min(20, toNumber(fd.get("maxDeltaPercent"), 10)));
     var autoApply = fd.get("autoApply") === "on";
+    var discountTypeRaw = String(fd.get("discountType") || "").trim();
+    var discountType =
+      discountTypeRaw === "percentage_off" || discountTypeRaw === "fixed_amount"
+        ? discountTypeRaw
+        : "";
+    var discountValue = Math.max(0, Math.min(5000, toNumber(fd.get("discountValue"), 0)));
+    var discountStackable = fd.get("discountStackable") === "on";
 
     var variantIdsRaw = String(fd.get("variantIds") || "").trim();
     var variantIds = variantIdsRaw
@@ -116,6 +128,15 @@
       proposalBody.variantIds = variantIds;
     }
 
+    var discountScenario = null;
+    if (discountType) {
+      discountScenario = {
+        strategyType: discountType,
+        value: discountValue,
+        stackable: discountStackable,
+      };
+    }
+
     return {
       name: name,
       autoApply: autoApply,
@@ -123,8 +144,106 @@
       minDeltaPercent: minDeltaPercent,
       maxDeltaPercent: maxDeltaPercent,
       variantIds: variantIds,
+      discountScenario: discountScenario,
       proposalBody: proposalBody,
     };
+  }
+
+  function riskLevelClass(level) {
+    if (level === "high") return "bg-rose-100 text-rose-700";
+    if (level === "medium") return "bg-amber-100 text-amber-700";
+    return "bg-emerald-100 text-emerald-700";
+  }
+
+  function renderPreflight(preflight) {
+    if (!preflightEl) return;
+
+    if (!preflight) {
+      preflightEl.classList.add("hidden");
+      preflightEl.innerHTML = "";
+      return;
+    }
+
+    var risk = preflight.risk || {};
+    var findings = preflight.findings || {};
+    var summary = preflight.proposalSummary || {};
+    var blockers = Array.isArray(findings.blockers) ? findings.blockers : [];
+    var warnings = Array.isArray(findings.warnings) ? findings.warnings : [];
+    var recommendations = Array.isArray(findings.recommendations)
+      ? findings.recommendations
+      : [];
+    var level = String(risk.level || "low");
+
+    var blockersList =
+      blockers.length > 0
+        ? '<ul class="mt-1 list-disc pl-4 space-y-1 text-xs">' +
+          blockers
+            .map(function (item) {
+              return "<li>" + escapeHtml(item) + "</li>";
+            })
+            .join("") +
+          "</ul>"
+        : '<p class="text-xs text-emerald-700 mt-1">No blocking risks detected.</p>';
+
+    var warningsList =
+      warnings.length > 0
+        ? '<ul class="mt-1 list-disc pl-4 space-y-1 text-xs">' +
+          warnings
+            .slice(0, 6)
+            .map(function (item) {
+              return "<li>" + escapeHtml(item) + "</li>";
+            })
+            .join("") +
+          "</ul>"
+        : '<p class="text-xs text-gray-600 mt-1">No warnings.</p>';
+
+    var recommendationList =
+      recommendations.length > 0
+        ? '<ul class="mt-1 list-disc pl-4 space-y-1 text-xs">' +
+          recommendations
+            .slice(0, 5)
+            .map(function (item) {
+              return "<li>" + escapeHtml(item) + "</li>";
+            })
+            .join("") +
+          "</ul>"
+        : '<p class="text-xs text-gray-600 mt-1">No recommendation changes.</p>';
+
+    preflightEl.classList.remove("hidden");
+    preflightEl.innerHTML =
+      '<div class="flex items-center justify-between gap-3 flex-wrap">' +
+      '<p class="font-semibold">Preflight Risk Summary</p>' +
+      '<span class="rounded-full px-2 py-0.5 text-xs font-semibold ' +
+      riskLevelClass(level) +
+      '">' +
+      "Risk " +
+      escapeHtml(level) +
+      " · score " +
+      escapeHtml(String(risk.score || 0)) +
+      "</span>" +
+      "</div>" +
+      '<p class="mt-1 text-xs text-amber-900">' +
+      "Assignments " +
+      escapeHtml(String(summary.assignmentsCount || 0)) +
+      ", markdown share " +
+      escapeHtml(String(summary.markdownShare || 0)) +
+      ", avg delta " +
+      escapeHtml(formatPercent(summary.avgDeltaPercent || 0)) +
+      "</p>" +
+      '<div class="mt-3 grid md:grid-cols-3 gap-3">' +
+      '<div class="rounded-md border border-rose-200 bg-rose-50 px-3 py-2">' +
+      '<p class="text-xs font-semibold text-rose-800">Blockers</p>' +
+      blockersList +
+      "</div>" +
+      '<div class="rounded-md border border-amber-200 bg-white px-3 py-2">' +
+      '<p class="text-xs font-semibold text-amber-800">Warnings</p>' +
+      warningsList +
+      "</div>" +
+      '<div class="rounded-md border border-sky-200 bg-white px-3 py-2">' +
+      '<p class="text-xs font-semibold text-sky-800">Recommendations</p>' +
+      recommendationList +
+      "</div>" +
+      "</div>";
   }
 
   function renderProposal(proposal) {
@@ -322,6 +441,7 @@
       });
 
       renderProposal(payload.proposal);
+      renderPreflight(null);
       setStatus("Proposal ready.", false);
     } catch (err) {
       showError(err && err.message ? err.message : "Failed to generate proposal.");
@@ -342,10 +462,24 @@
     }
 
     clearError();
-    setStatus("Starting experiment and applying assignments...", false);
+    setStatus("Running preflight checks...", false);
     if (startBtn) startBtn.disabled = true;
+    if (preflightBtn) preflightBtn.disabled = true;
 
     try {
+      var preflight = await runPreflight(values);
+      var blockers =
+        preflight && preflight.findings && Array.isArray(preflight.findings.blockers)
+          ? preflight.findings.blockers
+          : [];
+
+      if (blockers.length > 0 || (preflight && preflight.risk && preflight.risk.level === "high")) {
+        showError("Preflight blocked this rollout. Resolve blockers before start.");
+        setStatus("Preflight blocked start.", true);
+        return;
+      }
+
+      setStatus("Starting experiment and applying assignments...", false);
       var body = {
         name: values.name,
         autoApply: values.autoApply,
@@ -356,6 +490,9 @@
 
       if (values.variantIds.length > 0) {
         body.variantIds = values.variantIds;
+      }
+      if (values.discountScenario) {
+        body.discountScenario = values.discountScenario;
       }
 
       var payload = await requestJson("/api/admin/pricing-experiments/start", {
@@ -378,6 +515,7 @@
         },
       });
       renderPerformance(null);
+      renderPreflight(experiment.preflight || preflight || null);
       await loadExperiments();
 
       setStatus(
@@ -389,10 +527,62 @@
         false,
       );
     } catch (err) {
+      if (err && err.payload && err.payload.preflight) {
+        renderPreflight(err.payload.preflight);
+      }
       showError(err && err.message ? err.message : "Failed to start experiment.");
       setStatus("Failed to start experiment.", true);
     } finally {
       if (startBtn) startBtn.disabled = false;
+      if (preflightBtn) preflightBtn.disabled = false;
+    }
+  }
+
+  async function runPreflight(values) {
+    var payloadValues = values || collectFormValues();
+    if (!payloadValues) return null;
+
+    clearError();
+    setStatus("Running preflight risk checks...", false);
+    if (preflightBtn) preflightBtn.disabled = true;
+
+    try {
+      var body = {
+        autoApply: payloadValues.autoApply,
+        maxVariants: payloadValues.maxVariants,
+        minDeltaPercent: payloadValues.minDeltaPercent,
+        maxDeltaPercent: payloadValues.maxDeltaPercent,
+      };
+      if (payloadValues.variantIds.length > 0) {
+        body.variantIds = payloadValues.variantIds;
+      }
+      if (payloadValues.discountScenario) {
+        body.discountScenario = payloadValues.discountScenario;
+      }
+
+      var payload = await requestJson("/api/admin/pricing-experiments/preflight", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      var preflight = payload.preflight || null;
+      renderPreflight(preflight);
+      if (preflight && preflight.risk && preflight.risk.level === "high") {
+        setStatus("Preflight completed with high risk.", true);
+      } else {
+        setStatus("Preflight completed.", false);
+      }
+      return preflight;
+    } catch (err) {
+      showError(err && err.message ? err.message : "Preflight request failed.");
+      setStatus("Preflight failed.", true);
+      throw err;
+    } finally {
+      if (preflightBtn) preflightBtn.disabled = false;
     }
   }
 
@@ -450,6 +640,14 @@
     });
   }
 
+  if (preflightBtn) {
+    preflightBtn.addEventListener("click", function () {
+      runPreflight().catch(function () {
+        return undefined;
+      });
+    });
+  }
+
   if (refreshBtn) {
     refreshBtn.addEventListener("click", function () {
       clearError();
@@ -469,6 +667,7 @@
   if (clearProposalBtn) {
     clearProposalBtn.addEventListener("click", function () {
       renderProposal(null);
+      renderPreflight(null);
       renderPerformance(null);
       setStatus("Proposal cleared.", false);
       clearError();

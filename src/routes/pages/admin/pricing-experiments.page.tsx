@@ -33,7 +33,7 @@ export const PricingExperimentsPage: FC<PricingExperimentsPageProps> = ({
 
       <section class="rounded-2xl border border-gray-200 bg-white p-6 mb-6">
         <h2 class="text-lg font-semibold text-gray-900">Launch Experiment</h2>
-        <p class="text-sm text-gray-500 mt-1">Create a proposal first, then start to apply price changes.</p>
+        <p class="text-sm text-gray-500 mt-1">Create a proposal, run risk preflight, then start to apply price changes.</p>
 
         <form id="pricing-experiment-form" class="mt-4 grid lg:grid-cols-4 gap-4 items-end">
           <div class="lg:col-span-2">
@@ -97,11 +97,42 @@ export const PricingExperimentsPage: FC<PricingExperimentsPageProps> = ({
               placeholder="uuid-1,uuid-2"
             />
           </div>
+          <div>
+            <label for="experiment-discount-type" class="block text-xs font-medium text-gray-600 mb-1">Discount Scenario</label>
+            <select
+              id="experiment-discount-type"
+              name="discountType"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            >
+              <option value="">None</option>
+              <option value="percentage_off">% off</option>
+              <option value="fixed_amount">Fixed amount</option>
+            </select>
+          </div>
+          <div>
+            <label for="experiment-discount-value" class="block text-xs font-medium text-gray-600 mb-1">Discount Value</label>
+            <input
+              id="experiment-discount-value"
+              name="discountValue"
+              type="number"
+              min={0}
+              max={5000}
+              value={0}
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            />
+          </div>
+          <div class="flex items-center gap-2 pt-4">
+            <input id="experiment-discount-stackable" name="discountStackable" type="checkbox" class="rounded border-gray-300" />
+            <label for="experiment-discount-stackable" class="text-xs text-gray-600">Discount stackable</label>
+          </div>
         </form>
 
         <div class="mt-4 flex items-center gap-2">
           <button type="button" id="pricing-propose-btn" class="rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 hover:bg-cyan-100">
             Generate Proposal
+          </button>
+          <button type="button" id="pricing-preflight-btn" class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-100">
+            Run Preflight Risk Check
           </button>
           <button type="button" id="pricing-start-btn" class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
             Start Experiment
@@ -110,6 +141,7 @@ export const PricingExperimentsPage: FC<PricingExperimentsPageProps> = ({
         </div>
 
         <div id="pricing-form-error" class="hidden mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" />
+        <div id="pricing-preflight" class="hidden mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"></div>
       </section>
 
       <section class="rounded-2xl border border-gray-200 bg-white p-6 mb-6">

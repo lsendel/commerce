@@ -1,0 +1,74 @@
+{
+  "startedAt": "2026-03-06T06:41:14.752Z",
+  "finishedAt": "2026-03-06T06:41:14.752Z",
+  "status": "passed",
+  "reportVersion": "v1",
+  "policyOwner": "commerce-sre",
+  "checks": [
+    {
+      "id": "break-glass-approver-quorum",
+      "status": "pass",
+      "note": "Break-glass policy must require at least 2 approvers."
+    },
+    {
+      "id": "break-glass-window-bound",
+      "status": "pass",
+      "note": "Break-glass window must be bounded to <= 240 minutes."
+    },
+    {
+      "id": "break-glass-channel-defined",
+      "status": "pass",
+      "note": "Break-glass escalation channel must be configured."
+    },
+    {
+      "id": "break-glass-scenarios-present",
+      "status": "pass",
+      "note": "At least one break-glass scenario must be defined."
+    },
+    {
+      "id": "break-glass-date-format",
+      "status": "pass",
+      "note": "Break-glass drill dates must use YYYY-MM-DD format."
+    },
+    {
+      "id": "break-glass-next-after-last",
+      "status": "pass",
+      "note": "nextDrillBy must be on or after lastDrillOn."
+    },
+    {
+      "id": "break-glass-window-valid",
+      "status": "pass",
+      "note": "nextDrillBy must stay within drillCadenceDays window."
+    },
+    {
+      "id": "break-glass-not-overdue",
+      "status": "pass",
+      "note": "Break-glass drill schedule must not be overdue."
+    },
+    {
+      "id": "break-glass-scenario-evaluation",
+      "status": "pass",
+      "note": "All break-glass scenarios passed guard preconditions."
+    }
+  ],
+  "metrics": {
+    "totalChecks": 9,
+    "failedChecks": 0
+  },
+  "scenarios": [
+    {
+      "scenarioId": "bg-admin-api-emergency",
+      "name": "Emergency admin API access restore",
+      "targetSurface": "/api/admin/*",
+      "expectedOutcome": "Temporary elevation requires dual approval and bounded 120-minute window.",
+      "status": "pass"
+    },
+    {
+      "scenarioId": "bg-admin-page-emergency",
+      "name": "Emergency admin page access restore",
+      "targetSurface": "/admin/*",
+      "expectedOutcome": "Temporary elevation is revoked after incident closure and logged in audit trail.",
+      "status": "pass"
+    }
+  ]
+}

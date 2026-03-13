@@ -138,6 +138,7 @@ catalog.get(
 // GET /products/:slug - single product by slug (cache 1h)
 catalog.get("/products/:slug", cacheResponse({
   ttl: 3600,
+  tags: ["products:detail"],
   dynamicTags: (c) => [`product:${c.req.param("slug")}`],
 }), zValidator("query", geoPricingQuerySchema), async (c) => {
   try {

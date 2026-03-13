@@ -82,7 +82,14 @@ export const AdminOrdersPage: FC<AdminOrdersPageProps> = ({
 
       {/* Filter bar */}
       <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 mb-6">
-        <form method="get" action="/admin/orders" class="flex flex-wrap items-end gap-3">
+        <form
+          method="get"
+          action="/admin/orders"
+          class="flex flex-wrap items-end gap-3"
+          data-persist-filters
+          data-persist-key="admin-orders-filters"
+          data-persist-clear-selector="[data-clear-orders-filters]"
+        >
           <div class="flex-1 min-w-[200px]">
             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Search</label>
             <input
@@ -97,6 +104,7 @@ export const AdminOrdersPage: FC<AdminOrdersPageProps> = ({
             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</label>
             <select
               name="status"
+              data-auto-submit="change"
               class="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
             >
               <option value="">All statuses</option>
@@ -134,6 +142,7 @@ export const AdminOrdersPage: FC<AdminOrdersPageProps> = ({
           {(filters.status || filters.search || filters.dateFrom || filters.dateTo) && (
             <a
               href="/admin/orders"
+              data-clear-orders-filters
               class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400"
             >
               Clear

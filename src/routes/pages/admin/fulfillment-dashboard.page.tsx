@@ -138,11 +138,49 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
         </section>
       )}
 
+      {isExceptionHandlerEnabled && (
+        <section class="mb-6 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 p-4">
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h2 class="text-sm font-semibold text-amber-900">SLA Risk Prediction</h2>
+              <p class="text-xs text-amber-700 mt-0.5">
+                Predicts fulfillment and return breaches with intervention recommendations.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                id="sla-refresh-btn"
+                class="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50"
+              >
+                Refresh SLA Risk
+              </button>
+              <button
+                type="button"
+                id="sla-intervene-btn"
+                class="rounded-lg border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+              >
+                Run Interventions
+              </button>
+            </div>
+          </div>
+          <div id="sla-results" class="mt-3 text-xs text-amber-900">
+            SLA risk prediction not run yet.
+          </div>
+        </section>
+      )}
+
       {/* Filter Bar */}
-      <form method="get" class="flex flex-wrap items-end gap-3 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      <form
+        method="get"
+        class="flex flex-wrap items-end gap-3 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4"
+        data-persist-filters
+        data-persist-key="admin-fulfillment-filters"
+        data-persist-clear-selector="[data-clear-fulfillment-filters]"
+      >
         <div>
           <label class="text-xs font-medium text-gray-500 block mb-1">Status</label>
-          <select name="status" class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-300">
+          <select name="status" data-auto-submit="change" class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-300">
             <option value="">All statuses</option>
             {["pending", "submitted", "processing", "shipped", "delivered", "failed", "cancelled"].map((s) => (
               <option value={s} selected={filters.status === s}>{s}</option>
@@ -151,7 +189,7 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
         </div>
         <div>
           <label class="text-xs font-medium text-gray-500 block mb-1">Provider</label>
-          <select name="provider" class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-300">
+          <select name="provider" data-auto-submit="change" class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-300">
             <option value="">All providers</option>
             {["printful", "gooten", "prodigi", "shapeways"].map((p) => (
               <option value={p} selected={filters.provider === p}>{p}</option>
@@ -169,7 +207,7 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
           />
         </div>
         <Button type="submit" variant="primary" size="sm">Filter</Button>
-        <a href="/admin/fulfillment" class="text-sm text-gray-500 hover:text-gray-700 py-2">Clear</a>
+        <a href="/admin/fulfillment" data-clear-fulfillment-filters class="text-sm text-gray-500 hover:text-gray-700 py-2">Clear</a>
       </form>
 
       {/* Requests Table */}
@@ -195,7 +233,13 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
                 </tr>
               ) : (
                 requests.map((req) => (
-                  <tr key={req.id} class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <tr
+                    key={req.id}
+                    class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    data-request-row
+                    data-request-id={req.id}
+                    data-request-status={req.status}
+                  >
                     <td class="px-4 py-3 text-sm">
                       <a href={`/admin/fulfillment/${req.id}`} class="font-mono text-brand-600 hover:text-brand-700">
                         {req.id.slice(0, 8)}...
@@ -210,15 +254,15 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
                       {req.provider}
                     </td>
                     <td class="px-4 py-3">
-                      <span class={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[req.status] ?? "bg-gray-100 text-gray-800"}`}>
+                      <span class={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[req.status] ?? "bg-gray-100 text-gray-800"}`} data-request-status-badge>
                         {req.status}
                       </span>
                       {req.errorMessage && (
-                        <p class="mt-1 text-xs text-red-600 max-w-xs truncate">{req.errorMessage}</p>
+                        <p class="mt-1 text-xs text-red-600 max-w-xs truncate" data-request-error>{req.errorMessage}</p>
                       )}
                     </td>
                     <td class="px-4 py-3 text-sm text-gray-500">{req.createdAt}</td>
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3" data-request-actions>
                       {req.status === "failed" && (
                         <button
                           type="button"
@@ -294,13 +338,60 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
               setTimeout(function() { banner.classList.add('hidden'); }, 4000);
             }
 
+            function statusPillClass(status) {
+              if (status === 'pending') return 'bg-yellow-100 text-yellow-800';
+              if (status === 'submitted') return 'bg-blue-100 text-blue-800';
+              if (status === 'processing') return 'bg-indigo-100 text-indigo-800';
+              if (status === 'shipped') return 'bg-green-100 text-green-800';
+              if (status === 'delivered') return 'bg-green-200 text-green-900';
+              if (status === 'cancel_requested') return 'bg-orange-100 text-orange-800';
+              if (status === 'cancelled') return 'bg-gray-100 text-gray-800';
+              if (status === 'failed') return 'bg-red-100 text-red-800';
+              return 'bg-gray-100 text-gray-800';
+            }
+
+            function setRequestState(requestId, nextStatus, errorMessage) {
+              var row = document.querySelector('[data-request-row][data-request-id="' + requestId + '"]');
+              if (!row) return;
+              row.setAttribute('data-request-status', nextStatus);
+
+              var statusBadge = row.querySelector('[data-request-status-badge]');
+              if (statusBadge) {
+                statusBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + statusPillClass(nextStatus);
+                statusBadge.textContent = nextStatus;
+              }
+
+              var errorEl = row.querySelector('[data-request-error]');
+              if (errorMessage) {
+                if (!errorEl) {
+                  errorEl = document.createElement('p');
+                  errorEl.className = 'mt-1 text-xs text-red-600 max-w-xs truncate';
+                  errorEl.setAttribute('data-request-error', 'true');
+                  var statusCell = statusBadge ? statusBadge.parentElement : null;
+                  if (statusCell) statusCell.appendChild(errorEl);
+                }
+                errorEl.textContent = errorMessage;
+              } else if (errorEl) {
+                errorEl.remove();
+              }
+
+              var actionsCell = row.querySelector('[data-request-actions]');
+              if (actionsCell) {
+                if (nextStatus === 'failed') {
+                  actionsCell.innerHTML = '<button type="button" class="retry-btn text-sm text-brand-600 hover:text-brand-700 font-medium" data-request-id="' + requestId + '">Retry</button>';
+                } else {
+                  actionsCell.innerHTML = '';
+                }
+              }
+            }
+
             var pendingRetryId = null;
             var dialog = document.getElementById('retry-confirm');
-            document.querySelectorAll('.retry-btn').forEach(function(btn) {
-              btn.addEventListener('click', function() {
-                pendingRetryId = this.getAttribute('data-request-id');
-                dialog.classList.remove('hidden');
-              });
+            document.addEventListener('click', function(event) {
+              var retryBtn = event.target && event.target.closest ? event.target.closest('.retry-btn') : null;
+              if (!retryBtn) return;
+              pendingRetryId = retryBtn.getAttribute('data-request-id');
+              dialog.classList.remove('hidden');
             });
             document.getElementById('retry-no').addEventListener('click', function() {
               dialog.classList.add('hidden');
@@ -308,16 +399,20 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
             });
             document.getElementById('retry-yes').addEventListener('click', async function() {
               if (!pendingRetryId) return;
+              var confirmBtn = this;
+              confirmBtn.setAttribute('disabled', 'true');
               try {
                 var res = await fetch('/api/admin/fulfillment/' + pendingRetryId + '/retry', { method: 'POST' });
+                var data = await res.json().catch(function() { return {}; });
                 if (!res.ok) {
-                  var data = await res.json().catch(function() { return {}; });
                   throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to retry') : (data.error || data.message || 'Failed to retry'));
                 }
-                window.location.reload();
+                setRequestState(pendingRetryId, 'pending', null);
+                if (window.showToast) window.showToast(data.message || 'Retry queued.', 'success');
               } catch (err) {
                 showFulfillmentDashboardError(err.message || 'Failed to retry fulfillment');
               } finally {
+                confirmBtn.removeAttribute('disabled');
                 dialog.classList.add('hidden');
                 pendingRetryId = null;
               }
@@ -326,6 +421,9 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
             var scanBtn = document.getElementById('exception-scan-btn');
             var resolveBtn = document.getElementById('exception-resolve-btn');
             var resultEl = document.getElementById('exception-results');
+            var slaRefreshBtn = document.getElementById('sla-refresh-btn');
+            var slaInterveneBtn = document.getElementById('sla-intervene-btn');
+            var slaResultEl = document.getElementById('sla-results');
 
             function renderExceptionResult(payload, mode) {
               if (!resultEl || !payload) return;
@@ -377,11 +475,115 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
                   throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to auto-resolve fulfillment exceptions') : (data.error || data.message || 'Failed to auto-resolve fulfillment exceptions'));
                 }
                 renderExceptionResult(data, 'Auto-resolve');
-                setTimeout(function() { window.location.reload(); }, 800);
+                runExceptionScan();
+                runSlaRefresh();
+                if (window.showToast) window.showToast('Auto-resolve finished.', 'success');
               } catch (err) {
                 showFulfillmentDashboardError(err.message || 'Failed to auto-resolve fulfillment exceptions');
               } finally {
                 resolveBtn.removeAttribute('disabled');
+              }
+            }
+
+            function riskPill(level) {
+              if (level === 'high') return '<span class="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700">high</span>';
+              if (level === 'medium') return '<span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">medium</span>';
+              return '<span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">low</span>';
+            }
+
+            function renderSlaDashboard(payload) {
+              if (!slaResultEl || !payload || !payload.dashboard) return;
+              var dashboard = payload.dashboard;
+              var totals = dashboard.totals || {};
+              var items = Array.isArray(dashboard.items) ? dashboard.items : [];
+              var top = items.slice(0, 5).map(function(item) {
+                return '<li>' +
+                  '<div class="flex items-center gap-2 flex-wrap">' +
+                    '<span class="font-medium">' + item.entityId.slice(0, 8) + '...</span>' +
+                    riskPill(item.riskLevel) +
+                    '<span>' + item.domain + '</span>' +
+                  '</div>' +
+                  '<div class="text-[11px] text-amber-800 mt-0.5">' +
+                    'status=' + item.status +
+                    ' · age=' + item.ageMinutes + 'm' +
+                    ' · target=' + item.targetMinutes + 'm' +
+                    ' · action=' + item.recommendedAction +
+                  '</div>' +
+                '</li>';
+              }).join('');
+
+              var actions = Array.isArray(dashboard.actionQueue)
+                ? dashboard.actionQueue.map(function(row) {
+                    return row.action + ': ' + row.count;
+                  }).join(' · ')
+                : '';
+
+              slaResultEl.innerHTML =
+                '<p><span class="font-semibold">SLA dashboard:</span> open ' + totals.openCount +
+                ', at-risk ' + totals.atRiskCount +
+                ', high-risk ' + totals.highRiskCount +
+                ', projected breaches(24h) ' + totals.projectedBreaches24h +
+                ', auto-eligible ' + totals.autoActionEligibleCount + '.</p>' +
+                (actions ? '<p class="mt-1 text-[11px]">Action queue: ' + actions + '</p>' : '') +
+                (top ? '<ul class="mt-2 list-disc pl-4 space-y-1">' + top + '</ul>' : '<p class="mt-2">No SLA risk items found.</p>');
+            }
+
+            function renderSlaInterventions(payload) {
+              if (!slaResultEl || !payload) return;
+              var actions = Array.isArray(payload.actions) ? payload.actions : [];
+              var top = actions.slice(0, 6).map(function(action) {
+                return '<li><span class="font-medium">' + action.entityId.slice(0, 8) + '...</span> · ' +
+                  action.action + ' · ' + action.status + ' · ' + action.note + '</li>';
+              }).join('');
+
+              slaResultEl.innerHTML =
+                '<p><span class="font-semibold">' + (payload.dryRun ? 'Intervention dry-run' : 'Intervention execution') + ':</span> ' +
+                'scanned ' + payload.scannedCount +
+                ', candidates ' + payload.candidateCount +
+                ', executed ' + payload.executedCount +
+                ', skipped ' + payload.skippedCount + '.</p>' +
+                (top ? '<ul class="mt-2 list-disc pl-4 space-y-1">' + top + '</ul>' : '<p class="mt-2">No intervention actions generated.</p>');
+            }
+
+            async function runSlaRefresh() {
+              if (!slaRefreshBtn) return;
+              slaRefreshBtn.setAttribute('disabled', 'true');
+              try {
+                var res = await fetch('/api/admin/ops/fulfillment-sla?limit=40', { credentials: 'same-origin' });
+                var data = await res.json().catch(function() { return {}; });
+                if (!res.ok) {
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to load SLA dashboard') : (data.error || data.message || 'Failed to load SLA dashboard'));
+                }
+                renderSlaDashboard(data);
+              } catch (err) {
+                showFulfillmentDashboardError(err.message || 'Failed to load SLA dashboard');
+              } finally {
+                slaRefreshBtn.removeAttribute('disabled');
+              }
+            }
+
+            async function runSlaInterventions() {
+              if (!slaInterveneBtn) return;
+              slaInterveneBtn.setAttribute('disabled', 'true');
+              try {
+                var res = await fetch('/api/admin/ops/fulfillment-sla/interventions', {
+                  method: 'POST',
+                  credentials: 'same-origin',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ dryRun: false, limit: 20, minRiskLevel: 'high' }),
+                });
+                var data = await res.json().catch(function() { return {}; });
+                if (!res.ok) {
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to run SLA interventions') : (data.error || data.message || 'Failed to run SLA interventions'));
+                }
+                renderSlaInterventions(data);
+                runSlaRefresh();
+                runExceptionScan();
+                if (window.showToast) window.showToast('SLA interventions completed.', 'success');
+              } catch (err) {
+                showFulfillmentDashboardError(err.message || 'Failed to run SLA interventions');
+              } finally {
+                slaInterveneBtn.removeAttribute('disabled');
               }
             }
 
@@ -391,6 +593,13 @@ export const FulfillmentDashboardPage: FC<FulfillmentDashboardProps> = ({
             }
             if (resolveBtn) {
               resolveBtn.addEventListener('click', runExceptionResolve);
+            }
+            if (slaRefreshBtn) {
+              slaRefreshBtn.addEventListener('click', runSlaRefresh);
+              runSlaRefresh();
+            }
+            if (slaInterveneBtn) {
+              slaInterveneBtn.addEventListener('click', runSlaInterventions);
             }
           })();
         </script>

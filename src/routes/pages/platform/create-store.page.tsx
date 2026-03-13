@@ -27,100 +27,141 @@ export const CreateStorePage: FC<{ isAuthenticated: boolean }> = ({
           </p>
         </div>
       ) : (
-        <form id="create-store-form" class="space-y-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Store Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              required
-              minLength={2}
-              maxLength={100}
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
-              placeholder="My Awesome Store"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Store URL Slug
-            </label>
-            <div class="flex items-center">
-              <span class="text-gray-500 dark:text-gray-400 mr-1">https://</span>
+        <>
+          <form id="create-store-form" class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Store Name
+              </label>
               <input
                 type="text"
-                name="slug"
-                id="slug-input"
+                name="name"
                 required
                 minLength={2}
-                maxLength={50}
-                pattern="[a-z0-9-]+"
-                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
-                placeholder="my-store"
+                maxLength={100}
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
+                placeholder="My Awesome Store"
               />
-              <span class="text-gray-500 dark:text-gray-400 ml-1">.petm8.io</span>
             </div>
-            <p id="slug-status" class="text-xs text-gray-500 mt-1">
-              Lowercase letters, numbers, and hyphens only
-            </p>
-          </div>
 
-          {/* Logo Upload */}
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Store Logo (optional)
-            </label>
-            <input
-              type="file"
-              name="logo"
-              accept="image/*"
-              class="text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
-            />
-            <p class="text-xs text-gray-500 mt-1">PNG or JPG, max 2MB</p>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Primary Color
+                Store URL Slug
               </label>
-              <div class="flex items-center gap-3">
+              <div class="flex items-center">
+                <span class="text-gray-500 dark:text-gray-400 mr-1">https://</span>
                 <input
-                  type="color"
-                  name="primaryColor"
-                  id="primary-color"
-                  value="#4F46E5"
-                  class="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                  type="text"
+                  name="slug"
+                  id="slug-input"
+                  required
+                  minLength={2}
+                  maxLength={50}
+                  pattern="[a-z0-9-]+"
+                  class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-brand-300 focus:border-brand-400"
+                  placeholder="my-store"
                 />
-                <div id="primary-preview" class="w-20 h-10 rounded-lg" style="background-color: #4F46E5" />
+                <span class="text-gray-500 dark:text-gray-400 ml-1">.petm8.io</span>
               </div>
+              <p id="slug-status" class="text-xs text-gray-500 mt-1">
+                Lowercase letters, numbers, and hyphens only
+              </p>
             </div>
+
+            {/* Logo Upload */}
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Secondary Color
+                Store Logo (optional)
               </label>
-              <div class="flex items-center gap-3">
-                <input
-                  type="color"
-                  name="secondaryColor"
-                  id="secondary-color"
-                  value="#10B981"
-                  class="w-10 h-10 rounded border border-gray-300 cursor-pointer"
-                />
-                <div id="secondary-preview" class="w-20 h-10 rounded-lg" style="background-color: #10B981" />
+              <input
+                type="file"
+                name="logo"
+                accept="image/*"
+                class="text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
+              />
+              <p class="text-xs text-gray-500 mt-1">PNG or JPG, max 2MB</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Primary Color
+                </label>
+                <div class="flex items-center gap-3">
+                  <input
+                    type="color"
+                    name="primaryColor"
+                    id="primary-color"
+                    value="#4F46E5"
+                    class="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                  />
+                  <div id="primary-preview" class="w-20 h-10 rounded-lg" style="background-color: #4F46E5" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Secondary Color
+                </label>
+                <div class="flex items-center gap-3">
+                  <input
+                    type="color"
+                    name="secondaryColor"
+                    id="secondary-color"
+                    value="#10B981"
+                    class="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                  />
+                  <div id="secondary-preview" class="w-20 h-10 rounded-lg" style="background-color: #10B981" />
+                </div>
               </div>
             </div>
-          </div>
 
-          <button
-            type="submit"
-            class="w-full bg-brand-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-700 transition-colors"
+            <button
+              type="submit"
+              class="w-full bg-brand-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-700 transition-colors"
+            >
+              Create Store
+            </button>
+          </form>
+
+          <div
+            id="create-store-success"
+            class="hidden mt-8 rounded-lg border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 p-6"
           >
-            Create Store
-          </button>
-        </form>
+            <h2 class="text-xl font-semibold text-emerald-800 dark:text-emerald-200 mb-2">Store Created</h2>
+            <p class="text-sm text-emerald-700 dark:text-emerald-300">
+              <span id="create-store-success-name">Your store</span> is ready with slug{" "}
+              <code id="create-store-success-slug" class="px-1.5 py-0.5 rounded bg-white/70 dark:bg-black/30 text-xs">
+                --
+              </code>
+              .
+            </p>
+            <div class="mt-4 flex flex-wrap gap-3">
+              <a
+                id="create-store-dashboard-link"
+                href="/platform/dashboard"
+                class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              >
+                Open Dashboard
+              </a>
+              <a
+                id="create-store-settings-link"
+                href="/platform/settings"
+                class="inline-flex items-center rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Open Settings
+              </a>
+              <a
+                id="create-storefront-link"
+                href="/products"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center rounded-lg border border-brand-300 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
+              >
+                Visit Storefront
+              </a>
+            </div>
+          </div>
+        </>
       )}
 
       {html`<script>

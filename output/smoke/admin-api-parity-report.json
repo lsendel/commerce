@@ -1,0 +1,1608 @@
+{
+  "startedAt": "2026-03-13T05:34:34.672Z",
+  "finishedAt": "2026-03-13T05:34:34.675Z",
+  "status": "contract_only",
+  "mutationChecksEnabled": false,
+  "flakyPolicy": {
+    "externalProviderDefault": {
+      "maxAttempts": 3,
+      "retryDelayMs": 750,
+      "suppressFailures": false
+    },
+    "verifyIntegrationApp": {
+      "maxAttempts": 3,
+      "retryDelayMs": 750,
+      "suppressFailures": false
+    },
+    "installIntegrationApp": {
+      "maxAttempts": 3,
+      "retryDelayMs": 750,
+      "suppressFailures": false
+    },
+    "uninstallIntegrationApp": {
+      "maxAttempts": 3,
+      "retryDelayMs": 750,
+      "suppressFailures": false
+    }
+  },
+  "metrics": {
+    "totalChecks": 66,
+    "failedChecks": 0,
+    "suppressedChecks": 0,
+    "latencyMs": {
+      "count": 0,
+      "min": null,
+      "p50": null,
+      "p95": null,
+      "max": null,
+      "avg": null
+    },
+    "ownerRollups": [
+      {
+        "key": "commerce-platform",
+        "total": 13,
+        "passed": 13,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-billing",
+        "total": 9,
+        "passed": 9,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-identity",
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-checkout",
+        "total": 6,
+        "passed": 6,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-bookings",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-control-tower",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-integrations",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-reviews",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "unknown",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-automation",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-catalog",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-growth",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-operations",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      }
+    ],
+    "ownerLatencyRollups": [
+      {
+        "owner": "commerce-automation",
+        "checkCount": 3,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "commerce-billing",
+        "checkCount": 9,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "commerce-bookings",
+        "checkCount": 4,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "commerce-catalog",
+        "checkCount": 3,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "commerce-checkout",
+        "checkCount": 6,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "commerce-control-tower",
+        "checkCount": 4,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "commerce-growth",
+        "checkCount": 3,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "commerce-identity",
+        "checkCount": 7,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "commerce-integrations",
+        "checkCount": 4,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "commerce-operations",
+        "checkCount": 2,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "commerce-platform",
+        "checkCount": 13,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "commerce-reviews",
+        "checkCount": 4,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      },
+      {
+        "owner": "unknown",
+        "checkCount": 4,
+        "latencyMs": {
+          "count": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "max": null,
+          "avg": null
+        }
+      }
+    ],
+    "ownerLatencySlo": {
+      "configuredOwners": 0,
+      "warnings": [],
+      "failures": []
+    },
+    "tagRollups": [
+      {
+        "key": "mutations",
+        "total": 34,
+        "passed": 34,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "admin",
+        "total": 25,
+        "passed": 25,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "storefront",
+        "total": 15,
+        "passed": 15,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "read",
+        "total": 12,
+        "passed": 12,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "account",
+        "total": 9,
+        "passed": 9,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "subscriptions",
+        "total": 9,
+        "passed": 9,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "auth",
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "platform",
+        "total": 6,
+        "passed": 6,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "bookings",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "cart",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "integrations",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "members",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "reviews",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "store-templates",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "unmapped",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "api-packs",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "builder",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "catalog",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "headless",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "policies",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "pricing",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "provider",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "waitlist",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "analytics",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "automation",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "checkout",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "coupon",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "email-verification",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "fulfillment",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "invite",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "moderation",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "password-reset",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "profile",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "recommendations",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "sla",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "branding",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "clone",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "collections",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "compliance",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "control-tower",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "engagement",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "experiments",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "interventions",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "marketplace",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "password",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "performance",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "plan-change",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "plans",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "portal",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "preflight",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "product-detail",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "products",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "quote",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "resume",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "role",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "stores",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "summary",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "validation",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "verification",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "violations",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "workflows",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "suppressed": 0
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "contract:getPolicy",
+      "method": "GET",
+      "path": "/api/admin/policies",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-control-tower",
+      "tags": [
+        "admin",
+        "policies",
+        "compliance"
+      ]
+    },
+    {
+      "name": "contract:updatePolicy",
+      "method": "PUT",
+      "path": "/api/admin/policies",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-control-tower",
+      "tags": [
+        "admin",
+        "policies",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:listViolations",
+      "method": "GET",
+      "path": "/api/admin/policies/violations",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-control-tower",
+      "tags": [
+        "admin",
+        "policies",
+        "violations"
+      ]
+    },
+    {
+      "name": "contract:getControlTowerSummary",
+      "method": "GET",
+      "path": "/api/admin/control-tower/summary",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-control-tower",
+      "tags": [
+        "admin",
+        "control-tower",
+        "summary"
+      ]
+    },
+    {
+      "name": "contract:listPricingExperiments",
+      "method": "GET",
+      "path": "/api/admin/pricing-experiments",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-growth",
+      "tags": [
+        "admin",
+        "pricing",
+        "experiments"
+      ]
+    },
+    {
+      "name": "contract:pricingExperimentPreflight",
+      "method": "POST",
+      "path": "/api/admin/pricing-experiments/preflight",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-growth",
+      "tags": [
+        "admin",
+        "pricing",
+        "preflight"
+      ]
+    },
+    {
+      "name": "contract:pricingExperimentPerformance",
+      "method": "GET",
+      "path": "/api/admin/pricing-experiments/:id/performance",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-growth",
+      "tags": [
+        "admin",
+        "pricing",
+        "performance"
+      ]
+    },
+    {
+      "name": "contract:fulfillmentSlaDashboard",
+      "method": "GET",
+      "path": "/api/admin/ops/fulfillment-sla",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-operations",
+      "tags": [
+        "admin",
+        "fulfillment",
+        "sla"
+      ]
+    },
+    {
+      "name": "contract:fulfillmentSlaInterventions",
+      "method": "POST",
+      "path": "/api/admin/ops/fulfillment-sla/interventions",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-operations",
+      "tags": [
+        "admin",
+        "fulfillment",
+        "sla",
+        "interventions"
+      ]
+    },
+    {
+      "name": "contract:listWorkflows",
+      "method": "GET",
+      "path": "/api/admin/workflows",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-automation",
+      "tags": [
+        "admin",
+        "workflows"
+      ]
+    },
+    {
+      "name": "contract:analyticsRecommendationHistory",
+      "method": "GET",
+      "path": "/api/analytics/recommendations/history",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-automation",
+      "tags": [
+        "admin",
+        "analytics",
+        "recommendations",
+        "automation",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:analyticsApplyRecommendation",
+      "method": "POST",
+      "path": "/api/analytics/recommendations/apply",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-automation",
+      "tags": [
+        "admin",
+        "analytics",
+        "recommendations",
+        "automation",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:listIntegrationMarketplaceApps",
+      "method": "GET",
+      "path": "/api/admin/integration-marketplace/apps",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-integrations",
+      "tags": [
+        "admin",
+        "integrations",
+        "marketplace"
+      ]
+    },
+    {
+      "name": "contract:installIntegrationApp",
+      "method": "POST",
+      "path": "/api/admin/integration-marketplace/apps/:provider/install",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-integrations",
+      "tags": [
+        "admin",
+        "integrations",
+        "provider",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:uninstallIntegrationApp",
+      "method": "POST",
+      "path": "/api/admin/integration-marketplace/apps/:provider/uninstall",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-integrations",
+      "tags": [
+        "admin",
+        "integrations",
+        "provider",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:verifyIntegrationApp",
+      "method": "POST",
+      "path": "/api/admin/integration-marketplace/apps/:provider/verify",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-integrations",
+      "tags": [
+        "admin",
+        "integrations",
+        "provider",
+        "verification"
+      ]
+    },
+    {
+      "name": "contract:listPartnerOnboarding",
+      "method": "GET",
+      "path": "/api/admin/integration-marketplace/partners/onboarding",
+      "status": "contract",
+      "ok": true,
+      "owner": "unknown",
+      "tags": [
+        "unmapped"
+      ]
+    },
+    {
+      "name": "contract:getPartnerOnboarding",
+      "method": "GET",
+      "path": "/api/admin/integration-marketplace/partners/:provider/onboarding",
+      "status": "contract",
+      "ok": true,
+      "owner": "unknown",
+      "tags": [
+        "unmapped"
+      ]
+    },
+    {
+      "name": "contract:completePartnerOnboarding",
+      "method": "POST",
+      "path": "/api/admin/integration-marketplace/partners/:provider/onboarding/complete",
+      "status": "contract",
+      "ok": true,
+      "owner": "unknown",
+      "tags": [
+        "unmapped"
+      ]
+    },
+    {
+      "name": "contract:verifyPartnerContract",
+      "method": "POST",
+      "path": "/api/admin/integration-marketplace/partners/:provider/contract-verify",
+      "status": "contract",
+      "ok": true,
+      "owner": "unknown",
+      "tags": [
+        "unmapped"
+      ]
+    },
+    {
+      "name": "contract:listHeadlessPacks",
+      "method": "GET",
+      "path": "/api/admin/headless/packs",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "admin",
+        "headless",
+        "api-packs"
+      ]
+    },
+    {
+      "name": "contract:createHeadlessPack",
+      "method": "POST",
+      "path": "/api/admin/headless/packs",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "admin",
+        "headless",
+        "api-packs",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:revokeHeadlessPack",
+      "method": "POST",
+      "path": "/api/admin/headless/packs/:id/revoke",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "admin",
+        "headless",
+        "api-packs",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:listStoreTemplates",
+      "method": "GET",
+      "path": "/api/admin/store-templates",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "admin",
+        "store-templates"
+      ]
+    },
+    {
+      "name": "contract:createStoreTemplate",
+      "method": "POST",
+      "path": "/api/admin/store-templates",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "admin",
+        "store-templates",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:cloneStoreTemplate",
+      "method": "POST",
+      "path": "/api/admin/store-templates/:id/clone",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "admin",
+        "store-templates",
+        "clone"
+      ]
+    },
+    {
+      "name": "contract:deleteStoreTemplate",
+      "method": "DELETE",
+      "path": "/api/admin/store-templates/:id",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "admin",
+        "store-templates",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:getPlatformPlans",
+      "method": "GET",
+      "path": "/api/platform/plans",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "platform",
+        "plans",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:invitePlatformMember",
+      "method": "POST",
+      "path": "/api/platform/stores/:id/invite",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "platform",
+        "members",
+        "invite",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:acceptPlatformInvitation",
+      "method": "POST",
+      "path": "/api/platform/invitations/:token/accept",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "platform",
+        "members",
+        "invite",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:changePlatformMemberRole",
+      "method": "PATCH",
+      "path": "/api/platform/stores/:id/members/:userId/role",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "platform",
+        "members",
+        "role",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:uploadPlatformStoreLogo",
+      "method": "POST",
+      "path": "/api/platform/stores/:id/logo",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "platform",
+        "stores",
+        "branding",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:removePlatformMember",
+      "method": "DELETE",
+      "path": "/api/platform/stores/:id/members/:userId",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-platform",
+      "tags": [
+        "platform",
+        "members",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:listProducts",
+      "method": "GET",
+      "path": "/api/products",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-catalog",
+      "tags": [
+        "storefront",
+        "catalog",
+        "products",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:getProductBySlug",
+      "method": "GET",
+      "path": "/api/products/:slug",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-catalog",
+      "tags": [
+        "storefront",
+        "catalog",
+        "product-detail",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:listCollections",
+      "method": "GET",
+      "path": "/api/collections",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-catalog",
+      "tags": [
+        "storefront",
+        "catalog",
+        "collections",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:getCart",
+      "method": "GET",
+      "path": "/api/cart",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-checkout",
+      "tags": [
+        "storefront",
+        "cart",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:validateCart",
+      "method": "POST",
+      "path": "/api/cart/validate",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-checkout",
+      "tags": [
+        "storefront",
+        "cart",
+        "validation"
+      ]
+    },
+    {
+      "name": "contract:applyCartCoupon",
+      "method": "POST",
+      "path": "/api/cart/apply-coupon",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-checkout",
+      "tags": [
+        "storefront",
+        "cart",
+        "coupon",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:removeCartCoupon",
+      "method": "DELETE",
+      "path": "/api/cart/remove-coupon",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-checkout",
+      "tags": [
+        "storefront",
+        "cart",
+        "coupon",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:createCheckout",
+      "method": "POST",
+      "path": "/api/checkout",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-checkout",
+      "tags": [
+        "storefront",
+        "checkout",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:checkoutSuccess",
+      "method": "GET",
+      "path": "/api/checkout/success",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-checkout",
+      "tags": [
+        "storefront",
+        "checkout",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:listProductReviews",
+      "method": "GET",
+      "path": "/api/products/:slug/reviews",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-reviews",
+      "tags": [
+        "storefront",
+        "reviews",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:markReviewHelpful",
+      "method": "POST",
+      "path": "/api/reviews/:id/helpful",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-reviews",
+      "tags": [
+        "storefront",
+        "reviews",
+        "engagement",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:reportReview",
+      "method": "POST",
+      "path": "/api/reviews/:id/report",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-reviews",
+      "tags": [
+        "storefront",
+        "reviews",
+        "moderation",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:respondToReview",
+      "method": "POST",
+      "path": "/api/reviews/:id/respond",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-reviews",
+      "tags": [
+        "admin",
+        "reviews",
+        "moderation",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:markBookingNoShow",
+      "method": "POST",
+      "path": "/api/bookings/:id/no-show",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-bookings",
+      "tags": [
+        "admin",
+        "bookings",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:joinBookingWaitlist",
+      "method": "POST",
+      "path": "/api/bookings/availability/:id/waitlist",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-bookings",
+      "tags": [
+        "storefront",
+        "bookings",
+        "waitlist",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:listBookingWaitlist",
+      "method": "GET",
+      "path": "/api/bookings/waitlist",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-bookings",
+      "tags": [
+        "storefront",
+        "bookings",
+        "waitlist",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:removeBookingWaitlistEntry",
+      "method": "DELETE",
+      "path": "/api/bookings/waitlist/:id",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-bookings",
+      "tags": [
+        "storefront",
+        "bookings",
+        "waitlist",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:authForgotPassword",
+      "method": "POST",
+      "path": "/api/auth/forgot-password",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-identity",
+      "tags": [
+        "auth",
+        "password-reset",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:authResetPassword",
+      "method": "POST",
+      "path": "/api/auth/reset-password",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-identity",
+      "tags": [
+        "auth",
+        "password-reset",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:authVerifyEmail",
+      "method": "POST",
+      "path": "/api/auth/verify-email",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-identity",
+      "tags": [
+        "auth",
+        "email-verification",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:authProfile",
+      "method": "GET",
+      "path": "/api/auth/profile",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-identity",
+      "tags": [
+        "auth",
+        "profile",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:authUpdateProfile",
+      "method": "PATCH",
+      "path": "/api/auth/profile",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-identity",
+      "tags": [
+        "auth",
+        "profile",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:authRequestVerification",
+      "method": "POST",
+      "path": "/api/auth/request-verification",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-identity",
+      "tags": [
+        "auth",
+        "email-verification",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:authChangePassword",
+      "method": "POST",
+      "path": "/api/auth/change-password",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-identity",
+      "tags": [
+        "auth",
+        "password",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:subscriptionCreate",
+      "method": "POST",
+      "path": "/api/subscriptions",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-billing",
+      "tags": [
+        "account",
+        "subscriptions",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:subscriptionList",
+      "method": "GET",
+      "path": "/api/subscriptions",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-billing",
+      "tags": [
+        "account",
+        "subscriptions",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:subscriptionBuilderOptions",
+      "method": "GET",
+      "path": "/api/subscriptions/builder/options",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-billing",
+      "tags": [
+        "account",
+        "subscriptions",
+        "builder",
+        "read"
+      ]
+    },
+    {
+      "name": "contract:subscriptionBuilderQuote",
+      "method": "POST",
+      "path": "/api/subscriptions/builder/quote",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-billing",
+      "tags": [
+        "account",
+        "subscriptions",
+        "builder",
+        "quote"
+      ]
+    },
+    {
+      "name": "contract:subscriptionBuilderCheckout",
+      "method": "POST",
+      "path": "/api/subscriptions/builder/checkout",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-billing",
+      "tags": [
+        "account",
+        "subscriptions",
+        "builder",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:subscriptionPortal",
+      "method": "POST",
+      "path": "/api/subscriptions/portal",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-billing",
+      "tags": [
+        "account",
+        "subscriptions",
+        "portal",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:subscriptionCancel",
+      "method": "DELETE",
+      "path": "/api/subscriptions/:id",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-billing",
+      "tags": [
+        "account",
+        "subscriptions",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:subscriptionChangePlan",
+      "method": "PATCH",
+      "path": "/api/subscriptions/:id/change-plan",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-billing",
+      "tags": [
+        "account",
+        "subscriptions",
+        "plan-change",
+        "mutations"
+      ]
+    },
+    {
+      "name": "contract:subscriptionResume",
+      "method": "POST",
+      "path": "/api/subscriptions/:id/resume",
+      "status": "contract",
+      "ok": true,
+      "owner": "commerce-billing",
+      "tags": [
+        "account",
+        "subscriptions",
+        "resume",
+        "mutations"
+      ]
+    }
+  ],
+  "error": null
+}

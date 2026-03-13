@@ -1,0 +1,78 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]: Create Store | petm8 page loaded
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "petm8 home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e9]: petm8
+      - generic [ref=e10]:
+        - navigation "Main navigation" [ref=e11]:
+          - link "Shop" [ref=e12] [cursor=pointer]:
+            - /url: /products
+          - link "Events" [ref=e13] [cursor=pointer]:
+            - /url: /events
+          - link "Studio" [ref=e14] [cursor=pointer]:
+            - /url: /studio
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "Shopping cart" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - link "Sign in" [ref=e21] [cursor=pointer]:
+          - /url: /auth/login
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - heading "Create Your Store" [level=1] [ref=e24]
+      - paragraph [ref=e25]: Launch your own online store in minutes. Choose a name, customize your branding, and start selling.
+      - paragraph [ref=e27]:
+        - text: Please
+        - link "sign in" [ref=e28] [cursor=pointer]:
+          - /url: /auth/login
+        - text: or
+        - link "create an account" [ref=e29] [cursor=pointer]:
+          - /url: /auth/register
+        - text: to create a store.
+  - contentinfo [ref=e30]:
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - link "petm8 home" [ref=e34] [cursor=pointer]:
+            - /url: /
+            - img [ref=e35]
+            - generic [ref=e37]: petm8
+          - paragraph [ref=e38]: Personalized pet products, local events, and AI-powered designs — made for pets and the people who love them.
+        - generic [ref=e39]:
+          - heading "Shop" [level=4] [ref=e40]
+          - list [ref=e41]:
+            - listitem [ref=e42]:
+              - link "All Products" [ref=e43] [cursor=pointer]:
+                - /url: /products
+            - listitem [ref=e44]:
+              - link "Collections" [ref=e45] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e46]:
+          - heading "Account" [level=4] [ref=e47]
+          - list [ref=e48]:
+            - listitem [ref=e49]:
+              - link "Orders" [ref=e50] [cursor=pointer]:
+                - /url: /account/orders
+            - listitem [ref=e51]:
+              - link "My Pets" [ref=e52] [cursor=pointer]:
+                - /url: /account/pets
+        - generic [ref=e53]:
+          - heading "Company" [level=4] [ref=e54]
+          - list [ref=e55]:
+            - listitem [ref=e56]:
+              - link "About" [ref=e57] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e58]:
+              - link "Contact" [ref=e59] [cursor=pointer]:
+                - /url: /contact
+      - paragraph [ref=e61]: © 2026 petm8. All rights reserved.
+  - dialog "Shopping cart" [ref=e62]:
+    - generic [ref=e63]:
+      - heading "Your Cart" [level=2] [ref=e64]
+      - button "Close cart" [ref=e65] [cursor=pointer]:
+        - img [ref=e66]

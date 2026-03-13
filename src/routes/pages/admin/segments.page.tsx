@@ -15,6 +15,41 @@ interface SegmentsPageProps {
   segments: SegmentRow[];
 }
 
+const SEGMENT_FRESHNESS_THRESHOLD_HOURS = 8;
+
+function getSegmentFreshnessMeta(lastRefreshedAt: string | null): {
+  label: string;
+  className: string;
+} {
+  if (!lastRefreshedAt) {
+    return {
+      label: "Never refreshed",
+      className: "bg-amber-100 text-amber-700",
+    };
+  }
+
+  const refreshedAt = new Date(lastRefreshedAt);
+  const ageHours = (Date.now() - refreshedAt.getTime()) / 36e5;
+  if (!Number.isFinite(ageHours)) {
+    return {
+      label: "Unknown freshness",
+      className: "bg-gray-100 text-gray-700",
+    };
+  }
+
+  if (ageHours > SEGMENT_FRESHNESS_THRESHOLD_HOURS) {
+    return {
+      label: `Stale (${ageHours.toFixed(1)}h)`,
+      className: "bg-rose-100 text-rose-700",
+    };
+  }
+
+  return {
+    label: `Fresh (${ageHours.toFixed(1)}h)`,
+    className: "bg-emerald-100 text-emerald-700",
+  };
+}
+
 export const SegmentsPage: FC<SegmentsPageProps> = ({ segments }) => {
   return (
     <div class="max-w-6xl mx-auto px-4 py-8">
@@ -63,38 +98,53 @@ export const SegmentsPage: FC<SegmentsPageProps> = ({ segments }) => {
       </div>
 
       {/* Segments Grid */}
-      {segments.length === 0 ? (
-        <div class="text-center py-12">
-          <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          <h3 class="text-sm font-medium text-gray-900">No customer segments</h3>
-          <p class="mt-1 text-sm text-gray-500">Create segments to target promotions at specific customer groups.</p>
-        </div>
-      ) : (
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {segments.map((seg) => (
-            <div key={seg.id} class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
-              <h3 class="font-semibold text-gray-900 dark:text-gray-100">{seg.name}</h3>
-              {seg.description && (
-                <p class="text-sm text-gray-500 mt-1">{seg.description}</p>
-              )}
-              <div class="mt-4 flex items-center justify-between">
-                <div>
-                  <p class="text-2xl font-bold text-gray-900">{seg.memberCount}</p>
-                  <p class="text-xs text-gray-500">members</p>
+      <div id="segments-root">
+        {segments.length === 0 ? (
+          <div class="text-center py-12">
+            <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <h3 class="text-sm font-medium text-gray-900">No customer segments</h3>
+            <p class="mt-1 text-sm text-gray-500">Create segments to target promotions at specific customer groups.</p>
+          </div>
+        ) : (
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {segments.map((seg) => {
+              const freshness = getSegmentFreshnessMeta(seg.lastRefreshedAt);
+              return (
+                <div
+                  key={seg.id}
+                  class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6"
+                  data-segment-card
+                  data-segment-id={seg.id}
+                >
+                  <h3 class="font-semibold text-gray-900 dark:text-gray-100" data-segment-name>{seg.name}</h3>
+                  {seg.description && (
+                    <p class="text-sm text-gray-500 mt-1" data-segment-description>{seg.description}</p>
+                  )}
+                  <div class="mt-3">
+                    <span class={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${freshness.className}`} data-segment-freshness>
+                      {freshness.label}
+                    </span>
+                  </div>
+                  <div class="mt-4 flex items-center justify-between">
+                    <div>
+                      <p class="text-2xl font-bold text-gray-900" data-segment-count>{seg.memberCount}</p>
+                      <p class="text-xs text-gray-500">members</p>
+                    </div>
+                    <div class="text-right text-xs text-gray-400" data-segment-refreshed>
+                      {seg.lastRefreshedAt ? `Refreshed ${seg.lastRefreshedAt}` : "Never refreshed"}
+                    </div>
+                  </div>
+                  <div class="mt-4 flex gap-2">
+                    <button type="button" class="refresh-btn text-xs text-brand-600 hover:text-brand-700 font-medium" data-segment-id={seg.id}>Refresh</button>
+                  </div>
                 </div>
-                <div class="text-right text-xs text-gray-400">
-                  {seg.lastRefreshedAt ? `Refreshed ${seg.lastRefreshedAt}` : "Never refreshed"}
-                </div>
-              </div>
-              <div class="mt-4 flex gap-2">
-                <button type="button" class="refresh-btn text-xs text-brand-600 hover:text-brand-700 font-medium" data-segment-id={seg.id}>Refresh</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {html`
         <script>
@@ -116,8 +166,132 @@ export const SegmentsPage: FC<SegmentsPageProps> = ({ segments }) => {
               setTimeout(function() { banner.classList.add('hidden'); }, 4000);
             }
 
+            function setButtonLoading(button, loading, loadingLabel, idleLabel) {
+              if (!button) return;
+              if (loading) {
+                if (!button.dataset.originalLabel) button.dataset.originalLabel = button.textContent || '';
+                button.textContent = loadingLabel;
+                button.setAttribute('disabled', 'true');
+                return;
+              }
+              button.textContent = idleLabel || button.dataset.originalLabel || button.textContent;
+              button.removeAttribute('disabled');
+            }
+
+            function escapeHtml(value) {
+              return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            }
+
+            function getFreshnessMeta(lastRefreshedAt) {
+              if (!lastRefreshedAt) {
+                return {
+                  label: 'Never refreshed',
+                  className: 'bg-amber-100 text-amber-700',
+                };
+              }
+              var refreshedAt = new Date(lastRefreshedAt);
+              var ageHours = (Date.now() - refreshedAt.getTime()) / 36e5;
+              if (!Number.isFinite(ageHours)) {
+                return {
+                  label: 'Unknown freshness',
+                  className: 'bg-gray-100 text-gray-700',
+                };
+              }
+              if (ageHours > ${SEGMENT_FRESHNESS_THRESHOLD_HOURS}) {
+                return {
+                  label: 'Stale (' + ageHours.toFixed(1) + 'h)',
+                  className: 'bg-rose-100 text-rose-700',
+                };
+              }
+              return {
+                label: 'Fresh (' + ageHours.toFixed(1) + 'h)',
+                className: 'bg-emerald-100 text-emerald-700',
+              };
+            }
+
+            function formatRefreshedLabel(lastRefreshedAt) {
+              if (!lastRefreshedAt) return 'Never refreshed';
+              var date = new Date(lastRefreshedAt);
+              if (Number.isNaN(date.getTime())) return 'Refreshed ' + String(lastRefreshedAt);
+              return 'Refreshed ' + date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+              });
+            }
+
+            function normalizeSegment(raw) {
+              if (!raw || typeof raw !== 'object') return null;
+              var id = raw.id ? String(raw.id) : '';
+              if (!id) return null;
+              return {
+                id: id,
+                name: raw.name ? String(raw.name) : 'Untitled segment',
+                description: raw.description ? String(raw.description) : '',
+                memberCount: Number(raw.memberCount || 0),
+                lastRefreshedAt: raw.lastRefreshedAt ? String(raw.lastRefreshedAt) : null,
+              };
+            }
+
+            function renderSegmentCard(segment) {
+              var freshness = getFreshnessMeta(segment.lastRefreshedAt);
+              return '' +
+                '<div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6" data-segment-card data-segment-id="' + escapeHtml(segment.id) + '">' +
+                  '<h3 class="font-semibold text-gray-900 dark:text-gray-100" data-segment-name>' + escapeHtml(segment.name) + '</h3>' +
+                  (segment.description ? '<p class="text-sm text-gray-500 mt-1" data-segment-description>' + escapeHtml(segment.description) + '</p>' : '') +
+                  '<div class="mt-3">' +
+                    '<span class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ' + freshness.className + '" data-segment-freshness>' + escapeHtml(freshness.label) + '</span>' +
+                  '</div>' +
+                  '<div class="mt-4 flex items-center justify-between">' +
+                    '<div>' +
+                      '<p class="text-2xl font-bold text-gray-900" data-segment-count>' + segment.memberCount + '</p>' +
+                      '<p class="text-xs text-gray-500">members</p>' +
+                    '</div>' +
+                    '<div class="text-right text-xs text-gray-400" data-segment-refreshed>' + escapeHtml(formatRefreshedLabel(segment.lastRefreshedAt)) + '</div>' +
+                  '</div>' +
+                  '<div class="mt-4 flex gap-2">' +
+                    '<button type="button" class="refresh-btn text-xs text-brand-600 hover:text-brand-700 font-medium" data-segment-id="' + escapeHtml(segment.id) + '">Refresh</button>' +
+                  '</div>' +
+                '</div>';
+            }
+
+            function renderSegments(segments) {
+              if (!Array.isArray(segments) || segments.length === 0) {
+                return '' +
+                  '<div class="text-center py-12">' +
+                    '<svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>' +
+                    '</svg>' +
+                    '<h3 class="text-sm font-medium text-gray-900">No customer segments</h3>' +
+                    '<p class="mt-1 text-sm text-gray-500">Create segments to target promotions at specific customer groups.</p>' +
+                  '</div>';
+              }
+              return '<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">' +
+                segments.map(renderSegmentCard).join('') +
+              '</div>';
+            }
+
+            async function refreshSegments() {
+              var root = document.getElementById('segments-root');
+              if (!root) return;
+              var res = await fetch('/api/promotions/segments');
+              var data = await res.json().catch(function() { return {}; });
+              if (!res.ok) {
+                throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to refresh segments') : (data.error || data.message || 'Failed to refresh segments'));
+              }
+              var segments = Array.isArray(data.segments) ? data.segments.map(normalizeSegment).filter(Boolean) : [];
+              root.innerHTML = renderSegments(segments);
+            }
+
             var formSection = document.getElementById('segment-form-section');
             var form = document.getElementById('segment-form');
+            var saveBtn = document.getElementById('segment-save-btn');
             document.getElementById('btn-add-segment').addEventListener('click', function() {
               formSection.classList.remove('hidden');
             });
@@ -134,6 +308,7 @@ export const SegmentsPage: FC<SegmentsPageProps> = ({ segments }) => {
                 rules: {},
               };
               try {
+                setButtonLoading(saveBtn, true, 'Creating...', 'Create Segment');
                 var res = await fetch('/api/promotions/segments', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -143,31 +318,40 @@ export const SegmentsPage: FC<SegmentsPageProps> = ({ segments }) => {
                   var data = await res.json().catch(function() { return {}; });
                   throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to create segment') : (data.error || data.message || 'Failed to create segment'));
                 }
-                window.location.reload();
-              } catch (err) { showSegmentsError(err.message || 'Failed to create segment'); }
+                formSection.classList.add('hidden');
+                form.reset();
+                await refreshSegments();
+                if (window.showToast) window.showToast('Segment created.', 'success');
+              } catch (err) {
+                showSegmentsError(err.message || 'Failed to create segment');
+              } finally {
+                setButtonLoading(saveBtn, false, null, 'Create Segment');
+              }
             });
 
-            document.querySelectorAll('.refresh-btn').forEach(function(btn) {
-              btn.addEventListener('click', async function() {
-                var segmentId = this.getAttribute('data-segment-id');
-                if (!segmentId) return;
-                this.setAttribute('disabled', 'true');
-                try {
-                  var res = await fetch('/api/promotions/segments/' + segmentId + '/refresh', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({}),
-                  });
-                  if (!res.ok) {
-                    var data = await res.json().catch(function() { return {}; });
-                    throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to refresh segment') : (data.error || data.message || 'Failed to refresh segment'));
-                  }
-                  window.location.reload();
-                } catch (err) {
-                  showSegmentsError(err.message || 'Failed to refresh segment');
-                  this.removeAttribute('disabled');
+            document.addEventListener('click', async function(event) {
+              var refreshBtn = event.target && event.target.closest ? event.target.closest('.refresh-btn') : null;
+              if (!refreshBtn) return;
+              var segmentId = refreshBtn.getAttribute('data-segment-id');
+              if (!segmentId) return;
+              try {
+                setButtonLoading(refreshBtn, true, 'Refreshing...', 'Refresh');
+                var res = await fetch('/api/promotions/segments/' + segmentId + '/refresh', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({}),
+                });
+                if (!res.ok) {
+                  var data = await res.json().catch(function() { return {}; });
+                  throw new Error(window.petm8GetApiErrorMessage ? window.petm8GetApiErrorMessage(data, 'Failed to refresh segment') : (data.error || data.message || 'Failed to refresh segment'));
                 }
-              });
+                await refreshSegments();
+                if (window.showToast) window.showToast('Segment refreshed.', 'success');
+              } catch (err) {
+                showSegmentsError(err.message || 'Failed to refresh segment');
+              } finally {
+                setButtonLoading(refreshBtn, false, null, 'Refresh');
+              }
             });
           })();
         </script>

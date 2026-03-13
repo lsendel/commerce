@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, count, like, gte, lte } from "drizzle-orm";
+import { eq, and, desc, sql, count, like, gte, lte, inArray } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   orders,
@@ -6,6 +6,10 @@ import {
   productVariants,
   products,
   users,
+  fulfillmentRequests,
+  fulfillmentProviders,
+  shipments,
+  providerEvents,
 } from "../db/schema";
 
 export interface CreateOrderData {
@@ -163,6 +167,81 @@ export class OrderRepository {
 
     const items = await this.getOrderItemsEnriched(order.id);
     return { ...order, items };
+  }
+
+  async findAdminDetail(id: string) {
+    const order = await this.findById(id);
+    if (!order) return null;
+
+    const [requestRows, shipmentRows] = await Promise.all([
+      this.db
+        .select({
+          id: fulfillmentRequests.id,
+          provider: fulfillmentRequests.provider,
+          providerId: fulfillmentRequests.providerId,
+          providerName: fulfillmentProviders.name,
+          externalId: fulfillmentRequests.externalId,
+          status: fulfillmentRequests.status,
+          itemsSnapshot: fulfillmentRequests.itemsSnapshot,
+          costEstimatedTotal: fulfillmentRequests.costEstimatedTotal,
+          costActualTotal: fulfillmentRequests.costActualTotal,
+          costShipping: fulfillmentRequests.costShipping,
+          costTax: fulfillmentRequests.costTax,
+          currency: fulfillmentRequests.currency,
+          refundStripeId: fulfillmentRequests.refundStripeId,
+          refundAmount: fulfillmentRequests.refundAmount,
+          refundStatus: fulfillmentRequests.refundStatus,
+          errorMessage: fulfillmentRequests.errorMessage,
+          submittedAt: fulfillmentRequests.submittedAt,
+          completedAt: fulfillmentRequests.completedAt,
+          createdAt: fulfillmentRequests.createdAt,
+          updatedAt: fulfillmentRequests.updatedAt,
+        })
+        .from(fulfillmentRequests)
+        .leftJoin(
+          fulfillmentProviders,
+          eq(fulfillmentRequests.providerId, fulfillmentProviders.id),
+        )
+        .where(
+          and(
+            eq(fulfillmentRequests.orderId, order.id),
+            eq(fulfillmentRequests.storeId, this.storeId),
+          ),
+        )
+        .orderBy(desc(fulfillmentRequests.createdAt)),
+      this.db
+        .select()
+        .from(shipments)
+        .where(
+          and(eq(shipments.orderId, order.id), eq(shipments.storeId, this.storeId)),
+        )
+        .orderBy(desc(shipments.createdAt)),
+    ]);
+
+    const externalOrderIds = requestRows
+      .map((request) => request.externalId)
+      .filter((externalId): externalId is string => Boolean(externalId));
+
+    const providerEventRows =
+      externalOrderIds.length === 0
+        ? []
+        : await this.db
+            .select()
+            .from(providerEvents)
+            .where(
+              and(
+                eq(providerEvents.storeId, this.storeId),
+                inArray(providerEvents.externalOrderId, externalOrderIds),
+              ),
+            )
+            .orderBy(desc(providerEvents.receivedAt));
+
+    return {
+      ...order,
+      fulfillmentRequests: requestRows,
+      shipments: shipmentRows,
+      providerEvents: providerEventRows,
+    };
   }
 
   /**

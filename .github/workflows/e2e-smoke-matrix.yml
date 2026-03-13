@@ -1,0 +1,89 @@
+name: E2E Smoke Matrix
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "20 13 * * *"
+
+env:
+  NODE_VERSION: 22
+  PNPM_VERSION: 10
+
+jobs:
+  contract-matrix:
+    name: Contract Smoke Matrix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run E2E smoke matrix (contract mode)
+        env:
+          SMOKE_MATRIX_SKIP_HTTP: true
+          SMOKE_MATRIX_MD_PATH: output/smoke/e2e-smoke-matrix.contract.md
+          SMOKE_MATRIX_JSON_PATH: output/smoke/e2e-smoke-matrix.contract.json
+        run: pnpm smoke:e2e-matrix
+
+      - name: Upload contract matrix artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-smoke-matrix-contract-report
+          path: output/smoke/e2e-smoke-matrix.contract.*
+          if-no-files-found: ignore
+
+  live-matrix:
+    name: Live E2E Smoke Matrix
+    runs-on: ubuntu-latest
+    needs: contract-matrix
+    if: ${{ github.event_name != 'pull_request' && secrets.SMOKE_BASE_URL != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run E2E smoke matrix (live)
+        env:
+          SMOKE_BASE_URL: ${{ secrets.SMOKE_BASE_URL }}
+          SMOKE_COOKIE: ${{ secrets.SMOKE_COOKIE }}
+          SMOKE_AUTHORIZATION: ${{ secrets.SMOKE_AUTHORIZATION }}
+          SMOKE_ADMIN_EMAIL: ${{ secrets.SMOKE_ADMIN_EMAIL }}
+          SMOKE_ADMIN_PASSWORD: ${{ secrets.SMOKE_ADMIN_PASSWORD }}
+          SMOKE_ADMIN_ANALYTICS_REQUIRE_AUTH: ${{ secrets.SMOKE_COOKIE != '' || secrets.SMOKE_AUTHORIZATION != '' || (secrets.SMOKE_ADMIN_EMAIL != '' && secrets.SMOKE_ADMIN_PASSWORD != '') }}
+          SMOKE_MATRIX_MD_PATH: output/smoke/e2e-smoke-matrix.live.md
+          SMOKE_MATRIX_JSON_PATH: output/smoke/e2e-smoke-matrix.live.json
+          SMOKE_MATRIX_ADMIN_PARITY_MODE: contract
+        run: pnpm smoke:e2e-matrix
+
+      - name: Upload live matrix artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-smoke-matrix-live-report
+          path: output/smoke/e2e-smoke-matrix.live.*
+          if-no-files-found: ignore

@@ -29,6 +29,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
+      - name: Guard schema snapshot file is tracked
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          SNAPSHOT_PATH="docs/snapshots/admin-api-parity-report.schema.snapshot.json"
+          test -f "$SNAPSHOT_PATH"
+          git ls-files --error-unmatch "$SNAPSHOT_PATH" >/dev/null
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -72,6 +79,22 @@ jobs:
           SMOKE_COOKIE: ${{ secrets.SMOKE_COOKIE }}
           SMOKE_AUTHORIZATION: ${{ secrets.SMOKE_AUTHORIZATION }}
           SMOKE_ENABLE_MUTATIONS: ${{ secrets.SMOKE_ENABLE_MUTATIONS }}
+          SMOKE_EXTERNAL_PROVIDER_MAX_ATTEMPTS: ${{ secrets.SMOKE_EXTERNAL_PROVIDER_MAX_ATTEMPTS }}
+          SMOKE_EXTERNAL_PROVIDER_RETRY_DELAY_MS: ${{ secrets.SMOKE_EXTERNAL_PROVIDER_RETRY_DELAY_MS }}
+          SMOKE_SUPPRESS_FLAKY_EXTERNAL_PROVIDER_FAILURES: ${{ secrets.SMOKE_SUPPRESS_FLAKY_EXTERNAL_PROVIDER_FAILURES }}
+          SMOKE_VERIFY_MAX_ATTEMPTS: ${{ secrets.SMOKE_VERIFY_MAX_ATTEMPTS }}
+          SMOKE_VERIFY_RETRY_DELAY_MS: ${{ secrets.SMOKE_VERIFY_RETRY_DELAY_MS }}
+          SMOKE_SUPPRESS_FLAKY_VERIFY_FAILURES: ${{ secrets.SMOKE_SUPPRESS_FLAKY_VERIFY_FAILURES }}
+          SMOKE_INSTALL_MAX_ATTEMPTS: ${{ secrets.SMOKE_INSTALL_MAX_ATTEMPTS }}
+          SMOKE_INSTALL_RETRY_DELAY_MS: ${{ secrets.SMOKE_INSTALL_RETRY_DELAY_MS }}
+          SMOKE_SUPPRESS_FLAKY_INSTALL_FAILURES: ${{ secrets.SMOKE_SUPPRESS_FLAKY_INSTALL_FAILURES }}
+          SMOKE_UNINSTALL_MAX_ATTEMPTS: ${{ secrets.SMOKE_UNINSTALL_MAX_ATTEMPTS }}
+          SMOKE_UNINSTALL_RETRY_DELAY_MS: ${{ secrets.SMOKE_UNINSTALL_RETRY_DELAY_MS }}
+          SMOKE_SUPPRESS_FLAKY_UNINSTALL_FAILURES: ${{ secrets.SMOKE_SUPPRESS_FLAKY_UNINSTALL_FAILURES }}
+          SMOKE_OWNER_P95_SLO_THRESHOLDS_JSON: ${{ secrets.SMOKE_OWNER_P95_SLO_THRESHOLDS_JSON }}
+          SMOKE_ALERT_WEBHOOK_URL: ${{ secrets.SMOKE_ALERT_WEBHOOK_URL }}
+          SMOKE_ALERT_OWNER_ROUTING_JSON: ${{ secrets.SMOKE_ALERT_OWNER_ROUTING_JSON }}
+          SMOKE_ALERT_DEFAULT_ROUTE: ${{ secrets.SMOKE_ALERT_DEFAULT_ROUTE }}
           SMOKE_REPORT_JSON_PATH: output/smoke/admin-api-parity-report.live.json
           SMOKE_REPORT_MD_PATH: output/smoke/admin-api-parity-report.live.md
         run: pnpm smoke:admin-parity

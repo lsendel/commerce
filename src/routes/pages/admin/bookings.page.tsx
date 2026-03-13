@@ -124,7 +124,14 @@ export const AdminBookingsPage: FC<AdminBookingsPageProps> = ({
 
       {/* Filter bar */}
       <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 mb-6">
-        <form method="get" action="/admin/bookings" class="flex flex-wrap items-end gap-3">
+        <form
+          method="get"
+          action="/admin/bookings"
+          class="flex flex-wrap items-end gap-3"
+          data-persist-filters
+          data-persist-key="admin-bookings-filters"
+          data-persist-clear-selector="[data-clear-bookings-filters]"
+        >
           <div class="flex-1 min-w-[200px]">
             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Search</label>
             <input
@@ -139,6 +146,7 @@ export const AdminBookingsPage: FC<AdminBookingsPageProps> = ({
             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</label>
             <select
               name="status"
+              data-auto-submit="change"
               class="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
             >
               <option value="">All statuses</option>
@@ -167,6 +175,7 @@ export const AdminBookingsPage: FC<AdminBookingsPageProps> = ({
           {(filters.status || filters.search || filters.date) && (
             <a
               href="/admin/bookings"
+              data-clear-bookings-filters
               class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400"
             >
               Clear
@@ -202,7 +211,7 @@ export const AdminBookingsPage: FC<AdminBookingsPageProps> = ({
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                 {bookings.map((b) => (
-                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors" data-booking-row={b.id}>
                     <td class="px-4 py-3">
                       <div class="font-medium text-gray-900 dark:text-gray-100">
                         {b.customerName || "—"}
@@ -221,13 +230,13 @@ export const AdminBookingsPage: FC<AdminBookingsPageProps> = ({
                     <td class="px-4 py-3 text-center text-gray-600 dark:text-gray-400">
                       {b.quantity}
                     </td>
-                    <td class="px-4 py-3">
-                      <Badge variant={STATUS_VARIANT[b.status || "confirmed"] || "neutral"}>
+                    <td class="px-4 py-3" data-booking-status>
+                      <Badge variant={STATUS_VARIANT[b.status || "confirmed"] || "neutral"} class="capitalize" data-status-badge>
                         {formatStatus(b.status)}
                       </Badge>
                     </td>
                     <td class="px-4 py-3 text-right">
-                      <div class="flex items-center justify-end gap-2">
+                      <div class="flex items-center justify-end gap-2" data-booking-actions>
                         {b.status === "confirmed" && (
                           <>
                             <button
@@ -302,21 +311,125 @@ export const AdminBookingsPage: FC<AdminBookingsPageProps> = ({
       )}
 
       {html`<script>
-        function showAdminBookingsError(message) {
+        function showAdminBookingsNotice(message, type) {
           if (window.showToast) {
-            window.showToast(message, 'error');
+            window.showToast(message, type || 'info');
             return;
           }
           var banner = document.getElementById('admin-bookings-flash');
           if (!banner) {
             banner = document.createElement('div');
             banner.id = 'admin-bookings-flash';
-            banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-lg';
+            banner.className = 'fixed top-4 right-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm font-medium shadow-lg';
             document.body.appendChild(banner);
+          }
+          if (type === 'error') {
+            banner.classList.remove('border-emerald-200', 'bg-emerald-50', 'text-emerald-700');
+            banner.classList.add('border-red-200', 'bg-red-50', 'text-red-700');
+          } else {
+            banner.classList.remove('border-red-200', 'bg-red-50', 'text-red-700');
+            banner.classList.add('border-emerald-200', 'bg-emerald-50', 'text-emerald-700');
           }
           banner.textContent = message;
           banner.classList.remove('hidden');
           setTimeout(function() { banner.classList.add('hidden'); }, 4000);
+        }
+
+        var ACTION_CONFIG = {
+          'check-in': {
+            endpoint: '/check-in',
+            nextStatus: 'checked_in',
+            successMessage: 'Booking checked in.',
+            confirmTitle: 'Check in booking',
+            confirmMessage: 'Mark this booking as checked in now?',
+            confirmText: 'Check in',
+          },
+          'no-show': {
+            endpoint: '/no-show',
+            nextStatus: 'no_show',
+            successMessage: 'Booking marked as no-show.',
+            confirmTitle: 'Mark no-show',
+            confirmMessage: 'Mark this booking as a no-show?',
+            confirmText: 'Mark no-show',
+          },
+          'cancel': {
+            endpoint: '/cancel',
+            nextStatus: 'cancelled',
+            successMessage: 'Booking cancelled.',
+            confirmTitle: 'Cancel booking',
+            confirmMessage: 'Cancel this booking?',
+            confirmText: 'Cancel booking',
+          },
+        };
+
+        var STATUS_BADGE_CLASSES = {
+          confirmed: 'inline-flex items-center rounded-full font-medium px-2.5 py-0.5 text-xs bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 capitalize',
+          checked_in: 'inline-flex items-center rounded-full font-medium px-2.5 py-0.5 text-xs bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 capitalize',
+          cancelled: 'inline-flex items-center rounded-full font-medium px-2.5 py-0.5 text-xs bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 capitalize',
+          no_show: 'inline-flex items-center rounded-full font-medium px-2.5 py-0.5 text-xs bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 capitalize',
+        };
+
+        function toStatusLabel(status) {
+          return (status || 'confirmed')
+            .split('_')
+            .map(function(word) { return word.charAt(0).toUpperCase() + word.slice(1); })
+            .join(' ');
+        }
+
+        function renderStatusBadge(status) {
+          var safeStatus = status || 'confirmed';
+          var cls = STATUS_BADGE_CLASSES[safeStatus] || STATUS_BADGE_CLASSES.confirmed;
+          return '<span data-status-badge class="' + cls + '">' + toStatusLabel(safeStatus) + '</span>';
+        }
+
+        function renderActions(status, bookingId) {
+          if (status !== 'confirmed') {
+            return '<span class="text-xs text-gray-400">No further actions</span>';
+          }
+          return [
+            '<button type="button" data-action="check-in" data-booking-id="' + bookingId + '" class="text-xs font-medium text-green-600 hover:text-green-700 transition-colors">Check In</button>',
+            '<button type="button" data-action="no-show" data-booking-id="' + bookingId + '" class="text-xs font-medium text-red-500 hover:text-red-600 transition-colors">No Show</button>',
+            '<button type="button" data-action="cancel" data-booking-id="' + bookingId + '" class="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">Cancel</button>',
+          ].join('');
+        }
+
+        function setButtonLoading(btn, loading) {
+          if (!btn) return;
+          if (loading) {
+            btn.dataset.originalLabel = btn.textContent || '';
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+            return;
+          }
+          if (btn.dataset.originalLabel) btn.textContent = btn.dataset.originalLabel;
+          btn.disabled = false;
+          btn.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+
+        async function shouldContinue(config) {
+          if (window.petm8Ui && typeof window.petm8Ui.confirm === 'function') {
+            return window.petm8Ui.confirm(config.confirmMessage, {
+              title: config.confirmTitle,
+              confirmText: config.confirmText,
+              danger: config.nextStatus === 'cancelled' || config.nextStatus === 'no_show',
+            });
+          }
+          return confirm(config.confirmMessage);
+        }
+
+        async function parseFailure(res, fallbackMessage) {
+          var contentType = (res.headers.get('content-type') || '').toLowerCase();
+          if (contentType.indexOf('application/json') >= 0) {
+            var data = await res.json().catch(function() { return null; });
+            if (data) {
+              return window.petm8GetApiErrorMessage
+                ? window.petm8GetApiErrorMessage(data, fallbackMessage)
+                : (data.error || data.message || fallbackMessage);
+            }
+          }
+          var text = await res.text().catch(function() { return ''; });
+          return text || fallbackMessage;
         }
 
         document.addEventListener('click', async (e) => {
@@ -325,26 +438,32 @@ export const AdminBookingsPage: FC<AdminBookingsPageProps> = ({
           const action = btn.dataset.action;
           const bookingId = btn.dataset.bookingId;
           if (!bookingId) return;
+          const config = ACTION_CONFIG[action];
+          if (!config) return;
 
-          if (action === 'check-in') {
-            if (!confirm('Check in this booking?')) return;
-            const res = await fetch('/api/bookings/' + bookingId + '/check-in', { method: 'POST' });
-            if (res.ok) location.reload();
-            else showAdminBookingsError('Check-in failed: ' + (await res.text()));
-          }
+          var confirmed = await shouldContinue(config);
+          if (!confirmed) return;
 
-          if (action === 'no-show') {
-            if (!confirm('Mark this booking as no-show?')) return;
-            const res = await fetch('/api/bookings/' + bookingId + '/no-show', { method: 'POST' });
-            if (res.ok) location.reload();
-            else showAdminBookingsError('No-show failed: ' + (await res.text()));
-          }
+          setButtonLoading(btn, true);
+          try {
+            const res = await fetch('/api/bookings/' + bookingId + config.endpoint, { method: 'POST' });
+            if (!res.ok) {
+              throw new Error(await parseFailure(res, 'Booking update failed.'));
+            }
 
-          if (action === 'cancel') {
-            if (!confirm('Cancel this booking?')) return;
-            const res = await fetch('/api/bookings/' + bookingId + '/cancel', { method: 'POST' });
-            if (res.ok) location.reload();
-            else showAdminBookingsError('Cancel failed: ' + (await res.text()));
+            var row = document.querySelector('[data-booking-row="' + bookingId + '"]');
+            if (row) {
+              var statusCell = row.querySelector('[data-booking-status]');
+              if (statusCell) statusCell.innerHTML = renderStatusBadge(config.nextStatus);
+              var actionsCell = row.querySelector('[data-booking-actions]');
+              if (actionsCell) actionsCell.innerHTML = renderActions(config.nextStatus, bookingId);
+            }
+
+            showAdminBookingsNotice(config.successMessage, 'success');
+          } catch (err) {
+            showAdminBookingsNotice((err && err.message) || 'Booking update failed.', 'error');
+          } finally {
+            setButtonLoading(btn, false);
           }
         });
       </script>`}

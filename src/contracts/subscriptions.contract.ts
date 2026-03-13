@@ -143,6 +143,7 @@ export const subscriptionsContract = c.router({
     body: z.object({}).optional(),
     responses: {
       200: z.object({ url: z.string() }),
+      400: z.object({ error: z.string() }),
       401: z.object({ error: z.string() }),
     },
   },
@@ -160,6 +161,7 @@ export const subscriptionsContract = c.router({
           currentPeriodEnd: z.string().nullable(),
         }),
       }),
+      400: z.object({ error: z.string() }),
       401: z.object({ error: z.string() }),
       404: z.object({ error: z.string() }),
     },

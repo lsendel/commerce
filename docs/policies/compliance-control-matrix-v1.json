@@ -1,0 +1,552 @@
+{
+  "version": "v1",
+  "controls": [
+    {
+      "controlId": "CC-001",
+      "soc2Domain": "CC1/CC7 Control Monitoring",
+      "objective": "Admin policy and control-tower APIs remain contract-accurate with response-shape parity gates.",
+      "implementationPaths": [
+        "scripts/smoke-policy-control-tower.ts",
+        "src/contracts/policies.contract.ts",
+        "src/contracts/control-tower.contract.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/admin-api-parity-smoke.md",
+        "docs/runbooks/policy-engine-guardrails.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "docs/snapshots/admin-api-parity-report.schema.snapshot.json",
+          "kind": "repo_file"
+        },
+        {
+          "path": "output/smoke/admin-api-parity-report.contract.json",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:admin-parity"
+      ]
+    },
+    {
+      "controlId": "CC-002",
+      "soc2Domain": "CC2/CC7 Change and Release Safety",
+      "objective": "Release gates include matrix-level cross-surface smoke coverage and explicit production endpoint checks.",
+      "implementationPaths": [
+        "scripts/smoke-e2e-matrix.ts",
+        "scripts/smoke-production.sh"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/e2e-smoke-matrix.md",
+        "docs/runbooks/admin-api-parity-smoke.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "output/smoke/e2e-smoke-matrix-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/compliance-controls-report.json",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:e2e-matrix",
+        "smoke:production",
+        "smoke:compliance-controls"
+      ]
+    },
+    {
+      "controlId": "CC-003",
+      "soc2Domain": "CC6 Access and Authentication",
+      "objective": "Authentication and authorization controls are consistently enforced for account/platform/admin surfaces.",
+      "implementationPaths": [
+        "src/routes/api/auth.routes.ts",
+        "scripts/smoke-e2e-matrix.ts",
+        "scripts/smoke-production.sh"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/e2e-smoke-matrix.md",
+        "docs/runbooks/admin-api-parity-smoke.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "output/smoke/e2e-smoke-matrix-report.md",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/admin-api-parity-report.contract.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:e2e-matrix",
+        "smoke:admin-parity"
+      ]
+    },
+    {
+      "controlId": "CC-004",
+      "soc2Domain": "CC7 Event Integrity and Traceability",
+      "objective": "Event taxonomy, delivery, and replay reliability are continuously validated for telemetry correctness.",
+      "implementationPaths": [
+        "scripts/smoke-event-pipeline.ts",
+        "docs/policies/event-taxonomy-governance.md"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/event-pipeline-reliability.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "output/smoke/event-pipeline-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/event-pipeline-report.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:event-pipeline"
+      ]
+    },
+    {
+      "controlId": "CC-005",
+      "soc2Domain": "A1 Availability and Operations",
+      "objective": "Operational SLA risk and intervention readiness are tested and documented for fulfillment and return flows.",
+      "implementationPaths": [
+        "src/application/fulfillment/fulfillment-sla-prediction.usecase.ts",
+        "scripts/smoke-fulfillment-sla.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/fulfillment-sla-prediction.md",
+        "docs/runbooks/fulfillment-exception-handler.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "output/smoke/fulfillment-sla-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/fulfillment-sla-report.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:fulfillment-sla"
+      ]
+    },
+    {
+      "controlId": "CC-006",
+      "soc2Domain": "CC7 Incident Response",
+      "objective": "Incident detection and response playbooks remain current and drill-ready for production regressions.",
+      "implementationPaths": [
+        "scripts/smoke-production.sh",
+        "scripts/smoke-policy-control-tower.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/incident-responder.md",
+        "docs/runbooks/subscription-incident-response.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "output/smoke/e2e-smoke-matrix-report.md",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/admin-api-parity-report.contract.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:production",
+        "smoke:admin-parity"
+      ]
+    },
+    {
+      "controlId": "CC-007",
+      "soc2Domain": "CC3 Risk Mitigation and Guardrails",
+      "objective": "Growth and policy experimentation surfaces enforce preflight guardrails before rollout actions.",
+      "implementationPaths": [
+        "src/application/platform/policy-engine.usecase.ts",
+        "scripts/smoke-pricing-policy-simulation.ts",
+        "scripts/smoke-growth-experiment-os.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/policy-engine-guardrails.md",
+        "docs/runbooks/growth-experiment-os.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "output/smoke/pricing-policy-simulation-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/growth-experiment-os-report.json",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:pricing-policy-simulation",
+        "smoke:growth-experiments"
+      ]
+    },
+    {
+      "controlId": "CC-008",
+      "soc2Domain": "CC2/CC7 External Surface Governance",
+      "objective": "SEO and LLM discoverability controls are validated for public trust and machine-consumable correctness.",
+      "implementationPaths": [
+        "scripts/smoke-seo-audit.ts",
+        "scripts/smoke-llm-surface.ts",
+        "docs/policies/llm-discoverability-rules.md"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/technical-seo-smoke.md",
+        "docs/runbooks/llm-surface-smoke.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "output/smoke/seo-audit-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/llm-surface-smoke-report.json",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:seo",
+        "smoke:llm-surface"
+      ]
+    },
+    {
+      "controlId": "CC-009",
+      "soc2Domain": "CC7 Audit Trail Integrity and PII Minimization",
+      "objective": "API audit logs are emitted with deterministic integrity hashes and sensitive fields are redacted before log output.",
+      "implementationPaths": [
+        "src/middleware/audit-trail.middleware.ts",
+        "src/shared/audit-trail.ts",
+        "src/shared/pii-redaction.ts",
+        "src/middleware/error-handler.middleware.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/audit-trail-pii-guardrails.md",
+        "docs/runbooks/compliance-control-framework.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "output/smoke/audit-pii-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/audit-pii-report.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:audit-pii"
+      ]
+    },
+    {
+      "controlId": "CC-010",
+      "soc2Domain": "CC6/CC7 Secret Lifecycle Governance",
+      "objective": "Runtime and CI secret scopes are inventoried with explicit rotation ownership/cadence and automated drift checks.",
+      "implementationPaths": [
+        "scripts/smoke-secrets-hygiene.ts",
+        "src/env.ts",
+        ".github/workflows/admin-api-smoke.yml",
+        ".github/workflows/e2e-smoke-matrix.yml",
+        ".github/workflows/deploy.yml"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/secrets-rotation-hygiene.md",
+        "docs/policies/secrets-key-inventory-v1.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "docs/policies/secrets-key-inventory-v1.json",
+          "kind": "repo_file"
+        },
+        {
+          "path": "output/smoke/secrets-hygiene-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/secrets-hygiene-report.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:secrets-hygiene"
+      ]
+    },
+    {
+      "controlId": "CC-011",
+      "soc2Domain": "CC6/CC7 Access Governance and Break-Glass Controls",
+      "objective": "RBAC guardrails and emergency break-glass procedures are policy-governed, drill-tested, and release-gated.",
+      "implementationPaths": [
+        "scripts/smoke-access-governance.ts",
+        "src/middleware/role.middleware.ts",
+        "src/index.tsx",
+        "src/routes/api/platform.routes.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/access-governance-break-glass.md",
+        "docs/policies/access-governance-policy-v1.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "docs/policies/access-governance-policy-v1.json",
+          "kind": "repo_file"
+        },
+        {
+          "path": "output/smoke/access-governance-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/break-glass-drill-report.json",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:access-governance"
+      ]
+    },
+    {
+      "controlId": "CC-012",
+      "soc2Domain": "CC3/CC7 Cost Observability and Unit Economics",
+      "objective": "Feature/team/tenant unit-economics telemetry is policy-governed, dashboarded, and tied to optimization backlog execution.",
+      "implementationPaths": [
+        "src/application/analytics/get-cost-observability.usecase.ts",
+        "src/routes/api/analytics.routes.ts",
+        "src/routes/pages/admin/analytics.page.tsx",
+        "src/index.tsx",
+        "scripts/smoke-cost-observability.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/cost-observability-unit-economics.md",
+        "docs/policies/cost-observability-unit-economics-v1.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "docs/policies/cost-observability-unit-economics-v1.json",
+          "kind": "repo_file"
+        },
+        {
+          "path": "output/smoke/cost-observability-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/cost-observability-report.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:cost-observability"
+      ]
+    },
+    {
+      "controlId": "CC-013",
+      "soc2Domain": "CC2/CC7 Query Performance and Capacity Governance",
+      "objective": "Hot-path query predicates, index coverage, and cache budgets are governed through explicit policy and release gates.",
+      "implementationPaths": [
+        "src/infrastructure/db/schema.ts",
+        "src/infrastructure/repositories/cart.repository.ts",
+        "src/infrastructure/repositories/order.repository.ts",
+        "src/infrastructure/repositories/promotion.repository.ts",
+        "scripts/sql/add-week57-performance-indexes.sql",
+        "scripts/smoke-query-performance.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/query-performance-budget-wave1.md",
+        "docs/policies/query-performance-budget-v1.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "docs/policies/query-performance-budget-v1.json",
+          "kind": "repo_file"
+        },
+        {
+          "path": "output/smoke/query-performance-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/query-performance-report.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:query-performance"
+      ]
+    },
+    {
+      "controlId": "CC-014",
+      "soc2Domain": "CC2/CC7 Edge Cache Invalidation Governance",
+      "objective": "High-traffic cache surfaces, invalidation plan behavior, and mutation/webhook triggers are policy-governed and release-gated.",
+      "implementationPaths": [
+        "src/infrastructure/cache/invalidation-plan.ts",
+        "src/infrastructure/cache/invalidation-executor.ts",
+        "src/routes/api/cache.routes.ts",
+        "src/routes/api/admin-products.routes.ts",
+        "src/routes/api/admin-collections.routes.ts",
+        "src/routes/api/currency.routes.ts",
+        "scripts/smoke-cache-invalidation.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/cache-invalidation-automation.md",
+        "docs/policies/cache-policy-matrix-v1.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "docs/policies/cache-policy-matrix-v1.json",
+          "kind": "repo_file"
+        },
+        {
+          "path": "output/smoke/cache-invalidation-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/cache-invalidation-report.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:cache-invalidation"
+      ]
+    },
+    {
+      "controlId": "CC-015",
+      "soc2Domain": "CC2/CC7 Async Workflow Orchestration Reliability",
+      "objective": "Queue workflows enforce timeout boundaries, bounded retries, and terminal compensation behavior with scorecard-backed release gates.",
+      "implementationPaths": [
+        "src/queues/orchestration-policy.ts",
+        "src/queues/handler.ts",
+        "src/queues/ai-generation.consumer.ts",
+        "src/queues/order-fulfillment.consumer.ts",
+        "src/queues/notification.consumer.ts",
+        "src/routes/api/workflows.routes.ts",
+        "scripts/smoke-workflow-reliability.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/async-workflow-orchestration.md",
+        "docs/policies/workflow-reliability-scorecard-v1.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "docs/policies/workflow-reliability-scorecard-v1.json",
+          "kind": "repo_file"
+        },
+        {
+          "path": "output/smoke/workflow-reliability-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/workflow-reliability-report.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:workflow-reliability"
+      ]
+    },
+    {
+      "controlId": "CC-016",
+      "soc2Domain": "CC2/CC7 Dead-Letter Auto-Remediation Governance",
+      "objective": "Dead-letter candidates are policy-scored, auto-remediated within bounded limits, and escalated with explicit playbooks and metric evidence.",
+      "implementationPaths": [
+        "src/queues/dlq-remediation.ts",
+        "src/queues/handler.ts",
+        "src/queues/orchestration-policy.ts",
+        "src/queues/order-fulfillment.consumer.ts",
+        "src/queues/notification.consumer.ts",
+        "scripts/smoke-dlq-remediation.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/dlq-auto-remediation-playbook.md",
+        "docs/policies/dlq-auto-remediation-v1.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "docs/policies/dlq-auto-remediation-v1.json",
+          "kind": "repo_file"
+        },
+        {
+          "path": "output/smoke/dlq-remediation-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/dlq-remediation-report.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:dlq-remediation"
+      ]
+    },
+    {
+      "controlId": "CC-017",
+      "soc2Domain": "CC2/CC7 API Version Lifecycle Governance",
+      "objective": "API version negotiation, deprecation signaling, and migration hooks are policy-governed and continuously release-gated.",
+      "implementationPaths": [
+        "src/shared/api-versioning.ts",
+        "src/middleware/api-versioning.middleware.ts",
+        "src/routes/api/api-versioning.routes.ts",
+        "src/index.tsx",
+        "scripts/smoke-api-versioning.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/api-versioning-migration.md",
+        "docs/policies/api-version-policy-v1.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "docs/policies/api-version-policy-v1.json",
+          "kind": "repo_file"
+        },
+        {
+          "path": "output/smoke/api-versioning-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/api-versioning-report.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:api-versioning"
+      ]
+    },
+    {
+      "controlId": "CC-018",
+      "soc2Domain": "CC2/CC7 Partner Onboarding Contract Governance",
+      "objective": "Partner self-serve onboarding and contract verification flows remain policy-governed, analytics-instrumented, and release-gated.",
+      "implementationPaths": [
+        "src/application/platform/partner-onboarding.usecase.ts",
+        "src/routes/api/integration-marketplace.routes.ts",
+        "src/contracts/integration-marketplace.contract.ts",
+        "public/scripts/admin-integration-marketplace.js",
+        "scripts/smoke-partner-onboarding.ts"
+      ],
+      "runbookPaths": [
+        "docs/runbooks/partner-onboarding-self-serve.md",
+        "docs/policies/partner-onboarding-contract-v1.md"
+      ],
+      "evidencePaths": [
+        {
+          "path": "docs/policies/partner-onboarding-contract-v1.json",
+          "kind": "repo_file"
+        },
+        {
+          "path": "output/smoke/partner-onboarding-report.json",
+          "kind": "generated_artifact"
+        },
+        {
+          "path": "output/smoke/partner-onboarding-report.md",
+          "kind": "generated_artifact"
+        }
+      ],
+      "commandGates": [
+        "smoke:partner-onboarding"
+      ]
+    }
+  ]
+}

@@ -25,6 +25,37 @@
     return false;
   }
 
+  function applyCancelledState(orderId) {
+    var orderRoot = document.getElementById("order-" + orderId);
+    if (!orderRoot) return;
+
+    var badgeWrap = orderRoot.querySelector("[data-order-status-badge]");
+    var badge = badgeWrap && badgeWrap.firstElementChild
+      ? badgeWrap.firstElementChild
+      : badgeWrap;
+    if (badge) {
+      badge.className =
+        "inline-flex items-center rounded-full font-medium bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 px-2.5 py-0.5 text-xs";
+      badge.textContent = "Cancelled";
+    }
+
+    var cancelBtn = orderRoot.querySelector(".cancel-order-btn");
+    if (cancelBtn) {
+      cancelBtn.textContent = "Cancelled";
+      cancelBtn.disabled = true;
+      cancelBtn.classList.remove("text-red-600", "hover:text-red-700", "hover:bg-red-50");
+      cancelBtn.classList.add("text-gray-400", "cursor-not-allowed");
+    }
+
+    var returnBtn = orderRoot.querySelector(".return-exchange-btn");
+    if (returnBtn) {
+      returnBtn.disabled = true;
+      returnBtn.classList.remove("text-brand-600", "hover:text-brand-700", "hover:bg-brand-50");
+      returnBtn.classList.add("text-gray-400", "bg-gray-50", "cursor-not-allowed");
+      returnBtn.setAttribute("title", "Order is cancelled");
+    }
+  }
+
   document.addEventListener("click", function (e) {
     var btn = e.target.closest(".cancel-order-btn");
     if (!btn) return;
@@ -47,19 +78,15 @@
       .then(function (resp) {
         return resp.json().then(function (data) {
           if (resp.ok || resp.status === 207) {
-            btn.textContent = data.success ? "Cancelled" : "Partial";
-            btn.classList.remove(
-              "text-red-600",
-              "hover:text-red-700",
-              "hover:bg-red-50"
-            );
-            btn.classList.add("text-gray-400");
+            if (data.success) {
+              applyCancelledState(orderId);
+            } else {
+              btn.textContent = "Retry Cancel";
+              btn.disabled = false;
+            }
             if (data.message) {
               notify(data.message, data.success ? "success" : "warning");
             }
-            setTimeout(function () {
-              window.location.reload();
-            }, 1500);
           } else {
             btn.textContent = "Cancel Order";
             btn.disabled = false;

@@ -53,7 +53,7 @@ export const EventsListPage: FC<EventsListPageProps> = ({
 
       {/* Search & date filter */}
       <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 mb-8">
-        <form method="get" class="flex flex-wrap items-end gap-4">
+        <form method="get" class="flex flex-wrap items-end gap-4" data-persist-filters data-persist-key="events-list-filters" data-persist-clear-selector="[data-clear-events-filters]">
           <div class="flex-1 min-w-[200px] flex flex-col gap-1.5">
             <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Search</label>
             <input
@@ -86,7 +86,7 @@ export const EventsListPage: FC<EventsListPageProps> = ({
             Filter
           </Button>
           {(filterDateFrom || filterDateTo || filterSearch) && (
-            <a href="/events" class="text-sm text-gray-500 hover:text-brand-600 font-medium">
+            <a href="/events" data-clear-events-filters class="text-sm text-gray-500 hover:text-brand-600 font-medium">
               Clear
             </a>
           )}
