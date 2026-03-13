@@ -1,7 +1,7 @@
 {
-  "startedAt": "2026-03-13T05:49:48.454Z",
-  "finishedAt": "2026-03-13T05:49:49.979Z",
-  "status": "failed",
+  "startedAt": "2026-03-13T15:46:24.893Z",
+  "finishedAt": "2026-03-13T15:46:29.981Z",
+  "status": "passed",
   "mutationChecksEnabled": false,
   "flakyPolicy": {
     "externalProviderDefault": {
@@ -26,29 +26,22 @@
     }
   },
   "metrics": {
-    "totalChecks": 81,
-    "failedChecks": 1,
+    "totalChecks": 89,
+    "failedChecks": 0,
     "suppressedChecks": 0,
     "latencyMs": {
-      "count": 14,
-      "min": 38,
-      "p50": 44,
-      "p95": 473,
-      "max": 473,
-      "avg": 105.79
+      "count": 23,
+      "min": 82,
+      "p50": 162,
+      "p95": 565,
+      "max": 917,
+      "avg": 219.74
     },
     "ownerRollups": [
       {
-        "key": "unknown",
-        "total": 5,
-        "passed": 4,
-        "failed": 1,
-        "suppressed": 0
-      },
-      {
         "key": "commerce-platform",
-        "total": 15,
-        "passed": 15,
+        "total": 16,
+        "passed": 16,
         "failed": 0,
         "suppressed": 0
       },
@@ -56,6 +49,13 @@
         "key": "commerce-billing",
         "total": 9,
         "passed": 9,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "commerce-checkout",
+        "total": 8,
+        "passed": 8,
         "failed": 0,
         "suppressed": 0
       },
@@ -74,6 +74,13 @@
         "suppressed": 0
       },
       {
+        "key": "commerce-reviews",
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
         "key": "commerce-automation",
         "total": 6,
         "passed": 6,
@@ -81,7 +88,7 @@
         "suppressed": 0
       },
       {
-        "key": "commerce-checkout",
+        "key": "commerce-catalog",
         "total": 6,
         "passed": 6,
         "failed": 0,
@@ -116,43 +123,48 @@
         "suppressed": 0
       },
       {
-        "key": "commerce-reviews",
+        "key": "unknown",
         "total": 4,
         "passed": 4,
-        "failed": 0,
-        "suppressed": 0
-      },
-      {
-        "key": "commerce-catalog",
-        "total": 3,
-        "passed": 3,
         "failed": 0,
         "suppressed": 0
       }
     ],
     "ownerLatencyRollups": [
       {
-        "owner": "commerce-integrations",
-        "checkCount": 5,
-        "latencyMs": {
-          "count": 1,
-          "min": 473,
-          "p50": 473,
-          "p95": 473,
-          "max": 473,
-          "avg": 473
-        }
-      },
-      {
         "owner": "commerce-control-tower",
         "checkCount": 7,
         "latencyMs": {
           "count": 3,
-          "min": 51,
-          "p50": 52,
-          "p95": 467,
-          "max": 467,
-          "avg": 190
+          "min": 146,
+          "p50": 211,
+          "p95": 917,
+          "max": 917,
+          "avg": 424.67
+        }
+      },
+      {
+        "owner": "commerce-integrations",
+        "checkCount": 5,
+        "latencyMs": {
+          "count": 1,
+          "min": 565,
+          "p50": 565,
+          "p95": 565,
+          "max": 565,
+          "avg": 565
+        }
+      },
+      {
+        "owner": "commerce-checkout",
+        "checkCount": 8,
+        "latencyMs": {
+          "count": 2,
+          "min": 261,
+          "p50": 261,
+          "p95": 286,
+          "max": 286,
+          "avg": 273.5
         }
       },
       {
@@ -160,11 +172,35 @@
         "checkCount": 6,
         "latencyMs": {
           "count": 3,
-          "min": 43,
-          "p50": 49,
-          "p95": 49,
-          "max": 49,
-          "avg": 47
+          "min": 158,
+          "p50": 196,
+          "p95": 204,
+          "max": 204,
+          "avg": 186
+        }
+      },
+      {
+        "owner": "commerce-catalog",
+        "checkCount": 6,
+        "latencyMs": {
+          "count": 3,
+          "min": 130,
+          "p50": 153,
+          "p95": 178,
+          "max": 178,
+          "avg": 153.67
+        }
+      },
+      {
+        "owner": "commerce-platform",
+        "checkCount": 16,
+        "latencyMs": {
+          "count": 3,
+          "min": 149,
+          "p50": 157,
+          "p95": 170,
+          "max": 170,
+          "avg": 158.67
         }
       },
       {
@@ -172,23 +208,11 @@
         "checkCount": 6,
         "latencyMs": {
           "count": 3,
-          "min": 44,
-          "p50": 44,
-          "p95": 47,
-          "max": 47,
-          "avg": 45
-        }
-      },
-      {
-        "owner": "commerce-platform",
-        "checkCount": 15,
-        "latencyMs": {
-          "count": 2,
-          "min": 39,
-          "p50": 39,
-          "p95": 43,
-          "max": 43,
-          "avg": 41
+          "min": 143,
+          "p50": 159,
+          "p95": 167,
+          "max": 167,
+          "avg": 156.33
         }
       },
       {
@@ -196,11 +220,23 @@
         "checkCount": 4,
         "latencyMs": {
           "count": 2,
-          "min": 38,
-          "p50": 38,
-          "p95": 42,
-          "max": 42,
-          "avg": 40
+          "min": 139,
+          "p50": 139,
+          "p95": 162,
+          "max": 162,
+          "avg": 150.5
+        }
+      },
+      {
+        "owner": "commerce-reviews",
+        "checkCount": 7,
+        "latencyMs": {
+          "count": 3,
+          "min": 82,
+          "p50": 159,
+          "p95": 162,
+          "max": 162,
+          "avg": 134.33
         }
       },
       {
@@ -228,30 +264,6 @@
         }
       },
       {
-        "owner": "commerce-catalog",
-        "checkCount": 3,
-        "latencyMs": {
-          "count": 0,
-          "min": null,
-          "p50": null,
-          "p95": null,
-          "max": null,
-          "avg": null
-        }
-      },
-      {
-        "owner": "commerce-checkout",
-        "checkCount": 6,
-        "latencyMs": {
-          "count": 0,
-          "min": null,
-          "p50": null,
-          "p95": null,
-          "max": null,
-          "avg": null
-        }
-      },
-      {
         "owner": "commerce-identity",
         "checkCount": 7,
         "latencyMs": {
@@ -264,20 +276,8 @@
         }
       },
       {
-        "owner": "commerce-reviews",
-        "checkCount": 4,
-        "latencyMs": {
-          "count": 0,
-          "min": null,
-          "p50": null,
-          "p95": null,
-          "max": null,
-          "avg": null
-        }
-      },
-      {
         "owner": "unknown",
-        "checkCount": 5,
+        "checkCount": 4,
         "latencyMs": {
           "count": 0,
           "min": null,
@@ -295,13 +295,6 @@
     },
     "tagRollups": [
       {
-        "key": "unmapped",
-        "total": 5,
-        "passed": 4,
-        "failed": 1,
-        "suppressed": 0
-      },
-      {
         "key": "admin",
         "total": 39,
         "passed": 39,
@@ -310,22 +303,22 @@
       },
       {
         "key": "mutations",
-        "total": 35,
-        "passed": 35,
+        "total": 37,
+        "passed": 37,
         "failed": 0,
         "suppressed": 0
       },
       {
         "key": "storefront",
-        "total": 15,
-        "passed": 15,
+        "total": 23,
+        "passed": 23,
         "failed": 0,
         "suppressed": 0
       },
       {
         "key": "read",
-        "total": 13,
-        "passed": 13,
+        "total": 19,
+        "passed": 19,
         "failed": 0,
         "suppressed": 0
       },
@@ -352,6 +345,27 @@
       },
       {
         "key": "platform",
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "reviews",
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "cart",
+        "total": 6,
+        "passed": 6,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "catalog",
         "total": 6,
         "passed": 6,
         "failed": 0,
@@ -414,13 +428,6 @@
         "suppressed": 0
       },
       {
-        "key": "cart",
-        "total": 4,
-        "passed": 4,
-        "failed": 0,
-        "suppressed": 0
-      },
-      {
         "key": "fulfillment",
         "total": 4,
         "passed": 4,
@@ -449,14 +456,14 @@
         "suppressed": 0
       },
       {
-        "key": "reviews",
+        "key": "sla",
         "total": 4,
         "passed": 4,
         "failed": 0,
         "suppressed": 0
       },
       {
-        "key": "sla",
+        "key": "unmapped",
         "total": 4,
         "passed": 4,
         "failed": 0,
@@ -470,7 +477,7 @@
         "suppressed": 0
       },
       {
-        "key": "catalog",
+        "key": "moderation",
         "total": 3,
         "passed": 3,
         "failed": 0,
@@ -492,6 +499,13 @@
       },
       {
         "key": "checkout",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "collections",
         "total": 2,
         "passed": 2,
         "failed": 0,
@@ -526,6 +540,13 @@
         "suppressed": 0
       },
       {
+        "key": "engagement",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
         "key": "experiments",
         "total": 2,
         "passed": 2,
@@ -554,13 +575,6 @@
         "suppressed": 0
       },
       {
-        "key": "moderation",
-        "total": 2,
-        "passed": 2,
-        "failed": 0,
-        "suppressed": 0
-      },
-      {
         "key": "password-reset",
         "total": 2,
         "passed": 2,
@@ -575,7 +589,28 @@
         "suppressed": 0
       },
       {
+        "key": "plans",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
         "key": "preflight",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "product-detail",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "products",
         "total": 2,
         "passed": 2,
         "failed": 0,
@@ -590,6 +625,13 @@
       },
       {
         "key": "summary",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "suppressed": 0
+      },
+      {
+        "key": "validation",
         "total": 2,
         "passed": 2,
         "failed": 0,
@@ -624,20 +666,6 @@
         "suppressed": 0
       },
       {
-        "key": "collections",
-        "total": 1,
-        "passed": 1,
-        "failed": 0,
-        "suppressed": 0
-      },
-      {
-        "key": "engagement",
-        "total": 1,
-        "passed": 1,
-        "failed": 0,
-        "suppressed": 0
-      },
-      {
         "key": "password",
         "total": 1,
         "passed": 1,
@@ -652,28 +680,7 @@
         "suppressed": 0
       },
       {
-        "key": "plans",
-        "total": 1,
-        "passed": 1,
-        "failed": 0,
-        "suppressed": 0
-      },
-      {
         "key": "portal",
-        "total": 1,
-        "passed": 1,
-        "failed": 0,
-        "suppressed": 0
-      },
-      {
-        "key": "product-detail",
-        "total": 1,
-        "passed": 1,
-        "failed": 0,
-        "suppressed": 0
-      },
-      {
-        "key": "products",
         "total": 1,
         "passed": 1,
         "failed": 0,
@@ -702,13 +709,6 @@
       },
       {
         "key": "stores",
-        "total": 1,
-        "passed": 1,
-        "failed": 0,
-        "suppressed": 0
-      },
-      {
-        "key": "validation",
         "total": 1,
         "passed": 1,
         "failed": 0,
@@ -1608,7 +1608,7 @@
       "method": "GET",
       "path": "/api/admin/policies",
       "status": 403,
-      "durationMs": 467,
+      "durationMs": 917,
       "ok": true,
       "owner": "commerce-control-tower",
       "tags": [
@@ -1622,7 +1622,7 @@
       "method": "GET",
       "path": "/api/admin/policies/violations",
       "status": 403,
-      "durationMs": 51,
+      "durationMs": 211,
       "ok": true,
       "owner": "commerce-control-tower",
       "tags": [
@@ -1636,7 +1636,7 @@
       "method": "GET",
       "path": "/api/admin/control-tower/summary",
       "status": 403,
-      "durationMs": 52,
+      "durationMs": 146,
       "ok": true,
       "owner": "commerce-control-tower",
       "tags": [
@@ -1650,7 +1650,7 @@
       "method": "GET",
       "path": "/api/admin/pricing-experiments",
       "status": 403,
-      "durationMs": 44,
+      "durationMs": 159,
       "ok": true,
       "owner": "commerce-growth",
       "tags": [
@@ -1664,7 +1664,7 @@
       "method": "POST",
       "path": "/api/admin/pricing-experiments/preflight",
       "status": 403,
-      "durationMs": 47,
+      "durationMs": 167,
       "ok": true,
       "owner": "commerce-growth",
       "tags": [
@@ -1678,7 +1678,7 @@
       "method": "GET",
       "path": "/api/admin/pricing-experiments/:id/performance",
       "status": 403,
-      "durationMs": 44,
+      "durationMs": 143,
       "ok": true,
       "owner": "commerce-growth",
       "tags": [
@@ -1692,7 +1692,7 @@
       "method": "GET",
       "path": "/api/admin/ops/fulfillment-sla",
       "status": 403,
-      "durationMs": 38,
+      "durationMs": 139,
       "ok": true,
       "owner": "commerce-operations",
       "tags": [
@@ -1706,7 +1706,7 @@
       "method": "POST",
       "path": "/api/admin/ops/fulfillment-sla/interventions",
       "status": 403,
-      "durationMs": 42,
+      "durationMs": 162,
       "ok": true,
       "owner": "commerce-operations",
       "tags": [
@@ -1721,7 +1721,7 @@
       "method": "GET",
       "path": "/api/admin/workflows",
       "status": 403,
-      "durationMs": 43,
+      "durationMs": 158,
       "ok": true,
       "owner": "commerce-automation",
       "tags": [
@@ -1734,7 +1734,7 @@
       "method": "GET",
       "path": "/api/analytics/recommendations/history",
       "status": 200,
-      "durationMs": 49,
+      "durationMs": 204,
       "ok": true,
       "owner": "commerce-automation",
       "tags": [
@@ -1750,7 +1750,7 @@
       "method": "POST",
       "path": "/api/analytics/recommendations/apply",
       "status": 201,
-      "durationMs": 49,
+      "durationMs": 196,
       "ok": true,
       "owner": "commerce-automation",
       "tags": [
@@ -1766,7 +1766,7 @@
       "method": "GET",
       "path": "/api/admin/integration-marketplace/apps",
       "status": 403,
-      "durationMs": 473,
+      "durationMs": 565,
       "ok": true,
       "owner": "commerce-integrations",
       "tags": [
@@ -1780,7 +1780,7 @@
       "method": "GET",
       "path": "/api/admin/headless/packs",
       "status": 403,
-      "durationMs": 43,
+      "durationMs": 157,
       "ok": true,
       "owner": "commerce-platform",
       "tags": [
@@ -1794,7 +1794,7 @@
       "method": "GET",
       "path": "/api/admin/store-templates",
       "status": 403,
-      "durationMs": 39,
+      "durationMs": 170,
       "ok": true,
       "owner": "commerce-platform",
       "tags": [
@@ -1803,16 +1803,136 @@
       ]
     },
     {
-      "name": "run_failure",
-      "method": "N/A",
-      "path": "N/A",
-      "status": "contract",
-      "ok": false,
-      "owner": "unknown",
+      "name": "getPlatformPlans",
+      "method": "GET",
+      "path": "/api/platform/plans",
+      "status": 200,
+      "durationMs": 149,
+      "ok": true,
+      "owner": "commerce-platform",
       "tags": [
-        "unmapped"
+        "platform",
+        "plans",
+        "read"
+      ]
+    },
+    {
+      "name": "listProducts",
+      "method": "GET",
+      "path": "/api/products",
+      "status": 200,
+      "durationMs": 178,
+      "ok": true,
+      "owner": "commerce-catalog",
+      "tags": [
+        "storefront",
+        "catalog",
+        "products",
+        "read"
+      ]
+    },
+    {
+      "name": "getProductBySlug",
+      "method": "GET",
+      "path": "/api/products/:slug",
+      "status": 404,
+      "durationMs": 153,
+      "ok": true,
+      "owner": "commerce-catalog",
+      "tags": [
+        "storefront",
+        "catalog",
+        "product-detail",
+        "read"
+      ]
+    },
+    {
+      "name": "listCollections",
+      "method": "GET",
+      "path": "/api/collections",
+      "status": 200,
+      "durationMs": 130,
+      "ok": true,
+      "owner": "commerce-catalog",
+      "tags": [
+        "storefront",
+        "catalog",
+        "collections",
+        "read"
+      ]
+    },
+    {
+      "name": "getCart",
+      "method": "GET",
+      "path": "/api/cart",
+      "status": 200,
+      "durationMs": 261,
+      "ok": true,
+      "owner": "commerce-checkout",
+      "tags": [
+        "storefront",
+        "cart",
+        "read"
+      ]
+    },
+    {
+      "name": "validateCart",
+      "method": "POST",
+      "path": "/api/cart/validate",
+      "status": 200,
+      "durationMs": 286,
+      "ok": true,
+      "owner": "commerce-checkout",
+      "tags": [
+        "storefront",
+        "cart",
+        "validation"
+      ]
+    },
+    {
+      "name": "listProductReviews",
+      "method": "GET",
+      "path": "/api/products/:slug/reviews",
+      "status": 404,
+      "durationMs": 162,
+      "ok": true,
+      "owner": "commerce-reviews",
+      "tags": [
+        "storefront",
+        "reviews",
+        "read"
+      ]
+    },
+    {
+      "name": "markReviewHelpful",
+      "method": "POST",
+      "path": "/api/reviews/:id/helpful",
+      "status": 404,
+      "durationMs": 82,
+      "ok": true,
+      "owner": "commerce-reviews",
+      "tags": [
+        "storefront",
+        "reviews",
+        "engagement",
+        "mutations"
+      ]
+    },
+    {
+      "name": "reportReview",
+      "method": "POST",
+      "path": "/api/reviews/:id/report",
+      "status": 404,
+      "durationMs": 159,
+      "ok": true,
+      "owner": "commerce-reviews",
+      "tags": [
+        "storefront",
+        "reviews",
+        "moderation",
+        "mutations"
       ]
     }
   ],
-  "error": "schema.safeParse is not a function"
+  "error": null
 }

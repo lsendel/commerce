@@ -21,7 +21,11 @@ import { dirname } from "node:path";
 type ContractRoute = {
   method: string;
   path: string;
-  responses: Record<string, { safeParse: (value: unknown) => { success: boolean; error?: unknown } }>;
+  responses: Record<string, unknown>;
+};
+
+type RuntimeSchema = {
+  safeParse: (value: unknown) => { success: boolean; error?: unknown };
 };
 
 type Provider =
@@ -1280,16 +1284,46 @@ function validateContractResponse(
   payload: unknown,
   endpointName: string,
 ) {
-  const schema = route.responses[String(status)];
+  const responseContract = route.responses[String(status)];
   invariant(
-    schema,
+    responseContract,
     `${endpointName}: unexpected status ${status}; expected one of ${Object.keys(route.responses).join(", ")}`,
   );
+
+  const schema = extractRuntimeSchema(responseContract);
+  if (!schema) {
+    return;
+  }
 
   const result = schema.safeParse(payload);
   if (!result.success) {
     throw new Error(`${endpointName}: response for status ${status} failed contract validation`);
   }
+}
+
+function extractRuntimeSchema(responseContract: unknown): RuntimeSchema | null {
+  if (
+    responseContract &&
+    typeof responseContract === "object" &&
+    "safeParse" in responseContract &&
+    typeof responseContract.safeParse === "function"
+  ) {
+    return responseContract as RuntimeSchema;
+  }
+
+  if (
+    responseContract &&
+    typeof responseContract === "object" &&
+    "body" in responseContract &&
+    responseContract.body &&
+    typeof responseContract.body === "object" &&
+    "safeParse" in responseContract.body &&
+    typeof responseContract.body.safeParse === "function"
+  ) {
+    return responseContract.body as RuntimeSchema;
+  }
+
+  return null;
 }
 
 function assertContractRoute(

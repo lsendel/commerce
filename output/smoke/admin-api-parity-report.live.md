@@ -1,22 +1,22 @@
 # Admin API Parity Smoke Report
 
-- Started: 2026-03-13T05:49:48.454Z
-- Finished: 2026-03-13T05:49:49.979Z
-- Status: failed
+- Started: 2026-03-13T15:46:24.893Z
+- Finished: 2026-03-13T15:46:29.981Z
+- Status: passed
 - Mutation checks enabled: false
 - Flaky policy defaults (external-provider): attempts=3, delayMs=750, suppress=false
 - Flaky policy (verify): attempts=3, delayMs=750, suppress=false
 - Flaky policy (install): attempts=3, delayMs=750, suppress=false
 - Flaky policy (uninstall): attempts=3, delayMs=750, suppress=false
-- Checks: total=81, failed=1, suppressed=0
-- Latency (ms): count=14, min=38, p50=44, p95=473, max=473, avg=105.79
-- Owner rollups (top): unknown(total=5,pass=4,fail=1,suppressed=0); commerce-platform(total=15,pass=15,fail=0,suppressed=0); commerce-billing(total=9,pass=9,fail=0,suppressed=0); commerce-control-tower(total=7,pass=7,fail=0,suppressed=0); commerce-identity(total=7,pass=7,fail=0,suppressed=0); commerce-automation(total=6,pass=6,fail=0,suppressed=0); commerce-checkout(total=6,pass=6,fail=0,suppressed=0); commerce-growth(total=6,pass=6,fail=0,suppressed=0)
-- Owner latency rollups (top): commerce-integrations(checks=5,count=1,p50=473,p95=473,avg=473); commerce-control-tower(checks=7,count=3,p50=52,p95=467,avg=190); commerce-automation(checks=6,count=3,p50=49,p95=49,avg=47); commerce-growth(checks=6,count=3,p50=44,p95=47,avg=45); commerce-platform(checks=15,count=2,p50=39,p95=43,avg=41); commerce-operations(checks=4,count=2,p50=38,p95=42,avg=40); commerce-billing(checks=9,count=0,p50=n/a,p95=n/a,avg=n/a); commerce-bookings(checks=4,count=0,p50=n/a,p95=n/a,avg=n/a)
+- Checks: total=89, failed=0, suppressed=0
+- Latency (ms): count=23, min=82, p50=162, p95=565, max=917, avg=219.74
+- Owner rollups (top): commerce-platform(total=16,pass=16,fail=0,suppressed=0); commerce-billing(total=9,pass=9,fail=0,suppressed=0); commerce-checkout(total=8,pass=8,fail=0,suppressed=0); commerce-control-tower(total=7,pass=7,fail=0,suppressed=0); commerce-identity(total=7,pass=7,fail=0,suppressed=0); commerce-reviews(total=7,pass=7,fail=0,suppressed=0); commerce-automation(total=6,pass=6,fail=0,suppressed=0); commerce-catalog(total=6,pass=6,fail=0,suppressed=0)
+- Owner latency rollups (top): commerce-control-tower(checks=7,count=3,p50=211,p95=917,avg=424.67); commerce-integrations(checks=5,count=1,p50=565,p95=565,avg=565); commerce-checkout(checks=8,count=2,p50=261,p95=286,avg=273.5); commerce-automation(checks=6,count=3,p50=196,p95=204,avg=186); commerce-catalog(checks=6,count=3,p50=153,p95=178,avg=153.67); commerce-platform(checks=16,count=3,p50=157,p95=170,avg=158.67); commerce-growth(checks=6,count=3,p50=159,p95=167,avg=156.33); commerce-operations(checks=4,count=2,p50=139,p95=162,avg=150.5)
 - Owner latency SLO (p95): configuredOwners=0, warnings=0, failures=0
 - Owner latency SLO warnings (top): none
 - Owner latency SLO failures (top): none
-- Tag rollups (top): unmapped(total=5,pass=4,fail=1,suppressed=0); admin(total=39,pass=39,fail=0,suppressed=0); mutations(total=35,pass=35,fail=0,suppressed=0); storefront(total=15,pass=15,fail=0,suppressed=0); read(total=13,pass=13,fail=0,suppressed=0); account(total=9,pass=9,fail=0,suppressed=0); subscriptions(total=9,pass=9,fail=0,suppressed=0); auth(total=7,pass=7,fail=0,suppressed=0); platform(total=6,pass=6,fail=0,suppressed=0); pricing(total=6,pass=6,fail=0,suppressed=0); integrations(total=5,pass=5,fail=0,suppressed=0); policies(total=5,pass=5,fail=0,suppressed=0)
-- Error: schema.safeParse is not a function
+- Tag rollups (top): admin(total=39,pass=39,fail=0,suppressed=0); mutations(total=37,pass=37,fail=0,suppressed=0); storefront(total=23,pass=23,fail=0,suppressed=0); read(total=19,pass=19,fail=0,suppressed=0); account(total=9,pass=9,fail=0,suppressed=0); subscriptions(total=9,pass=9,fail=0,suppressed=0); auth(total=7,pass=7,fail=0,suppressed=0); platform(total=7,pass=7,fail=0,suppressed=0); reviews(total=7,pass=7,fail=0,suppressed=0); cart(total=6,pass=6,fail=0,suppressed=0); catalog(total=6,pass=6,fail=0,suppressed=0); pricing(total=6,pass=6,fail=0,suppressed=0)
+- Error: none
 
 | Name | Method | Path | Owner | Tags | Status | Result | Duration(ms) | Attempts | Suppressed | Note |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -86,18 +86,26 @@
 | contract:subscriptionCancel | DELETE | /api/subscriptions/:id | commerce-billing | account,subscriptions,mutations | contract | pass |  |  | no |  |
 | contract:subscriptionChangePlan | PATCH | /api/subscriptions/:id/change-plan | commerce-billing | account,subscriptions,plan-change,mutations | contract | pass |  |  | no |  |
 | contract:subscriptionResume | POST | /api/subscriptions/:id/resume | commerce-billing | account,subscriptions,resume,mutations | contract | pass |  |  | no |  |
-| getPolicy | GET | /api/admin/policies | commerce-control-tower | admin,policies,compliance | 403 | pass | 467 |  | no |  |
-| listViolations | GET | /api/admin/policies/violations | commerce-control-tower | admin,policies,violations | 403 | pass | 51 |  | no |  |
-| getControlTowerSummary | GET | /api/admin/control-tower/summary | commerce-control-tower | admin,control-tower,summary | 403 | pass | 52 |  | no |  |
-| listPricingExperiments | GET | /api/admin/pricing-experiments | commerce-growth | admin,pricing,experiments | 403 | pass | 44 |  | no |  |
-| pricingExperimentPreflight | POST | /api/admin/pricing-experiments/preflight | commerce-growth | admin,pricing,preflight | 403 | pass | 47 |  | no |  |
-| pricingExperimentPerformance | GET | /api/admin/pricing-experiments/:id/performance | commerce-growth | admin,pricing,performance | 403 | pass | 44 |  | no |  |
-| fulfillmentSlaDashboard | GET | /api/admin/ops/fulfillment-sla | commerce-operations | admin,fulfillment,sla | 403 | pass | 38 |  | no |  |
-| fulfillmentSlaInterventions | POST | /api/admin/ops/fulfillment-sla/interventions | commerce-operations | admin,fulfillment,sla,interventions | 403 | pass | 42 |  | no |  |
-| listWorkflows | GET | /api/admin/workflows | commerce-automation | admin,workflows | 403 | pass | 43 |  | no |  |
-| analyticsRecommendationHistory | GET | /api/analytics/recommendations/history | commerce-automation | admin,analytics,recommendations,automation,read | 200 | pass | 49 |  | no |  |
-| analyticsApplyRecommendation | POST | /api/analytics/recommendations/apply | commerce-automation | admin,analytics,recommendations,automation,mutations | 201 | pass | 49 |  | no |  |
-| listIntegrationMarketplaceApps | GET | /api/admin/integration-marketplace/apps | commerce-integrations | admin,integrations,marketplace | 403 | pass | 473 |  | no |  |
-| listHeadlessPacks | GET | /api/admin/headless/packs | commerce-platform | admin,headless,api-packs | 403 | pass | 43 |  | no |  |
-| listStoreTemplates | GET | /api/admin/store-templates | commerce-platform | admin,store-templates | 403 | pass | 39 |  | no |  |
-| run_failure | N/A | N/A | unknown | unmapped | contract | fail |  |  | no |  |
+| getPolicy | GET | /api/admin/policies | commerce-control-tower | admin,policies,compliance | 403 | pass | 917 |  | no |  |
+| listViolations | GET | /api/admin/policies/violations | commerce-control-tower | admin,policies,violations | 403 | pass | 211 |  | no |  |
+| getControlTowerSummary | GET | /api/admin/control-tower/summary | commerce-control-tower | admin,control-tower,summary | 403 | pass | 146 |  | no |  |
+| listPricingExperiments | GET | /api/admin/pricing-experiments | commerce-growth | admin,pricing,experiments | 403 | pass | 159 |  | no |  |
+| pricingExperimentPreflight | POST | /api/admin/pricing-experiments/preflight | commerce-growth | admin,pricing,preflight | 403 | pass | 167 |  | no |  |
+| pricingExperimentPerformance | GET | /api/admin/pricing-experiments/:id/performance | commerce-growth | admin,pricing,performance | 403 | pass | 143 |  | no |  |
+| fulfillmentSlaDashboard | GET | /api/admin/ops/fulfillment-sla | commerce-operations | admin,fulfillment,sla | 403 | pass | 139 |  | no |  |
+| fulfillmentSlaInterventions | POST | /api/admin/ops/fulfillment-sla/interventions | commerce-operations | admin,fulfillment,sla,interventions | 403 | pass | 162 |  | no |  |
+| listWorkflows | GET | /api/admin/workflows | commerce-automation | admin,workflows | 403 | pass | 158 |  | no |  |
+| analyticsRecommendationHistory | GET | /api/analytics/recommendations/history | commerce-automation | admin,analytics,recommendations,automation,read | 200 | pass | 204 |  | no |  |
+| analyticsApplyRecommendation | POST | /api/analytics/recommendations/apply | commerce-automation | admin,analytics,recommendations,automation,mutations | 201 | pass | 196 |  | no |  |
+| listIntegrationMarketplaceApps | GET | /api/admin/integration-marketplace/apps | commerce-integrations | admin,integrations,marketplace | 403 | pass | 565 |  | no |  |
+| listHeadlessPacks | GET | /api/admin/headless/packs | commerce-platform | admin,headless,api-packs | 403 | pass | 157 |  | no |  |
+| listStoreTemplates | GET | /api/admin/store-templates | commerce-platform | admin,store-templates | 403 | pass | 170 |  | no |  |
+| getPlatformPlans | GET | /api/platform/plans | commerce-platform | platform,plans,read | 200 | pass | 149 |  | no |  |
+| listProducts | GET | /api/products | commerce-catalog | storefront,catalog,products,read | 200 | pass | 178 |  | no |  |
+| getProductBySlug | GET | /api/products/:slug | commerce-catalog | storefront,catalog,product-detail,read | 404 | pass | 153 |  | no |  |
+| listCollections | GET | /api/collections | commerce-catalog | storefront,catalog,collections,read | 200 | pass | 130 |  | no |  |
+| getCart | GET | /api/cart | commerce-checkout | storefront,cart,read | 200 | pass | 261 |  | no |  |
+| validateCart | POST | /api/cart/validate | commerce-checkout | storefront,cart,validation | 200 | pass | 286 |  | no |  |
+| listProductReviews | GET | /api/products/:slug/reviews | commerce-reviews | storefront,reviews,read | 404 | pass | 162 |  | no |  |
+| markReviewHelpful | POST | /api/reviews/:id/helpful | commerce-reviews | storefront,reviews,engagement,mutations | 404 | pass | 82 |  | no |  |
+| reportReview | POST | /api/reviews/:id/report | commerce-reviews | storefront,reviews,moderation,mutations | 404 | pass | 159 |  | no |  |
